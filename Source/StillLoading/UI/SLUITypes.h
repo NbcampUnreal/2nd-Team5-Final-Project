@@ -17,6 +17,17 @@ enum class ESLAdditiveWidgetType : uint8
 	CreditWidget
 };
 
+UENUM(BlueprintType)
+enum class ESLUISoundType : uint8
+{
+	None = 0,
+	Click,
+	Hover,
+	Open,
+	Close,
+	Notify
+};
+
 UCLASS()
 class STILLLOADING_API USLUITypes : public UObject
 {
