@@ -8,8 +8,10 @@ public class StillLoading : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG" });
 
-		PrivateIncludePaths.Add("StillLoading");
+        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+
+        PrivateIncludePaths.Add("StillLoading");
 	}
 }
