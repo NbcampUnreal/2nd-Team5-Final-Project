@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/Widget/SLUserInputWidget.h"
+#include "Character/Widget/UserInputWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "SLBasePlayerController.generated.h"
 
