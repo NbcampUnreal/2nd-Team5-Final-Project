@@ -6,6 +6,16 @@
 #include "UI/Widget/SLBaseWidget.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/GameUserSettings.h"
+
+void USLUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	/*UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
+	GameUserSettings->SetFullscreenMode(EWindowMode::Fullscreen);
+	GameUserSettings->ApplySettings(false);*/
+}
 
 void USLUISubsystem::SetChapterToUI(ESLChapterType ChapterType)
 {

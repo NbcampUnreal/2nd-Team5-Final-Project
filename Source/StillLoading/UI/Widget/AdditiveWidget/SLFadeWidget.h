@@ -3,14 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Widget/SLBaseWidget.h"
+#include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
 #include "SLFadeWidget.generated.h"
 
-/**
- * 
- */
+
 UCLASS()
-class STILLLOADING_API USLFadeWidget : public USLBaseWidget
+class STILLLOADING_API USLFadeWidget : public USLAdditiveWidget
 {
 	GENERATED_BODY()
 	
