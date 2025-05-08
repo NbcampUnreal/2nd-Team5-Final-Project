@@ -4,7 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Character/SLBaseCharacter.h"
 #include "Components/Button.h"
-#include "UserInputWidget.generated.h"
+#include "SLUserInputWidget.generated.h"
 
 UCLASS()
 class STILLLOADING_API UUserInputWidget : public UUserWidget

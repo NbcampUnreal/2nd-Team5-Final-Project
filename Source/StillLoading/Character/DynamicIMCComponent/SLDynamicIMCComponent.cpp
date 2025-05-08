@@ -1,4 +1,4 @@
-#include "DynamicIMCComponent.h"
+#include "SLDynamicIMCComponent.h"
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -50,7 +50,7 @@ void UDynamicIMCComponent::SetKeyForAction(EInputActionType ActionType, const FK
 	EnumName.RemoveFromStart("EInputActionType::");
 	UE_LOG(LogTemp, Display, TEXT("SetKeyForAction: %s → %s"), *EnumName, *NewKey.GetDisplayName().ToString());
 
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	const APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (!PC) return;
 
 	auto* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
