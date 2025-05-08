@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "MovementHandlerComponent.generated.h"
+#include "SLMovementHandlerComponent.generated.h"
 
 enum class EInputActionType : uint8;
 
@@ -24,14 +24,25 @@ protected:
 
 	UFUNCTION()
 	void OnActionTriggered(EInputActionType ActionType);
+	UFUNCTION()
+	void BindIMCComponent();
 
 private:
 	UPROPERTY()
 	TObjectPtr<ACharacter> OwnerCharacter;
-
-	UFUNCTION()
-	void BindIMCComponent();
-
+	
 	UFUNCTION()
 	void Jump();
+	UFUNCTION()
+	void Move(const FVector& Direction);
+	UFUNCTION()
+	void Interact();
+	UFUNCTION()
+	void Attack();
+	UFUNCTION()
+	void PointMove();
+	UFUNCTION()
+	void ToggleWalk();
+	UFUNCTION()
+	void ToggleMenu();
 };
