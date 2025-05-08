@@ -1,6 +1,6 @@
-#include "UserInputWidget.h"
+#include "SLUserInputWidget.h"
 
-#include "Character/DynamicIMCComponent/DynamicIMCComponent.h"
+#include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 
 void UUserInputWidget::NativeConstruct()
 {
@@ -46,6 +46,7 @@ FReply UUserInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKey
 		if (IMCComp)
 		{
 			IMCComp->SetKeyForAction(EInputActionType::Jump, PressedKey);
+			//IMCComp->SetKeyForAction(EInputActionType::MoveDown, PressedKey);
 		}
 	}
 
