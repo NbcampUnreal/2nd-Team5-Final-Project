@@ -28,6 +28,23 @@ enum class ESLUISoundType : uint8
 	Notify
 };
 
+UENUM(BlueprintType)
+enum class ESLChapterType : uint8
+{
+	Intro = 0,
+	Chapter2D,
+	Chapter2_5D,
+	Chapter3D,
+	ChapterHighQuality
+};
+
+UENUM(BlueprintType)
+enum class ESLLanguageType : uint8
+{
+	Kor = 0,
+	Eng
+};
+
 UCLASS()
 class STILLLOADING_API USLUITypes : public UObject
 {

@@ -15,11 +15,12 @@ class STILLLOADING_API USLBaseWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem);
-	virtual void ApplyOnChangedLanguage() {};
-	virtual void ApplyOnChangedChapter(int ChpaterNum) {};
-	virtual void ActivateWidget() {};
-	virtual void DeactivateWidget() {};
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType);
+	virtual void ActivateWidget(ESLChapterType ChapterType);
+	virtual void DeactivateWidget();
+
+	virtual void ApplyOnChangedLanguage(ESLLanguageType LanguageType) {};
+	void ApplyOnChangedChapter(ESLChapterType ChapterType);
 
 protected:
 	UFUNCTION()
@@ -28,9 +29,12 @@ protected:
 	UFUNCTION()
 	virtual void OnEndedCloseAnim();
 
-	void PlayOpenAnim();
-	void PlayCloseAnim();
+	virtual void FindWidgetData();
+	virtual void ApplyImageData() {};
+	virtual void ApplyFontData() {};
+
 	void PlayUISound(ESLUISoundType SoundType);
+
 	bool CheckValidOfUISubsystem();
 
 protected:
@@ -42,6 +46,18 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UWidgetAnimation> CloseAnim = nullptr;
+
+	UPROPERTY()
+	TMap<FName, UTexture2D*> ImageMap;
+
+	UPROPERTY()
+	TObjectPtr<UFont> Font = nullptr;
+
+	UPROPERTY()
+	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::OptionWidget;
+
+	UPROPERTY()
+	ESLChapterType CurrentChapter = ESLChapterType::Intro;
 
 	FWidgetAnimationDynamicEvent EndOpenAnimDelegate;
 	FWidgetAnimationDynamicEvent EndCloseAnimDelegate;
