@@ -4,17 +4,14 @@
 #include "Components/ActorComponent.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
-#include "SLDynamicIMCComponent.generated.h"
+#include "DynamicIMCComponent.generated.h"
 
 UENUM(BlueprintType)
 enum class EInputActionType : uint8
 {
 	None UMETA(DisplayName = "None"),
 	Jump UMETA(DisplayName = "Jump"),
-	MoveUp UMETA(DisplayName = "MoveUp"),
-	MoveDown UMETA(DisplayName = "MoveDown"),
-	MoveLeft UMETA(DisplayName = "MoveLeft"),
-	MoveRight UMETA(DisplayName = "MoveRight"),
+	Move UMETA(DisplayName = "Move"),
 	Interaction UMETA(DisplayName = "Interaction"),
 	Attack UMETA(DisplayName = "Attack"),
 	PointMove UMETA(DisplayName = "PointMove"),
