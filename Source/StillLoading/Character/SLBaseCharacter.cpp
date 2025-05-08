@@ -3,12 +3,12 @@
 ASLBaseCharacter::ASLBaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	
 }
 
 void ASLBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 	
 }
 

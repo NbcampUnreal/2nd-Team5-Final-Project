@@ -11,6 +11,7 @@ enum class EInputActionType : uint8
 {
 	None UMETA(DisplayName = "None"),
 	Jump UMETA(DisplayName = "Jump"),
+	Look UMETA(DisplayName = "Look"),
 	MoveUp UMETA(DisplayName = "MoveUp"),
 	MoveDown UMETA(DisplayName = "MoveDown"),
 	MoveLeft UMETA(DisplayName = "MoveLeft"),
@@ -34,7 +35,9 @@ struct FInputBindingData
 	UInputAction* Action;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInputTriggered, EInputActionType, ActionType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInputTriggered, EInputActionType, ActionType, FInputActionValue, InputValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInputStarted, EInputActionType, ActionType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInputStopped, EInputActionType, ActionType);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UDynamicIMCComponent : public UActorComponent
@@ -44,7 +47,10 @@ class STILLLOADING_API UDynamicIMCComponent : public UActorComponent
 public:
 	UDynamicIMCComponent();
 
+	UFUNCTION()
 	void SetKeyForAction(EInputActionType ActionType, const FKey& NewKey);
+	UFUNCTION()
+	void BindInputForAction(const UInputAction* Action, EInputActionType ActionType, UEnhancedInputComponent* InputComp);
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UInputMappingContext> DefaultIMC;
@@ -55,16 +61,28 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnInputTriggered OnActionTriggered;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnInputStarted OnActionStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnInputStopped OnActionCompleted;
+
 protected:
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY()
-	UInputMappingContext* CurrentIMC;
-	
 	UFUNCTION()
 	void HandleActionTriggered(const FInputActionInstance& ActionInstance);
+	UFUNCTION()
+	void HandleActionStarted(const FInputActionInstance& Instance);
+	UFUNCTION()
+	void HandleActionCompleted(const FInputActionInstance& Instance);
+
+	UFUNCTION()
+	void BindDefaultSetting();
 
 	UPROPERTY()
 	TMap<EInputActionType, UInputAction*> ActionMap;
+	UPROPERTY()
+	UInputMappingContext* CurrentIMC;
 };
