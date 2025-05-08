@@ -1,5 +1,7 @@
 #include "SLBaseCharacter.h"
 
+#include "EnhancedInputSubsystems.h"
+
 ASLBaseCharacter::ASLBaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -8,6 +10,8 @@ ASLBaseCharacter::ASLBaseCharacter()
 void ASLBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	
 }
 
 void ASLBaseCharacter::Tick(float DeltaTime)

@@ -4,6 +4,8 @@
 #include "GameFramework/Character.h"
 #include "SLBaseCharacter.generated.h"
 
+class UInputMappingContext;
+
 UCLASS()
 class STILLLOADING_API ASLBaseCharacter : public ACharacter
 {
