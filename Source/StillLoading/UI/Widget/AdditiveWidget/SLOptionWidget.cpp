@@ -36,6 +36,11 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType 
 	KeySettingButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedKeySetting);
 	QuitGameButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuit);
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
+
+	if (IsValid(KeySettingPanel))
+	{
+		KeySettingPanel->InitWidget(UISubsystem, CurrentChapter);
+	}
 }
 
 void USLOptionWidget::ActivateWidget(ESLChapterType ChapterType)
@@ -57,6 +62,11 @@ void USLOptionWidget::ActivateWidget(ESLChapterType ChapterType)
 	}
 
 	UpdateLanguageButton();
+
+	if (IsValid(KeySettingPanel))
+	{
+		KeySettingPanel->SetVisibility(ESlateVisibility::Collapsed);
+	}
 }
 
 void USLOptionWidget::ApplyImageData()
@@ -181,7 +191,11 @@ void USLOptionWidget::UpdateBrightness(float BrightnessValue)
 
 void USLOptionWidget::OnClickedKeySetting()
 {
-	// TODO : Open Key Setting Widget
+	if (IsValid(KeySettingPanel))
+	{
+		KeySettingPanel->SetVisibility(ESlateVisibility::Visible);
+		KeySettingPanel->ActivateWidget(CurrentChapter);
+	}
 }
 
 void USLOptionWidget::OnClickedQuit()

@@ -156,6 +156,9 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> KeySettingText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLBaseWidget> KeySettingPanel = nullptr;
 	//
 
 	// Widget Handle
