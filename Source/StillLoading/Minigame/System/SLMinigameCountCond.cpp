@@ -12,7 +12,11 @@ ASLMinigameCountCond::ASLMinigameCountCond()
 void ASLMinigameCountCond::AddCount(int32 addCount)
 {
 	Count += addCount;
-	CheckCondition(EResult::Success);
+	if (Count >= MaxCount)
+	{
+		SendCondition(ESLMinigameResult::Success);
+	}
+	
 }
 
 // Called when the game starts or when spawned
@@ -28,30 +32,7 @@ void ASLMinigameCountCond::InitCondition()
 	Count = 0;
 }
 
-void ASLMinigameCountCond::CheckCondition(EResult result)
-{
-	switch (result)
-	{
-	case EResult::Success:
-		if (Count < MaxCount)
-		{
-			return;
-		}
-		bIsClear = true;
-		break;
-	case EResult::Fail:
-		bIsFail = true;
-		break;
-	case EResult::Pass:
-		bIsPass = true;
-		break;
-	default:
-		break;
-	}
-	SendCondition(result);
-}
-
-void ASLMinigameCountCond::SendCondition(EResult result)
+void ASLMinigameCountCond::SendCondition(ESLMinigameResult result)
 {
 	Super::SendCondition(result);
 }

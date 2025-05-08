@@ -3,12 +3,12 @@
 
 #include "Minigame/System/SLMinigameCondSubsystem.h"
 
-EResult USLMinigameCondSubsystem::GetMinigameResult(EMinigame minigame)
+ESLMinigameResult USLMinigameCondSubsystem::GetMinigameResult(ESLMinigameStage minigame)
 {
 	return MinigameResult[minigame];
 }
 
-void USLMinigameCondSubsystem::SetMinigameResult(EMinigame minigame, EResult result)
+void USLMinigameCondSubsystem::SetMinigameResult(ESLMinigameStage minigame, ESLMinigameResult result)
 {
 	MinigameResult[minigame] = result;
 }

@@ -22,16 +22,12 @@ void ASLBaseMinigameCond::InitCondition()
 	bIsClear = false;
 }
 
-void ASLBaseMinigameCond::CheckCondition(EResult result)
-{
-}
-
-void ASLBaseMinigameCond::SendCondition(EResult result)
+void ASLBaseMinigameCond::SendCondition(ESLMinigameResult result)
 {
 	UGameInstance* GI = GetGameInstance();
-	checkf(GI, TEXT("UGameInstance is nullptr"));
+	checkf(IsValid(GI), TEXT("UGameInstance is nullptr"));
 	USLMinigameCondSubsystem* Subsystem = GI->GetSubsystem<USLMinigameCondSubsystem>();
-	checkf(Subsystem, TEXT("USLMinigameCondSubsystem is nullptr"));
+	checkf(IsValid(Subsystem), TEXT("USLMinigameCondSubsystem is nullptr"));
 	Subsystem->SetMinigameResult(AssignedMinigame, result);
 }
 

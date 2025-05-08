@@ -7,7 +7,7 @@
 #include "SLMinigameCondSubsystem.generated.h"
 
 UENUM()
-enum class EResult
+enum class ESLMinigameResult
 {
 	Success, //성공
 	Fail,    //실패
@@ -16,15 +16,16 @@ enum class EResult
 };
 
 UENUM()
-enum class EMinigame
+enum class ESLMinigameStage
 {
-	MG_Ch1_Stage1,
-	MG_Ch1_Stage2_A,
-	MG_Ch1_Stage2_B,
-	MG_Ch1_Stage3,
-	MG_Ch1_Stage4,
-	MG_Ch1_Stage5_A,
-	MG_Ch1_Stage5_B,
+	//각 이름은 챕터와 미니게임 제목으로
+	Ch1Stage1,
+	Ch1Stage2_A,
+	Ch1Stage2_B,
+	Ch1Stage3,
+	Ch1Stage4,
+	Ch1Stage5_A,
+	Ch1Stage5_B,
 
 	MG_Ch2_Stage1,
 	MG_Ch2_Stage2_A,
@@ -47,8 +48,9 @@ class STILLLOADING_API USLMinigameCondSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 public:
-	EResult GetMinigameResult(EMinigame minigame);
-	void SetMinigameResult(EMinigame minigame, EResult result);
+	ESLMinigameResult GetMinigameResult(ESLMinigameStage Minigame);
+	void SetMinigameResult(ESLMinigameStage Minigame, ESLMinigameResult Result);
 private:
-	TMap<EMinigame, EResult> MinigameResult;
+	UPROPERTY()
+	TMap<ESLMinigameStage, ESLMinigameResult> MinigameResult;
 };

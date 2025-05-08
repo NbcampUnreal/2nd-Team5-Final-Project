@@ -8,7 +8,14 @@ void ASLMinigameWaveCond::AddCount(int count)
 	CurrentKillCount += count;
 	if (CurrentKillCount >= MaxKillCount)
 	{
-		CheckCondition(EResult::Success);
+		if (CurrentWave < MaxWave)
+		{
+			StartNextWave();
+		}
+		else
+		{
+			SendCondition(ESLMinigameResult::Success);
+		}
 	}
 }
 
@@ -16,28 +23,7 @@ void ASLMinigameWaveCond::InitCondition()
 {
 }
 
-void ASLMinigameWaveCond::CheckCondition(EResult result)
-{
-	switch (result)
-	{
-	case EResult::Success:
-		if (CurrentWave < MaxWave)
-		{
-			StartNextWave();
-			return;
-		}
-		break;
-	case EResult::Fail:
-		break;
-	case EResult::Pass:
-		break;
-	default:
-		break;
-	}
-	SendCondition(result);
-}
-
-void ASLMinigameWaveCond::SendCondition(EResult result)
+void ASLMinigameWaveCond::SendCondition(ESLMinigameResult result)
 {
 	Super::SendCondition(result);
 }

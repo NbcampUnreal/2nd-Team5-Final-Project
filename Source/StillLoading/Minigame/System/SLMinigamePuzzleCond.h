@@ -22,21 +22,19 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	//조건을 만족하기 위한 변수 및 클리어 여부 초기화
-	virtual void InitCondition();
-
-	//조건이 만족되었는지 체크
-	virtual void CheckCondition(EResult result);
-
-	//조건이 만족되었다면 결과를 저장해줄 클래스로 전달
-	virtual void SendCondition(EResult result);
-
 	//실패했을 경우 모든 석상들을 비활성화
 	UFUNCTION()
 	void DeactivateStatue();
+
+	//조건을 만족하기 위한 변수 및 클리어 여부 초기화
+	virtual void InitCondition();
+
+	//조건이 만족되었다면 결과를 저장해줄 클래스로 전달
+	virtual void SendCondition(ESLMinigameResult result);
 private:
+	//초기화는 생성자
 	UPROPERTY(EditAnywhere)
-	TArray<int> CurrentPermutation = {};
+	TArray<int> CurrentPermutation;
 	UPROPERTY(VisibleAnywhere)
-	TArray<int> AnswerPermutation = {};
+	TArray<int> AnswerPermutation;
 };
