@@ -12,7 +12,8 @@
 				"Engine",
 				"DeveloperSettings",
 				"UMG",
-				"CoreUObject"
+				"CoreUObject",
+				"AIModule"
 			]
 		}
 	],
