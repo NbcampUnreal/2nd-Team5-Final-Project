@@ -14,7 +14,7 @@ void ASLMinigamePuzzleCond::AddNumber(int32 Number)
 	CurrentPermutation.Add(Number);
 	if (CurrentPermutation.Num() == AnswerPermutation.Num())
 	{
-		CheckCondition();
+		CheckCondition(EResult::Success);
 	}
 }
 
@@ -27,25 +27,40 @@ void ASLMinigamePuzzleCond::BeginPlay()
 
 void ASLMinigamePuzzleCond::InitCondition()
 {
+	Super::InitCondition();
 	CurrentPermutation.Empty();
 }
 
-void ASLMinigamePuzzleCond::CheckCondition()
+void ASLMinigamePuzzleCond::CheckCondition(EResult result)
 {
-	for (int i = 0; i < CurrentPermutation.Num(); i++)
+	switch (result)
 	{
-		if (CurrentPermutation[i] != AnswerPermutation[i])
+	case EResult::Success:
+		for (int i = 0; i < CurrentPermutation.Num(); i++)
 		{
-			DeactivateStatue();
-			return;
+			if (CurrentPermutation[i] != AnswerPermutation[i])
+			{
+				DeactivateStatue();
+				return;
+			}
 		}
+		bIsClear = true;
+		break;
+	case EResult::Fail:
+		bIsFail = true;
+		break;
+	case EResult::Pass:
+		bIsPass = true;
+		break;
+	default:
+		break;
 	}
-	bIsClear = true;
-	SendCondition();
+	SendCondition(result);
 }
 
-void ASLMinigamePuzzleCond::SendCondition()
+void ASLMinigamePuzzleCond::SendCondition(EResult result)
 {
+	Super::SendCondition(result);
 }
 
 void ASLMinigamePuzzleCond::DeactivateStatue()

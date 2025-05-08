@@ -25,16 +25,13 @@ protected:
 
 private:
 	//조건을 만족하기 위한 변수 및 클리어 여부 초기화
-	UFUNCTION()
 	virtual void InitCondition();
 
 	//조건이 만족되었는지 체크
-	UFUNCTION()
-	virtual void CheckCondition();
+	virtual void CheckCondition(EResult result);
 
 	//조건이 만족되었다면 결과를 저장해줄 클래스로 전달
-	UFUNCTION()
-	virtual void SendCondition();
+	virtual void SendCondition(EResult result);
 
 private:
 	UPROPERTY(VisibleAnywhere)
