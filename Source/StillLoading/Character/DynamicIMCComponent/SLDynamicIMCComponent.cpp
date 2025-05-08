@@ -13,7 +13,11 @@ UDynamicIMCComponent::UDynamicIMCComponent()
 void UDynamicIMCComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	BindDefaultSetting();
+}
 
+void UDynamicIMCComponent::BindDefaultSetting()
+{
 	for (const FInputBindingData& Binding : ActionBindings)
 	{
 		if (Binding.Action)
@@ -36,10 +40,11 @@ void UDynamicIMCComponent::BeginPlay()
 	{
 		for (const auto& Pair : ActionMap)
 		{
-			if (const UInputAction* Action = Pair.Value)
-			{
-				InputComp->BindAction(Action, ETriggerEvent::Triggered, this, &UDynamicIMCComponent::HandleActionTriggered);
-			}
+			const EInputActionType ActionType = Pair.Key;
+			const UInputAction* Action = Pair.Value;
+			if (!Action) continue;
+
+			BindInputForAction(Action, ActionType, InputComp);
 		}
 	}
 }
@@ -74,8 +79,7 @@ void UDynamicIMCComponent::SetKeyForAction(EInputActionType ActionType, const FK
 		{
 			if (auto* InputComp = Cast<UEnhancedInputComponent>(OwnerChar->InputComponent))
 			{
-				InputComp->BindAction(Action, ETriggerEvent::Started, this,
-					&UDynamicIMCComponent::HandleActionTriggered);
+				BindInputForAction(Action, ActionType, InputComp);
 			}
 		}
 	}
@@ -83,15 +87,72 @@ void UDynamicIMCComponent::SetKeyForAction(EInputActionType ActionType, const FK
 	Subsystem->AddMappingContext(CurrentIMC, 0);
 }
 
+void UDynamicIMCComponent::BindInputForAction(const UInputAction* Action, const EInputActionType ActionType, UEnhancedInputComponent* InputComp)
+{
+	switch (ActionType)
+	{
+	case EInputActionType::MoveUp:
+	case EInputActionType::MoveDown:
+	case EInputActionType::MoveLeft:
+	case EInputActionType::MoveRight:
+	case EInputActionType::Look:
+		InputComp->BindAction(Action, ETriggerEvent::Triggered, this, &UDynamicIMCComponent::HandleActionTriggered);
+		break;
+
+	case EInputActionType::Walk:
+	case EInputActionType::Jump:
+	case EInputActionType::Interaction:
+	case EInputActionType::Attack:
+	case EInputActionType::PointMove:
+	case EInputActionType::Menu:
+		InputComp->BindAction(Action, ETriggerEvent::Started, this, &UDynamicIMCComponent::HandleActionStarted);
+		InputComp->BindAction(Action, ETriggerEvent::Completed, this, &UDynamicIMCComponent::HandleActionCompleted);
+		break;
+
+	default:
+		break;
+	}
+}
+
 void UDynamicIMCComponent::HandleActionTriggered(const FInputActionInstance& Instance)
- {
+{
 	if (const UInputAction* TriggeredAction = Instance.GetSourceAction())
 	{
 		for (const auto& Pair : ActionMap)
 		{
 			if (Pair.Value == TriggeredAction)
 			{
-				OnActionTriggered.Broadcast(Pair.Key);
+				OnActionTriggered.Broadcast(Pair.Key, Instance.GetValue());
+				break;
+			}
+		}
+	}
+}
+
+void UDynamicIMCComponent::HandleActionStarted(const FInputActionInstance& Instance)
+{
+	if (const UInputAction* StartedAction = Instance.GetSourceAction())
+	{
+		for (const auto& Pair : ActionMap)
+		{
+			if (Pair.Value == StartedAction)
+			{
+				OnActionStarted.Broadcast(Pair.Key);
+				break;
+			}
+		}
+	}
+}
+
+void UDynamicIMCComponent::HandleActionCompleted(const FInputActionInstance& Instance)
+{
+	if (const UInputAction* CompletedAction = Instance.GetSourceAction())
+	{
+		for (const auto& Pair : ActionMap)
+		{
+			if (Pair.Value == CompletedAction)
+			{
+				OnActionCompleted.Broadcast(Pair.Key);
 				break;
 			}
 		}
