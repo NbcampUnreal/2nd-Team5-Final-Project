@@ -4,9 +4,11 @@
 #include "UI/Widget/SLBaseWidget.h"
 #include "UI/SLUISubsystem.h"
 #include "Animation/WidgetAnimation.h"
+#include "UI/Struct/SLWidgetImageDataRow.h"
+#include "Engine/Font.h"
 
 
-void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem)
+void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
 	UISubsystem = NewUISubsystem;
 
@@ -21,6 +23,52 @@ void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 		EndCloseAnimDelegate.BindDynamic(this, &ThisClass::OnEndedCloseAnim);
 		BindToAnimationFinished(CloseAnim, EndCloseAnimDelegate);
 	}
+
+	ApplyOnChangedChapter(ChapterType);
+}
+
+void USLBaseWidget::ApplyOnChangedChapter(ESLChapterType ChapterType)
+{
+	CurrentChapter = ChapterType;
+	ImageMap.Empty();
+
+	FindWidgetData();
+
+	ApplyImageData();
+	ApplyFontData();
+}
+
+void USLBaseWidget::ActivateWidget(ESLChapterType ChapterType)
+{
+	if (CurrentChapter != ChapterType)
+	{
+		ApplyOnChangedChapter(ChapterType);
+	}
+
+	if (IsValid(OpenAnim))
+	{
+		PlayAnimation(OpenAnim);
+	}
+	else
+	{
+		OnEndedOpenAnim();
+	}
+
+	PlayUISound(ESLUISoundType::Open);
+}
+
+void USLBaseWidget::DeactivateWidget()
+{
+	if (IsValid(CloseAnim))
+	{
+		PlayAnimation(CloseAnim);
+	}
+	else
+	{
+		OnEndedCloseAnim();
+	}
+
+	PlayUISound(ESLUISoundType::Close);
 }
 
 void USLBaseWidget::OnEndedOpenAnim()
@@ -30,6 +78,8 @@ void USLBaseWidget::OnEndedOpenAnim()
 
 void USLBaseWidget::OnEndedCloseAnim()
 {
+	this->RemoveFromViewport();
+
 	if (!CheckValidOfUISubsystem())
 	{
 		return;
@@ -38,24 +88,35 @@ void USLBaseWidget::OnEndedCloseAnim()
 	// TODO : Pose Close Animation Function. Call Remove Widget and Post Processing From UISubsystem.
 }
 
-void USLBaseWidget::PlayOpenAnim()
+void USLBaseWidget::FindWidgetData()
 {
-	if (!IsValid(OpenAnim))
+	if (!CheckValidOfUISubsystem())
 	{
 		return;
 	}
 
-	PlayAnimation(OpenAnim);
-}
+	const UDataTable* ImageDataTable = UISubsystem->GetImageDataTable();
+	const FString ContextString(TEXT("Image Data Table"));
 
-void USLBaseWidget::PlayCloseAnim()
-{
-	if (!IsValid(CloseAnim))
+	TArray<FSLWidgetImageDataRow*> ImageData;
+
+	ImageDataTable->GetAllRows(ContextString, ImageData);
+
+	for (const FSLWidgetImageDataRow* ImageDataRow : ImageData)
 	{
-		return;
-	}
+		if (ImageDataRow->WidgetType == WidgetType &&
+			ImageDataRow->TargetChapter == CurrentChapter)
+		{
+			Font = ImageDataRow->Font.LoadSynchronous();
 
-	PlayAnimation(CloseAnim);
+			for (TPair<FName, TSoftObjectPtr<UTexture2D>> Target : ImageDataRow->ImageMap)
+			{
+				ImageMap.Add(Target.Key, Target.Value.LoadSynchronous());
+			}
+
+			break;
+		}
+	}
 }
 
 void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)
@@ -65,7 +126,7 @@ void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)
 		return;
 	}
 
-	// TODO : Call SFX Sound Play Function From UISubsystem.
+	UISubsystem->PlayUISound(SoundType);
 }
 
 bool USLBaseWidget::CheckValidOfUISubsystem()
