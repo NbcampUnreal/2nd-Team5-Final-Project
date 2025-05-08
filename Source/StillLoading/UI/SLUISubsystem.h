@@ -17,9 +17,12 @@ class STILLLOADING_API USLUISubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
 	void SetChapterToUI(ESLChapterType ChapterType);
 	void SetLanguageToUI(ESLLanguageType LanguageType);
 
+	UFUNCTION(BlueprintCallable)
 	void AddAdditveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveCurrentAdditiveWidget();
 	void RemoveAllAdditveWidget();
@@ -61,15 +64,10 @@ private:
 	UPROPERTY()
 	TObjectPtr<UDataTable> WidgetImageData = nullptr;
 
-	UPROPERTY()
 	int32 ActiveCount = 0;
 
-	UPROPERTY()
 	ESLChapterType CurrentChapter = ESLChapterType::Intro;
-
-	UPROPERTY()
 	ESLLanguageType CurrentLanguage = ESLLanguageType::Kor;
 
-	UPROPERTY()
 	float EffectVolume = 1.0f;
 };
