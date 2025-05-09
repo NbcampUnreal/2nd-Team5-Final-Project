@@ -5,11 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "SaveLoad/SLSaveGame.h"
 
-void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-    Super::Initialize(Collection);
-    
-}
+
 
 void USLSaveGameSubsystem::SaveGame()
 {
