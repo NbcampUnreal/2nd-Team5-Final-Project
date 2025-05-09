@@ -32,7 +32,7 @@ public:
 
 private:
 
-    UPROPERTY(VisibleAnywhere)
+    UPROPERTY()
     USLSaveGame* CurrentSaveGame;
 
     UPROPERTY()
