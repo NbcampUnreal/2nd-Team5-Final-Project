@@ -45,7 +45,7 @@ FReply UUserInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKey
 		auto* IMCComp = LinkedCharacter->FindComponentByClass<UDynamicIMCComponent>();
 		if (IMCComp)
 		{
-			IMCComp->SetKeyForAction(EInputActionType::Jump, PressedKey);
+			IMCComp->SetKeyForAction(EInputActionType::EIAT_Jump, PressedKey);
 			//IMCComp->SetKeyForAction(EInputActionType::MoveDown, PressedKey);
 		}
 	}

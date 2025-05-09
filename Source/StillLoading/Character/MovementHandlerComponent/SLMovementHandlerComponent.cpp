@@ -2,6 +2,7 @@
 
 #include "Character/SLBaseCharacter.h"
 #include "Character/SLCharacter.h"
+#include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
 
@@ -40,19 +41,19 @@ void UMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, F
 	
 	switch (ActionType)
 	{
-	case EInputActionType::Look:
+	case EInputActionType::EIAT_Look:
 		Look(Value.Get<FVector2D>());
 		break;
-	case EInputActionType::MoveUp:
+	case EInputActionType::EIAT_MoveUp:
 		Move(Value.Get<float>(), FVector::ForwardVector, ActionType);
 		break;
-	case EInputActionType::MoveDown:
+	case EInputActionType::EIAT_MoveDown:
 		Move(Value.Get<float>(), -FVector::ForwardVector, ActionType);
 		break;
-	case EInputActionType::MoveLeft:
+	case EInputActionType::EIAT_MoveLeft:
 		Move(Value.Get<float>(), -FVector::RightVector, ActionType);
 		break;
-	case EInputActionType::MoveRight:
+	case EInputActionType::EIAT_MoveRight:
 		Move(Value.Get<float>(), FVector::RightVector, ActionType);
 		break;
 
@@ -70,27 +71,27 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 
 	switch (ActionType)
 	{
-	case EInputActionType::Jump:
+	case EInputActionType::EIAT_Jump:
 		Jump();
 		break;
 
-	case EInputActionType::Interaction:
+	case EInputActionType::EIAT_Interaction:
 		Interact();
 		break;
 
-	case EInputActionType::Attack:
+	case EInputActionType::EIAT_Attack:
 		Attack();
 		break;
 
-	case EInputActionType::PointMove:
+	case EInputActionType::EIAT_PointMove:
 		PointMove();
 		break;
 
-	case EInputActionType::Walk:
+	case EInputActionType::EIAT_Walk:
 		ToggleWalk(true);
 		break;
 
-	case EInputActionType::Menu:
+	case EInputActionType::EIAT_Menu:
 		ToggleMenu();
 		break;
 
@@ -108,23 +109,23 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 
 	switch (ActionType)
 	{
-	case EInputActionType::Jump:
+	case EInputActionType::EIAT_Jump:
 		break;
 
-	case EInputActionType::Interaction:
+	case EInputActionType::EIAT_Interaction:
 		break;
 
-	case EInputActionType::Attack:
+	case EInputActionType::EIAT_Attack:
 		break;
 
-	case EInputActionType::PointMove:
+	case EInputActionType::EIAT_PointMove:
 		break;
 
-	case EInputActionType::Walk:
+	case EInputActionType::EIAT_Walk:
 		ToggleWalk(false);
 		break;
 
-	case EInputActionType::Menu:
+	case EInputActionType::EIAT_Menu:
 		break;
 
 	default:
@@ -168,13 +169,13 @@ void UMovementHandlerComponent::Move(const float AxisValue, const FVector& Direc
 
 	const FVector WorldDirection = YawRotation.RotateVector(Direction);
 
-	if (ActionType == EInputActionType::MoveUp)
+	if (ActionType == EInputActionType::EIAT_MoveUp)
 	{
 		const FRotator TargetRot = FRotationMatrix::MakeFromX(WorldDirection).Rotator();
 		OwnerCharacter->SetActorRotation(TargetRot);
 	}
 
-	else if (ActionType == EInputActionType::MoveDown)
+	else if (ActionType == EInputActionType::EIAT_MoveDown)
 	{
 		const FRotator TargetRot = FRotationMatrix::MakeFromX(-WorldDirection).Rotator();
 		OwnerCharacter->SetActorRotation(TargetRot);
@@ -185,9 +186,23 @@ void UMovementHandlerComponent::Move(const float AxisValue, const FVector& Direc
 
 void UMovementHandlerComponent::Interact()
 {
-	UE_LOG(LogTemp, Log, TEXT("Interact triggered"));
 	// TODO: 인터랙션 대상 탐색 및 처리
 	
+	// Test
+	if (auto* CMC = GetOwner()->FindComponentByClass<UCameraManagerComponent>())
+	{
+		static const TArray<EGameCameraType> CameraOrder = {
+			EGameCameraType::EGCT_Default,
+			EGameCameraType::EGCT_Battle,
+			EGameCameraType::EGCT_TopDown,
+			EGameCameraType::EGCT_SideView
+		};
+
+		CurrentIndex = (CurrentIndex + 1) % CameraOrder.Num();
+		const EGameCameraType NextType = CameraOrder[CurrentIndex];
+
+		CMC->SwitchCamera(NextType);
+	}
 }
 
 void UMovementHandlerComponent::Attack()
