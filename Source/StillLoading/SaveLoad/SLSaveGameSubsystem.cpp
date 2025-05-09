@@ -8,9 +8,10 @@
 void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    
 }
 
-void USLSaveGameSubsystem::SaveGameToSlot(FName SlotName)
+void USLSaveGameSubsystem::SaveGame()
 {
     if (!CurrentSaveGame)
     {
@@ -18,19 +19,29 @@ void USLSaveGameSubsystem::SaveGameToSlot(FName SlotName)
         UE_LOG(LogTemp, Warning, TEXT("Create New Save Data"));
     }
 
-    UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName.ToString(), 0);
-    CurrentSlotName = SlotName;
+    UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
+    UE_LOG(LogTemp, Warning, TEXT("Save Data"));
 }
 
-void USLSaveGameSubsystem::LoadGameFromSlot(FName SlotName)
+void USLSaveGameSubsystem::LoadGame()
 {
-    USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(SlotName.ToString(), 0);
-    CurrentSaveGame = Cast<USLSaveGame>(Loaded);
-
-    if (!CurrentSaveGame)
+    if (UGameplayStatics::DoesSaveGameExist(SlotName, 0))
     {
-        CurrentSaveGame = NewObject<USLSaveGame>();
-    }
+        USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(SlotName, 0);
+        CurrentSaveGame = Cast<USLSaveGame>(Loaded);
+        UE_LOG(LogTemp, Warning, TEXT("Data Load Succeed"));
 
-    CurrentSlotName = SlotName;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Save file does not exist created a new one"));
+        CurrentSaveGame = NewObject<USLSaveGame>();
+        UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
+      
+    }
+    
+
 }
+
+
+

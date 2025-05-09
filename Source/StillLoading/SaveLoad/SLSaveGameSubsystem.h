@@ -17,17 +17,22 @@ public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
     UFUNCTION(BlueprintCallable)
-    void SaveGameToSlot(FName SlotName);
+    void SaveGame();
 
     UFUNCTION(BlueprintCallable)
-    void LoadGameFromSlot(FName SlotName);
+    void LoadGame();
 
     UFUNCTION(BlueprintCallable)
     USLSaveGame* GetCurrentSaveGame() const { return CurrentSaveGame; }
 
+
+
 private:
-    UPROPERTY()
+
+    UPROPERTY(VisibleAnywhere)
     USLSaveGame* CurrentSaveGame;
 
-    FName CurrentSlotName;
+    UPROPERTY()
+    FString SlotName = FString(TEXT("SaveData"));
+
 };
