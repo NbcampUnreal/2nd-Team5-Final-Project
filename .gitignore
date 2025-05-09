@@ -80,4 +80,5 @@ DerivedDataCache/*
 
 Content/Local/*
 
-# Config/DefaultEditor.ini
+Config/DefaultEditor.ini
+Config/DefaultEditorUserSettings.ini
