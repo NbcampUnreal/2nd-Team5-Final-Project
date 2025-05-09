@@ -16,9 +16,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void MapKey(UInputMappingContext* Context, const UInputAction* Action, const FKey NewKey) const;
 
-	UFUNCTION(BlueprintCallable)
-	TObjectPtr<UInputMappingContext> GetOrCreateIMC(FName ContextName);
-
 private:
 	UPROPERTY()
 	TMap<FName, TObjectPtr<UInputMappingContext>> MappingContexts;

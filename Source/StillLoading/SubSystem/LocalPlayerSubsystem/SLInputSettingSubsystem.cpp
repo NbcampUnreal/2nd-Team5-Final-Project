@@ -18,13 +18,3 @@ void USLInputSettingSubsystem::MapKey(UInputMappingContext* Context, const UInpu
 		}
 	}
 }
-
-TObjectPtr<UInputMappingContext> USLInputSettingSubsystem::GetOrCreateIMC(const FName ContextName)
-{
-	if (MappingContexts.Contains(ContextName))
-		return MappingContexts[ContextName];
-
-	UInputMappingContext* NewIMC = NewObject<UInputMappingContext>(this);
-	MappingContexts.Add(ContextName, NewIMC);
-	return NewIMC;
-}
