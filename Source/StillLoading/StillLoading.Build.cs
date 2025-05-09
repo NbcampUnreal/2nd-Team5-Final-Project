@@ -8,7 +8,19 @@ public class StillLoading : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG" });
+		PublicDependencyModuleNames.AddRange(new string[]
+		{
+			"Core", 
+			"CoreUObject", 
+			"Engine", 
+			"InputCore", 
+			"EnhancedInput", 
+			"UMG",
+			"AIModule",
+			"MotionWarping",
+			"AnimGraphRuntime",
+			"GameplayTags",
+		});
 
         PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 
