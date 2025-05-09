@@ -40,19 +40,19 @@ void UMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, F
 	
 	switch (ActionType)
 	{
-	case EInputActionType::Look:
+	case EInputActionType::EIAT_Look:
 		Look(Value.Get<FVector2D>());
 		break;
-	case EInputActionType::MoveUp:
+	case EInputActionType::EIAT_MoveUp:
 		Move(Value.Get<float>(), FVector::ForwardVector, ActionType);
 		break;
-	case EInputActionType::MoveDown:
+	case EInputActionType::EIAT_MoveDown:
 		Move(Value.Get<float>(), -FVector::ForwardVector, ActionType);
 		break;
-	case EInputActionType::MoveLeft:
+	case EInputActionType::EIAT_MoveLeft:
 		Move(Value.Get<float>(), -FVector::RightVector, ActionType);
 		break;
-	case EInputActionType::MoveRight:
+	case EInputActionType::EIAT_MoveRight:
 		Move(Value.Get<float>(), FVector::RightVector, ActionType);
 		break;
 
@@ -70,27 +70,27 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 
 	switch (ActionType)
 	{
-	case EInputActionType::Jump:
+	case EInputActionType::EIAT_Jump:
 		Jump();
 		break;
 
-	case EInputActionType::Interaction:
+	case EInputActionType::EIAT_Interaction:
 		Interact();
 		break;
 
-	case EInputActionType::Attack:
+	case EInputActionType::EIAT_Attack:
 		Attack();
 		break;
 
-	case EInputActionType::PointMove:
+	case EInputActionType::EIAT_PointMove:
 		PointMove();
 		break;
 
-	case EInputActionType::Walk:
+	case EInputActionType::EIAT_Walk:
 		ToggleWalk(true);
 		break;
 
-	case EInputActionType::Menu:
+	case EInputActionType::EIAT_Menu:
 		ToggleMenu();
 		break;
 
@@ -108,23 +108,23 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 
 	switch (ActionType)
 	{
-	case EInputActionType::Jump:
+	case EInputActionType::EIAT_Jump:
 		break;
 
-	case EInputActionType::Interaction:
+	case EInputActionType::EIAT_Interaction:
 		break;
 
-	case EInputActionType::Attack:
+	case EInputActionType::EIAT_Attack:
 		break;
 
-	case EInputActionType::PointMove:
+	case EInputActionType::EIAT_PointMove:
 		break;
 
-	case EInputActionType::Walk:
+	case EInputActionType::EIAT_Walk:
 		ToggleWalk(false);
 		break;
 
-	case EInputActionType::Menu:
+	case EInputActionType::EIAT_Menu:
 		break;
 
 	default:
@@ -168,13 +168,13 @@ void UMovementHandlerComponent::Move(const float AxisValue, const FVector& Direc
 
 	const FVector WorldDirection = YawRotation.RotateVector(Direction);
 
-	if (ActionType == EInputActionType::MoveUp)
+	if (ActionType == EInputActionType::EIAT_MoveUp)
 	{
 		const FRotator TargetRot = FRotationMatrix::MakeFromX(WorldDirection).Rotator();
 		OwnerCharacter->SetActorRotation(TargetRot);
 	}
 
-	else if (ActionType == EInputActionType::MoveDown)
+	else if (ActionType == EInputActionType::EIAT_MoveDown)
 	{
 		const FRotator TargetRot = FRotationMatrix::MakeFromX(-WorldDirection).Rotator();
 		OwnerCharacter->SetActorRotation(TargetRot);
