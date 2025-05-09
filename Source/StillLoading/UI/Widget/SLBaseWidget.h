@@ -29,7 +29,7 @@ protected:
 	UFUNCTION()
 	virtual void OnEndedCloseAnim();
 
-	virtual void FindWidgetData();
+	virtual void FindWidgetData() {};
 	virtual void ApplyImageData() {};
 	virtual void ApplyFontData() {};
 
@@ -53,10 +53,7 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UFont> Font = nullptr;
 
-	UPROPERTY()
 	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::OptionWidget;
-
-	UPROPERTY()
 	ESLChapterType CurrentChapter = ESLChapterType::Intro;
 
 	FWidgetAnimationDynamicEvent EndOpenAnimDelegate;

@@ -4,9 +4,6 @@
 #include "UI/Widget/SLBaseWidget.h"
 #include "UI/SLUISubsystem.h"
 #include "Animation/WidgetAnimation.h"
-#include "UI/Struct/SLWidgetImageDataRow.h"
-#include "Engine/Font.h"
-
 
 void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
@@ -86,37 +83,6 @@ void USLBaseWidget::OnEndedCloseAnim()
 	}
 
 	// TODO : Pose Close Animation Function. Call Remove Widget and Post Processing From UISubsystem.
-}
-
-void USLBaseWidget::FindWidgetData()
-{
-	if (!CheckValidOfUISubsystem())
-	{
-		return;
-	}
-
-	const UDataTable* ImageDataTable = UISubsystem->GetImageDataTable();
-	const FString ContextString(TEXT("Image Data Table"));
-
-	TArray<FSLWidgetImageDataRow*> ImageData;
-
-	ImageDataTable->GetAllRows(ContextString, ImageData);
-
-	for (const FSLWidgetImageDataRow* ImageDataRow : ImageData)
-	{
-		if (ImageDataRow->WidgetType == WidgetType &&
-			ImageDataRow->TargetChapter == CurrentChapter)
-		{
-			Font = ImageDataRow->Font.LoadSynchronous();
-
-			for (TPair<FName, TSoftObjectPtr<UTexture2D>> Target : ImageDataRow->ImageMap)
-			{
-				ImageMap.Add(Target.Key, Target.Value.LoadSynchronous());
-			}
-
-			break;
-		}
-	}
 }
 
 void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)

@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Widget/SLBaseWidget.h"
+#include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
 #include "SLCreditWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class STILLLOADING_API USLCreditWidget : public USLBaseWidget
+class STILLLOADING_API USLCreditWidget : public USLAdditiveWidget
 {
 	GENERATED_BODY()
 	
