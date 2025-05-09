@@ -2,6 +2,7 @@
 
 #include "Character/SLBaseCharacter.h"
 #include "Character/SLCharacter.h"
+#include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
 
@@ -185,9 +186,23 @@ void UMovementHandlerComponent::Move(const float AxisValue, const FVector& Direc
 
 void UMovementHandlerComponent::Interact()
 {
-	UE_LOG(LogTemp, Log, TEXT("Interact triggered"));
 	// TODO: 인터랙션 대상 탐색 및 처리
 	
+	// Test
+	if (auto* CMC = GetOwner()->FindComponentByClass<UCameraManagerComponent>())
+	{
+		static const TArray<EGameCameraType> CameraOrder = {
+			EGameCameraType::EGCT_Default,
+			EGameCameraType::EGCT_Battle,
+			EGameCameraType::EGCT_TopDown,
+			EGameCameraType::EGCT_SideView
+		};
+
+		CurrentIndex = (CurrentIndex + 1) % CameraOrder.Num();
+		const EGameCameraType NextType = CameraOrder[CurrentIndex];
+
+		CMC->SwitchCamera(NextType);
+	}
 }
 
 void UMovementHandlerComponent::Attack()
