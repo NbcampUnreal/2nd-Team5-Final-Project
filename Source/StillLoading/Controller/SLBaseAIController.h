@@ -25,6 +25,15 @@ public:
 	//End of ~IGenericTeamAgentInterface inteface
 
 protected:
+	UFUNCTION()
+	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	
+	UFUNCTION()
+	void OnTargetPerceptionForgotten(AActor* Actor);
+	
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void BeginPlay() override;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	UAIPerceptionComponent* AIPerceptionComponent;
 
@@ -47,13 +56,5 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Detour Crowd Avoidance Config", meta = (EditCondition = "bEnableDetourCrowdAvoidance"))
 	float CollisionQueryRange = 600.f;
 
-	UFUNCTION()
-	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
-	UFUNCTION()
-	void OnTargetPerceptionForgotten(AActor* Actor);
-
-	virtual void OnPossess(APawn* InPawn) override;
-
-	virtual void BeginPlay() override;
 };

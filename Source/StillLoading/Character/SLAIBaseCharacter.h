@@ -30,4 +30,9 @@ public:
 	//공격중인지 여부
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat")
 	bool IsAttacking;
+	
+	//맞았을때 반응 할건지 여부
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat")
+	bool IsHitReaction;
+;
 };

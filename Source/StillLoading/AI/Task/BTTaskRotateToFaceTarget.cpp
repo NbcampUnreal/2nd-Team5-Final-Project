@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "BTTask_RotateToFaceTarget.h"
+#include "BTTaskRotateToFaceTarget.h"
 
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
-UBTTask_RotateToFaceTarget::UBTTask_RotateToFaceTarget()
+UBTTaskRotateToFaceTarget::UBTTaskRotateToFaceTarget()
 {
 	//이 태스크의 이름 설정
 	NodeName = TEXT("Native Rotate to Face Target Actor");
@@ -24,7 +24,7 @@ UBTTask_RotateToFaceTarget::UBTTask_RotateToFaceTarget()
 	InTargetToFaceKey.AddObjectFilter(this, GET_MEMBER_NAME_CHECKED(ThisClass, InTargetToFaceKey), AActor::StaticClass());
 }
 
-void UBTTask_RotateToFaceTarget::InitializeFromAsset(UBehaviorTree& Asset)
+void UBTTaskRotateToFaceTarget::InitializeFromAsset(UBehaviorTree& Asset)
 {
 	Super::InitializeFromAsset(Asset);
 
@@ -35,7 +35,7 @@ void UBTTask_RotateToFaceTarget::InitializeFromAsset(UBehaviorTree& Asset)
 	}
 }
 
-bool UBTTask_RotateToFaceTarget::HasReachedAnglePrecision(APawn* QueryPawn, AActor* TargetActor) const
+bool UBTTaskRotateToFaceTarget::HasReachedAnglePrecision(APawn* QueryPawn, AActor* TargetActor) const
 {
 	if (!QueryPawn || !TargetActor)
 	{
@@ -64,19 +64,19 @@ bool UBTTask_RotateToFaceTarget::HasReachedAnglePrecision(APawn* QueryPawn, AAct
 	return AngleDiff <= AnglePrecision;
 }
 
-uint16 UBTTask_RotateToFaceTarget::GetInstanceMemorySize() const
+uint16 UBTTaskRotateToFaceTarget::GetInstanceMemorySize() const
 {
 	return sizeof(FRotateToFaceTargetTaskMemory);
 }
 
-FString UBTTask_RotateToFaceTarget::GetStaticDescription() const
+FString UBTTaskRotateToFaceTarget::GetStaticDescription() const
 {
 	const FString KeyDescription = InTargetToFaceKey.SelectedKeyName.ToString();
 
 	return FString::Printf(TEXT("Smoothly rotates to face %s Key until the angle precision: %s is reached"), *KeyDescription, *FString::SanitizeFloat(AnglePrecision));
 }
 
-EBTNodeResult::Type UBTTask_RotateToFaceTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTaskRotateToFaceTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	Super::ExecuteTask(OwnerComp, NodeMemory);
 
@@ -112,7 +112,7 @@ EBTNodeResult::Type UBTTask_RotateToFaceTarget::ExecuteTask(UBehaviorTreeCompone
 	return EBTNodeResult::InProgress;
 }
 
-void UBTTask_RotateToFaceTarget::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+void UBTTaskRotateToFaceTarget::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
 
