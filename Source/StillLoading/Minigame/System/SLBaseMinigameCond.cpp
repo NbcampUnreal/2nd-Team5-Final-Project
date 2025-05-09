@@ -11,12 +11,12 @@ ASLBaseMinigameCond::ASLBaseMinigameCond()
 
 void ASLBaseMinigameCond::MinigameFailed()
 {
-	SendCondition(ESLMinigameResult::Fail);
+	SendConditionToMinigameSubsystem(ESLMinigameResult::EMR_Fail);
 }
 
 void ASLBaseMinigameCond::MinigamePass()
 {
-	SendCondition(ESLMinigameResult::Pass);
+	SendConditionToMinigameSubsystem(ESLMinigameResult::EMR_Pass);
 }
 
 // Called when the game starts or when spawned
@@ -28,12 +28,12 @@ void ASLBaseMinigameCond::BeginPlay()
 
 void ASLBaseMinigameCond::InitCondition()
 {
-	GetMinigameCondSubsystem()->SetMinigameResult(AssignedMinigame, ESLMinigameResult::None);
+	GetMinigameCondSubsystem()->SetMinigameResult(AssignedMinigame, ESLMinigameResult::EMR_None);
 }
 
-void ASLBaseMinigameCond::SendCondition(ESLMinigameResult result)
+void ASLBaseMinigameCond::SendConditionToMinigameSubsystem(ESLMinigameResult Result)
 {
-	GetMinigameCondSubsystem()->SetMinigameResult(AssignedMinigame, result);
+	GetMinigameCondSubsystem()->SetMinigameResult(AssignedMinigame, Result);
 }
 
 USLMinigameCondSubsystem* ASLBaseMinigameCond::GetMinigameCondSubsystem()

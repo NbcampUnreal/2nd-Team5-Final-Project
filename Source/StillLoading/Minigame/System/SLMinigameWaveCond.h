@@ -16,15 +16,13 @@ class STILLLOADING_API ASLMinigameWaveCond : public ASLBaseMinigameCond
 
 public:
 	UFUNCTION()
-	void AddCount(int32 count);
+	void AddCount(int32 InCount);
 
 	UFUNCTION()
 	void StartNextWave();
 protected:
-	//조건을 만족하기 위한 변수 및 클리어 여부 초기화
 	virtual void InitCondition();
 
-	//조건이 만족되었다면 결과를 저장해줄 클래스로 전달
 	virtual void SendCondition(ESLMinigameResult InResult);
 
 private:

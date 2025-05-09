@@ -10,20 +10,20 @@ ASLMinigamePuzzleCond::ASLMinigamePuzzleCond()
 	AnswerPermutation = {};
 }
 
-void ASLMinigamePuzzleCond::AddNumber(int32 Number)
+void ASLMinigamePuzzleCond::AddNumber(int32 InNumber)
 {
-	CurrentPermutation.Add(Number);
+	CurrentPermutation.Add(InNumber);
 	if (CurrentPermutation.Num() == AnswerPermutation.Num())
 	{
 		for (int i = 0; i < CurrentPermutation.Num(); i++)
 		{
 			if (CurrentPermutation[i] != AnswerPermutation[i])
 			{
-				DeactivateStatue();
+				DeactivateAllStatue();
 				return;
 			}
 		}
-		SendCondition(ESLMinigameResult::Success);
+		SendCondition(ESLMinigameResult::EMR_Success);
 	}
 }
 
@@ -40,12 +40,12 @@ void ASLMinigamePuzzleCond::InitCondition()
 	CurrentPermutation.Empty();
 }
 
-void ASLMinigamePuzzleCond::SendCondition(ESLMinigameResult result)
+void ASLMinigamePuzzleCond::SendCondition(ESLMinigameResult InResult)
 {
-	Super::SendCondition(result);
+	Super::SendConditionToMinigameSubsystem(InResult);
 }
 
-void ASLMinigamePuzzleCond::DeactivateStatue()
+void ASLMinigamePuzzleCond::DeactivateAllStatue()
 {
 
 }

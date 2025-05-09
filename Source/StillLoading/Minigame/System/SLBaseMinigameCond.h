@@ -34,11 +34,11 @@ protected:
 
 	//조건이 만족되었다면 결과를 저장해줄 클래스로 전달
 	UFUNCTION()
-	virtual void SendCondition(ESLMinigameResult result);
+	virtual void SendConditionToMinigameSubsystem(ESLMinigameResult Result);
 
 	UFUNCTION()
 	USLMinigameCondSubsystem* GetMinigameCondSubsystem();
 protected:
 	UPROPERTY(EditAnywhere)
-	ESLMinigameStage AssignedMinigame = ESLMinigameStage::None;
+	ESLMinigameStage AssignedMinigame = ESLMinigameStage::EMS_None;
 };

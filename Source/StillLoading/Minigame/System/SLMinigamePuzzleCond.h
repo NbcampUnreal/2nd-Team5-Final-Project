@@ -16,21 +16,18 @@ public:
 	ASLMinigamePuzzleCond();
 
 	//석상이 활성화되었을 때 해당 석상의 고유 번호를 아래 함수로 전달
-	void AddNumber(int32 Number);
+	void AddNumber(int32 InNumber);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
-	//실패했을 경우 모든 석상들을 비활성화
 	UFUNCTION()
-	void DeactivateStatue();
+	void DeactivateAllStatue();
 
-	//조건을 만족하기 위한 변수 및 클리어 여부 초기화
 	virtual void InitCondition();
 
-	//조건이 만족되었다면 결과를 저장해줄 클래스로 전달
-	virtual void SendCondition(ESLMinigameResult result);
+	virtual void SendCondition(ESLMinigameResult InResult);
 private:
 	//초기화는 생성자
 	UPROPERTY(EditAnywhere)

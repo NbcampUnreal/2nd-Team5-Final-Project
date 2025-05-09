@@ -3,9 +3,9 @@
 
 #include "Minigame/System/SLMinigameWaveCond.h"
 
-void ASLMinigameWaveCond::AddCount(int32 count)
+void ASLMinigameWaveCond::AddCount(int32 InCount)
 {
-	CurrentKillCount += count;
+	CurrentKillCount += InCount;
 	if (CurrentKillCount >= MaxKillCount)
 	{
 		if (CurrentWave < MaxWave)
@@ -14,7 +14,7 @@ void ASLMinigameWaveCond::AddCount(int32 count)
 		}
 		else
 		{
-			SendCondition(ESLMinigameResult::Success);
+			SendCondition(ESLMinigameResult::EMR_Success);
 		}
 	}
 }
@@ -23,9 +23,9 @@ void ASLMinigameWaveCond::InitCondition()
 {
 }
 
-void ASLMinigameWaveCond::SendCondition(ESLMinigameResult result)
+void ASLMinigameWaveCond::SendCondition(ESLMinigameResult InResult)
 {
-	Super::SendCondition(result);
+	Super::SendConditionToMinigameSubsystem(InResult);
 }
 
 void ASLMinigameWaveCond::StartNextWave()

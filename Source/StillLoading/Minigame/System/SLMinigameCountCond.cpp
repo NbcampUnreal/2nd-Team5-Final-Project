@@ -9,12 +9,12 @@ ASLMinigameCountCond::ASLMinigameCountCond()
 
 }
 
-void ASLMinigameCountCond::AddCount(int32 addCount)
+void ASLMinigameCountCond::AddCount(int32 InAddCount)
 {
-	Count += addCount;
+	Count += InAddCount;
 	if (Count >= MaxCount)
 	{
-		SendCondition(ESLMinigameResult::Success);
+		SendConditionToMinigameSubsystem(ESLMinigameResult::EMR_Success);
 	}
 	
 }
@@ -32,8 +32,8 @@ void ASLMinigameCountCond::InitCondition()
 	Count = 0;
 }
 
-void ASLMinigameCountCond::SendCondition(ESLMinigameResult result)
+void ASLMinigameCountCond::SendConditionToMinigameSubsystem(ESLMinigameResult InResult)
 {
-	Super::SendCondition(result);
+	Super::SendConditionToMinigameSubsystem(InResult);
 }
 

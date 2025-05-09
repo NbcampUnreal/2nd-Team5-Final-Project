@@ -3,12 +3,30 @@
 
 #include "Minigame/System/SLMinigameCondSubsystem.h"
 
-ESLMinigameResult USLMinigameCondSubsystem::GetMinigameResult(ESLMinigameStage minigame)
+ESLMinigameResult USLMinigameCondSubsystem::GetMinigameResult(ESLMinigameStage InMinigame)
 {
-	return MinigameResult[minigame];
+	if (MinigameResult.Contains(InMinigame))
+	{
+		return MinigameResult[InMinigame];
+	}
+	else
+	{
+		if (!MinigameResult.Contains(ESLMinigameStage::EMS_None))
+		{
+			MinigameResult.Add(ESLMinigameStage::EMS_None, ESLMinigameResult::EMR_None);
+		}
+		return MinigameResult[ESLMinigameStage::EMS_None];
+	}
 }
 
-void USLMinigameCondSubsystem::SetMinigameResult(ESLMinigameStage minigame, ESLMinigameResult result)
+void USLMinigameCondSubsystem::SetMinigameResult(ESLMinigameStage InMinigame, ESLMinigameResult InResult)
 {
-	MinigameResult[minigame] = result;
+	if (MinigameResult.Contains(InMinigame))
+	{
+		MinigameResult[InMinigame] = InResult;
+	}
+	else
+	{
+		MinigameResult.Add(InMinigame, InResult);
+	}
 }
