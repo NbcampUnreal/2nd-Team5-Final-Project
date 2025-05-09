@@ -7,7 +7,7 @@
 #include "SLMinigameCondSubsystem.generated.h"
 
 UENUM()
-enum class ESLMinigameResult
+enum class ESLMinigameResult : uint8
 {
 	Success, //성공
 	Fail,    //실패
@@ -16,29 +16,30 @@ enum class ESLMinigameResult
 };
 
 UENUM()
-enum class ESLMinigameStage
+enum class ESLMinigameStage : uint8
 {
 	//각 이름은 챕터와 미니게임 제목으로
-	Ch1Stage1,
-	Ch1Stage2_A,
-	Ch1Stage2_B,
-	Ch1Stage3,
-	Ch1Stage4,
-	Ch1Stage5_A,
-	Ch1Stage5_B,
+	Ch1OpenCastleGate,
+	Ch1DebugRoom,
+	Ch1CarriageDriving,
+	Ch1DefenseGame,
+	Ch1Wayfinding,
+	Ch1PathClearing,
+	Ch1TreasureRun,
 
-	MG_Ch2_Stage1,
-	MG_Ch2_Stage2_A,
-	MG_Ch2_Stage2_B,
-	MG_Ch2_Stage3,
-	MG_Ch2_Stage4_A,
-	MG_Ch2_Stage4_B,
+	Ch2VillageDefense,
+	Ch2DebugRoom,
+	Ch2CarriageDriving,
+	Ch2WarDecision,
+	Ch2MonsterClearing,
+	Ch2TreasureRun,
 
-	MG_Ch3_Stage1,
-	MG_Ch3_Stage2,
-	MG_Ch3_Stage3,
-	MG_Ch3_Stage4,
-	MG_Ch3_Stage5,
+	Ch3GateDisruption,
+	Ch3CarriageAmbush,
+	Ch3WarTriggerDefense,
+	Ch3WarTriggerLogistics,
+	Ch3RouteBlockade,
+	Ch3TrapSetup,
 	
 	None
 };
@@ -48,7 +49,10 @@ class STILLLOADING_API USLMinigameCondSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 public:
+	UFUNCTION()
 	ESLMinigameResult GetMinigameResult(ESLMinigameStage Minigame);
+
+	UFUNCTION()
 	void SetMinigameResult(ESLMinigameStage Minigame, ESLMinigameResult Result);
 private:
 	UPROPERTY()

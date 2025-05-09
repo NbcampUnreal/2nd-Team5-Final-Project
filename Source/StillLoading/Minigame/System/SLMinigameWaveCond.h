@@ -16,7 +16,7 @@ class STILLLOADING_API ASLMinigameWaveCond : public ASLBaseMinigameCond
 
 public:
 	UFUNCTION()
-	void AddCount(int count);
+	void AddCount(int32 count);
 
 	UFUNCTION()
 	void StartNextWave();

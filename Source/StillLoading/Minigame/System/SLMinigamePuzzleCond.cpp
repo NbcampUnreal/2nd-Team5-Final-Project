@@ -6,7 +6,8 @@
 // Sets default values
 ASLMinigamePuzzleCond::ASLMinigamePuzzleCond()
 {
-
+	CurrentPermutation = {};
+	AnswerPermutation = {};
 }
 
 void ASLMinigamePuzzleCond::AddNumber(int32 Number)

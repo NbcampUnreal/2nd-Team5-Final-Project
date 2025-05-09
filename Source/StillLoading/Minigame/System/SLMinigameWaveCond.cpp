@@ -3,7 +3,7 @@
 
 #include "Minigame/System/SLMinigameWaveCond.h"
 
-void ASLMinigameWaveCond::AddCount(int count)
+void ASLMinigameWaveCond::AddCount(int32 count)
 {
 	CurrentKillCount += count;
 	if (CurrentKillCount >= MaxKillCount)
