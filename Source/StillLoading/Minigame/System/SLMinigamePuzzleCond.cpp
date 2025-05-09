@@ -2,29 +2,44 @@
 
 
 #include "Minigame/System/SLMinigamePuzzleCond.h"
+#include "Minigame/Object/SLReactiveObjectStatue.h"
 
 // Sets default values
 ASLMinigamePuzzleCond::ASLMinigamePuzzleCond()
 {
-	CurrentPermutation = {};
-	AnswerPermutation = {};
+	CurrentStates = {};
+	AnswerStates = {};
+	Statues = {};
 }
 
-void ASLMinigamePuzzleCond::AddNumber(int32 InNumber)
+void ASLMinigamePuzzleCond::UpdateStatueState(int8 InStatueIndex, int8 SubmittedValue)
 {
-	CurrentPermutation.Add(InNumber);
-	if (CurrentPermutation.Num() == AnswerPermutation.Num())
+	if (CurrentStates.IsValidIndex(InStatueIndex))
 	{
-		for (int i = 0; i < CurrentPermutation.Num(); i++)
-		{
-			if (CurrentPermutation[i] != AnswerPermutation[i])
-			{
-				DeactivateAllStatue();
-				return;
-			}
-		}
-		SendCondition(ESLMinigameResult::EMR_Success);
+		CurrentStates[InStatueIndex] = SubmittedValue;
 	}
+	if (!CurrentStates.Contains(-1))
+	{
+		SubmittedAnswer();
+	}
+}
+
+void ASLMinigamePuzzleCond::SubmittedAnswer()
+{
+	for (int i = 0; i < CurrentStates.Num(); i++)
+	{
+		if (CurrentStates[i] != AnswerStates[i])
+		{
+			DeactivateAllStatue();
+			return;
+		}
+	}
+	SendCondition(ESLMinigameResult::EMR_Success);
+}
+
+void ASLMinigamePuzzleCond::RegisterStatue(ASLReactiveObjectStatue* InStatue)
+{
+	Statues.Add(InStatue);
 }
 
 // Called when the game starts or when spawned
@@ -37,7 +52,7 @@ void ASLMinigamePuzzleCond::BeginPlay()
 void ASLMinigamePuzzleCond::InitCondition()
 {
 	Super::InitCondition();
-	CurrentPermutation.Empty();
+	CurrentStates.Empty();
 }
 
 void ASLMinigamePuzzleCond::SendCondition(ESLMinigameResult InResult)
@@ -47,6 +62,10 @@ void ASLMinigamePuzzleCond::SendCondition(ESLMinigameResult InResult)
 
 void ASLMinigamePuzzleCond::DeactivateAllStatue()
 {
-
+	for (int i = 0; i < CurrentStates.Num(); i++)
+	{
+		CurrentStates[i] = -1;
+		Statues[i];
+	}
 }
 
