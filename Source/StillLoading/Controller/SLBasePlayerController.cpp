@@ -15,14 +15,9 @@ void ASLBasePlayerController::BeginPlay()
 		{
 			InputWidget->AddToViewport();
 
-			FInputModeGameAndUI InputMode;
-			InputMode.SetWidgetToFocus(InputWidget->TakeWidget());
-			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-			SetInputMode(InputMode);
-
 			InputWidget->LinkedCharacter = Cast<ASLBaseCharacter>(GetPawn());
 
-			bShowMouseCursor = true;
+			bShowMouseCursor = false;
 		}
 	}
 }
