@@ -4,8 +4,6 @@
 #include "Character/SLCharacter.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
-#include "Controller/SLBasePlayerController.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
 {
