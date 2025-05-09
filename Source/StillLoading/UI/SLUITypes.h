@@ -14,7 +14,8 @@ enum class ESLAdditiveWidgetType : uint8
 	StoryWidget,
 	TalkWidget,
 	NotifyWidget,
-	CreditWidget
+	CreditWidget,
+	KeySettingWidget
 };
 
 UENUM(BlueprintType)
