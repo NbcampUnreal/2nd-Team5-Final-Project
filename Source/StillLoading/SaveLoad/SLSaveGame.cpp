@@ -5,6 +5,7 @@
 
 USLSaveGame::USLSaveGame()
 {
-	CurrentLevel = 0;
+	SaveSlotName = TEXT("TestSaveSlot");
+	CurrentMiniGameLevel = 0;
 	CurrentChapter = 0;
 }

@@ -17,10 +17,13 @@ class STILLLOADING_API USLSaveGame : public USaveGame
 public:
 	USLSaveGame();
 
-	UPROPERTY()
-	int CurrentLevel;
+	UPROPERTY(VisibleAnywhere)
+	FString SaveSlotName;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
+	int CurrentMiniGameLevel;
+
+	UPROPERTY(VisibleAnywhere)
 	int CurrentChapter;
 
 };

@@ -7,6 +7,7 @@
 
 void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+    Super::Initialize(Collection);
 }
 
 void USLSaveGameSubsystem::SaveGameToSlot(FName SlotName)
@@ -14,6 +15,7 @@ void USLSaveGameSubsystem::SaveGameToSlot(FName SlotName)
     if (!CurrentSaveGame)
     {
         CurrentSaveGame = NewObject<USLSaveGame>();
+        UE_LOG(LogTemp, Warning, TEXT("Create New Save Data"));
     }
 
     UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName.ToString(), 0);
