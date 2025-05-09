@@ -43,5 +43,13 @@ void USLSaveGameSubsystem::LoadGame()
 
 }
 
+void USLSaveGameSubsystem::NewGame()
+{
+    CurrentSaveGame = NewObject<USLSaveGame>();
+    UE_LOG(LogTemp, Warning, TEXT("Create New Save Data"));
+    UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
+    UE_LOG(LogTemp, Warning, TEXT("Save Data"));
+}
+
 
 

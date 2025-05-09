@@ -23,6 +23,9 @@ public:
     void LoadGame();
 
     UFUNCTION(BlueprintCallable)
+    void NewGame();
+
+    UFUNCTION(BlueprintCallable)
     USLSaveGame* GetCurrentSaveGame() const { return CurrentSaveGame; }
 
 

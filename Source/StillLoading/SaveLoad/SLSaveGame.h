@@ -17,11 +17,11 @@ class STILLLOADING_API USLSaveGame : public USaveGame
 public:
 	USLSaveGame();
 
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//저장할 데이터 변수들 추가하세요
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) //테스트용 임시 변수
 	int CurrentMiniGameLevel;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) //테스트용 임시 변수
 	int CurrentChapter;
 
 };
