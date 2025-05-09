@@ -35,16 +35,16 @@ protected:
 	virtual void BeginPlay() override;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-	UAIPerceptionComponent* AIPerceptionComponent;
+	TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-	UAISenseConfig_Sight* AISenseConfig_Sight;
+	TObjectPtr<UAISenseConfig_Sight> AISenseConfig_Sight;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-	UAISenseConfig_Damage* AISenseConfig_Damage;
+	TObjectPtr<UAISenseConfig_Damage> AISenseConfig_Damage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
-	UBehaviorTree* BehaviorTreeToRun;
+	TObjectPtr<UBehaviorTree> BehaviorTreeToRun;
 
 	//Avoidance 관련 변수들
 	UPROPERTY(EditDefaultsOnly, Category = "Detour Crowd Avoidance Config")

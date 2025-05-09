@@ -9,6 +9,7 @@
 
 struct FRotateToFaceTargetTaskMemory
 {
+public:
 	bool IsValid() const
 	{
 		return OwningPawn.IsValid() && TargetActor.IsValid();
@@ -31,9 +32,9 @@ UCLASS()
 class STILLLOADING_API UBTTaskRotateToFaceTarget : public UBTTaskNode
 {
 	GENERATED_BODY()
-
+public:
 	UBTTaskRotateToFaceTarget();
-	
+private:
 	//~ Begin UBTNode Interface
 	virtual void InitializeFromAsset(UBehaviorTree& Asset) override;
 	virtual uint16 GetInstanceMemorySize() const override;
