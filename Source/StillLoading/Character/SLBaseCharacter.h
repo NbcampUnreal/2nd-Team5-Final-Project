@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "SLBaseCharacter.generated.h"
 
+class UCameraComponent;
 class UInputMappingContext;
 
 UCLASS()
@@ -17,4 +18,20 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+
+private:
+	UPROPERTY(EditAnywhere)
+	class USpringArmComponent* SpringArmComponent;
+	
+	UPROPERTY(EditAnywhere)
+	UCameraComponent* DefaultCamera;
+
+	UPROPERTY(EditAnywhere)
+	UCameraComponent* BattleCamera;
+
+	UPROPERTY(EditAnywhere)
+	UCameraComponent* TopDownCamera;
+
+	UPROPERTY(EditAnywhere)
+	UCameraComponent* SideViewCamera;
 };
