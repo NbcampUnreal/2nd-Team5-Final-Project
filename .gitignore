@@ -79,3 +79,5 @@ DerivedDataCache/*
 .idea/*
 
 Content/Local/*
+
+# Config/DefaultEditor.ini
