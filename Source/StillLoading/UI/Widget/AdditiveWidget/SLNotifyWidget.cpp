@@ -7,7 +7,7 @@
 
 void USLNotifyWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
-	WidgetType = ESLAdditiveWidgetType::NotifyWidget;
+	WidgetType = ESLAdditiveWidgetType::EAW_NotifyWidget;
 
 	OpenAnim = VisibleNotifyAnim;
 	CloseAnim = InvisibleNotifyAnim;
@@ -15,9 +15,12 @@ void USLNotifyWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType 
 	Super::InitWidget(NewUISubsystem, ChapterType);
 }
 
-void USLNotifyWidget::DeactivateWidget()
+void USLNotifyWidget::ActivateWidget(ESLChapterType ChapterType)
 {
-	
+	Super::ActivateWidget(ChapterType);
+
+	PlayAnimation(OpenAnim);
+	PlayUISound(ESLUISoundType::EUS_Notify);
 }
 
 void USLNotifyWidget::UpdateNotifyText(const FText& NewText)
@@ -27,20 +30,26 @@ void USLNotifyWidget::UpdateNotifyText(const FText& NewText)
 
 void USLNotifyWidget::OnEndedOpenAnim()
 {
+	Super::OnEndedOpenAnim();
+
 	PlayAnimation(CloseAnim);
 }
 
 void USLNotifyWidget::OnEndedCloseAnim()
 {
+	Super::OnEndedCloseAnim();
+
 	CloseWidget();
 }
 
 void USLNotifyWidget::ApplyImageData()
 {
+	Super::ApplyImageData();
 	//BackgroundImg->SetBrushFromTexture();
 }
 
 void USLNotifyWidget::ApplyFontData()
 {
+	Super::ApplyFontData();
 	//NotifyText->SetFont();
 }
