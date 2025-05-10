@@ -16,7 +16,7 @@ class STILLLOADING_API USLNotifyWidget : public USLAdditiveWidget
 	
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
-	virtual void DeactivateWidget() override;
+	virtual void ActivateWidget(ESLChapterType ChapterType) override;
 
 	void UpdateNotifyText(const FText& NewText);
 

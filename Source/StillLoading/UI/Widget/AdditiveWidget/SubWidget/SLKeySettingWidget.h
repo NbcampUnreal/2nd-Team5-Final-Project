@@ -38,6 +38,8 @@ class STILLLOADING_API USLKeySettingWidget : public USLAdditiveWidget
 	
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
+	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void DeactivateWidget() override;
 
 protected:
 	virtual void ApplyImageData() override;

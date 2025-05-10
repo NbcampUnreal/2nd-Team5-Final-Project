@@ -35,4 +35,6 @@ private:
 	TObjectPtr<UWidgetAnimation> FadeOutAnim = nullptr;
 
 	bool bIsFadeIn = true;
+
+	static const FName FadeImgName;
 };

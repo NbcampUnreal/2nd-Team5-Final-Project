@@ -3,18 +3,49 @@
 
 #include "UI/Widget/AdditiveWidget/SubWidget/SLKeySettingWidget.h"
 #include "UI/Widget/AdditiveWidget/SubWidget/SLKeyMappingWidget.h"
+#include "Animation/WidgetAnimation.h"
 #include "Components/Button.h"
 
 
 void USLKeySettingWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
-	WidgetType = ESLAdditiveWidgetType::KeySettingWidget;
+	WidgetType = ESLAdditiveWidgetType::EAW_KeySettingWidget;
 
 	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
 	Super::InitWidget(NewUISubsystem, ChapterType);
 
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
 	InitKeyDataMap();
+}
+
+void USLKeySettingWidget::ActivateWidget(ESLChapterType ChapterType)
+{
+	Super::ActivateWidget(ChapterType);
+
+	if (IsValid(OpenAnim))
+	{
+		PlayAnimation(OpenAnim);
+	}
+	else
+	{
+		OnEndedOpenAnim();
+	}
+
+	PlayUISound(ESLUISoundType::EUS_Open);
+}
+
+void USLKeySettingWidget::DeactivateWidget()
+{
+	if (IsValid(CloseAnim))
+	{
+		PlayAnimation(CloseAnim);
+	}
+	else
+	{
+		OnEndedCloseAnim();
+	}
+
+	PlayUISound(ESLUISoundType::EUS_Close);
 }
 
 void USLKeySettingWidget::ApplyImageData()

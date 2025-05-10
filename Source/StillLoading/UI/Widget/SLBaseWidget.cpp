@@ -41,48 +41,11 @@ void USLBaseWidget::ActivateWidget(ESLChapterType ChapterType)
 	{
 		ApplyOnChangedChapter(ChapterType);
 	}
-
-	if (IsValid(OpenAnim))
-	{
-		PlayAnimation(OpenAnim);
-	}
-	else
-	{
-		OnEndedOpenAnim();
-	}
-
-	PlayUISound(ESLUISoundType::Open);
-}
-
-void USLBaseWidget::DeactivateWidget()
-{
-	if (IsValid(CloseAnim))
-	{
-		PlayAnimation(CloseAnim);
-	}
-	else
-	{
-		OnEndedCloseAnim();
-	}
-
-	PlayUISound(ESLUISoundType::Close);
-}
-
-void USLBaseWidget::OnEndedOpenAnim()
-{
-	// TODO : Post Open Animation Function 
 }
 
 void USLBaseWidget::OnEndedCloseAnim()
 {
 	this->RemoveFromViewport();
-
-	if (!CheckValidOfUISubsystem())
-	{
-		return;
-	}
-
-	// TODO : Pose Close Animation Function. Call Remove Widget and Post Processing From UISubsystem.
 }
 
 void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)

@@ -66,8 +66,8 @@ private:
 
 	int32 ActiveCount = 0;
 
-	ESLChapterType CurrentChapter = ESLChapterType::Intro;
-	ESLLanguageType CurrentLanguage = ESLLanguageType::Kor;
+	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
+	ESLLanguageType CurrentLanguage = ESLLanguageType::EL_Kor;
 
 	float EffectVolume = 1.0f;
 };

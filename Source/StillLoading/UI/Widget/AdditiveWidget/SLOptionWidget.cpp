@@ -9,12 +9,13 @@
 #include "GameFramework/GameUserSettings.h"
 #include "UI/SLUISubsystem.h"
 #include "Engine/RendererSettings.h"
+#include "Animation/WidgetAnimation.h"
 
 const TArray<TPair<float, float>> USLOptionWidget::ResolutionSet = { {1920, 1080}, {1280, 800}, {1680, 1050} };
 
 void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
-	WidgetType = ESLAdditiveWidgetType::OptionWidget;
+	WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
 	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
 	Super::InitWidget(NewUISubsystem, ChapterType);
 
@@ -42,6 +43,17 @@ void USLOptionWidget::ActivateWidget(ESLChapterType ChapterType)
 {
 	Super::ActivateWidget(ChapterType);
 
+	if (IsValid(OpenAnim))
+	{
+		PlayAnimation(OpenAnim);
+	}
+	else
+	{
+		OnEndedOpenAnim();
+	}
+
+	PlayUISound(ESLUISoundType::EUS_Open);
+
 	if (CheckValidOfGameUserSettings())
 	{
 		if (GameUserSettings->GetFullscreenMode() == EWindowMode::Fullscreen)
@@ -57,6 +69,20 @@ void USLOptionWidget::ActivateWidget(ESLChapterType ChapterType)
 	}
 
 	UpdateLanguageButton();
+}
+
+void USLOptionWidget::DeactivateWidget()
+{
+	if (IsValid(CloseAnim))
+	{
+		PlayAnimation(CloseAnim);
+	}
+	else
+	{
+		OnEndedCloseAnim();
+	}
+
+	PlayUISound(ESLUISoundType::EUS_Close);
 }
 
 void USLOptionWidget::ApplyImageData()
@@ -76,11 +102,11 @@ void USLOptionWidget::OnClickedKor()
 {
 	bIsKor = true;
 	UpdateLanguageButton();
-	PlayUISound(ESLUISoundType::Click);
+	PlayUISound(ESLUISoundType::EUS_Click);
 
 	if (CheckValidOfUISubsystem())
 	{
-		UISubsystem->SetLanguageToUI(ESLLanguageType::Kor);
+		UISubsystem->SetLanguageToUI(ESLLanguageType::EL_Kor);
 	}
 }
 
@@ -88,11 +114,11 @@ void USLOptionWidget::OnClickedEng()
 {
 	bIsKor = false;
 	UpdateLanguageButton();
-	PlayUISound(ESLUISoundType::Click);
+	PlayUISound(ESLUISoundType::EUS_Click);
 
 	if (CheckValidOfUISubsystem())
 	{
-		UISubsystem->SetLanguageToUI(ESLLanguageType::Eng);
+		UISubsystem->SetLanguageToUI(ESLLanguageType::EL_Kor);
 	}
 }
 
@@ -100,7 +126,7 @@ void USLOptionWidget::OnClickedFullScreen()
 {
 	bIsFullScreen = true;
 	UpdateScreenModeButton();
-	PlayUISound(ESLUISoundType::Click);
+	PlayUISound(ESLUISoundType::EUS_Click);
 
 	if (!CheckValidOfGameUserSettings())
 	{
@@ -115,7 +141,7 @@ void USLOptionWidget::OnClickedWindowScreen()
 {
 	bIsFullScreen = false;
 	UpdateScreenModeButton();
-	PlayUISound(ESLUISoundType::Click);
+	PlayUISound(ESLUISoundType::EUS_Click);
 
 	if (!CheckValidOfGameUserSettings())
 	{
@@ -145,7 +171,7 @@ void USLOptionWidget::UpdateBgmVolume(float VolumeValue)
 {
 	// TODO : Send Bgm Sound Volume Value
 
-	PlayUISound(ESLUISoundType::Click);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::UpdateEffectVolume(float VolumeValue)
@@ -158,7 +184,7 @@ void USLOptionWidget::UpdateEffectVolume(float VolumeValue)
 	}
 
 	UISubsystem->SetEffectVolume(VolumeValue);
-	PlayUISound(ESLUISoundType::Click);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::UpdateBrightness(float BrightnessValue)
@@ -176,14 +202,14 @@ void USLOptionWidget::UpdateBrightness(float BrightnessValue)
 	RendererSettings->PostEditChangeProperty(PropertyChangedEvent);
 	RendererSettings->SaveConfig();
 
-	PlayUISound(ESLUISoundType::Click);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::OnClickedKeySetting()
 {
 	if (CheckValidOfUISubsystem())
 	{
-		UISubsystem->AddAdditveWidget(ESLAdditiveWidgetType::KeySettingWidget);
+		UISubsystem->AddAdditveWidget(ESLAdditiveWidgetType::EAW_KeySettingWidget);
 	}
 }
 
@@ -254,5 +280,5 @@ void USLOptionWidget::UpdateResolution(int32 ResolutionNum)
 
 	ResolutionList->SetIsExpanded(false);
 	CurrentResolutionText->SetText(FText::FromString(FString::Printf(TEXT("%.0f * %.0f"), Width, Height)));
-	PlayUISound(ESLUISoundType::Click);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
