@@ -3,6 +3,7 @@
 
 #include "Controller/SLBaseAIController.h"
 
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Navigation/CrowdFollowingComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AIPerceptionTypes.h"
@@ -45,8 +46,17 @@ ETeamAttitude::Type ASLBaseAIController::GetTeamAttitudeTowards(const AActor& Ot
 
 void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+	if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
+	{
+		if (Stimulus.WasSuccessfullySensed() && Actor)
+		{
+			BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
+		}
+	}
+	
 }
 
+// 이전에 감지한 액터를 잊었을때 호출
 void ASLBaseAIController::OnTargetPerceptionForgotten(AActor* Actor)
 {
 }

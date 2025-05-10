@@ -6,6 +6,9 @@
 #include "SLBaseCharacter.h"
 #include "SLAIBaseCharacter.generated.h"
 
+class UBlackboardComponent;
+class ASLBaseAIController;
+
 UENUM(BlueprintType)
 enum class EAIState : uint8
 {
@@ -22,7 +25,8 @@ class STILLLOADING_API ASLAIBaseCharacter : public ASLBaseCharacter
 
 public:
 	ASLAIBaseCharacter();
-
+	virtual void BeginPlay() override;
+	
 	// 플레이어를 바라보는 상태인지 여부
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat")
 	bool LookAtPlayer;
@@ -34,5 +38,14 @@ public:
 	//맞았을때 반응 할건지 여부
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat")
 	bool IsHitReaction;
+
+private:
+	// AI 컨트롤러 참조
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<ASLBaseAIController> AIController;
+	
+	// 블랙보드 컴포넌트 참조
+	UPROPERTY(VisibleAnywhere)
+	UBlackboardComponent* BlackboardComp;
 ;
 };
