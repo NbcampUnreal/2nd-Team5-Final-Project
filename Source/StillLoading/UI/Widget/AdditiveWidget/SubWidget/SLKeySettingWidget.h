@@ -21,8 +21,8 @@ public:
 	UPROPERTY()
 	FName ActionName = "";
 
-	UPROPERTY()
-	EInputActionType ActionType = EInputActionType::None;
+	//UPROPERTY()
+	//EInputActionType ActionType = EInputActionType::None;
 
 	UPROPERTY()
 	FEnhancedActionKeyMapping MappingData;

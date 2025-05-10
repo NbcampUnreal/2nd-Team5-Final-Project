@@ -145,67 +145,67 @@ void USLKeySettingWidget::AddToKeyDataMap(const FEnhancedActionKeyMapping& Targe
 	if (TargetData.Action->GetName().Contains(TEXT("MoveUp")))
 	{
 		KeySettingData.ActionName = "MoveUp";
-		KeySettingData.ActionType = EInputActionType::MoveUp;
+		//KeySettingData.ActionType = EInputActionType::MoveUp;
 		KeySettingData.ElementWidget = MoveUp;
 	}
 	else if (TargetData.Action->GetName().Contains(TEXT("MoveDown")))
 	{
 		KeySettingData.ActionName = "MoveDown";
-		KeySettingData.ActionType = EInputActionType::MoveDown;
+		//KeySettingData.ActionType = EInputActionType::MoveDown;
 		KeySettingData.ElementWidget = MoveDown;
 	}
 	else if (TargetData.Action->GetName().Contains(TEXT("MoveLeft")))
 	{
 		KeySettingData.ActionName = "MoveLeft";
-		KeySettingData.ActionType = EInputActionType::MoveLeft;
+		//KeySettingData.ActionType = EInputActionType::MoveLeft;
 		KeySettingData.ElementWidget = MoveLeft;
 	}
 	else if (TargetData.Action->GetName().Contains(TEXT("MoveRight")))
 	{
 		KeySettingData.ActionName = "MoveRight";
-		KeySettingData.ActionType = EInputActionType::MoveRight;
+		//KeySettingData.ActionType = EInputActionType::MoveRight;
 		KeySettingData.ElementWidget = MoveRight;
 	}
 	else if (TargetData.Action->GetName().Contains(TEXT("Walk")))
 	{
 		KeySettingData.ActionName = "Walk";
-		KeySettingData.ActionType = EInputActionType::Walk;
+		//KeySettingData.ActionType = EInputActionType::Walk;
 		KeySettingData.ElementWidget = Walk;
 	}
 	else if (TargetData.Action->GetName().Contains(TEXT("Jump")))
 	{
 		KeySettingData.ActionName = "Jump";
-		KeySettingData.ActionType = EInputActionType::Jump;
+		//KeySettingData.ActionType = EInputActionType::Jump;
 		KeySettingData.ElementWidget = Jump;
 	}
 	else if (TargetData.Action->GetName().Contains(TEXT("Attack")))
 	{
 		KeySettingData.ActionName = "Attack";
-		KeySettingData.ActionType = EInputActionType::Attack;
+		//KeySettingData.ActionType = EInputActionType::Attack;
 		KeySettingData.ElementWidget = Attack;
 	}
 	else if (TargetData.Action->GetName().Contains(TEXT("Interation")))
 	{
 		KeySettingData.ActionName = "Interaction";
-		KeySettingData.ActionType = EInputActionType::Interaction;
+		//KeySettingData.ActionType = EInputActionType::Interaction;
 		KeySettingData.ElementWidget = Interaction;
 	}
 	else if (TargetData.Action->GetName().Contains(TEXT("PointMove")))
 	{
 		KeySettingData.ActionName = "PointMove";
-		KeySettingData.ActionType = EInputActionType::PointMove;
+		//KeySettingData.ActionType = EInputActionType::PointMove;
 		KeySettingData.ElementWidget = PointMove;
 	}
 	else if (TargetData.Action->GetName().Contains(TEXT("Menu")))
 	{
 		KeySettingData.ActionName = "Menu";
-		KeySettingData.ActionType = EInputActionType::Menu;
+		//KeySettingData.ActionType = EInputActionType::Menu;
 		KeySettingData.ElementWidget = Menu;
 	}
 	else if (TargetData.Action->GetName().Contains(TEXT("Look")))
 	{
 		KeySettingData.ActionName = "Look";
-		KeySettingData.ActionType = EInputActionType::Look;
+		//KeySettingData.ActionType = EInputActionType::Look;
 		KeySettingData.ElementWidget = Look;
 	}
 
