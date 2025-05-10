@@ -6,12 +6,31 @@
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
 #include "SLCreditWidget.generated.h"
 
-/**
- * 
- */
+class UButton;
+class UTextBlock;
+class UVerticalBox;
+
 UCLASS()
 class STILLLOADING_API USLCreditWidget : public USLAdditiveWidget
 {
 	GENERATED_BODY()
 	
+public:
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
+	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void DeactivateWidget() override;
+
+protected:
+	virtual void ApplyImageData() override;
+	virtual void ApplyFontData() override;
+
+private:
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> CloseButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> TitleText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr <UVerticalBox> CreditBox = nullptr;
 };
