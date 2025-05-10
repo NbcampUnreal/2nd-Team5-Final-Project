@@ -25,7 +25,10 @@ public:
 	EInputActionType ActionType = EInputActionType::None;
 
 	UPROPERTY()
-	const TObjectPtr<UInputAction> InputAction = nullptr;
+	FEnhancedActionKeyMapping MappingData;
+
+	UPROPERTY()
+	TObjectPtr<USLKeyMappingWidget> ElementWidget = nullptr;
 };
 
 UCLASS()
@@ -39,29 +42,24 @@ public:
 protected:
 	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InPointerEvent) override;
 
 private:
 	UFUNCTION()
-	void ChangeKeyData(const FName& TargetName);
+	void OnClickedKeyDataButton(const FKey& TargetKey);
 
 	void InitKeyDataMap();
-	void AddToKeyDataMap(const FKey& NewKey, const UInputAction* NewInputAction);
+	void AddToKeyDataMap(const FEnhancedActionKeyMapping& TargetData);
+	void UpdateKeyMapping(const FKey& InputKey);
 
-	void InitKeyInfoWidgetMap();
-	void GetIMCKey();
-	void AddIMCKeyMap(const FString& ActionName, const FKey& Key);
+	void SetFocusToTargetButton(const FKey& TargetKey, bool bIsFocus);
 
 public:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputMappingContext> IMC = nullptr;
 
-protected:
-	UPROPERTY()
-	TMap<EInputActionType, FKey> IMCKeyMap;
-
-	UPROPERTY()
-	TMap<FName, USLKeyMappingWidget*> KeyInfoWidgetMap;
-
+private:
 	UPROPERTY()
 	TMap<FKey, FSLKeySettingData> KeyDataMap;
 
@@ -107,5 +105,9 @@ protected:
 	TObjectPtr<USLKeyMappingWidget> PointMove = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> Pause = nullptr;
+	TObjectPtr<USLKeyMappingWidget> Menu = nullptr;
+
+	FKey TempKey;
+
+	bool bOnClickedChange = false;
 };

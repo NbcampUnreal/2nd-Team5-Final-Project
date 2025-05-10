@@ -7,7 +7,6 @@
 #include "SLKeyMappingWidget.generated.h"
 
 class UButton;
-class UEditableTextBox;
 class UTextBlock;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnClickedKey, const FKey&, KeyName);
@@ -22,11 +21,15 @@ public:
 	void UpdateTagText(const FName& NewTagText);
 	void UpdateKeyText(const FKey& NewKey);
 
+	void SetVisibilityButton(bool bIsVisible);
+	void SetIsEnabledButton(bool bIsEnable);
+
 private:
 	UFUNCTION()
 	void OnClickedChangeKey();
 
 public:
+	UPROPERTY()
 	FOnClickedKey KeyDelegate;
 
 private:
@@ -34,11 +37,10 @@ private:
 	TObjectPtr<UButton> ChangeButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UEditableTextBox> KeyTextBox = nullptr;
+	TObjectPtr<UTextBlock> KeyTextBox = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> TagText = nullptr;
 
 	FKey InputKey;
-	EInputActionType ActionType = EInputActionType::None;
 };
