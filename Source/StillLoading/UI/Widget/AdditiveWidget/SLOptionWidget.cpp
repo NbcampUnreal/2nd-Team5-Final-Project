@@ -181,7 +181,10 @@ void USLOptionWidget::UpdateBrightness(float BrightnessValue)
 
 void USLOptionWidget::OnClickedKeySetting()
 {
-	// TODO : Open Key Setting Widget
+	if (CheckValidOfUISubsystem())
+	{
+		UISubsystem->AddAdditveWidget(ESLAdditiveWidgetType::KeySettingWidget);
+	}
 }
 
 void USLOptionWidget::OnClickedQuit()
