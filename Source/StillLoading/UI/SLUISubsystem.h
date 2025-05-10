@@ -17,8 +17,6 @@ class STILLLOADING_API USLUISubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-
 	void SetChapterToUI(ESLChapterType ChapterType);
 	void SetLanguageToUI(ESLLanguageType LanguageType);
 
@@ -39,6 +37,8 @@ public:
 	void SetEffectVolume(float VolumeValue);
 
 private:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
 	bool CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	bool CheckValidOfUISettings();
 
