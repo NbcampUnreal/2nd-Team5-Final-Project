@@ -3,21 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Minigame/Object/SLBaseReactiveObject.h"
-#include "SLReactiveObjectRock.generated.h"
+#include "Minigame/Object/SLReactiveObjectStatue.h"
+#include "SLReactiveObjectLuminousStatue.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class STILLLOADING_API ASLReactiveObjectRock : public ASLBaseReactiveObject
+class STILLLOADING_API ASLReactiveObjectLuminousStatue : public ASLReactiveObjectStatue
 {
 	GENERATED_BODY()
 	
 protected:
 	virtual void OnReacted(const ASLBaseCharacter* InCharacter) override;
 
-public:
-	UPROPERTY(EditAnywhere)
-	float KnockbackForce = 0.f;
+private:
+
 };

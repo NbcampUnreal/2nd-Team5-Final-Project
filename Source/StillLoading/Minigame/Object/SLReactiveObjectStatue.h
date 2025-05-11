@@ -27,8 +27,6 @@ public:
 	void DeactivateStatue();
 protected:
 	virtual void BeginPlay();
-	//UFUNCTION()
-	//void RotationStatue(const ASLBaseCharacter* InCharacter);
 
 	//UFUNCTION()
 	//void LuminousStatue(const ASLBaseCharacter* InCharacter);
@@ -37,9 +35,4 @@ private:
 	UPROPERTY(EditAnywhere)
 	int8 StatueIndex = 0;
 
-	// 회전 관련 변수
-	UPROPERTY(EditAnywhere)
-	TArray<FRotator> RotationStates;
-	UPROPERTY(VisibleAnywhere)
-	int32 CurrentRotationIndex = 0;
 };

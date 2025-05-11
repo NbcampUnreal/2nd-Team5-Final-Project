@@ -13,9 +13,11 @@ void ASLReactiveObjectRock::OnReacted(const ASLBaseCharacter* InCharacter)
 	FVector HitOrigin = InCharacter->GetActorLocation();
 	FVector KnockbackDirection = (RockLocation - HitOrigin).GetSafeNormal();
 
+	
 	UPrimitiveComponent* Primitive = FindComponentByClass<UPrimitiveComponent>();
 	if (Primitive && Primitive->IsSimulatingPhysics())
 	{
+		StaticMeshComp->SetSimulatePhysics(true);
 		Primitive->AddImpulse(KnockbackDirection * KnockbackForce, NAME_None, true);
 	}
 }

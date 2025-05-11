@@ -28,7 +28,7 @@ public:
 	ASLBaseReactiveObject();
 
 	//캐릭터에서 상호작용 시 아래 함수에 접근, 상호작용 방식에 대한 값을 넣어주면 됨.
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void TriggerReact(ASLBaseCharacter* InCharacter, const ESLReactiveTriggerType InComingType);
 
 protected:
@@ -40,13 +40,15 @@ protected:
 private:
 	UFUNCTION()
 	bool IsTriggerTypeAllowed(ESLReactiveTriggerType InComingType);
-private:
-	UPROPERTY(EditAnywhere, Category = "Reactive")
-	ESLReactiveTriggerType TriggerType = ESLReactiveTriggerType::ERT_None;
 
+protected:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UStaticMeshComponent> StaticMeshComp = nullptr;
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<USphereComponent> CollisionComp = nullptr;
+private:
+	UPROPERTY(EditAnywhere, Category = "Reactive")
+	ESLReactiveTriggerType TriggerType = ESLReactiveTriggerType::ERT_None;
+
 };

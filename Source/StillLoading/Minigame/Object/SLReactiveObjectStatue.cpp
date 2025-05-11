@@ -8,7 +8,6 @@
 
 ASLReactiveObjectStatue::ASLReactiveObjectStatue()
 {
-	RotationStates = {};
 }
 
 void ASLReactiveObjectStatue::BeginPlay()

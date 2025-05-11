@@ -15,12 +15,19 @@ ASLBaseReactiveObject::ASLBaseReactiveObject()
 
 void ASLBaseReactiveObject::TriggerReact(ASLBaseCharacter* InCharacter, const ESLReactiveTriggerType InComingType)
 {
-	if (!IsValid(InCharacter)) return;
-	if (!IsTriggerTypeAllowed(InComingType))
+	if (!IsValid(InCharacter))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Character is not IsValid"));
+		return;
+	}
+	
+	if (IsTriggerTypeAllowed(InComingType))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Type Failed"));
 		return;
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("OnReacted"));
 	OnReacted(InCharacter);
 }
 
