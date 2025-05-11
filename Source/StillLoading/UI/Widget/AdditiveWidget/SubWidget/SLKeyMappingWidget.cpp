@@ -7,12 +7,11 @@
 #include "Components/TextBlock.h"
 
 
-void USLKeyMappingWidget::InitWidget(const FName& NewTagText, const FKey& NewKey)
+void USLKeyMappingWidget::InitWidget(const FName& NewTagText, EInputActionType NewActionType)
 {
-	UpdateTagText(NewTagText);
-	UpdateKeyText(NewKey);
-
+	ActionType = NewActionType;
 	ChangeButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedChangeKey);
+	UpdateTagText(NewTagText);
 }
 
 void USLKeyMappingWidget::UpdateTagText(const FName& NewTagText)
@@ -20,10 +19,9 @@ void USLKeyMappingWidget::UpdateTagText(const FName& NewTagText)
 	TagText->SetText(FText::FromName(NewTagText));
 }
 
-void USLKeyMappingWidget::UpdateKeyText(const FKey& NewKey)
+void USLKeyMappingWidget::UpdateKeyText(const FName& KeyText)
 {
-	InputKey = NewKey;
-	KeyTextBox->SetText(FText::FromString(InputKey.ToString()));
+	KeyTextBox->SetText(FText::FromName(KeyText));
 }
 
 void USLKeyMappingWidget::SetVisibilityButton(bool bIsVisible)
@@ -45,5 +43,5 @@ void USLKeyMappingWidget::SetIsEnabledButton(bool bIsEnable)
 
 void USLKeyMappingWidget::OnClickedChangeKey()
 {
-	KeyDelegate.Broadcast(InputKey);
+	KeyDelegate.Broadcast(ActionType);
 }

@@ -50,32 +50,18 @@ void USLBaseWidget::OnEndedCloseAnim()
 
 void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)
 {
-	if (!CheckValidOfUISubsystem())
+	CheckValidOfUISubsystem();
+	UISubsystem->PlayUISound(SoundType);
+}
+
+void USLBaseWidget::CheckValidOfUISubsystem()
+{
+	if (IsValid(UISubsystem))
 	{
 		return;
 	}
 
-	UISubsystem->PlayUISound(SoundType);
-}
-
-bool USLBaseWidget::CheckValidOfUISubsystem()
-{
-	if (IsValid(UISubsystem))
-	{
-		return true;
-	}
-
-	if (!IsValid(GetGameInstance()))
-	{
-		return false;
-	}
-
+	checkf(IsValid(GetGameInstance()), TEXT("GameInstance is invalid"));
 	UISubsystem = GetGameInstance()->GetSubsystem<USLUISubsystem>();
-
-	if (!IsValid(UISubsystem))
-	{
-		return false;
-	}
-
-	return true;
+	checkf(IsValid(UISubsystem), TEXT("UISubsystem is invalid"));
 }

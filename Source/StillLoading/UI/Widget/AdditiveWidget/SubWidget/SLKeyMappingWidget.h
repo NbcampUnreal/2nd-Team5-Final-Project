@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Character//DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "SLKeyMappingWidget.generated.h"
 
 class UButton;
 class UTextBlock;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnClickedKey, const FKey&, KeyName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnClickedKey, EInputActionType, KeyName);
 
 UCLASS()
 class STILLLOADING_API USLKeyMappingWidget : public UUserWidget
@@ -17,9 +18,9 @@ class STILLLOADING_API USLKeyMappingWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void InitWidget(const FName& NewTagText, const FKey& NewKey);
+	void InitWidget(const FName& NewTagText, EInputActionType NewActionType);
 	void UpdateTagText(const FName& NewTagText);
-	void UpdateKeyText(const FKey& NewKey);
+	void UpdateKeyText(const FName& KeyText);
 
 	void SetVisibilityButton(bool bIsVisible);
 	void SetIsEnabledButton(bool bIsEnable);
@@ -42,5 +43,6 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> TagText = nullptr;
 
+	EInputActionType ActionType = EInputActionType::EIAT_None;
 	FKey InputKey;
 };
