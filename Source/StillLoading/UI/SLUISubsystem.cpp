@@ -74,6 +74,7 @@ void USLUISubsystem::RemoveCurrentAdditiveWidget()
 	}
 
 	ActiveAdditiveWidgets[ActiveCount - 1]->DeactivateWidget();
+	ActiveAdditiveWidgets.RemoveAt(ActiveCount - 1);
 	--ActiveCount;
 }
 
@@ -89,6 +90,7 @@ void USLUISubsystem::RemoveAllAdditveWidget()
 		ActiveWidget->DeactivateWidget();
 	}
 
+	ActiveAdditiveWidgets.Empty();
 	ActiveCount = 0;
 }
 

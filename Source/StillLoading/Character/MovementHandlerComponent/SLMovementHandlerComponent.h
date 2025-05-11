@@ -52,4 +52,6 @@ private:
 	void ToggleWalk(const bool bNewWalking);
 	UFUNCTION()
 	void ToggleMenu();
+
+	int32 CurrentIndex = 0; // Test용
 };
