@@ -8,10 +8,7 @@
 
 void USLAdditiveWidget::FindWidgetData()
 {
-	if (!CheckValidOfUISubsystem())
-	{
-		return;
-	}
+	CheckValidOfUISubsystem();
 
 	const UDataTable* ImageDataTable = UISubsystem->GetImageDataTable();
 	const FString ContextString(TEXT("Image Data Table"));
@@ -39,8 +36,6 @@ void USLAdditiveWidget::FindWidgetData()
 
 void USLAdditiveWidget::CloseWidget()
 {
-	if (CheckValidOfUISubsystem())
-	{
-		UISubsystem->RemoveCurrentAdditiveWidget();
-	}
+	CheckValidOfUISubsystem();
+	UISubsystem->RemoveCurrentAdditiveWidget();
 }
