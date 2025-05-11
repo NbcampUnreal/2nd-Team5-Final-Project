@@ -17,14 +17,14 @@ class STILLLOADING_API USLBaseWidget : public UUserWidget
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType);
 	virtual void ActivateWidget(ESLChapterType ChapterType);
-	virtual void DeactivateWidget();
+	virtual void DeactivateWidget() {};
 
 	virtual void ApplyOnChangedLanguage(ESLLanguageType LanguageType) {};
 	void ApplyOnChangedChapter(ESLChapterType ChapterType);
 
 protected:
 	UFUNCTION()
-	virtual void OnEndedOpenAnim();
+	virtual void OnEndedOpenAnim() {};
 
 	UFUNCTION()
 	virtual void OnEndedCloseAnim();
@@ -35,7 +35,7 @@ protected:
 
 	void PlayUISound(ESLUISoundType SoundType);
 
-	bool CheckValidOfUISubsystem();
+	void CheckValidOfUISubsystem();
 
 protected:
 	UPROPERTY()
@@ -53,8 +53,8 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UFont> Font = nullptr;
 
-	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::OptionWidget;
-	ESLChapterType CurrentChapter = ESLChapterType::Intro;
+	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
+	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
 
 	FWidgetAnimationDynamicEvent EndOpenAnimDelegate;
 	FWidgetAnimationDynamicEvent EndCloseAnimDelegate;
