@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Character/SLAIBaseCharacter.h"
 #include "SLAICharacterAnimInstance.generated.h"
 
 class UCharacterMovementComponent;
@@ -20,17 +21,24 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void SetHitDirection(EHitDirection NewDirection);
+    
+	// 히트 상태 설정 함수
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void SetIsHit(bool bNewIsHit);
+	
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
 	bool DoesOwnerHaveTag(FName TagToCheck) const;
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = "AnimData|LocomotionData")
 	TObjectPtr<ASLBaseCharacter> OwningCharacter;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = "AnimData|LocomotionData")
 	TObjectPtr<ASLBaseCharacter> TargetCharacter;
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = "AnimData|LocomotionData")
 	TObjectPtr<UCharacterMovementComponent> OwningMovementComponent;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|LocomotionData")
@@ -45,12 +53,30 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "AnimData|LocomotionData")
 	float Angle;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "FaceAO")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "AnimData|FaceAO")
 	float FacePitch;
 	
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "FaceAO")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "AnimData|FaceAO")
 	float FaceYaw;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AnimData")
+	bool IsAttacking;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AnimData|FaceAO")
+	bool ShouldLookAtPlayer;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite , Category = "AnimData")
 	bool IsDead;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Dead")
+	bool DeathAnimCompleted;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation")
+    bool bIsHit;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+    EHitDirection HitDirectionVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+	float HitWeight;
 };

@@ -6,6 +6,7 @@
 #include "SLBaseCharacter.h"
 #include "SLAIBaseCharacter.generated.h"
 
+class UBoxComponent;
 class UBlackboardComponent;
 class ASLBaseAIController;
 
@@ -18,6 +19,15 @@ enum class EAIState : uint8
 	Dead        UMETA(DisplayName = "Dead")
 };
 
+UENUM(BlueprintType)
+enum class EHitDirection : uint8
+{
+	Front,
+	Back,
+	Left,
+	Right
+};
+
 UCLASS()
 class STILLLOADING_API ASLAIBaseCharacter : public ASLBaseCharacter
 {
@@ -26,10 +36,18 @@ class STILLLOADING_API ASLAIBaseCharacter : public ASLBaseCharacter
 public:
 	ASLAIBaseCharacter();
 	virtual void BeginPlay() override;
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	
+	FORCEINLINE UBoxComponent* GetLeftHandCollisionBox() const { return LeftHandCollisionBox; }
+	FORCEINLINE UBoxComponent* GetRightHandCollisionBox() const { return RightHandCollisionBox; }
+
+	UFUNCTION()
+	virtual void OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
 	// 플레이어를 바라보는 상태인지 여부
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat")
-	bool LookAtPlayer;
+	bool ShouldLookAtPlayer;
 
 	//공격중인지 여부
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat")
@@ -39,13 +57,24 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat")
 	bool IsHitReaction;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat")
+	bool IsDead;
+	
 private:
 	// AI 컨트롤러 참조
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<ASLBaseAIController> AIController;
-	
-	// 블랙보드 컴포넌트 참조
-	UPROPERTY(VisibleAnywhere)
-	UBlackboardComponent* BlackboardComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	UBoxComponent* LeftHandCollisionBox;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	FName LeftHandCollisionBoxAttachBoneName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	UBoxComponent* RightHandCollisionBox;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	FName RightHandCollisionBoxAttachBoneName;
 ;
 };

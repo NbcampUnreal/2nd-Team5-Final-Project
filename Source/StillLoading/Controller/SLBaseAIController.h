@@ -6,6 +6,7 @@
 #include "DetourCrowdAIController.h"
 #include "SLBaseAIController.generated.h"
 
+class ASLBaseCharacter;
 struct FAIStimulus;
 class UAISenseConfig_Damage;
 class UAISenseConfig_Sight;
@@ -20,10 +21,6 @@ class STILLLOADING_API ASLBaseAIController : public ADetourCrowdAIController
 public:
 	ASLBaseAIController();
 
-	//~IGenericTeamAgentInterface inteface
-	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
-	//End of ~IGenericTeamAgentInterface inteface
-
 protected:
 	UFUNCTION()
 	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
@@ -33,6 +30,9 @@ protected:
 	
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void BeginPlay() override;
+
+	virtual void SetAITeamId(const FGenericTeamId& NewTeamID);
+	
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent;
@@ -45,7 +45,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UBehaviorTree> BehaviorTreeToRun;
-
+	
 	//Avoidance 관련 변수들
 	UPROPERTY(EditDefaultsOnly, Category = "Detour Crowd Avoidance Config")
 	bool bEnableDetourCrowdAvoidance = true;
@@ -55,6 +55,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Detour Crowd Avoidance Config", meta = (EditCondition = "bEnableDetourCrowdAvoidance"))
 	float CollisionQueryRange = 600.f;
+	//Avoidance 관련 변수끝
+	
+	UPROPERTY(BlueprintReadWrite, Category = "AI|Reference")
+	TObjectPtr<ASLBaseCharacter> PosseedAIPawn;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AI|Behavior")
+	bool bIsHostileToOtherAI;
 
+	
 };

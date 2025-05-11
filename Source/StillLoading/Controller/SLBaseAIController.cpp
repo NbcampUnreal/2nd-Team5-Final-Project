@@ -4,6 +4,9 @@
 #include "Controller/SLBaseAIController.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Character/SLBaseCharacter.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/CrowdFollowingComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AIPerceptionTypes.h"
@@ -36,12 +39,8 @@ ASLBaseAIController::ASLBaseAIController()
 	// 감지 업데이트 이벤트 바인딩
 	AIPerceptionComponent->OnTargetPerceptionUpdated.AddUniqueDynamic(this, &ThisClass::OnAIPerceptionUpdated);
 	AIPerceptionComponent->OnTargetPerceptionForgotten.AddDynamic(this,&ThisClass::OnTargetPerceptionForgotten);
-	AAIController::SetGenericTeamId(FGenericTeamId(1));
-}
 
-ETeamAttitude::Type ASLBaseAIController::GetTeamAttitudeTowards(const AActor& Other) const
-{
-	return Super::GetTeamAttitudeTowards(Other);
+	bIsHostileToOtherAI = true;
 }
 
 void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -53,7 +52,6 @@ void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 			BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
 		}
 	}
-	
 }
 
 // 이전에 감지한 액터를 잊었을때 호출
@@ -64,6 +62,18 @@ void ASLBaseAIController::OnTargetPerceptionForgotten(AActor* Actor)
 void ASLBaseAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+
+	checkf(BehaviorTreeToRun, TEXT("BehaviorTreeToRun is nullptr. Current object: %s"), *GetName());
+	
+	RunBehaviorTree(BehaviorTreeToRun);
+	if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
+	{
+		BlackboardComponent->SetValueAsVector(FName("StartLocation"), InPawn->GetActorLocation());
+
+		TObjectPtr<ASLBaseCharacter> AiCharacter = Cast<ASLBaseCharacter>(InPawn);
+		BlackboardComponent->SetValueAsFloat(FName("DefaultMaxWalkSpeed"), AiCharacter->GetCharacterMovement()->MaxWalkSpeed);
+		PosseedAIPawn = Cast<ASLBaseCharacter>(GetPawn()); 
+	}
 }
 
 void ASLBaseAIController::BeginPlay()
@@ -87,4 +97,9 @@ void ASLBaseAIController::BeginPlay()
 		CrowdComp->SetGroupsToAvoid(1);
 		CrowdComp->SetCrowdCollisionQueryRange(CollisionQueryRange);
 	}
+}
+
+void ASLBaseAIController::SetAITeamId(const FGenericTeamId& NewTeamID)
+{
+	AAIController::SetGenericTeamId(NewTeamID);
 }
