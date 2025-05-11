@@ -9,9 +9,7 @@
 struct FAIStimulus;
 class UAISenseConfig_Damage;
 class UAISenseConfig_Sight;
-/**
- * 
- */
+
 UCLASS()
 class STILLLOADING_API ASLBaseAIController : public ADetourCrowdAIController
 {
@@ -20,9 +18,7 @@ class STILLLOADING_API ASLBaseAIController : public ADetourCrowdAIController
 public:
 	ASLBaseAIController();
 
-	//~IGenericTeamAgentInterface inteface
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
-	//End of ~IGenericTeamAgentInterface inteface
 
 protected:
 	UFUNCTION()
