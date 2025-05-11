@@ -73,12 +73,11 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+Config/DefaultEditor.ini
+Config/DefaultEditorUserSettings.ini
 
 .vsconfig
 
 .idea/*
 
 Content/Local/*
-
-Config/DefaultEditor.ini
-Config/DefaultEditorUserSettings.ini

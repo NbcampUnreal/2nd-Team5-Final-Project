@@ -1,5 +1,6 @@
 #include "SLBattlePlayerState.h"
 
+#include "Character/DataAsset/CharacterStatData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -9,6 +10,12 @@ ASLBattlePlayerState::ASLBattlePlayerState()
 
 	Health = MaxHealth;
 	bIsWalking = false;
+}
+
+void ASLBattlePlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+	
 }
 
 void ASLBattlePlayerState::SetHealth(const float NewHealth)
@@ -21,6 +28,18 @@ void ASLBattlePlayerState::SetWalking(const bool bNewWalking)
 {
 	bIsWalking = bNewWalking;
 	OnRep_IsWalking();
+}
+
+void ASLBattlePlayerState::SetMaxSpeed(float NewMaxSpeed)
+{
+	MaxSpeed = NewMaxSpeed;
+	if (APawn* OwnerPawn = GetPawn())
+	{
+		if (auto* Movement = OwnerPawn->FindComponentByClass<UCharacterMovementComponent>())
+		{
+			Movement->MaxWalkSpeed = MaxSpeed;
+		}
+	}
 }
 
 void ASLBattlePlayerState::OnRep_Health()
@@ -38,7 +57,7 @@ void ASLBattlePlayerState::OnRep_IsWalking()
 	{
 		if (auto* Movement = OwnerPawn->FindComponentByClass<UCharacterMovementComponent>())
 		{
-			Movement->MaxWalkSpeed = bIsWalking ? 200.f : 600.f;
+			Movement->MaxWalkSpeed = bIsWalking ? WalkingSpeed : MaxSpeed;
 		}
 	}
 }
