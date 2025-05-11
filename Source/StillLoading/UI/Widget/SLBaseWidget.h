@@ -35,7 +35,7 @@ protected:
 
 	void PlayUISound(ESLUISoundType SoundType);
 
-	bool CheckValidOfUISubsystem();
+	void CheckValidOfUISubsystem();
 
 protected:
 	UPROPERTY()

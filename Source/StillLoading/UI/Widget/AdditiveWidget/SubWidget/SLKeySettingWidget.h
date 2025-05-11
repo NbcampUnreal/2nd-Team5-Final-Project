@@ -4,32 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
-#include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "Character//DynamicIMCComponent/SLDynamicIMCComponent.h"
+//#include "EnhancedActionKeyMapping.h"
 #include "SLKeySettingWidget.generated.h"
 
+class USLUserDataSubsystem;
 class USLKeyMappingWidget;
 class UTextBlock;
 class UButton;
 class UImage;
-
-USTRUCT(BlueprintType)
-struct FSLKeySettingData
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY()
-	FName ActionName = "";
-
-	//UPROPERTY()
-	//EInputActionType ActionType = EInputActionType::None;
-
-	UPROPERTY()
-	FEnhancedActionKeyMapping MappingData;
-
-	UPROPERTY()
-	TObjectPtr<USLKeyMappingWidget> ElementWidget = nullptr;
-};
 
 UCLASS()
 class STILLLOADING_API USLKeySettingWidget : public USLAdditiveWidget
@@ -49,22 +32,20 @@ protected:
 
 private:
 	UFUNCTION()
-	void OnClickedKeyDataButton(const FKey& TargetKey);
+	void OnClickedKeyDataButton(EInputActionType TargetAction);
 
-	void InitKeyDataMap();
-	void AddToKeyDataMap(const FEnhancedActionKeyMapping& TargetData);
+	void InitElementWidget();
 	void UpdateKeyMapping(const FKey& InputKey);
+	void SetFocusToTargetButton(EInputActionType TargetAction, bool bIsFocus);
 
-	void SetFocusToTargetButton(const FKey& TargetKey, bool bIsFocus);
-
-public:
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputMappingContext> IMC = nullptr;
+	void CheckValidOfUserDateSubsystem();
 
 private:
 	UPROPERTY()
-	TMap<FKey, FSLKeySettingData> KeyDataMap;
+	TObjectPtr<USLUserDataSubsystem> UserDataSubsystem = nullptr;
 
+	UPROPERTY()
+	TMap<EInputActionType, USLKeyMappingWidget*> ActionWidgetMap;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UButton> CloseButton = nullptr;
@@ -109,7 +90,18 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLKeyMappingWidget> Menu = nullptr;
 
-	FKey TempKey;
+	static const FName MoveUpTagIndex;
+	static const FName MoveDownTagIndex;
+	static const FName MoveLeftTagIndex;
+	static const FName MoveRightTagIndex;
+	static const FName WalkTagIndex;
+	static const FName JumpTagIndex;
+	static const FName AttackTagIndex;
+	static const FName InteractionTagIndex;
+	static const FName PointMoveTagIndex;
+	static const FName LookTagIndex;
+	static const FName MenuTagIndex;
 
+	EInputActionType TargetActionType = EInputActionType::EIAT_None;
 	bool bOnClickedChange = false;
 };

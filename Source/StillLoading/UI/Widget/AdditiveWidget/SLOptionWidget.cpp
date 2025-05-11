@@ -6,10 +6,9 @@
 #include "Components/TextBlock.h"
 #include "Components/ExpandableArea.h"
 #include "Components/Slider.h"
-#include "GameFramework/GameUserSettings.h"
 #include "UI/SLUISubsystem.h"
-#include "Engine/RendererSettings.h"
 #include "Animation/WidgetAnimation.h"
+#include "SubSystem/SLUserDataSubsystem.h"
 
 const TArray<TPair<float, float>> USLOptionWidget::ResolutionSet = { {1920, 1080}, {1280, 800}, {1680, 1050} };
 
@@ -52,23 +51,10 @@ void USLOptionWidget::ActivateWidget(ESLChapterType ChapterType)
 		OnEndedOpenAnim();
 	}
 
-	PlayUISound(ESLUISoundType::EUS_Open);
-
-	if (CheckValidOfGameUserSettings())
-	{
-		if (GameUserSettings->GetFullscreenMode() == EWindowMode::Fullscreen)
-		{
-			bIsFullScreen = true;
-		}
-		else
-		{
-			bIsFullScreen = false;
-		}
-
-		UpdateScreenModeButton();
-	}
-
+	UpdateScreenModeButton();
 	UpdateLanguageButton();
+
+	PlayUISound(ESLUISoundType::EUS_Open);
 }
 
 void USLOptionWidget::DeactivateWidget()
@@ -100,56 +86,34 @@ void USLOptionWidget::ApplyFontData()
 
 void USLOptionWidget::OnClickedKor()
 {
-	bIsKor = true;
+	CheckValidOfUserDataSubsystem();
+	UserDataSubsystem->SetLanguage(ESLLanguageType::EL_Kor);
 	UpdateLanguageButton();
 	PlayUISound(ESLUISoundType::EUS_Click);
-
-	if (CheckValidOfUISubsystem())
-	{
-		UISubsystem->SetLanguageToUI(ESLLanguageType::EL_Kor);
-	}
 }
 
 void USLOptionWidget::OnClickedEng()
 {
-	bIsKor = false;
+	CheckValidOfUserDataSubsystem();
+	UserDataSubsystem->SetLanguage(ESLLanguageType::EL_Eng);
 	UpdateLanguageButton();
 	PlayUISound(ESLUISoundType::EUS_Click);
-
-	if (CheckValidOfUISubsystem())
-	{
-		UISubsystem->SetLanguageToUI(ESLLanguageType::EL_Kor);
-	}
 }
 
 void USLOptionWidget::OnClickedFullScreen()
 {
-	bIsFullScreen = true;
+	CheckValidOfUserDataSubsystem();
+	UserDataSubsystem->SetWindowMode(EWindowMode::Fullscreen);
 	UpdateScreenModeButton();
 	PlayUISound(ESLUISoundType::EUS_Click);
-
-	if (!CheckValidOfGameUserSettings())
-	{
-		return;
-	}
-
-	GameUserSettings->SetFullscreenMode(EWindowMode::Fullscreen);
-	GameUserSettings->ApplySettings(false);
 }
 
 void USLOptionWidget::OnClickedWindowScreen()
 {
-	bIsFullScreen = false;
+	CheckValidOfUserDataSubsystem();
+	UserDataSubsystem->SetWindowMode(EWindowMode::Windowed);
 	UpdateScreenModeButton();
 	PlayUISound(ESLUISoundType::EUS_Click);
-
-	if (!CheckValidOfGameUserSettings())
-	{
-		return;
-	}
-
-	GameUserSettings->SetFullscreenMode(EWindowMode::Windowed);
-	GameUserSettings->ApplySettings(false);
 }
 
 void USLOptionWidget::OnClickedFirstResolution()
@@ -169,48 +133,29 @@ void USLOptionWidget::OnClickedThirdResolution()
 
 void USLOptionWidget::UpdateBgmVolume(float VolumeValue)
 {
-	// TODO : Send Bgm Sound Volume Value
-
+	CheckValidOfUserDataSubsystem();
+	UserDataSubsystem->SetBgmVolume(VolumeValue);
 	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::UpdateEffectVolume(float VolumeValue)
 {
-	// TODO : Send Effect Sound Volume Value
-
-	if (!CheckValidOfUISubsystem())
-	{
-		return;
-	}
-
-	UISubsystem->SetEffectVolume(VolumeValue);
+	CheckValidOfUserDataSubsystem();
+	UserDataSubsystem->SetEffectVolume(VolumeValue);
 	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::UpdateBrightness(float BrightnessValue)
 {
-	if (!CheckValidOfRendererSettings())
-	{
-		return;
-	}
-
-	RendererSettings->DefaultFeatureAutoExposureBias = BrightnessValue;
-	
-	FPropertyChangedEvent PropertyChangedEvent(URendererSettings::StaticClass()->
-		FindPropertyByName(GET_MEMBER_NAME_CHECKED(URendererSettings, DefaultFeatureAutoExposureBias)));
-
-	RendererSettings->PostEditChangeProperty(PropertyChangedEvent);
-	RendererSettings->SaveConfig();
-
+	CheckValidOfUserDataSubsystem();
+	UserDataSubsystem->SetBrightness(BrightnessValue);
 	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::OnClickedKeySetting()
 {
-	if (CheckValidOfUISubsystem())
-	{
-		UISubsystem->AddAdditveWidget(ESLAdditiveWidgetType::EAW_KeySettingWidget);
-	}
+	CheckValidOfUISubsystem();
+	UISubsystem->AddAdditveWidget(ESLAdditiveWidgetType::EAW_KeySettingWidget);
 }
 
 void USLOptionWidget::OnClickedQuit()
@@ -218,50 +163,46 @@ void USLOptionWidget::OnClickedQuit()
 	// TODO : Quit Game
 }
 
-bool USLOptionWidget::CheckValidOfGameUserSettings()
+void USLOptionWidget::CheckValidOfUserDataSubsystem()
 {
-	if (IsValid(GameUserSettings))
+	if (IsValid(UserDataSubsystem))
 	{
-		return true;
+		return;
 	}
 
-	GameUserSettings = GEngine->GetGameUserSettings();
-
-	if (!IsValid(GameUserSettings))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-bool USLOptionWidget::CheckValidOfRendererSettings()
-{
-	if (IsValid(RendererSettings))
-	{
-		return true;
-	}
-
-	RendererSettings = GetMutableDefault<URendererSettings>();
-
-	if (!IsValid(RendererSettings))
-	{
-		return false;
-	}
-
-	return true;
+	UserDataSubsystem = GetGameInstance()->GetSubsystem<USLUserDataSubsystem>();
+	checkf(IsValid(UserDataSubsystem), TEXT("User Data Subsystem is invalid"));
 }
 
 void USLOptionWidget::UpdateScreenModeButton()
 {
-	FullScreenButton->SetIsEnabled(!bIsFullScreen);
-	WindowScreenButton->SetIsEnabled(bIsFullScreen);
+	CheckValidOfUserDataSubsystem();
 
+	EWindowMode::Type CurrentWindowMode = (EWindowMode::Type)UserDataSubsystem->GetCurrentWindowMode();
+	bool bIsFullScreen = false;
+
+	if (CurrentWindowMode == EWindowMode::Fullscreen)
+	{
+		bIsFullScreen = true;
+	}
+
+	WindowScreenButton->SetIsEnabled(bIsFullScreen);
+	FullScreenButton->SetIsEnabled(!bIsFullScreen);
 	ResolutionList->SetIsEnabled(!bIsFullScreen);
 }
 
 void USLOptionWidget::UpdateLanguageButton()
 {
+	CheckValidOfUserDataSubsystem();
+	
+	ESLLanguageType CurrentLanguage = UserDataSubsystem->GetCurrentLanguage();
+	bool bIsKor = false;
+
+	if (CurrentLanguage == ESLLanguageType::EL_Kor)
+	{
+		bIsKor = true;
+	}
+
 	KorButton->SetIsEnabled(!bIsKor);
 	EngButton->SetIsEnabled(bIsKor);
 }
@@ -272,11 +213,8 @@ void USLOptionWidget::UpdateResolution(int32 ResolutionNum)
 	float Width = ResolutionSet[TargetIndex].Key;
 	float Height = ResolutionSet[TargetIndex].Value;
 
-	if (CheckValidOfGameUserSettings())
-	{
-		GameUserSettings->SetScreenResolution(FIntPoint(Width, Height));
-		GameUserSettings->ApplySettings(false);
-	}
+	CheckValidOfUserDataSubsystem();
+	UserDataSubsystem->SetScreenSize(ResolutionSet[TargetIndex]);
 
 	ResolutionList->SetIsExpanded(false);
 	CurrentResolutionText->SetText(FText::FromString(FString::Printf(TEXT("%.0f * %.0f"), Width, Height)));
