@@ -41,78 +41,27 @@ void USLBaseWidget::ActivateWidget(ESLChapterType ChapterType)
 	{
 		ApplyOnChangedChapter(ChapterType);
 	}
-
-	if (IsValid(OpenAnim))
-	{
-		PlayAnimation(OpenAnim);
-	}
-	else
-	{
-		OnEndedOpenAnim();
-	}
-
-	PlayUISound(ESLUISoundType::Open);
-}
-
-void USLBaseWidget::DeactivateWidget()
-{
-	if (IsValid(CloseAnim))
-	{
-		PlayAnimation(CloseAnim);
-	}
-	else
-	{
-		OnEndedCloseAnim();
-	}
-
-	PlayUISound(ESLUISoundType::Close);
-}
-
-void USLBaseWidget::OnEndedOpenAnim()
-{
-	// TODO : Post Open Animation Function 
 }
 
 void USLBaseWidget::OnEndedCloseAnim()
 {
 	this->RemoveFromViewport();
-
-	if (!CheckValidOfUISubsystem())
-	{
-		return;
-	}
-
-	// TODO : Pose Close Animation Function. Call Remove Widget and Post Processing From UISubsystem.
 }
 
 void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)
 {
-	if (!CheckValidOfUISubsystem())
+	CheckValidOfUISubsystem();
+	UISubsystem->PlayUISound(SoundType);
+}
+
+void USLBaseWidget::CheckValidOfUISubsystem()
+{
+	if (IsValid(UISubsystem))
 	{
 		return;
 	}
 
-	UISubsystem->PlayUISound(SoundType);
-}
-
-bool USLBaseWidget::CheckValidOfUISubsystem()
-{
-	if (IsValid(UISubsystem))
-	{
-		return true;
-	}
-
-	if (!IsValid(GetGameInstance()))
-	{
-		return false;
-	}
-
+	checkf(IsValid(GetGameInstance()), TEXT("GameInstance is invalid"));
 	UISubsystem = GetGameInstance()->GetSubsystem<USLUISubsystem>();
-
-	if (!IsValid(UISubsystem))
-	{
-		return false;
-	}
-
-	return true;
+	checkf(IsValid(UISubsystem), TEXT("UISubsystem is invalid"));
 }

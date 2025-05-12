@@ -81,3 +81,7 @@ Config/DefaultEditorUserSettings.ini
 .idea/*
 
 Content/Local/*
+Content/StarterContent/*
+
+Config/DefaultEditor.ini
+Config/DefaultEditorUserSettings.ini

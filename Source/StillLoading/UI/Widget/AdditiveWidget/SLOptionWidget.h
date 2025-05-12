@@ -12,6 +12,7 @@ class USlider;
 class UExpandableArea;
 class UGameUserSettings;
 class URendererSettings;
+class USLUserDataSubsystem;
 
 UCLASS()
 class STILLLOADING_API USLOptionWidget : public USLAdditiveWidget
@@ -21,6 +22,7 @@ class STILLLOADING_API USLOptionWidget : public USLAdditiveWidget
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
 	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void DeactivateWidget() override;
 
 protected:
 	virtual void ApplyImageData() override;
@@ -75,8 +77,7 @@ private:
 	UFUNCTION()
 	void OnClickedQuit();
 
-	bool CheckValidOfGameUserSettings();
-	bool CheckValidOfRendererSettings();
+	void CheckValidOfUserDataSubsystem();
 
 	void UpdateScreenModeButton();
 	void UpdateLanguageButton();
@@ -173,13 +174,7 @@ private:
 	//
 
 	UPROPERTY()
-	TObjectPtr<UGameUserSettings> GameUserSettings = nullptr;
-
-	UPROPERTY()
-	TObjectPtr<URendererSettings> RendererSettings = nullptr;
-
-	bool bIsFullScreen = true;
-	bool bIsKor = true;
+	TObjectPtr<USLUserDataSubsystem> UserDataSubsystem = nullptr;
 
 	static const TArray<TPair<float, float>> ResolutionSet;
 };

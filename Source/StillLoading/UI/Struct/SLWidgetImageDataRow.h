@@ -14,10 +14,10 @@ struct STILLLOADING_API FSLWidgetImageDataRow : public FTableRowBase
 	
 public:
 	UPROPERTY(EditAnywhere)
-	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::OptionWidget;
+	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
 
 	UPROPERTY(EditAnywhere)
-	ESLChapterType TargetChapter = ESLChapterType::Intro;
+	ESLChapterType TargetChapter = ESLChapterType::EC_Intro;
 
 	UPROPERTY(EditAnywhere)
 	TSoftObjectPtr<UFont> Font = nullptr;
