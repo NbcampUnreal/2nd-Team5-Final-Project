@@ -84,3 +84,13 @@ bool USLAICharacterAnimInstance::DoesOwnerHaveTag(FName TagToCheck) const
 {
 	return TryGetPawnOwner()->ActorHasTag(TagToCheck);
 }
+
+void USLAICharacterAnimInstance::SetIsAttacking(bool bNewIsAttacking)
+{
+	IsAttacking = bNewIsAttacking;
+}
+
+void USLAICharacterAnimInstance::AnimNotify_AttackEnd()
+{
+	SetIsAttacking(false);
+}

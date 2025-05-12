@@ -27,6 +27,9 @@ public:
 	// 히트 상태 설정 함수
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void SetIsHit(bool bNewIsHit);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void SetIsAttacking(bool bNewIsAttacking);
 	
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
@@ -79,4 +82,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
 	float HitWeight;
+
+	UFUNCTION()
+	void AnimNotify_AttackEnd();
 };
