@@ -8,6 +8,8 @@
 void USLNotifyWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_NotifyWidget;
+	WidgetInputMode = ESLInputModeType::EIM_GameAndUI;
+	bIsVisibleCursor = false;
 
 	OpenAnim = VisibleNotifyAnim;
 	CloseAnim = InvisibleNotifyAnim;

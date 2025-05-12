@@ -35,6 +35,16 @@ void USLBaseWidget::ApplyOnChangedChapter(ESLChapterType ChapterType)
 	ApplyFontData();
 }
 
+ESLInputModeType USLBaseWidget::GetWidgetInputMode() const
+{
+	return WidgetInputMode;
+}
+
+bool USLBaseWidget::GetWidgetCursorMode() const
+{
+	return bIsVisibleCursor;
+}
+
 void USLBaseWidget::ActivateWidget(ESLChapterType ChapterType)
 {
 	if (CurrentChapter != ChapterType)
