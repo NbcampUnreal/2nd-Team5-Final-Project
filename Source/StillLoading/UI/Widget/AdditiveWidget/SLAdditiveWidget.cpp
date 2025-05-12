@@ -22,7 +22,7 @@ void USLAdditiveWidget::FindWidgetData()
 		if (ImageDataRow->WidgetType == WidgetType &&
 			ImageDataRow->TargetChapter == CurrentChapter)
 		{
-			Font = ImageDataRow->Font.LoadSynchronous();
+			FontInfo = ImageDataRow->FontInfo;
 
 			for (TPair<FName, TSoftObjectPtr<UTexture2D>> Target : ImageDataRow->ImageMap)
 			{

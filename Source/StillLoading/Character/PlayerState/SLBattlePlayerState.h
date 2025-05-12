@@ -4,6 +4,8 @@
 #include "GameFramework/PlayerState.h"
 #include "SLBattlePlayerState.generated.h"
 
+class UCharacterStatData;
+
 UCLASS()
 class STILLLOADING_API ASLBattlePlayerState : public APlayerState
 {
@@ -11,7 +13,22 @@ class STILLLOADING_API ASLBattlePlayerState : public APlayerState
 
 public:
 	ASLBattlePlayerState();
+
+	virtual void BeginPlay() override;
 	
+	UFUNCTION()
+	void SetHealth(float NewHealth);
+	UFUNCTION()
+	void SetWalking(bool bNewWalking);
+	UFUNCTION()
+	void SetMaxSpeed(float NewMaxSpeed);
+
+protected:
+	UFUNCTION()
+	void OnRep_Health();
+	UFUNCTION()
+	void OnRep_IsWalking();
+
 	UPROPERTY(ReplicatedUsing = OnRep_Health, BlueprintReadOnly, Category = "Stat")
 	float Health;
 
@@ -21,12 +38,8 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_IsWalking, BlueprintReadOnly, Category = "Stat")
 	bool bIsWalking;
 
-	void SetHealth(float NewHealth);
-	void SetWalking(bool bNewWalking);
-	
-	UFUNCTION()
-	void OnRep_Health();
-
-	UFUNCTION()
-	void OnRep_IsWalking();
+	UPROPERTY()
+	float WalkingSpeed;
+	UPROPERTY()
+	float MaxSpeed;
 };
