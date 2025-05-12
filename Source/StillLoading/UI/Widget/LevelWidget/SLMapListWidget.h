@@ -3,15 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Widget/SLBaseWidget.h"
+#include "UI/Widget/LevelWidget/SLLevelWidget.h"
 #include "SLMapListWidget.generated.h"
 
-/**
- * 
- */
+
 UCLASS()
-class STILLLOADING_API USLMapListWidget : public USLBaseWidget
+class STILLLOADING_API USLMapListWidget : public USLLevelWidget
 {
 	GENERATED_BODY()
 	
+public:
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
+	virtual void DeactivateWidget() override;
+
+protected:
+	virtual void ApplyImageData() override;
+	virtual void ApplyFontData() override;
+
+private:
+
+private:
+
 };
