@@ -1,8 +1,10 @@
 #include "SLAIBaseCharacter.h"
 
+#include "BrainComponent.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Controller/SLBaseAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -36,52 +38,94 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	IsAttacking = false;
 	IsHitReaction = false;
 	IsDead = false;
+	MaxHealth = 100.0f;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	IsDead = true;
-
+	CurrentHealth = MaxHealth;
+	AIController = Cast<ASLBaseAIController>(GetController());
 }
 
 float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
     float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-    if (ActualDamage > 0.0f && DamageCauser)
+    if (ActualDamage > 0.0f)
     {
-        FVector AttackerLocation = DamageCauser->GetActorLocation();
-        
-        FVector DirectionVector = AttackerLocation - GetActorLocation();
-        DirectionVector.Normalize();
-        
-        FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
-        
-        EHitDirection HitDir;
-        float AbsX = FMath::Abs(LocalHitDirection.X);
-        float AbsY = FMath::Abs(LocalHitDirection.Y);
-        
-        if (AbsY > AbsX)
+        CurrentHealth = FMath::Clamp(CurrentHealth - ActualDamage, 0.0f, MaxHealth);
+
+        TObjectPtr<UAnimInstance> AnimInstancePtr = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr; 
+
+        if (CurrentHealth <= 0.0f)
         {
-            HitDir = (LocalHitDirection.Y > 0) ? EHitDirection::Right : EHitDirection::Left;
+            if (!IsDead)
+            {
+                IsDead = true;
+
+                if (AIController)
+                {
+                    AIController->GetBrainComponent()->StopLogic("Character Died"); //AI 로직 중지
+                }
+
+                GetCharacterMovement()->StopMovementImmediately();
+                GetCharacterMovement()->DisableMovement();
+            	
+                // 콜리전 비활성화
+                GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
+
+                if (AnimInstancePtr)
+                {
+                    if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+                    {
+                        SLAIAnimInstance->SetIsDead(IsDead);
+                    }
+
+                    
+                    if (DeathMontages.Num() > 0)
+                    {
+                        const int32 MontageIndex = FMath::RandRange(0, DeathMontages.Num() - 1);
+                        UAnimMontage* MontageToPlay = DeathMontages[MontageIndex];
+                        if (MontageToPlay)
+                        {
+                            AnimInstancePtr->Montage_Play(MontageToPlay);
+                        }
+                    }
+                }
+            }
         }
-        else
+        else if (DamageCauser && !IsHitReaction && AnimInstancePtr)
         {
-            HitDir = (LocalHitDirection.X > 0) ? EHitDirection::Front : EHitDirection::Back;
-        }
-        
-        
-        TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
-        if (AnimInstance && !IsHitReaction)
-        {
-            AnimInstance->SetHitDirection(HitDir);
-            
-            AnimInstance->SetIsHit(true);   
+            if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+            {
+                 FVector AttackerLocation = DamageCauser->GetActorLocation();
+                 FVector DirectionVector = AttackerLocation - GetActorLocation(); // 캐릭터 -> 공격자
+                 DirectionVector.Normalize();
+
+                
+                 FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
+
+                 EHitDirection HitDir;
+                 float AbsX = FMath::Abs(LocalHitDirection.X);
+                 float AbsY = FMath::Abs(LocalHitDirection.Y);
+
+                 if (AbsY > AbsX)
+                 {
+                     HitDir = (LocalHitDirection.Y > 0) ? EHitDirection::Right : EHitDirection::Left;
+                 }
+                 else 
+                 {
+                     HitDir = (LocalHitDirection.X > 0) ? EHitDirection::Front : EHitDirection::Back;
+                 }
+                 
+                 SLAIAnimInstance->SetHitDirection(HitDir);
+                 SLAIAnimInstance->SetIsHit(true);
+            }
         }
     }
-    
     return ActualDamage;
 }
 
