@@ -51,7 +51,7 @@ protected:
 	TMap<FName, UTexture2D*> ImageMap;
 
 	UPROPERTY()
-	TObjectPtr<UFont> Font = nullptr;
+	FSlateFontInfo FontInfo;
 
 	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
 	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
