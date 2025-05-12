@@ -1,5 +1,5 @@
 ﻿// --- Input ---
-// float4 UVs
+// float4 Color
 // float KERNEL_SIZE
 // float2 NormalStepRange
 // float2 DepthStepRange
@@ -44,4 +44,4 @@ float StepNormal = (MaxNormal - NormalStepRange.x) / (NormalStepRange.y - Normal
 float StepDepth = (LaplacianFilter_Depth - DepthStepRange.x) / (DepthStepRange.y - DepthStepRange.x);
 float Result =  1 - max(StepNormal, StepDepth);
 
-return UVs * Result;
+return Color * Result;
