@@ -3,6 +3,7 @@
 
 #include "UI/Widget/LevelWidget/SLLevelWidget.h"
 #include "UI/SLUISubsystem.h"
+#include "UI/Struct/SLLevelWidgetDataRow.h"
 
 void USLLevelWidget::ActivateWidget(ESLChapterType ChapterType)
 {
@@ -12,11 +13,15 @@ void USLLevelWidget::ActivateWidget(ESLChapterType ChapterType)
 	UISubsystem->SetLevelInputMode(WidgetInputMode, bIsVisibleCursor);
 }
 
-void USLLevelWidget::FindWidgetData()
+void USLLevelWidget::SetLevelWidgetData(const FSLLevelWidgetDataRow& LevelWidgetData)
 {
-	Super::FindWidgetData();
+	FontInfo = LevelWidgetData.FontInfo;
+	ImageMap.Empty();
 
-	// TODO : Get Data From HUD
+	for (const TPair<FName, TSoftObjectPtr<UTexture2D>>& ImagePair : LevelWidgetData.ImageMap)
+	{
+		ImageMap.Add(ImagePair.Key, ImagePair.Value.LoadSynchronous());
+	}
 }
 
 void USLLevelWidget::RequestAddedWidgetToUISubsystem(ESLAdditiveWidgetType TargetWidgetType)
