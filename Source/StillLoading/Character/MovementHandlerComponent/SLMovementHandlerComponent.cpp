@@ -2,11 +2,10 @@
 
 #include "Character/SLBaseCharacter.h"
 #include "Character/SLCharacter.h"
+#include "Character/BattleComponent/BattleComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
 {
@@ -29,6 +28,8 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick TickTy
                                               FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	
 }
 
 void UMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
@@ -48,6 +49,7 @@ void UMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, F
 	case EInputActionType::EIAT_MoveLeft:
 	case EInputActionType::EIAT_MoveRight:
 		Move(Value.Get<float>(), ActionType);
+		//Move(Value.Get<float>(), ActionType);
 		break;
 
 	default:
@@ -67,23 +69,18 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 	case EInputActionType::EIAT_Jump:
 		Jump();
 		break;
-
 	case EInputActionType::EIAT_Interaction:
 		Interact();
 		break;
-
 	case EInputActionType::EIAT_Attack:
 		Attack();
 		break;
-
 	case EInputActionType::EIAT_PointMove:
 		PointMove();
 		break;
-
 	case EInputActionType::EIAT_Walk:
 		ToggleWalk(true);
 		break;
-
 	case EInputActionType::EIAT_Menu:
 		ToggleMenu();
 		break;
@@ -102,22 +99,19 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 
 	switch (ActionType)
 	{
-	case EInputActionType::EIAT_Jump:
+	case EInputActionType::EIAT_MoveUp:
+	case EInputActionType::EIAT_MoveDown:
+	case EInputActionType::EIAT_MoveLeft:
+	case EInputActionType::EIAT_MoveRight:
 		break;
-
-	case EInputActionType::EIAT_Interaction:
-		break;
-
-	case EInputActionType::EIAT_Attack:
-		break;
-
-	case EInputActionType::EIAT_PointMove:
-		break;
-
 	case EInputActionType::EIAT_Walk:
 		ToggleWalk(false);
 		break;
 
+	case EInputActionType::EIAT_Jump:
+	case EInputActionType::EIAT_Interaction:
+	case EInputActionType::EIAT_Attack:
+	case EInputActionType::EIAT_PointMove:
 	case EInputActionType::EIAT_Menu:
 		break;
 
@@ -140,18 +134,18 @@ void UMovementHandlerComponent::Look(const FVector2D& Value)
 {
 	if (!OwnerCharacter || Value.IsNearlyZero()) return;
 
-	USpringArmComponent* CameraBoom = OwnerCharacter->CameraBoom;
-	if (!CameraBoom) return;
+	APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController());
+	if (!PC) return;
 
-	const FRotator CurrentRotation = CameraBoom->GetRelativeRotation();
-    
-	float NewYaw = CurrentRotation.Yaw + Value.X;
-	float NewPitch = CurrentRotation.Pitch - Value.Y;
+	FRotator ControlRot = PC->GetControlRotation();
 
-	NewYaw = FMath::ClampAngle(NewYaw, -YawRangeDown, YawRangeUp);
-	NewPitch = FMath::ClampAngle(NewPitch, -PitchRangeDown, PitchRangeUp);
+	ControlRot.Yaw += Value.X * MouseSensitivity;
+	ControlRot.Pitch -= Value.Y * MouseSensitivity;
+	ControlRot.Pitch = FMath::Clamp(ControlRot.Pitch, MinPitch, MaxPitch);
 
-	CameraBoom->SetRelativeRotation(FRotator(NewPitch, NewYaw, 0.f));
+	ControlRot.Roll = 0.f;
+
+	PC->SetControlRotation(ControlRot);
 }
 
 void UMovementHandlerComponent::Jump()
@@ -160,50 +154,41 @@ void UMovementHandlerComponent::Jump()
 	if (OwnerCharacter) OwnerCharacter->Jump();
 }
 
-void UMovementHandlerComponent::Move(const float AxisValue, EInputActionType ActionType)
+void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)
 {
 	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
 
-	const bool bBackpedalMode = OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement == false;
+	AController* Controller = OwnerCharacter->GetController();
+	if (!Controller) return;
 
-	if (bBackpedalMode && 
-		(ActionType == EInputActionType::EIAT_MoveLeft || ActionType == EInputActionType::EIAT_MoveRight))
-	{
-		return;
-	}
-	
-	const FRotator YawRotation(0.f, OwnerCharacter->GetActorRotation().Yaw, 0.f);
-	const FVector ForwardDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	const FVector RightDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	FRotator ControlRotation = Controller->GetControlRotation();
+	FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
 
-	if (ActionType == EInputActionType::EIAT_MoveDown)
-	{
-		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
-		if (ASLBattlePlayerState* PS = Cast<ASLBattlePlayerState>(OwnerCharacter->GetPlayerState()))
-		{
-			PS->SetMaxSpeed(250.0f);
-		}
-	}
-	else
-	{
-		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
-		if (ASLBattlePlayerState* PS = Cast<ASLBattlePlayerState>(OwnerCharacter->GetPlayerState()))
-		{
-			PS->SetMaxSpeed(500.0f);
-		}
-	}
+	FVector ForwardDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	FVector RightDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-	FVector MoveDir = FVector::ZeroVector;
+	ForwardDir.Z = 0.f;
+	RightDir.Z = 0.f;
+	ForwardDir.Normalize();
+	RightDir.Normalize();
+
 	switch (ActionType)
 	{
-	case EInputActionType::EIAT_MoveUp:    MoveDir = ForwardDir; break;
-	case EInputActionType::EIAT_MoveDown:  MoveDir = -ForwardDir; break;
-	case EInputActionType::EIAT_MoveLeft:  MoveDir = -RightDir; break;
-	case EInputActionType::EIAT_MoveRight: MoveDir = RightDir; break;
-	default: return;
+	case EInputActionType::EIAT_MoveUp:
+		OwnerCharacter->AddMovementInput(ForwardDir, AxisValue);
+		break;
+	case EInputActionType::EIAT_MoveDown:
+		OwnerCharacter->AddMovementInput(-ForwardDir, AxisValue);
+		break;
+	case EInputActionType::EIAT_MoveLeft:
+		OwnerCharacter->AddMovementInput(-RightDir, AxisValue);
+		break;
+	case EInputActionType::EIAT_MoveRight:
+		OwnerCharacter->AddMovementInput(RightDir, AxisValue);
+		break;
+	default:
+		break;
 	}
-
-	OwnerCharacter->AddMovementInput(MoveDir.GetSafeNormal(), AxisValue);
 }
 
 void UMovementHandlerComponent::Interact()
@@ -230,8 +215,16 @@ void UMovementHandlerComponent::Interact()
 void UMovementHandlerComponent::Attack()
 {
 	UE_LOG(LogTemp, Log, TEXT("Attack triggered"));
-	// TODO: 무기/애니메이션 처리 연결
 	
+	// TODO: 무기/애니메이션 처리 연결
+	if (auto* BC = GetOwner()->FindComponentByClass<UBattleComponent>())
+	{
+		BC->PerformAttack();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BattleComponent not found on %s"), *GetOwner()->GetName());
+	}
 }
 
 void UMovementHandlerComponent::PointMove()
