@@ -30,8 +30,7 @@ void ASLBaseHUD::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CheckValidOfUISubsystem();
-	UISubsystem->AddAdditveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
+	OnStartedHUD();
 }
 
 void ASLBaseHUD::ApplyLevelWidgetInputMode()
@@ -72,11 +71,7 @@ void ASLBaseHUD::CheckValidOfLevelWidget()
 	LevelWidgetObj = CreateWidget<USLLevelWidget>(GetOwningPlayerController(), LevelWidgetClass);
 	checkf(IsValid(LevelWidgetObj), TEXT("LevelWidgetObj is invalid"));
 
-	checkf(ChapterWidgetDataMap.Contains(CurrentChapter), TEXT("Widget Data Map is not contains ChapterType"));
-	LevelWidgetObj->SetLevelWidgetData(ChapterWidgetDataMap[CurrentChapter]);
-
-	CheckValidOfUISubsystem();
-	LevelWidgetObj->InitWidget(UISubsystem, CurrentChapter);
+	InitLevelWidget();
 }
 
 void ASLBaseHUD::CheckValidOfUISubsystem()
