@@ -5,65 +5,82 @@
 UBattleComponent::UBattleComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-
-	AttackCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("AttackCollision"));
-	AttackCollision->InitCapsuleSize(10.f, 50.f);
-	if (GetOwner() && GetOwner()->GetRootComponent())
-	{
-		AttackCollision->SetupAttachment(GetOwner()->GetRootComponent());
-	}
-	AttackCollision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-	AttackCollision->SetGenerateOverlapEvents(true);
-
-	SetIsReplicatedByDefault(true); // Component Replication 설정
 }
 
 void UBattleComponent::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
-	if (AttackCollision)
+void UBattleComponent::PerformAttack()
+{
+	bool bIsMultiplayer = bForceMultiplayerMode || (GetOwner()->GetNetMode() != NM_Standalone);
+
+	if (bIsMultiplayer && !GetOwner()->HasAuthority())
 	{
-		AttackCollision->OnComponentBeginOverlap.AddDynamic(this, &UBattleComponent::OnAttackOverlap);
+		ServerPerformAttack();
+		return;
 	}
+
+	DoAttack();
 }
 
-void UBattleComponent::ReceiveBattleDamage_Implementation(const float DamageAmount)
+void UBattleComponent::ServerPerformAttack_Implementation()
 {
-	UE_LOG(LogTemp, Warning, TEXT("BattleComponent: Received %f Damage"), DamageAmount);
-
-	// TODO: HP 감소, 이펙트, 애니메이션 처리 등
+	DoAttack();
 }
 
-void UBattleComponent::ServerAttack_Implementation(AActor* Target)
-{
-	Attack(Target);
-}
-
-bool UBattleComponent::ServerAttack_Validate(AActor* Target)
+bool UBattleComponent::ServerPerformAttack_Validate()
 {
 	return true;
 }
 
-void UBattleComponent::Attack(AActor* Target)
+void UBattleComponent::DoAttack()
 {
-	if (Target && Target->GetClass()->ImplementsInterface(USLBattleInterface::StaticClass()))
-	{
-		ISLBattleInterface::Execute_ReceiveBattleDamage(Target, 10.0f);
-	}
-}
+	const AActor* Owner = GetOwner();
+	if (!Owner) return;
 
-void UBattleComponent::OnAttackOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (!OtherActor || OtherActor == GetOwner()) return;
+	const FVector Start = Owner->GetActorLocation() + FVector(0, 0, 50);
+	const FVector End = Start + Owner->GetActorForwardVector() * AttackRange;
+
+	TArray<FHitResult> HitResults;
+	const FCollisionShape Sphere = FCollisionShape::MakeSphere(AttackRadius);
+
+	bool bHit = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		Start,
+		End,
+		FQuat::Identity,
+		EnemyChannel,
+		Sphere
+	);
+
+	if (bShowDebugLine)
+	{
+		DrawDebugSphere(GetWorld(), Start, AttackRadius, 12, FColor::Blue, false, 1.f);
+		DrawDebugSphere(GetWorld(), End, AttackRadius, 12, FColor::Red, false, 1.f);
+		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 2.f);
+	}
 	
-	if (OtherActor->GetRootComponent()->GetCollisionObjectType() == EnemyChannel)
+	if (bHit)
 	{
-		if (GetOwner()->HasAuthority())
-			Attack(OtherActor);
-		else
-			ServerAttack(OtherActor);
+		for (const FHitResult& Hit : HitResults)
+		{
+			AActor* HitActor = Hit.GetActor();
+			
+			if (HitActor && HitActor != Owner &&
+				HitActor->GetClass()->ImplementsInterface(USLBattleInterface::StaticClass()))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Hit Actor[%s]"), *HitActor->GetName());
+			}
+			
+			/*
+			if (HitActor && HitActor != Owner &&
+				HitActor->GetClass()->ImplementsInterface(USLBattleInterface::StaticClass()))
+			{
+				ISLBattleInterface::Execute_ReceiveBattleDamage(HitActor, 10.0f);
+			}
+			*/
+		}
 	}
 }
-

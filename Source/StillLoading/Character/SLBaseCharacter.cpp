@@ -10,15 +10,16 @@ ASLBaseCharacter::ASLBaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 80.f, 0.f);
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationPitch = false;
+	//GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
+	//GetCharacterMovement()->RotationRate = FRotator(0.f, 80.f, 0.f);
 	
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.f;
-	CameraBoom->bUsePawnControlRotation = false; // 자체 회전 제어
-	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->bUsePawnControlRotation = true; // 자체 회전 제어
+	//CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 3.f;
 
 	DefaultCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("DefaultCamera"));

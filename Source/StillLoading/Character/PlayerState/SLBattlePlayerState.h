@@ -39,7 +39,7 @@ protected:
 	bool bIsWalking;
 
 	UPROPERTY()
-	float WalkingSpeed;
+	float WalkingSpeed = 250.f;
 	UPROPERTY()
-	float MaxSpeed;
+	float MaxSpeed = 500.f;
 };

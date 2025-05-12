@@ -15,25 +15,30 @@ class STILLLOADING_API UBattleComponent : public UActorComponent, public ISLBatt
 public:
 	UBattleComponent();
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerAttack(AActor* Target);
+	UFUNCTION(BlueprintCallable)
+	void PerformAttack();
 
+	UPROPERTY(Blueprintable, EditAnywhere, Category="Debug")
+	bool bShowDebugLine = true;
 protected:
 	virtual void BeginPlay() override;
-	virtual void ReceiveBattleDamage_Implementation(float DamageAmount) override;
 
 private:
-	UFUNCTION()
-	void OnAttackOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-						 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-						 bool bFromSweep, const FHitResult& SweepResult);
+	UPROPERTY(EditDefaultsOnly, Category="Attack")
+	bool bForceMultiplayerMode = false;
 
-	UFUNCTION()
-	void Attack(AActor* Target);
+	UPROPERTY(EditDefaultsOnly, Category="Attack")
+	float AttackRange = 100.f;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
-	TObjectPtr<UCapsuleComponent> AttackCollision;
+	UPROPERTY(EditDefaultsOnly, Category="Attack")
+	float AttackRadius = 20.f;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	TEnumAsByte<ECollisionChannel> EnemyChannel = ECC_GameTraceChannel2;
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerPerformAttack();
+
+	UFUNCTION()
+	void DoAttack();
 };
