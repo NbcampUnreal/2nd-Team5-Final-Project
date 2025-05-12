@@ -1,5 +1,6 @@
 #include "SLBaseCharacter.h"
 
+#include "BattleComponent/BattleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "CameraManagerComponent/CameraManagerComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -48,5 +49,18 @@ void ASLBaseCharacter::BeginPlay()
 void ASLBaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+float ASLBaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
+{
+	const float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	if (UBattleComponent* BattleComp = FindComponentByClass<UBattleComponent>())
+	{
+		ISLBattleInterface::Execute_ReceiveBattleDamage(BattleComp, ActualDamage);
+	}
+
+	return ActualDamage;
 }
 
