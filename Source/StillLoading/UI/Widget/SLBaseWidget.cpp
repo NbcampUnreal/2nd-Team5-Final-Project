@@ -27,8 +27,6 @@ void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 void USLBaseWidget::ApplyOnChangedChapter(ESLChapterType ChapterType)
 {
 	CurrentChapter = ChapterType;
-	ImageMap.Empty();
-
 	FindWidgetData();
 
 	ApplyImageData();

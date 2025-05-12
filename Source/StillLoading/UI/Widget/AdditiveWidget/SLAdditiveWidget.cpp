@@ -16,6 +16,7 @@ void USLAdditiveWidget::FindWidgetData()
 	TArray<FSLWidgetImageDataRow*> ImageData;
 
 	ImageDataTable->GetAllRows(ContextString, ImageData);
+	ImageMap.Empty();
 
 	for (const FSLWidgetImageDataRow* ImageDataRow : ImageData)
 	{
@@ -24,7 +25,7 @@ void USLAdditiveWidget::FindWidgetData()
 		{
 			FontInfo = ImageDataRow->FontInfo;
 
-			for (TPair<FName, TSoftObjectPtr<UTexture2D>> Target : ImageDataRow->ImageMap)
+			for (const TPair<FName, TSoftObjectPtr<UTexture2D>>& Target : ImageDataRow->ImageMap)
 			{
 				ImageMap.Add(Target.Key, Target.Value.LoadSynchronous());
 			}
