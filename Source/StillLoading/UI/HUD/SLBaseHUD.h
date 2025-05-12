@@ -25,11 +25,12 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnStartedHUD() {};
+	virtual void InitLevelWidget() {};
 
 	void ApplyLevelWidgetInputMode();
-
-	void CheckValidOfLevelWidget();
 	void CheckValidOfUISubsystem();
+	void CheckValidOfLevelWidget();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
