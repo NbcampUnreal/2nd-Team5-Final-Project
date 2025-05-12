@@ -9,6 +9,8 @@ const FName USLFadeWidget::FadeImgName = "FadeImage";
 void USLFadeWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_FadeWidget;
+	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	bIsVisibleCursor = false;
 
 	OpenAnim = FadeInAnim;
 	CloseAnim = FadeOutAnim;

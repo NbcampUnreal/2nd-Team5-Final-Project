@@ -15,12 +15,18 @@ class STILLLOADING_API USLBaseWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintCallable)
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType);
+
+	UFUNCTION(BlueprintCallable)
 	virtual void ActivateWidget(ESLChapterType ChapterType);
 	virtual void DeactivateWidget() {};
 
 	virtual void ApplyOnChangedLanguage(ESLLanguageType LanguageType) {};
 	void ApplyOnChangedChapter(ESLChapterType ChapterType);
+
+	ESLInputModeType GetWidgetInputMode() const;
+	bool GetWidgetCursorMode() const;
 
 protected:
 	UFUNCTION()
@@ -51,10 +57,12 @@ protected:
 	TMap<FName, UTexture2D*> ImageMap;
 
 	UPROPERTY()
-	TObjectPtr<UFont> Font = nullptr;
+	FSlateFontInfo FontInfo;
 
-	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
 	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
+	ESLInputModeType WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+
+	bool bIsVisibleCursor = true;
 
 	FWidgetAnimationDynamicEvent EndOpenAnimDelegate;
 	FWidgetAnimationDynamicEvent EndCloseAnimDelegate;

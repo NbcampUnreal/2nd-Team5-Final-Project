@@ -1,9 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
+class ASLBaseCharacter;
 struct FInputActionValue;
 enum class EInputActionType : uint8;
 
@@ -17,6 +19,15 @@ class STILLLOADING_API UMovementHandlerComponent : public UActorComponent
 
 public:
 	UMovementHandlerComponent();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
+	float YawRangeUp = 60.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
+	float YawRangeDown = 60.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
+	float PitchRangeUp = 10.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
+	float PitchRangeDown = 20.f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -33,15 +44,14 @@ protected:
 	void BindIMCComponent();
 
 private:
-	UPROPERTY()
-	TObjectPtr<ACharacter> OwnerCharacter;
-
 	UFUNCTION()
 	void Look(const FVector2D& Value);
 	UFUNCTION()
 	void Jump();
+	// Test
+	void Move2(float AxisValue, const FVector& Direction, EInputActionType ActionType);
 	UFUNCTION()
-	void Move(const float AxisValue, const FVector& Direction, EInputActionType ActionType);
+	void Move(const float AxisValue, EInputActionType ActionType);
 	UFUNCTION()
 	void Interact();
 	UFUNCTION()
@@ -52,6 +62,13 @@ private:
 	void ToggleWalk(const bool bNewWalking);
 	UFUNCTION()
 	void ToggleMenu();
+	UFUNCTION()
+	EGameCameraType GetCurrentCameraType() const;
+
+	UPROPERTY()
+	TObjectPtr<ASLBaseCharacter> OwnerCharacter;
+	UPROPERTY()
+	float SpeedScale = 0.5f;
 
 	int32 CurrentIndex = 0; // Test용
 };
