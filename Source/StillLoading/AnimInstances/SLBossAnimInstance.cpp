@@ -2,3 +2,13 @@
 
 
 #include "SLBossAnimInstance.h"
+
+void USLBossAnimInstance::SetBossAttackPattern(EBossAttackPattern NewBossAttackPattern)
+{
+	BossAttackPattern = NewBossAttackPattern;
+}
+
+EBossAttackPattern USLBossAnimInstance::GetBossAttackPattern()
+{
+	return BossAttackPattern;
+}
