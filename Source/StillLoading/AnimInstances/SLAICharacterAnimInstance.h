@@ -27,6 +27,15 @@ public:
 	// 히트 상태 설정 함수
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void SetIsHit(bool bNewIsHit);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void SetIsDead(bool bNewIsDead);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void SetIsDown(bool bNewIsDown);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void SetIsStun(bool bNewIsStun);
 	
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
@@ -73,10 +82,14 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation")
     bool bIsHit;
-    
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	bool IsDown;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	bool IsStun;
+	
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
     EHitDirection HitDirectionVector;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
-	float HitWeight;
+	
 };
