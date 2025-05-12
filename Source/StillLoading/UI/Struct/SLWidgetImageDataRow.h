@@ -20,7 +20,7 @@ public:
 	ESLChapterType TargetChapter = ESLChapterType::EC_Intro;
 
 	UPROPERTY(EditAnywhere)
-	TSoftObjectPtr<UFont> Font = nullptr;
+	FSlateFontInfo FontInfo;
 
 	UPROPERTY(EditAnywhere)
 	TMap<FName, TSoftObjectPtr<UTexture2D>> ImageMap;
