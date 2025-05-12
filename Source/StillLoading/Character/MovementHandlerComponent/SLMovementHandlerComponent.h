@@ -20,6 +20,9 @@ class STILLLOADING_API UMovementHandlerComponent : public UActorComponent
 public:
 	UMovementHandlerComponent();
 
+	UFUNCTION()
+	void Attack();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
 	float MinPitch = -80.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
@@ -51,8 +54,6 @@ private:
 	UFUNCTION()
 	void Interact();
 	UFUNCTION()
-	void Attack();
-	UFUNCTION()
 	void PointMove();
 	UFUNCTION()
 	void ToggleWalk(const bool bNewWalking);
@@ -63,6 +64,8 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<ASLBaseCharacter> OwnerCharacter;
+	UPROPERTY()
+	float InputBufferDuration = 0.3f;
 
 	int32 CurrentIndex = 0; // Test용
 };

@@ -3,13 +3,14 @@
 #include "Character/SLBaseCharacter.h"
 #include "Character/SLCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
+#include "Character/Buffer/InputBufferComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UMovementHandlerComponent::BeginPlay()
@@ -28,8 +29,6 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick TickTy
                                               FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	
 }
 
 void UMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
@@ -73,7 +72,11 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 		Interact();
 		break;
 	case EInputActionType::EIAT_Attack:
-		Attack();
+		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
+		{
+			BufferComp->AddBufferedInput(ActionType);
+		}
+		//Attack();
 		break;
 	case EInputActionType::EIAT_PointMove:
 		PointMove();

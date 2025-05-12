@@ -1,7 +1,5 @@
 #include "BattleComponent.h"
 
-#include "Components/CapsuleComponent.h"
-
 UBattleComponent::UBattleComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
