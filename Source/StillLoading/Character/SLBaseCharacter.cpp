@@ -1,9 +1,10 @@
 #include "SLBaseCharacter.h"
 
 #include "BattleComponent/BattleComponent.h"
+#include "Buffer/InputBufferComponent.h"
 #include "Camera/CameraComponent.h"
 #include "CameraManagerComponent/CameraManagerComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 ASLBaseCharacter::ASLBaseCharacter()
@@ -34,7 +35,16 @@ ASLBaseCharacter::ASLBaseCharacter()
 	SideViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
 	SideViewCamera->SetupAttachment(RootComponent);
 
+	// 컴포넌트 연결
 	CameraManager = CreateDefaultSubobject<UCameraManagerComponent>(TEXT("CameraManager"));
+
+	if (UInputBufferComponent* BufferComp = FindComponentByClass<UInputBufferComponent>())
+	{
+		if (UDynamicIMCComponent* IMCComp = FindComponentByClass<UDynamicIMCComponent>())
+		{
+			IMCComp->OnActionStarted.AddDynamic(BufferComp, &UInputBufferComponent::OnIMCActionStarted);
+		}
+	}
 }
 
 void ASLBaseCharacter::BeginPlay()
