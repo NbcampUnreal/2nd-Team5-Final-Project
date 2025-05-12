@@ -17,7 +17,7 @@ void ASLBossCharacter::SetBossAttackPattern(EBossAttackPattern NewPattern)
 {
 	BossAttackPattern = NewPattern;
 
-	if (TObjectPtr<USLBossAnimInstance> SLAIAnimInstance = Cast<USLBossAnimInstance>(AnimInstancePtr.Get()))
+	if (USLBossAnimInstance* SLAIAnimInstance = Cast<USLBossAnimInstance>(AnimInstancePtr.Get()))
 	{
 		SLAIAnimInstance->SetBossAttackPattern(NewPattern);
 	}

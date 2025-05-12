@@ -75,7 +75,7 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 
                 if (AnimInstancePtr)
                 {
-                    if (TObjectPtr<USLAICharacterAnimInstance> SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+                    if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
                     {
                         SLAIAnimInstance->SetIsDead(IsDead);
                     }
@@ -83,7 +83,7 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
                     if (DeathMontages.Num() > 0)
                     {
                         const int32 MontageIndex = FMath::RandRange(0, DeathMontages.Num() - 1);
-                        TObjectPtr<UAnimMontage> MontageToPlay = DeathMontages[MontageIndex];
+                        UAnimMontage* MontageToPlay = DeathMontages[MontageIndex];
                         if (MontageToPlay)
                         {
                             AnimInstancePtr->Montage_Play(MontageToPlay);
@@ -94,7 +94,7 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
         }
         else if (DamageCauser && IsHitReaction && AnimInstancePtr)
         {
-            if (TObjectPtr<USLAICharacterAnimInstance> SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+            if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
             {
                  FVector AttackerLocation = DamageCauser->GetActorLocation();
                  FVector DirectionVector = AttackerLocation - GetActorLocation(); // 캐릭터 -> 공격자
