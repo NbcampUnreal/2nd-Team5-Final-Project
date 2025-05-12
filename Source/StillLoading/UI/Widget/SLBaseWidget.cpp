@@ -27,12 +27,20 @@ void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 void USLBaseWidget::ApplyOnChangedChapter(ESLChapterType ChapterType)
 {
 	CurrentChapter = ChapterType;
-	ImageMap.Empty();
-
 	FindWidgetData();
 
 	ApplyImageData();
 	ApplyFontData();
+}
+
+ESLInputModeType USLBaseWidget::GetWidgetInputMode() const
+{
+	return WidgetInputMode;
+}
+
+bool USLBaseWidget::GetWidgetCursorMode() const
+{
+	return bIsVisibleCursor;
 }
 
 void USLBaseWidget::ActivateWidget(ESLChapterType ChapterType)

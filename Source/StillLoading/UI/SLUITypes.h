@@ -46,6 +46,14 @@ enum class ESLLanguageType : uint8
 	EL_Eng
 };
 
+UENUM(BlueprintType)
+enum class ESLInputModeType : uint8
+{
+	EIM_UIOnly = 0,
+	EIM_GameOnly,
+	EIM_GameAndUI
+};
+
 UCLASS()
 class STILLLOADING_API USLUITypes : public UObject
 {

@@ -19,6 +19,7 @@ class STILLLOADING_API USLUISubsystem : public UGameInstanceSubsystem
 public:
 	void SetChapterToUI(ESLChapterType ChapterType);
 	void SetLanguageToUI(ESLLanguageType LanguageType);
+	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 
 	UFUNCTION(BlueprintCallable)
 	void AddAdditveWidget(ESLAdditiveWidgetType WidgetType);
@@ -38,6 +39,8 @@ public:
 
 private:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+	void SetInputModeAndCursor();
 
 	bool CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	bool CheckValidOfUISettings();
@@ -68,6 +71,8 @@ private:
 
 	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
 	ESLLanguageType CurrentLanguage = ESLLanguageType::EL_Kor;
+	ESLInputModeType CurrentLevelInputMode = ESLInputModeType::EIM_UIOnly;
 
+	bool bIsVisibleLevelCursor = true;
 	float EffectVolume = 1.0f;
 };

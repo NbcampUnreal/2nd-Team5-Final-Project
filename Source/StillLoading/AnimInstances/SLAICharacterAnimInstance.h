@@ -21,68 +21,82 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Animation")
+	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
 	void SetHitDirection(EHitDirection NewDirection);
     
-	// 히트 상태 설정 함수
-	UFUNCTION(BlueprintCallable, Category = "Animation")
+	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
 	void SetIsHit(bool bNewIsHit);
 
-	UFUNCTION(BlueprintCallable, Category = "Animation")
+	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
+	void SetIsDead(bool bNewIsDead);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
+	void SetIsDown(bool bNewIsDown);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
+	void SetIsStun(bool bNewIsStun);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
 	void SetIsAttacking(bool bNewIsAttacking);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
+	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer); 
 	
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
 	bool DoesOwnerHaveTag(FName TagToCheck) const;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "AnimData|LocomotionData")
+
+	// --- Anim Data | References ---
+	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
 	TObjectPtr<ASLBaseCharacter> OwningCharacter;
 
-	UPROPERTY(BlueprintReadOnly, Category = "AnimData|LocomotionData")
-	TObjectPtr<ASLBaseCharacter> TargetCharacter;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "AnimData|LocomotionData")
-	TObjectPtr<UCharacterMovementComponent> OwningMovementComponent;
+	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
+	TObjectPtr<UCharacterMovementComponent> OwningMovementComponent; 
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|LocomotionData")
+	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
+	TObjectPtr<ASLBaseCharacter> TargetCharacter;
+
+	// --- Anim Data | Movement ---
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
 	float GroundSpeed;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|LocomotionData")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
 	bool bHasAcceleration;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AnimData|LocomotionData")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
 	float LocomotionDirection;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "AnimData|LocomotionData")
+	
+	// --- Anim Data | Aiming & Looking ---
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AnimData|Movement")	// 수정 예정
 	float Angle;
-
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "AnimData|FaceAO")
-	float FacePitch;
 	
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "AnimData|FaceAO")
-	float FaceYaw;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AnimData")
-	bool IsAttacking;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AnimData|FaceAO")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AnimData|Aiming") 
 	bool ShouldLookAtPlayer;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite , Category = "AnimData")
-	bool IsDead;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Dead")
-	bool DeathAnimCompleted;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AnimData|Aiming") 
+	float FacePitch; 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AnimData|Aiming")
+	float FaceYaw; 
+
+	// --- Anim Data | State ---
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
+	bool IsAttacking; 
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State") 
     bool bIsHit;
-    
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
-    EHitDirection HitDirectionVector;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
-	float HitWeight;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State") 
+	bool IsDown;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State") 
+	bool IsStun;
 
-	UFUNCTION()
-	void AnimNotify_AttackEnd();
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
+	bool IsDead;
+
+	// --- Anim Data | Combat Specific ---
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Combat Specific")
+    EHitDirection HitDirectionVector; 
 };

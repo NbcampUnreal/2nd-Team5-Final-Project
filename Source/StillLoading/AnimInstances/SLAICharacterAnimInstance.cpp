@@ -56,13 +56,6 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 		FaceYaw = NormalizeRotator.GetInverse().Yaw;
 		FacePitch = NormalizeRotator.GetInverse().Pitch;
 	}
-
-	/*if(TObjectPtr<ASLAIBaseCharacter> Owner = Cast<ASLAIBaseCharacter>(OwningCharacter))
-	{
-		IsAttacking = Owner->IsAttacking;
-		ShouldLookAtPlayer = Owner->ShouldLookAtPlayer;
-		IsDead = Owner->IsDead;
-	}*/
 }
 
 void USLAICharacterAnimInstance::SetHitDirection(EHitDirection NewDirection)
@@ -73,16 +66,21 @@ void USLAICharacterAnimInstance::SetHitDirection(EHitDirection NewDirection)
 void USLAICharacterAnimInstance::SetIsHit(bool bNewIsHit)
 {
 	bIsHit = bNewIsHit;
-    
-	if (bNewIsHit)
-	{
-		HitWeight = 1.0f;
-	}
 }
 
-bool USLAICharacterAnimInstance::DoesOwnerHaveTag(FName TagToCheck) const
+void USLAICharacterAnimInstance::SetIsDead(bool bNewIsDead)
 {
-	return TryGetPawnOwner()->ActorHasTag(TagToCheck);
+	IsDead = bNewIsDead;
+}
+
+void USLAICharacterAnimInstance::SetIsDown(bool bNewIsDown)
+{
+	IsDown = bNewIsDown;
+}
+
+void USLAICharacterAnimInstance::SetIsStun(bool bNewIsStun)
+{
+	IsStun = bNewIsStun;
 }
 
 void USLAICharacterAnimInstance::SetIsAttacking(bool bNewIsAttacking)
@@ -90,7 +88,12 @@ void USLAICharacterAnimInstance::SetIsAttacking(bool bNewIsAttacking)
 	IsAttacking = bNewIsAttacking;
 }
 
-void USLAICharacterAnimInstance::AnimNotify_AttackEnd()
+void USLAICharacterAnimInstance::SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer)
 {
-	SetIsAttacking(false);
+	ShouldLookAtPlayer = bNewShouldLookAtPlayer;
+}
+
+bool USLAICharacterAnimInstance::DoesOwnerHaveTag(FName TagToCheck) const
+{
+	return TryGetPawnOwner()->ActorHasTag(TagToCheck);
 }

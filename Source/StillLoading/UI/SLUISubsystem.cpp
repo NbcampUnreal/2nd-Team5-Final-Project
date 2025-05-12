@@ -17,6 +17,43 @@ void USLUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	GameUserSettings->ApplySettings(false);*/
 }
 
+void USLUISubsystem::SetInputModeAndCursor()
+{
+	ESLInputModeType TargetInputMode = ESLInputModeType::EIM_UIOnly;
+	bool bIsVisibleTargetCursor = true;
+
+	if (ActiveAdditiveWidgets.IsEmpty())
+	{
+		TargetInputMode = CurrentLevelInputMode;
+		bIsVisibleTargetCursor = bIsVisibleLevelCursor;
+	}
+	else
+	{
+		TargetInputMode = ActiveAdditiveWidgets[ActiveCount - 1]->GetWidgetInputMode();
+		bIsVisibleTargetCursor = ActiveAdditiveWidgets[ActiveCount - 1]->GetWidgetCursorMode();
+	}
+
+	APlayerController* CurrentPC = GetWorld()->GetPlayerControllerIterator()->Get();
+	checkf(IsValid(CurrentPC), TEXT("Player Controller is invalid"));
+
+	switch (CurrentLevelInputMode)
+	{
+	case ESLInputModeType::EIM_UIOnly:
+		CurrentPC->SetInputMode(FInputModeUIOnly());
+		break;
+
+	case ESLInputModeType::EIM_GameOnly:
+		CurrentPC->SetInputMode(FInputModeGameOnly());
+		break;
+
+	case ESLInputModeType::EIM_GameAndUI:
+		CurrentPC->SetInputMode(FInputModeGameAndUI());
+		break;
+	}
+
+	CurrentPC->SetShowMouseCursor(bIsVisibleTargetCursor);
+}
+
 void USLUISubsystem::SetChapterToUI(ESLChapterType ChapterType)
 {
 	CurrentChapter = ChapterType;
@@ -47,6 +84,12 @@ void USLUISubsystem::SetLanguageToUI(ESLLanguageType LanguageType)
 	}
 }
 
+void USLUISubsystem::SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor)
+{
+	CurrentLevelInputMode = InputModeType;
+	bIsVisibleLevelCursor = bIsVisibleMouseCursor;
+}
+
 void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
 {
 	if (!CheckValidOfAdditiveWidget(WidgetType))
@@ -54,11 +97,15 @@ void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
 		return;
 	}
 
-	ActiveAdditiveWidgets.Add(AdditiveWidgetMap[WidgetType]);
-	++ActiveCount;
+	if (!ActiveAdditiveWidgets.Contains(AdditiveWidgetMap[WidgetType]))
+	{
+		ActiveAdditiveWidgets.Add(AdditiveWidgetMap[WidgetType]);
+		++ActiveCount;
 
-	ActiveAdditiveWidgets[ActiveCount - 1]->ActivateWidget(CurrentChapter);
-	ActiveAdditiveWidgets[ActiveCount - 1]->AddToViewport(ActiveCount);
+		ActiveAdditiveWidgets[ActiveCount - 1]->ActivateWidget(CurrentChapter);
+		ActiveAdditiveWidgets[ActiveCount - 1]->AddToViewport(ActiveCount);
+		SetInputModeAndCursor();
+	}
 }
 
 void USLUISubsystem::RemoveCurrentAdditiveWidget()
@@ -76,6 +123,7 @@ void USLUISubsystem::RemoveCurrentAdditiveWidget()
 	ActiveAdditiveWidgets[ActiveCount - 1]->DeactivateWidget();
 	ActiveAdditiveWidgets.RemoveAt(ActiveCount - 1);
 	--ActiveCount;
+	SetInputModeAndCursor();
 }
 
 void USLUISubsystem::RemoveAllAdditveWidget()
@@ -92,6 +140,7 @@ void USLUISubsystem::RemoveAllAdditveWidget()
 
 	ActiveAdditiveWidgets.Empty();
 	ActiveCount = 0;
+	SetInputModeAndCursor();
 }
 
 void USLUISubsystem::PlayUISound(ESLUISoundType SoundType)
