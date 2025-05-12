@@ -9,12 +9,15 @@
 #include "UI/SLUISubsystem.h"
 #include "Animation/WidgetAnimation.h"
 #include "SubSystem/SLUserDataSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 
 const TArray<TPair<float, float>> USLOptionWidget::ResolutionSet = { {1920, 1080}, {1280, 800}, {1680, 1050} };
 
 void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
+	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	bIsVisibleCursor = true;
 	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
 	Super::InitWidget(NewUISubsystem, ChapterType);
 
@@ -160,7 +163,7 @@ void USLOptionWidget::OnClickedKeySetting()
 
 void USLOptionWidget::OnClickedQuit()
 {
-	// TODO : Quit Game
+	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
 }
 
 void USLOptionWidget::CheckValidOfUserDataSubsystem()

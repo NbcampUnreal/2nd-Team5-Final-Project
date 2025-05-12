@@ -22,6 +22,8 @@ const FName USLKeySettingWidget::MenuTagIndex = "Menu";
 void USLKeySettingWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_KeySettingWidget;
+	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	bIsVisibleCursor = true;
 	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
 	Super::InitWidget(NewUISubsystem, ChapterType);
 

@@ -12,6 +12,8 @@
 void USLCreditWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_CreditWidget;
+	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	bIsVisibleCursor = true;
 	
 	Super::InitWidget(NewUISubsystem, ChapterType);
 
