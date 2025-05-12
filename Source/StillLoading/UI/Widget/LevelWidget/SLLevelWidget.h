@@ -6,6 +6,7 @@
 #include "UI/Widget/SLBaseWidget.h"
 #include "SLLevelWidget.generated.h"
 
+struct FSLLevelWidgetDataRow;
 
 UCLASS()
 class STILLLOADING_API USLLevelWidget : public USLBaseWidget
@@ -14,9 +15,8 @@ class STILLLOADING_API USLLevelWidget : public USLBaseWidget
 	
 public:
 	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void SetLevelWidgetData(const FSLLevelWidgetDataRow& LevelWidgetData);
 
 protected:
-	virtual void FindWidgetData() override;
-	
 	void RequestAddedWidgetToUISubsystem(ESLAdditiveWidgetType TargetWidgetType);
 };
