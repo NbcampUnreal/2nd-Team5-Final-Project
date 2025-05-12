@@ -33,9 +33,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	RightHandCollisionBox->SetupAttachment(GetMesh());
 	RightHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RightHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-
-	ShouldLookAtPlayer = false;
-	IsAttacking = false;
+	
 	IsHitReaction = false;
 	IsDead = false;
 	MaxHealth = 100.0f;
@@ -47,6 +45,7 @@ void ASLAIBaseCharacter::BeginPlay()
 
 	CurrentHealth = MaxHealth;
 	AIController = Cast<ASLBaseAIController>(GetController());
+	AnimInstancePtr = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
 }
 
 float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -56,8 +55,6 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
     if (ActualDamage > 0.0f)
     {
         CurrentHealth = FMath::Clamp(CurrentHealth - ActualDamage, 0.0f, MaxHealth);
-
-        TObjectPtr<UAnimInstance> AnimInstancePtr = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr; 
 
         if (CurrentHealth <= 0.0f)
         {
@@ -73,22 +70,20 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
                 GetCharacterMovement()->StopMovementImmediately();
                 GetCharacterMovement()->DisableMovement();
             	
-                // 콜리전 비활성화
                 GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
                 GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
 
                 if (AnimInstancePtr)
                 {
-                    if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+                    if (TObjectPtr<USLAICharacterAnimInstance> SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
                     {
                         SLAIAnimInstance->SetIsDead(IsDead);
                     }
-
-                    
+                	
                     if (DeathMontages.Num() > 0)
                     {
                         const int32 MontageIndex = FMath::RandRange(0, DeathMontages.Num() - 1);
-                        UAnimMontage* MontageToPlay = DeathMontages[MontageIndex];
+                        TObjectPtr<UAnimMontage> MontageToPlay = DeathMontages[MontageIndex];
                         if (MontageToPlay)
                         {
                             AnimInstancePtr->Montage_Play(MontageToPlay);
@@ -97,14 +92,13 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
                 }
             }
         }
-        else if (DamageCauser && !IsHitReaction && AnimInstancePtr)
+        else if (DamageCauser && IsHitReaction && AnimInstancePtr)
         {
-            if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+            if (TObjectPtr<USLAICharacterAnimInstance> SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
             {
                  FVector AttackerLocation = DamageCauser->GetActorLocation();
                  FVector DirectionVector = AttackerLocation - GetActorLocation(); // 캐릭터 -> 공격자
                  DirectionVector.Normalize();
-
                 
                  FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
 
@@ -132,10 +126,8 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (APawn* HitPawn = Cast<APawn>(OtherActor))
+	if (TObjectPtr<APawn> HitPawn = Cast<APawn>(OtherActor))
 	{
 		// 오버랩 되면 데미지 입힐거임
 	}
 }
-
-

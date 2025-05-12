@@ -66,8 +66,6 @@ void USLAICharacterAnimInstance::SetHitDirection(EHitDirection NewDirection)
 void USLAICharacterAnimInstance::SetIsHit(bool bNewIsHit)
 {
 	bIsHit = bNewIsHit;
-    
-	
 }
 
 void USLAICharacterAnimInstance::SetIsDead(bool bNewIsDead)
@@ -85,6 +83,15 @@ void USLAICharacterAnimInstance::SetIsStun(bool bNewIsStun)
 	IsStun = bNewIsStun;
 }
 
+void USLAICharacterAnimInstance::SetIsAttacking(bool bNewIsAttacking)
+{
+	IsAttacking = bNewIsAttacking;
+}
+
+void USLAICharacterAnimInstance::SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer)
+{
+	ShouldLookAtPlayer = bNewShouldLookAtPlayer;
+}
 
 bool USLAICharacterAnimInstance::DoesOwnerHaveTag(FName TagToCheck) const
 {
