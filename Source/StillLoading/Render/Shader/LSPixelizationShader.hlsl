@@ -1,6 +1,8 @@
 ﻿// --- Inputs ---
-// float2 UVs
+// float4 Color
 // float2 PixelSize
+
+float2 SceneColor = GetDefaultSceneTextureUV(Parameters, 1);
 
 // Viewport 관련 정보
 float2 ViewportSize     = View.ViewSizeAndInvSize.xy;
@@ -11,7 +13,7 @@ float  ViewportRatio    = ViewportSize.y / ViewportSize.x;
 float2 PixelViewportSize = PixelSize * float2(1.0, ViewportRatio);
 
 // 현재 픽셀이 속한 정규화된 픽셀 중심 위치 구하기
-float2 RelativeUvToPixel = floor(UVs * PixelViewportSize) + float2(0.5, 0.5);
+float2 RelativeUvToPixel = floor(SceneColor * PixelViewportSize) + float2(0.5, 0.5);
 float2 TargetUv          = RelativeUvToPixel / PixelViewportSize;
 
 // UV를 정확한 텍셀 중심으로 정렬
