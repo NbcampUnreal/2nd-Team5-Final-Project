@@ -39,6 +39,8 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType 
 	KeySettingButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedKeySetting);
 	QuitGameButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuit);
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
+
+	InitOptionVariable();
 }
 
 void USLOptionWidget::ActivateWidget(ESLChapterType ChapterType)
@@ -85,6 +87,21 @@ void USLOptionWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
 
+}
+
+void USLOptionWidget::InitOptionVariable()
+{
+	CheckValidOfUserDataSubsystem();
+
+	TPair<float, float> CurrentReolution =  UserDataSubsystem->GetCurrentScreenSize();
+
+	CurrentResolutionText->SetText(FText::FromString(FString::Printf(TEXT("%.0f * %.0f"), 
+		CurrentReolution.Key, CurrentReolution.Value)));
+
+	BgmVolumeSlider->SetValue(UserDataSubsystem->GetCurrentBgmVolume());
+	EffectVolumeSlider->SetValue(UserDataSubsystem->GetCurrentEffectVolume());
+
+	BrightnessSlider->SetValue(UserDataSubsystem->GetCurrentBrightness());
 }
 
 void USLOptionWidget::OnClickedKor()
