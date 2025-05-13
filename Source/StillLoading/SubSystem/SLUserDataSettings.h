@@ -10,7 +10,7 @@
 
 class UInputMappingContext;
 
-UCLASS(Config = UserDataSettings, DefaultConfig, meta = (DisplayName = "UserDataSubsystemSettings"))
+UCLASS(Config = UserDataSettings, DefaultConfig, meta = (DisplayName = "UserData Subsystem Settings"))
 class STILLLOADING_API USLUserDataSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
