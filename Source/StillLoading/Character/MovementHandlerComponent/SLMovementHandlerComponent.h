@@ -20,14 +20,15 @@ class STILLLOADING_API UMovementHandlerComponent : public UActorComponent
 public:
 	UMovementHandlerComponent();
 
+	UFUNCTION()
+	void Attack();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
-	float YawRangeUp = 60.f;
+	float MinPitch = -80.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
-	float YawRangeDown = 60.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
-	float PitchRangeUp = 10.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
-	float PitchRangeDown = 20.f;
+	float MaxPitch = 80.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	float MouseSensitivity = 0.5f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -48,14 +49,10 @@ private:
 	void Look(const FVector2D& Value);
 	UFUNCTION()
 	void Jump();
-	// Test
-	void Move2(float AxisValue, const FVector& Direction, EInputActionType ActionType);
 	UFUNCTION()
-	void Move(const float AxisValue, EInputActionType ActionType);
+	void Move(const float AxisValue, const EInputActionType ActionType);
 	UFUNCTION()
 	void Interact();
-	UFUNCTION()
-	void Attack();
 	UFUNCTION()
 	void PointMove();
 	UFUNCTION()
@@ -68,7 +65,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<ASLBaseCharacter> OwnerCharacter;
 	UPROPERTY()
-	float SpeedScale = 0.5f;
+	float InputBufferDuration = 0.3f;
 
 	int32 CurrentIndex = 0; // Test용
 };
