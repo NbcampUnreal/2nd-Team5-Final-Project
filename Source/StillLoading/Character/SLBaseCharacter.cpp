@@ -1,24 +1,26 @@
 #include "SLBaseCharacter.h"
 
 #include "BattleComponent/BattleComponent.h"
+#include "Buffer/InputBufferComponent.h"
 #include "Camera/CameraComponent.h"
 #include "CameraManagerComponent/CameraManagerComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 ASLBaseCharacter::ASLBaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 80.f, 0.f);
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationPitch = false;
+	//GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
+	//GetCharacterMovement()->RotationRate = FRotator(0.f, 80.f, 0.f);
 	
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.f;
-	CameraBoom->bUsePawnControlRotation = false; // 자체 회전 제어
-	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->bUsePawnControlRotation = true; // 자체 회전 제어
+	//CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 3.f;
 
 	DefaultCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("DefaultCamera"));
@@ -33,7 +35,16 @@ ASLBaseCharacter::ASLBaseCharacter()
 	SideViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
 	SideViewCamera->SetupAttachment(RootComponent);
 
+	// 컴포넌트 연결
 	CameraManager = CreateDefaultSubobject<UCameraManagerComponent>(TEXT("CameraManager"));
+
+	if (UInputBufferComponent* BufferComp = FindComponentByClass<UInputBufferComponent>())
+	{
+		if (UDynamicIMCComponent* IMCComp = FindComponentByClass<UDynamicIMCComponent>())
+		{
+			IMCComp->OnActionStarted.AddDynamic(BufferComp, &UInputBufferComponent::OnIMCActionStarted);
+		}
+	}
 }
 
 void ASLBaseCharacter::BeginPlay()

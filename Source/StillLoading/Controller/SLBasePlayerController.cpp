@@ -20,4 +20,12 @@ void ASLBasePlayerController::BeginPlay()
 			bShowMouseCursor = false;
 		}
 	}
+
+	//팀 번호 설정
+	playerTeamId = FGenericTeamId(0);
+}
+
+FGenericTeamId ASLBasePlayerController::GetGenericTeamId() const
+{
+	return playerTeamId;
 }

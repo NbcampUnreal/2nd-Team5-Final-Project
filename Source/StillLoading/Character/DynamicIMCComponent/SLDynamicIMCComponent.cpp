@@ -95,6 +95,7 @@ void UDynamicIMCComponent::BindInputForAction(const UInputAction* Action, const 
 	case EInputActionType::EIAT_MoveDown:
 	case EInputActionType::EIAT_MoveLeft:
 	case EInputActionType::EIAT_MoveRight:
+		InputComp->BindAction(Action, ETriggerEvent::Completed, this, &UDynamicIMCComponent::HandleActionCompleted);
 	case EInputActionType::EIAT_Look:
 		InputComp->BindAction(Action, ETriggerEvent::Triggered, this, &UDynamicIMCComponent::HandleActionTriggered);
 		break;
