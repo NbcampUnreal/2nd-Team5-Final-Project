@@ -8,18 +8,26 @@
 #include "SubSystem/SLUserDataSettings.h"
 #include "SaveLoad/SLSaveGameSubsystem.h"
 #include "InputMappingContext.h"
+#include "SaveLoad/SLSaveDataStructs.h"
 
-void USLUserDataSubsystem::ApplyLoadedUserData()
+void USLUserDataSubsystem::ApplyLoadedUserData(const FWidgetSaveData& LoadData)
 {
-	// TODO : Load User Data From SaveSubsystem
-	LoadWidgetDataFromSaveSubSystem();
+	SetLanguage(LoadData.LanguageType);
+	SetBgmVolume(LoadData.BgmVolume);
+	SetEffectVolume(LoadData.EffectVolume);
+	SetWindowMode(LoadData.WindowMode);
+	SetScreenSize({ LoadData.ScreenWidth, LoadData.ScreenHeight });
+	SetBrightness(LoadData.Brightness);
+	
+	if (ActionKeyMap.IsEmpty())
+	{
+		LoadKeyMapFromIMC();
+	}
 
-	ApplyLanguageMode();
-	ApplyBgmVolume();
-	ApplyEffectVolume();
-	ApplyWindowMode();
-	ApplyResolution();
-	ApplyBrightness();
+	for (const TPair<EInputActionType, FEnhancedActionKeyMapping>& LoadedMapping : LoadData.ActionKeyMap)
+	{
+		ApplyMappingKey(LoadedMapping.Key, LoadedMapping.Value.Key);
+	}
 }
 
 void USLUserDataSubsystem::ApplyDefaultUserData()
@@ -118,19 +126,7 @@ bool USLUserDataSubsystem::UpdateMappingKey(EInputActionType TargetType, const F
 		return false;
 	}
 
-	if (ActionKeyMap.Contains(TargetType))
-	{
-		const UInputAction* TargetAction = ActionKeyMap[TargetType].Action;
-		FKey OriginKey = ActionKeyMap[TargetType].Key;
-
-		ActionKeyMap[TargetType].Key = KeyValue;
-
-		KeySet.Remove(OriginKey);
-		KeySet.Add(KeyValue);
-
-		PlayerIMC->UnmapKey(TargetAction, OriginKey);
-		PlayerIMC->MapKey(TargetAction, KeyValue);
-	}
+	ApplyMappingKey(TargetType, KeyValue);
 
 	return true;
 }
@@ -152,7 +148,7 @@ TSet<FKey> USLUserDataSubsystem::GetKeySet() const
 
 void USLUserDataSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	Collection.InitializeDependency<USLSaveGameSubsystem>();
+	Collection.InitializeDependency<USLUISubsystem>();
 	Super::Initialize(Collection);
 
 	CheckValidOfUserDataSettings();
@@ -202,6 +198,23 @@ void USLUserDataSubsystem::ApplyWindowMode()
 	GameUserSettings->ApplySettings(false);
 }
 
+void USLUserDataSubsystem::ApplyMappingKey(EInputActionType TargetType, const FKey& KeyValue)
+{
+	if (ActionKeyMap.Contains(TargetType))
+	{
+		const UInputAction* TargetAction = ActionKeyMap[TargetType].Action;
+		FKey OriginKey = ActionKeyMap[TargetType].Key;
+
+		ActionKeyMap[TargetType].Key = KeyValue;
+
+		KeySet.Remove(OriginKey);
+		KeySet.Add(KeyValue);
+
+		PlayerIMC->UnmapKey(TargetAction, OriginKey);
+		PlayerIMC->MapKey(TargetAction, KeyValue);
+	}
+}
+
 void USLUserDataSubsystem::LoadKeyMapFromIMC()
 {
 	checkf(IsValid(PlayerIMC), TEXT("IMC is invalid"));
@@ -212,33 +225,6 @@ void USLUserDataSubsystem::LoadKeyMapFromIMC()
 	{
 		AddMappingDataToKeyMap(ActionKeyMapping);
 	}
-}
-
-void USLUserDataSubsystem::LoadWidgetDataFromSaveSubSystem()
-{
-	UGameInstance* GameInstance = GetGameInstance();
-
-	check(GameInstance);
-
-	USLSaveGameSubsystem* SaveSubSystem = GameInstance->GetSubsystem<USLSaveGameSubsystem>();
-
-	check(SaveSubSystem);
-
-	check(SaveSubSystem->GetCurrentSaveGame());
-
-	FWidgetSaveData WidgetData = SaveSubSystem->GetCurrentWidgetDataByRef();
-
-	KeySet = WidgetData.KeySet;
-	ActionKeyMap = WidgetData.ActionKeyMap;
-	LanguageType = WidgetData.LanguageType;
-	BgmVolume = WidgetData.BgmVolume;
-	EffectVolume = WidgetData.EffectVolume;
-	Brightness = WidgetData.Brightness;
-	WindowMode = WidgetData.WindowMode;
-	ScreenWidth = WidgetData.ScreenWidth;
-	ScreenHeight = WidgetData.ScreenHeight;
-
-	UE_LOG(LogTemp, Warning, TEXT("Load Success Widget Data"));
 }
 
 void USLUserDataSubsystem::AddMappingDataToKeyMap(const FEnhancedActionKeyMapping& ActionKeyMapping)

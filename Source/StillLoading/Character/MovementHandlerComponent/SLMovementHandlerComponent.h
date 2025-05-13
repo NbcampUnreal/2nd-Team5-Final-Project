@@ -5,6 +5,9 @@
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
+class UBattleComponent;
+class UAnimationMontageComponent;
+class ASLCharacter;
 class ASLBaseCharacter;
 struct FInputActionValue;
 enum class EInputActionType : uint8;
@@ -63,9 +66,16 @@ private:
 	EGameCameraType GetCurrentCameraType() const;
 
 	UPROPERTY()
-	TObjectPtr<ASLBaseCharacter> OwnerCharacter;
-	UPROPERTY()
 	float InputBufferDuration = 0.3f;
+
+	UPROPERTY()
+	TObjectPtr<ASLCharacter> OwnerCharacter;
+	UPROPERTY()
+	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
+	UPROPERTY()
+	TObjectPtr<UBattleComponent> CachedBattleComponent;
+
+	EMovementMode CachedMovementMode = MOVE_Walking;
 
 	int32 CurrentIndex = 0; // Test용
 };

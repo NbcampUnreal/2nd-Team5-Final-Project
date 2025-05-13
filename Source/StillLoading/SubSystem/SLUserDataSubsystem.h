@@ -13,6 +13,7 @@ class UInputMappingContext;
 class UGameUserSettings;
 class URendererSettings;
 class USLUISubsystem;
+struct FWidgetSaveData;
 
 UCLASS()
 class STILLLOADING_API USLUserDataSubsystem : public UGameInstanceSubsystem
@@ -20,7 +21,7 @@ class STILLLOADING_API USLUserDataSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
-	void ApplyLoadedUserData();
+	void ApplyLoadedUserData(const FWidgetSaveData& LoadData);
 	void ApplyDefaultUserData();
 
 	void SetLanguage(ESLLanguageType NewType);
@@ -50,10 +51,9 @@ private:
 	void ApplyResolution();
 	void ApplyBrightness();
 	void ApplyWindowMode();
+	void ApplyMappingKey(EInputActionType TargetType, const FKey& KeyValue);
 
 	void LoadKeyMapFromIMC();
-	void LoadWidgetDataFromSaveSubSystem();
-
 	void AddMappingDataToKeyMap(const FEnhancedActionKeyMapping& ActionKeyMapping);
 
 	void CheckValidOfGameUserSettings();
