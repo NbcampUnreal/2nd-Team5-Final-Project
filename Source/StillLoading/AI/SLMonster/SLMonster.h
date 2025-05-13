@@ -22,13 +22,16 @@ protected:
     void Attack();
 
     UPROPERTY(EditAnywhere, Category = "AI")
-    float AttackRange = 130.0f;
+    float AttackRange = 180.0f;
 
     UPROPERTY(EditAnywhere, Category = "AI")
     float AttackCooldown = 2.5f;
 
     float LastAttackTime;
 
-    APawn* TargetPlayer;
+    UPROPERTY()
+    AActor* TargetActor;
+
+    
 
 };

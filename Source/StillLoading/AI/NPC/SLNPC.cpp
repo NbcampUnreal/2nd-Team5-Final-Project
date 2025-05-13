@@ -1,33 +1,29 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SLMonster.h"
-#include "Kismet/GameplayStatics.h"
+
+#include "AI/NPC/SLNPC.h"
+#include "Controller/SLNPCAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "EngineUtils.h"
-#include "GenericTeamAgentInterface.h"
-#include "Controller/SLEnemyAIController.h"
 
-
-ASLMonster::ASLMonster()
+ASLNPC::ASLNPC()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-
 }
 
-void ASLMonster::BeginPlay()
+void ASLNPC::BeginPlay()
 {
 	Super::BeginPlay();
 	LastAttackTime = 0.0f;
-    GetCharacterMovement()->MaxWalkSpeed = 650.f;
+	GetCharacterMovement()->MaxWalkSpeed = 650.0f;
 	
 }
 
-void ASLMonster::Tick(float DeltaTime)
+void ASLNPC::Tick(float DeltaTime)
 {
-    Super::Tick(DeltaTime);
+	Super::Tick(DeltaTime);
 
     AActor* ClosestEnemy = nullptr;
     float ClosestDistance = MAX_FLT;
@@ -43,7 +39,7 @@ void ASLMonster::Tick(float DeltaTime)
         IGenericTeamAgentInterface* OtherTeamAgent = Cast<IGenericTeamAgentInterface>(OtherController);
         if (!OtherTeamAgent) continue;
 
-        ASLEnemyAIController* MyController = Cast<ASLEnemyAIController>(GetController());
+        ASLNPCAIController* MyController = Cast<ASLNPCAIController>(GetController());
         if (!MyController) continue;
 
         ETeamAttitude::Type Attitude = MyController->GetTeamAttitudeTowards(*OtherPawn);
@@ -74,14 +70,15 @@ void ASLMonster::Tick(float DeltaTime)
     }
 }
 
-
-    
-
-void ASLMonster::Attack()
+void ASLNPC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-    TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
-    AnimInstance->SetIsAttacking(true);
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
 }
 
-
+void ASLNPC::Attack()
+{
+	TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
+	AnimInstance->SetIsAttacking(true);
+}
 

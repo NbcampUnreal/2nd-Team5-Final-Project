@@ -49,7 +49,10 @@ void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 	{
 		if (Stimulus.WasSuccessfullySensed() && Actor)
 		{
-			BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
+			if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile)
+			{
+				BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
+			}
 		}
 		else
 		{
