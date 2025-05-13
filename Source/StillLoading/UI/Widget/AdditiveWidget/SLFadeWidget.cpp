@@ -24,19 +24,25 @@ void USLFadeWidget::ActivateWidget(ESLChapterType ChapterType)
 
 	if (bIsFadeIn)
 	{
+		if (IsPlayingAnimation())
+		{
+			StopAllAnimations();
+		}
 		PlayAnimation(OpenAnim);
 	}
 	else
 	{
+		if (IsPlayingAnimation())
+		{
+			StopAllAnimations();
+		}
 		PlayAnimation(CloseAnim);
 	}
 }
 
-void USLFadeWidget::DeactivateWidget()
+void USLFadeWidget::SetIsFadeIn(bool FadeValue)
 {
-	Super::DeactivateWidget();
-
-	bIsFadeIn = !bIsFadeIn;
+	bIsFadeIn = FadeValue;
 }
 
 void USLFadeWidget::OnEndedOpenAnim()

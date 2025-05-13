@@ -21,7 +21,7 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character|Movement")
 	float LastLandTime = 0.0f;
-	
+  
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
 

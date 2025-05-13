@@ -32,5 +32,5 @@ void USLIntroWidget::OnEndedOpenAnim()
 
 void USLIntroWidget::OnEndedCloseAnim()
 {
-	//UGameplayStatics::OpenLevel(GetWorld(), "TestTitleLevel");
+	UGameplayStatics::OpenLevel(GetWorld(), "TestTitleLevel");
 }

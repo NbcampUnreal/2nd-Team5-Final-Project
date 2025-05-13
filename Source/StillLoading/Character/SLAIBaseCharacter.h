@@ -51,9 +51,9 @@ class STILLLOADING_API ASLAIBaseCharacter : public ASLBaseCharacter
 public:
 	// --- Constructor ---
 	ASLAIBaseCharacter();
+	virtual void BeginPlay() override;
 
 	// --- Overrides ---
-	virtual void BeginPlay() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	// --- Getters (Collision) ---

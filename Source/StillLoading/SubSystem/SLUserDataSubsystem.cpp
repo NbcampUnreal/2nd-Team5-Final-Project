@@ -6,11 +6,13 @@
 #include "Engine/RendererSettings.h"
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/SLUserDataSettings.h"
+#include "SaveLoad/SLSaveGameSubsystem.h"
 #include "InputMappingContext.h"
 
 void USLUserDataSubsystem::ApplyLoadedUserData()
 {
 	// TODO : Load User Data From SaveSubsystem
+	LoadWidgetDataFromSaveSubSystem();
 
 	ApplyLanguageMode();
 	ApplyBgmVolume();
@@ -143,8 +145,14 @@ const TMap<EInputActionType, FEnhancedActionKeyMapping>& USLUserDataSubsystem::G
 	return ActionKeyMap;
 }
 
+TSet<FKey> USLUserDataSubsystem::GetKeySet() const
+{
+	return KeySet;
+}
+
 void USLUserDataSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+	Collection.InitializeDependency<USLSaveGameSubsystem>();
 	Super::Initialize(Collection);
 
 	CheckValidOfUserDataSettings();
@@ -204,6 +212,33 @@ void USLUserDataSubsystem::LoadKeyMapFromIMC()
 	{
 		AddMappingDataToKeyMap(ActionKeyMapping);
 	}
+}
+
+void USLUserDataSubsystem::LoadWidgetDataFromSaveSubSystem()
+{
+	UGameInstance* GameInstance = GetGameInstance();
+
+	check(GameInstance);
+
+	USLSaveGameSubsystem* SaveSubSystem = GameInstance->GetSubsystem<USLSaveGameSubsystem>();
+
+	check(SaveSubSystem);
+
+	check(SaveSubSystem->GetCurrentSaveGame());
+
+	FWidgetSaveData WidgetData = SaveSubSystem->GetCurrentWidgetDataByRef();
+
+	KeySet = WidgetData.KeySet;
+	ActionKeyMap = WidgetData.ActionKeyMap;
+	LanguageType = WidgetData.LanguageType;
+	BgmVolume = WidgetData.BgmVolume;
+	EffectVolume = WidgetData.EffectVolume;
+	Brightness = WidgetData.Brightness;
+	WindowMode = WidgetData.WindowMode;
+	ScreenWidth = WidgetData.ScreenWidth;
+	ScreenHeight = WidgetData.ScreenHeight;
+
+	UE_LOG(LogTemp, Warning, TEXT("Load Success Widget Data"));
 }
 
 void USLUserDataSubsystem::AddMappingDataToKeyMap(const FEnhancedActionKeyMapping& ActionKeyMapping)

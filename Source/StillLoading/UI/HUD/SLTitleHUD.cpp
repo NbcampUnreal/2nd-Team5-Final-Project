@@ -10,7 +10,7 @@ void ASLTitleHUD::OnStartedHUD()
 	Super::OnStartedHUD();
 
 	CheckValidOfUISubsystem();
-	UISubsystem->AddAdditveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
+	UISubsystem->ActivateFade(true);
 }
 
 void ASLTitleHUD::InitLevelWidget()

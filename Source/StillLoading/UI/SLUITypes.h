@@ -54,6 +54,20 @@ enum class ESLInputModeType : uint8
 	EIM_GameAndUI
 };
 
+UENUM(BlueprintType)
+enum class ESLGameMapType : uint8
+{
+	EGM_None = 0,
+	EGM_Mini1,
+	EGM_Mini2,
+	EGM_Mini3,
+	EGM_Mini4,
+	EGM_Mini5,
+	EGM_DebugRoom,
+	EGM_Boss,
+	EGM_Max
+};
+
 UCLASS()
 class STILLLOADING_API USLUITypes : public UObject
 {

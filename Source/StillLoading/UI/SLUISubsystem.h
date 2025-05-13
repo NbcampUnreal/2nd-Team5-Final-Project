@@ -21,6 +21,11 @@ public:
 	void SetLanguageToUI(ESLLanguageType LanguageType);
 	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 
+	void ActivateFade(bool bIsFadeIn);
+	void ActivateNotify(const FText& NotifyText);
+	//void ActivateStory();
+	//void ActivateTalk();
+
 	UFUNCTION(BlueprintCallable)
 	void AddAdditveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveCurrentAdditiveWidget();
@@ -42,11 +47,11 @@ private:
 
 	void SetInputModeAndCursor();
 
-	bool CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
-	bool CheckValidOfUISettings();
+	void CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
+	void CheckValidOfUISettings();
 
-	bool CheckValidOfSoundSource(ESLUISoundType SoundType);
-	bool CheckValidOfImageDataTable();
+	void CheckValidOfSoundSource(ESLUISoundType SoundType);
+	void CheckValidOfImageDataTable();
 
 private:
 	UPROPERTY()
