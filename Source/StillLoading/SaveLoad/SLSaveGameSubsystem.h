@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "SLSaveDataStructs.h"
 #include "SLSaveGameSubsystem.generated.h"
 
 class USLSaveGame;
@@ -15,6 +16,11 @@ class STILLLOADING_API USLSaveGameSubsystem : public UGameInstanceSubsystem
 
 public:
 
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+    virtual void Deinitialize() override;
+
+ 
     UFUNCTION(BlueprintCallable)
     void SaveGame();
 
@@ -27,9 +33,14 @@ public:
     UFUNCTION(BlueprintCallable)
     USLSaveGame* GetCurrentSaveGame() const { return CurrentSaveGame; }
 
+    UFUNCTION()
+    const FWidgetSaveData& GetCurrentWidgetDataByRef() const;
 
 
 private:
+    UFUNCTION()
+    void SaveWidgetData();
+
 
     UPROPERTY()
     USLSaveGame* CurrentSaveGame;

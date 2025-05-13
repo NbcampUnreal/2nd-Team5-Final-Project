@@ -39,6 +39,7 @@ public:
 
 	bool UpdateMappingKey(EInputActionType TargetType, const FKey& KeyValue);
 	const TMap<EInputActionType, FEnhancedActionKeyMapping>& GetActionKeyMap();
+	TSet<FKey> GetKeySet() const;
 
 private:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -51,12 +52,15 @@ private:
 	void ApplyWindowMode();
 
 	void LoadKeyMapFromIMC();
+	void LoadWidgetDataFromSaveSubSystem();
+
 	void AddMappingDataToKeyMap(const FEnhancedActionKeyMapping& ActionKeyMapping);
 
 	void CheckValidOfGameUserSettings();
 	void CheckValidOfRendererSettings();
 	void CheckValidOfUISubsystem();
 	void CheckValidOfUserDataSettings();
+	
 
 private:
 	UPROPERTY()
