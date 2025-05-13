@@ -10,9 +10,7 @@ class ASLBaseCharacter;
 struct FAIStimulus;
 class UAISenseConfig_Damage;
 class UAISenseConfig_Sight;
-/**
- * 
- */
+
 UCLASS()
 class STILLLOADING_API ASLBaseAIController : public ADetourCrowdAIController
 {

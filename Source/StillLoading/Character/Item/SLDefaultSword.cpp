@@ -1,5 +1,4 @@
 #include "SLDefaultSword.h"
-
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Components/BoxComponent.h"
 

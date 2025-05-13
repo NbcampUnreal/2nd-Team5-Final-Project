@@ -3,18 +3,18 @@
 
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUISettings.h"
-#include "UI/Widget/SLBaseWidget.h"
-#include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "GameFramework/GameUserSettings.h"
+#include "UI/Widget/SLBaseWidget.h"
+#include "UI/Widget/AdditiveWidget/SLFadeWidget.h"
+#include "UI/Widget/AdditiveWidget/SLNotifyWidget.h"
+#include "UI/Widget/AdditiveWidget/SLStoryWidget.h"
+#include "UI/Widget/AdditiveWidget/SLTalkWidget.h"
+#include "Components/AudioComponent.h"
 
 void USLUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	/*UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
-	GameUserSettings->SetFullscreenMode(EWindowMode::Fullscreen);
-	GameUserSettings->ApplySettings(false);*/
 }
 
 void USLUISubsystem::SetInputModeAndCursor()
@@ -90,12 +90,25 @@ void USLUISubsystem::SetLevelInputMode(ESLInputModeType InputModeType, bool bIsV
 	bIsVisibleLevelCursor = bIsVisibleMouseCursor;
 }
 
+void USLUISubsystem::ActivateFade(bool bIsFadeIn)
+{
+	ESLAdditiveWidgetType FadeType = ESLAdditiveWidgetType::EAW_FadeWidget;
+	CheckValidOfAdditiveWidget(FadeType);
+	Cast<USLFadeWidget>(AdditiveWidgetMap[FadeType])->SetIsFadeIn(bIsFadeIn);
+	AddAdditveWidget(FadeType);
+}
+
+void USLUISubsystem::ActivateNotify(const FText& NotifyText)
+{
+	ESLAdditiveWidgetType NotifyType = ESLAdditiveWidgetType::EAW_NotifyWidget;
+	CheckValidOfAdditiveWidget(NotifyType);
+	Cast<USLNotifyWidget>(AdditiveWidgetMap[NotifyType])->UpdateNotifyText(NotifyText);
+	AddAdditveWidget(NotifyType);
+}
+
 void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
 {
-	if (!CheckValidOfAdditiveWidget(WidgetType))
-	{
-		return;
-	}
+	CheckValidOfAdditiveWidget(WidgetType);
 
 	if (!ActiveAdditiveWidgets.Contains(AdditiveWidgetMap[WidgetType]))
 	{
@@ -145,10 +158,7 @@ void USLUISubsystem::RemoveAllAdditveWidget()
 
 void USLUISubsystem::PlayUISound(ESLUISoundType SoundType)
 {
-	if (!CheckValidOfSoundSource(SoundType))
-	{
-		return;
-	}
+	CheckValidOfSoundSource(SoundType);
 
 	if (!IsValid(AudioComp))
 	{
@@ -182,11 +192,7 @@ const ESLLanguageType USLUISubsystem::GetCurrentLanguage() const
 
 const UDataTable* USLUISubsystem::GetImageDataTable()
 {
-	if (!CheckValidOfImageDataTable())
-	{
-		return nullptr;
-	}
-
+	CheckValidOfImageDataTable();
 	return WidgetImageData;
 }
 
@@ -200,113 +206,67 @@ void USLUISubsystem::SetEffectVolume(float VolumeValue)
 	}
 }
 
-bool USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType)
+void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType)
 {
 	if (AdditiveWidgetMap.Contains(WidgetType))
 	{
 		if (IsValid(AdditiveWidgetMap[WidgetType]))
 		{
-			return true;
+			return;
 		}
 	}
 
-	if (!CheckValidOfUISettings())
-	{
-		return false;
-	}
-
-	if (!UISettings->WidgetClassMap.Contains(WidgetType))
-	{
-		return false;
-	}
+	CheckValidOfUISettings();
+	checkf(UISettings->WidgetClassMap.Contains(WidgetType), TEXT("Widget Class Map is not contains widgettype"));
 
 	UClass* WidgetClass = UISettings->WidgetClassMap[WidgetType].LoadSynchronous();
-
-	if (!IsValid(WidgetClass))
-	{
-		return false;
-	}
+	checkf(IsValid(WidgetClass), TEXT("WidgetClass is invalid"));
 
 	USLBaseWidget* TempWidget = CreateWidget<USLBaseWidget>(GetGameInstance(), WidgetClass);
-
-	if (!IsValid(TempWidget))
-	{
-		return false;
-	}
+	checkf(IsValid(TempWidget), TEXT("Fail Create Widget"));
 
 	TempWidget->InitWidget(this, CurrentChapter);
 	AdditiveWidgetMap.Add(WidgetType, TempWidget);
-	
-	return true;
 }
 
-bool USLUISubsystem::CheckValidOfUISettings()
+void USLUISubsystem::CheckValidOfUISettings()
 {
 	if (IsValid(UISettings))
 	{
-		return true;
+		return;
 	}
 
 	UISettings = GetDefault<USLUISettings>();
-
-	if (!IsValid(UISettings))
-	{
-		return false;
-	}
-
-	return true;
+	checkf(IsValid(UISettings), TEXT("UI Settings is invalid"));
 }
 
-bool USLUISubsystem::CheckValidOfSoundSource(ESLUISoundType SoundType)
+void USLUISubsystem::CheckValidOfSoundSource(ESLUISoundType SoundType)
 {
 	if (UISoundMap.Contains(SoundType))
 	{
 		if (IsValid(UISoundMap[SoundType]))
 		{
-			return true;
+			return;
 		}
 	}
 
-	if (!CheckValidOfUISettings())
-	{
-		return false;
-	}
-
-	if (!UISettings->WidgetSoundMap.Contains(SoundType))
-	{
-		return false;
-	}
+	CheckValidOfUISettings();
+	checkf(UISettings->WidgetSoundMap.Contains(SoundType), TEXT("Widget Sound Map is not contains soundtype"));
 
 	USoundBase* SoundSource = UISettings->WidgetSoundMap[SoundType].LoadSynchronous();
-	
-	if (!IsValid(SoundSource))
-	{
-		return false;
-	}
+	checkf(IsValid(SoundSource), TEXT("SoundSource is invalid"));
 
 	UISoundMap.Add(SoundType, SoundSource);
-
-	return true;
 }
 
-bool USLUISubsystem::CheckValidOfImageDataTable()
+void USLUISubsystem::CheckValidOfImageDataTable()
 {
 	if (IsValid(WidgetImageData))
 	{
-		return true;
+		return;
 	}
 
-	if (!CheckValidOfUISettings())
-	{
-		return false;
-	}
-
+	CheckValidOfUISettings();
 	WidgetImageData = UISettings->WidgetDataTable.LoadSynchronous();
-
-	if (!IsValid(WidgetImageData))
-	{
-		return false;
-	}
-
-	return true;
+	checkf(IsValid(WidgetImageData), TEXT("Widget ImageData is invalid"));
 }

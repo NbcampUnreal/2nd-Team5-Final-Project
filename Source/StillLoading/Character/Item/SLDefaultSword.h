@@ -20,7 +20,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> BoxComponent;
-
+  
 private:
 	UFUNCTION()
 	void OnBoxOverlap(
@@ -31,7 +31,4 @@ private:
 		bool bFromSweep,
 		const FHitResult& SweepResult
 		);
-
-	
-	
 };

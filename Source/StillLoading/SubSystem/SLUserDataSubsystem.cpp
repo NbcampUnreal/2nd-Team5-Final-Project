@@ -6,18 +6,28 @@
 #include "Engine/RendererSettings.h"
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/SLUserDataSettings.h"
+#include "SaveLoad/SLSaveGameSubsystem.h"
 #include "InputMappingContext.h"
+#include "SaveLoad/SLSaveDataStructs.h"
 
-void USLUserDataSubsystem::ApplyLoadedUserData()
+void USLUserDataSubsystem::ApplyLoadedUserData(const FWidgetSaveData& LoadData)
 {
-	// TODO : Load User Data From SaveSubsystem
+	SetLanguage(LoadData.LanguageType);
+	SetBgmVolume(LoadData.BgmVolume);
+	SetEffectVolume(LoadData.EffectVolume);
+	SetWindowMode(LoadData.WindowMode);
+	SetScreenSize({ LoadData.ScreenWidth, LoadData.ScreenHeight });
+	SetBrightness(LoadData.Brightness);
+	
+	if (ActionKeyMap.IsEmpty())
+	{
+		LoadKeyMapFromIMC();
+	}
 
-	ApplyLanguageMode();
-	ApplyBgmVolume();
-	ApplyEffectVolume();
-	ApplyWindowMode();
-	ApplyResolution();
-	ApplyBrightness();
+	for (const TPair<EInputActionType, FEnhancedActionKeyMapping>& LoadedMapping : LoadData.ActionKeyMap)
+	{
+		ApplyMappingKey(LoadedMapping.Key, LoadedMapping.Value.Key);
+	}
 }
 
 void USLUserDataSubsystem::ApplyDefaultUserData()
@@ -116,19 +126,7 @@ bool USLUserDataSubsystem::UpdateMappingKey(EInputActionType TargetType, const F
 		return false;
 	}
 
-	if (ActionKeyMap.Contains(TargetType))
-	{
-		const UInputAction* TargetAction = ActionKeyMap[TargetType].Action;
-		FKey OriginKey = ActionKeyMap[TargetType].Key;
-
-		ActionKeyMap[TargetType].Key = KeyValue;
-
-		KeySet.Remove(OriginKey);
-		KeySet.Add(KeyValue);
-
-		PlayerIMC->UnmapKey(TargetAction, OriginKey);
-		PlayerIMC->MapKey(TargetAction, KeyValue);
-	}
+	ApplyMappingKey(TargetType, KeyValue);
 
 	return true;
 }
@@ -143,8 +141,14 @@ const TMap<EInputActionType, FEnhancedActionKeyMapping>& USLUserDataSubsystem::G
 	return ActionKeyMap;
 }
 
+TSet<FKey> USLUserDataSubsystem::GetKeySet() const
+{
+	return KeySet;
+}
+
 void USLUserDataSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+	Collection.InitializeDependency<USLUISubsystem>();
 	Super::Initialize(Collection);
 
 	CheckValidOfUserDataSettings();
@@ -192,6 +196,23 @@ void USLUserDataSubsystem::ApplyWindowMode()
 	CheckValidOfGameUserSettings();
 	GameUserSettings->SetFullscreenMode((EWindowMode::Type)WindowMode);
 	GameUserSettings->ApplySettings(false);
+}
+
+void USLUserDataSubsystem::ApplyMappingKey(EInputActionType TargetType, const FKey& KeyValue)
+{
+	if (ActionKeyMap.Contains(TargetType))
+	{
+		const UInputAction* TargetAction = ActionKeyMap[TargetType].Action;
+		FKey OriginKey = ActionKeyMap[TargetType].Key;
+
+		ActionKeyMap[TargetType].Key = KeyValue;
+
+		KeySet.Remove(OriginKey);
+		KeySet.Add(KeyValue);
+
+		PlayerIMC->UnmapKey(TargetAction, OriginKey);
+		PlayerIMC->MapKey(TargetAction, KeyValue);
+	}
 }
 
 void USLUserDataSubsystem::LoadKeyMapFromIMC()

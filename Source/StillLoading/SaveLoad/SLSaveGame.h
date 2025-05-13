@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "SLSaveDataStructs.h"
 #include "SLSaveGame.generated.h"
+
 
 /**
  * 
@@ -15,6 +17,7 @@ class STILLLOADING_API USLSaveGame : public USaveGame
 	GENERATED_BODY()
 	
 public:
+
 	USLSaveGame();
 
 	//저장할 데이터 변수들 추가하세요
@@ -23,5 +26,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) //테스트용 임시 변수
 	int CurrentChapter;
+
+	UPROPERTY()
+	FWidgetSaveData WidgetSaveData;
 
 };

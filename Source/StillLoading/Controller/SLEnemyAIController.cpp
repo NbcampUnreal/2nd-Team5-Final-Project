@@ -2,11 +2,13 @@
 
 
 #include "SLEnemyAIController.h"
+#include "Perception/AISenseConfig_Sight.h"
 
 
 ASLEnemyAIController::ASLEnemyAIController()
 {
 	AAIController::SetGenericTeamId(FGenericTeamId(2));
+	AISenseConfig_Sight->SightRadius = 2500.f;
 }
 
 ETeamAttitude::Type ASLEnemyAIController::GetTeamAttitudeTowards(const AActor& Other) const
