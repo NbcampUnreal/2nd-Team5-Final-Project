@@ -17,6 +17,11 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void Landed(const FHitResult& Hit) override;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|Movement")
+	float LastLandTime = 0.0f;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
 
