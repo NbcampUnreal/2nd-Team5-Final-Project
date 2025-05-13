@@ -152,6 +152,7 @@ TSet<FKey> USLUserDataSubsystem::GetKeySet() const
 
 void USLUserDataSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+	Collection.InitializeDependency<USLSaveGameSubsystem>();
 	Super::Initialize(Collection);
 
 	CheckValidOfUserDataSettings();
