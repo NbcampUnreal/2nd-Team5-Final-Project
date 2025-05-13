@@ -98,5 +98,8 @@ protected:
 
 	// --- Anim Data | Combat Specific ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Combat Specific")
-    EHitDirection HitDirectionVector; 
+    EHitDirection HitDirectionVector;
+
+	UFUNCTION()
+	void AnimNotify_AttackEnd();
 };
