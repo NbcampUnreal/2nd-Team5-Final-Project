@@ -45,7 +45,7 @@ void UAnimationMontageComponent::OnMontageBlendingOut(UAnimMontage* Montage, boo
 
 void UAnimationMontageComponent::PlayMontage(UAnimMontage* Montage, FName Section)
 {
-	OwnerCharacter->GetCharacterMovement()->DisableMovement();
+	//OwnerCharacter->GetCharacterMovement()->DisableMovement();
 	
 	if (Montage)
 	{
