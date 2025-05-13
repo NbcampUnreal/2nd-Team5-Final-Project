@@ -62,6 +62,12 @@ void UInputBufferComponent::OnIMCActionStarted(EInputActionType ActionType)
 bool UInputBufferComponent::CanConsumeInput() const
 {
 	//TODO::동작 조건 정의 필요
+
+	// 공격 연속 3회 -> 공격1 공격2 공격3
+	// 공격1 방어 공격1
+
+	
+	
 	return true;
 }
 

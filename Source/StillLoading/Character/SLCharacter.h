@@ -16,4 +16,18 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<AActor> SwordClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<AActor> ShieldClass;
+
+private:
+	UPROPERTY()
+	TObjectPtr<AActor> Sword;
+	UPROPERTY()
+	TObjectPtr<AActor> Shield;
+
+	void AttachItemToHand(AActor* ItemActor, const FName SocketName) const;
 };
