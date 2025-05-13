@@ -24,23 +24,7 @@ void ASLReactiveObjectStatue::BeginPlay()
 	}
 }
 
-//void ASLReactiveObjectStatue::RotationStatue(const ASLBaseCharacter* InCharacter)
-//{
-//	if (RotationStates.Num() == 0) return;
-//
-//	CurrentRotationIndex = (CurrentRotationIndex + 1) % RotationStates.Num();
-//
-//	const FRotator& NextRotation = RotationStates[CurrentRotationIndex];
-//
-//	SetActorRotation(NextRotation);
-//}
-//
-//void ASLReactiveObjectStatue::LuminousStatue(const ASLBaseCharacter* InCharacter)
-//{
-//
-//}
-
-void ASLReactiveObjectStatue::OnReacted(const ASLBaseCharacter* InCharacter)
+void ASLReactiveObjectStatue::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 
 }

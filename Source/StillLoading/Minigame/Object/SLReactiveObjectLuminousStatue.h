@@ -19,7 +19,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnReacted(const ASLBaseCharacter* InCharacter) override;
+	virtual void OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType TriggerType) override;
 	UFUNCTION()
 	void SetLightActive();
 private:

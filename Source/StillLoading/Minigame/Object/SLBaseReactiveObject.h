@@ -36,7 +36,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
-	virtual void OnReacted(const ASLBaseCharacter* InCharacter);
+	virtual void OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType TriggerType);
 
 	UFUNCTION()
 	void BeginOverlapCollision(

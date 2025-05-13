@@ -4,7 +4,7 @@
 #include "Minigame/Object/SLReactiveObjectRock.h"
 #include "StillLoading\Character\SLBaseCharacter.h"
 
-void ASLReactiveObjectRock::OnReacted(const ASLBaseCharacter* InCharacter)
+void ASLReactiveObjectRock::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	checkf(IsValid(InCharacter), TEXT("InCharacter is nullptr!"));
 

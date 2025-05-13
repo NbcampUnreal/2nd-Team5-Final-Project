@@ -20,7 +20,8 @@ public class StillLoading : ModuleRules
 			"MotionWarping",
 			"AnimGraphRuntime",
 			"GameplayTags",
-		});
+			"Niagara",
+        });
 
         PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 

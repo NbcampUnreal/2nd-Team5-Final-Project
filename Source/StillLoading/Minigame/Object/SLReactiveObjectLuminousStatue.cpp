@@ -39,7 +39,7 @@ void ASLReactiveObjectLuminousStatue::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ASLReactiveObjectLuminousStatue::OnReacted(const ASLBaseCharacter* InCharacter)
+void ASLReactiveObjectLuminousStatue::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	SetLightActive();
 	FTimerHandle handle;

@@ -33,7 +33,7 @@ void ASLBaseReactiveObject::TriggerReact(ASLBaseCharacter* InCharacter, const ES
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("OnReacted"));
-	OnReacted(InCharacter);
+	OnReacted(InCharacter, InComingType);
 }
 
 
@@ -44,7 +44,7 @@ void ASLBaseReactiveObject::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ASLBaseReactiveObject::OnReacted(const ASLBaseCharacter* InCharacter)
+void ASLBaseReactiveObject::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 
 }

@@ -22,7 +22,7 @@ class STILLLOADING_API ASLReactiveObjectStatue : public ASLBaseReactiveObject
 	
 public:
 	ASLReactiveObjectStatue();
-	virtual void OnReacted(const ASLBaseCharacter* InCharacter) override;
+	virtual void OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType TriggerType) override;
 	UFUNCTION()
 	void DeactivateStatue();
 protected:
