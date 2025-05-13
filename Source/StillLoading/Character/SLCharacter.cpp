@@ -34,6 +34,14 @@ void ASLCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+void ASLCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	LastLandTime = GetWorld()->GetTimeSeconds();
+	UE_LOG(LogTemp, Log, TEXT("Landed at time: %f"), LastLandTime);
+}
+
 void ASLCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketName) const
 {
 	if (!ItemActor || !GetMesh()) return;

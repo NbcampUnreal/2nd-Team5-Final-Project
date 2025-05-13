@@ -38,7 +38,7 @@ void UInputBufferComponent::ProcessBufferedInputs()
 
 	if (InputBuffer.Num() > 0)
 	{
-		EInputActionType NextInput = InputBuffer[0].Action;
+		const EInputActionType NextInput = InputBuffer[0].Action;
 
 		if (CanConsumeInput())
 		{
@@ -76,7 +76,7 @@ void UInputBufferComponent::ExecuteInput(EInputActionType Action)
 	AActor* Owner = GetOwner();
 	if (Owner)
 	{
-		UE_LOG(LogTemp, Log, TEXT("ExecuteInput: %d on Actor %s"), (int32)Action, *Owner->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("ExecuteInput: %d on Actor %s"), (int32)Action, *Owner->GetName());
 		if (UMovementHandlerComponent* MovementComp = GetOwner()->FindComponentByClass<UMovementHandlerComponent>())
 		{
 			MovementComp->Attack();
