@@ -34,5 +34,5 @@ private:
 	UPROPERTY(EditAnywhere)
 	int8 Location;// 위치
 	UPROPERTY(EditAnywhere)
-	int8 Radius;// Radius
+	int32 Radius;// Radius
 };

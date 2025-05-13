@@ -6,6 +6,7 @@
 #include "Chaos/ChaosEngineInterface.h"
 #include "GeometryCollection/GeometryCollectionActor.h"
 #include "GeometryCollection\GeometryCollectionComponent.h"
+//#include "DestructibleComponent"
 
 ASLReactiveObjectPortal::ASLReactiveObjectPortal()
 {
@@ -37,15 +38,23 @@ void ASLReactiveObjectPortal::OnReacted(const ASLBaseCharacter*, ESLReactiveTrig
         }
         else
         {
+            FVector HitLocation = GetActorLocation(); // 파괴 중심 위치
+            //float Radius = 100.0f; // 파괴 범위
+            float Strain = 500.0f; // 응력 강도
+            int32 PropagationDepth = 1; // 얼마나 깊이 퍼질지
+            float PropagationFactor = 0.5f; // 응력 전파 감쇠율
 
-            GeometryCollectionComp->ApplyRadiusDamage(
-                Strength,          // Damage
-                Location,          // 위치
-                Radius,            // Radius
-                Strength * 10.f,   // Impulse
-                false              // Full Damage
-            );
-            
+            if (GeometryCollectionComp)
+            {
+                GeometryCollectionComp->ApplyInternalStrain(
+                    0, // 첫 번째 조각부터
+                    HitLocation,
+                    Radius,
+                    PropagationDepth,
+                    PropagationFactor,
+                    Strain
+                );
+            }
         }
     }
 }
