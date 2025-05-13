@@ -10,7 +10,6 @@
 
 void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-    Collection.InitializeDependency<USLSaveGameSubsystem>();
     Super::Initialize(Collection);
     LoadGame();
 
