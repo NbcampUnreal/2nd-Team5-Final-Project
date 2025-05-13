@@ -6,17 +6,27 @@
 #include "Minigame/Object/SLReactiveObjectStatue.h"
 #include "SLReactiveObjectLuminousStatue.generated.h"
 
-/**
- * 
- */
+class UPointLightComponent;
+
 UCLASS()
 class STILLLOADING_API ASLReactiveObjectLuminousStatue : public ASLReactiveObjectStatue
 {
 	GENERATED_BODY()
-	
-protected:
-	virtual void OnReacted(const ASLBaseCharacter* InCharacter) override;
+public:
+	ASLReactiveObjectLuminousStatue();
+	UFUNCTION()
+	void TurnOffLight();
 
+protected:
+	virtual void BeginPlay() override;
+	virtual void OnReacted(const ASLBaseCharacter* InCharacter) override;
+	UFUNCTION()
+	void SetLightActive();
 private:
 
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UPointLightComponent> PointLightComp = nullptr;
+
+	float DeltaTime = 0;
+	FTimerHandle LightControlHandler;
 };

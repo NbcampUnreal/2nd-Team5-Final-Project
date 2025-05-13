@@ -37,16 +37,34 @@ protected:
 
 	UFUNCTION()
 	virtual void OnReacted(const ASLBaseCharacter* InCharacter);
+
+	UFUNCTION()
+	void BeginOverlapCollision(
+		UPrimitiveComponent* OverlappedComponent, 
+		AActor* OtherActor, 
+		UPrimitiveComponent* OtherComp, 
+		int32 OtherBodyIndex, 
+		bool bFromSweep, 
+		const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void EndOverlapCollision(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex
+	);
 private:
 	UFUNCTION()
 	bool IsTriggerTypeAllowed(ESLReactiveTriggerType InComingType);
 
 protected:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UStaticMeshComponent> StaticMeshComp = nullptr;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USphereComponent> CollisionComp = nullptr;
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Reactive")
 	ESLReactiveTriggerType TriggerType = ESLReactiveTriggerType::ERT_None;

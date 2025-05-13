@@ -6,6 +6,7 @@
 
 ASLReactiveObjectRotationStatue::ASLReactiveObjectRotationStatue()
 {
+	PrimaryActorTick.bCanEverTick = true;
 	RotationStates = {};
 }
 
@@ -16,6 +17,27 @@ void ASLReactiveObjectRotationStatue::OnReacted(const ASLBaseCharacter* InCharac
 	CurrentRotationIndex = (CurrentRotationIndex + 1) % RotationStates.Num();
 	
 	const FRotator& NextRotation = RotationStates[CurrentRotationIndex];
-	
-	SetActorRotation(NextRotation);
+	GetWorldTimerManager().SetTimer(
+		RotationHandle,
+		[this, NextRotation]
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Timer"));
+			FRotator MyRot = GetActorRotation();
+			float LerpRotZ = FMath::FInterpConstantTo(MyRot.Yaw, NextRotation.Yaw, GetWorld()->GetDeltaSeconds(), LerpSpeed);
+			MyRot.Yaw = LerpRotZ;
+			SetActorRotation(MyRot);
+			if (FMath::IsNearlyEqual(MyRot.Yaw, NextRotation.Yaw, KINDA_SMALL_NUMBER))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("End Timer"));
+
+				GetWorld()->GetTimerManager().ClearTimer(RotationHandle);
+			}
+		},
+		0.1f,
+		true);
+}
+
+void ASLReactiveObjectRotationStatue::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
 }
