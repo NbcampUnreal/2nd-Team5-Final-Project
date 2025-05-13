@@ -28,6 +28,8 @@ protected:
 	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
 
+	void InitOptionVariable();
+
 private:
 	// Language Funtion
 	UFUNCTION()

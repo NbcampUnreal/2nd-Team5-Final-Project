@@ -6,7 +6,9 @@
 #include "Character/Buffer/InputBufferComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
 {
@@ -21,6 +23,8 @@ void UMovementHandlerComponent::BeginPlay()
 	
 	if (OwnerCharacter)
 	{
+		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
+		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
 		BindIMCComponent();
 	}
 }
@@ -217,12 +221,14 @@ void UMovementHandlerComponent::Interact()
 
 void UMovementHandlerComponent::Attack()
 {
-	UE_LOG(LogTemp, Log, TEXT("Attack triggered"));
-	
-	// TODO: 무기/애니메이션 처리 연결
-	if (auto* BC = GetOwner()->FindComponentByClass<UBattleComponent>())
+	if (CachedMontageComponent)
 	{
-		BC->PerformAttack();
+		CachedMontageComponent->PlayAttackMontage(FName("Attack1"));
+	}
+	
+	if (CachedBattleComponent)
+	{
+		CachedBattleComponent->PerformAttack();
 	}
 	else
 	{
