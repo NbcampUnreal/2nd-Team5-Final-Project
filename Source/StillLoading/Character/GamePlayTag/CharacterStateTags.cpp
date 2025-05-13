@@ -1,0 +1,35 @@
+#include "CharacterStateTags.h"
+#include "GamePlayTag.h"
+
+// Hit Reactions
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Weak, "Character.HitReaction.Weak");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Medium, "Character.HitReaction.Medium");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Area, "Character.HitReaction.Area");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Airborne, "Character.HitReaction.Airborne");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Groggy, "Character.HitReaction.Groggy");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Knockback, "Character.HitReaction.Knockback");
+
+// Attacks
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Basic1, "Character.Attack.Basic1");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Basic2, "Character.Attack.Basic2");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Basic3, "Character.Attack.Basic3");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Special1, "Character.Attack.Special1");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Special2, "Character.Attack.Special2");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Special3, "Character.Attack.Special3");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Air1, "Character.Attack.Air1");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Air2, "Character.Attack.Air2");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airborn1, "Character.Attack.Airborn1");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Finisher1, "Character.Attack.Finisher1");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Finisher2, "Character.Attack.Finisher2");
+
+// Defense
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Defense_Block, "Character.Defense.Block");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Defense_Parry, "Character.Defense.Parry");
+
+// Movement
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Forward, "Character.Movement.Forward");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Backward, "Character.Movement.Backward");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Dash, "Character.Movement.Dash");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Jump, "Character.Movement.Jump");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Run, "Character.Movement.Run");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Walk, "Character.Movement.Walk");

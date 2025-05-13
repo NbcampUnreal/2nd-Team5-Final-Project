@@ -53,3 +53,26 @@ void ASLCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketName) c
 	);
 }
 
+/*/ 이동 시작 → 태그 추가
+    if (bIsMoving && !bWasMoving)
+    {
+        CharacterTags.AddTag(TAG_Character_Movement_Run);
+        UE_LOG(LogTemp, Log, TEXT("Run tag added (GAS-less)"));
+    }
+
+    // 이동 중지 → 태그 제거
+    if (!bIsMoving && bWasMoving)
+    {
+        CharacterTags.RemoveTag(TAG_Character_Movement_Run);
+        UE_LOG(LogTemp, Log, TEXT("Run tag removed (GAS-less)"));
+    }
+
+    bWasMoving = bIsMoving;
+
+    // 예시: 상태 체크
+    if (CharacterTags.HasTag(TAG_Character_Movement_Run))
+    {
+        UE_LOG(LogTemp, Log, TEXT("Character is running (GAS-less)"));
+    }
+
+ */

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "SLBaseCharacter.h"
 #include "SLCharacter.generated.h"
 
@@ -27,12 +28,16 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> ShieldClass;
-
 private:
+	UFUNCTION()
+	void AttachItemToHand(AActor* ItemActor, const FName SocketName) const;
+	
 	UPROPERTY()
 	TObjectPtr<AActor> Sword;
 	UPROPERTY()
 	TObjectPtr<AActor> Shield;
+	UPROPERTY()
+	FGameplayTagContainer CharacterTags;
 
-	void AttachItemToHand(AActor* ItemActor, const FName SocketName) const;
+	
 };
