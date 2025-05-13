@@ -3,6 +3,7 @@
 
 #include "UI/Widget/LevelWidget/SLMapListWidget.h"
 #include "UI/Widget/LevelWidget/SubWidget/SLMapElementWidget.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/UniformGridPanel.h"
@@ -40,6 +41,8 @@ void USLMapListWidget::OnClickedElement(ESLGameMapType TargetMapType)
 
 	checkf(MapElementDataMap.Contains(TargetMapType), TEXT("Element Data not contains TargetMapType"));
 	UE_LOG(LogTemp, Warning, TEXT("On Clicked %s"), *MapElementDataMap[TargetMapType].MapName.ToString());
+
+	UGameplayStatics::OpenLevel(GetWorld(), "TestInGameLevel");
 }
 
 void USLMapListWidget::ApplyImageData()
