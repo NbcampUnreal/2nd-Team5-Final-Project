@@ -3,19 +3,34 @@
 
 #include "SaveLoad/SLSaveGameSubsystem.h"
 #include "Kismet/GameplayStatics.h"
+#include "SubSystem/SLUserDataSubsystem.h"
 #include "SaveLoad/SLSaveGame.h"
+
+
+
+void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+    Super::Initialize(Collection);
+    LoadGame();
+
+}
+
+void USLSaveGameSubsystem::Deinitialize()
+{
+    Super::Deinitialize();
+    SaveGame();
+}
 
 
 
 void USLSaveGameSubsystem::SaveGame()
 {
-    if (!CurrentSaveGame)
-    {
-        CurrentSaveGame = NewObject<USLSaveGame>();
-        UE_LOG(LogTemp, Warning, TEXT("Create New Save Data"));
-    }
 
+    check(CurrentSaveGame);
+
+    SaveWidgetData();
     UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
+
     UE_LOG(LogTemp, Warning, TEXT("Save Data"));
 }
 
@@ -26,7 +41,7 @@ void USLSaveGameSubsystem::LoadGame()
         USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(SlotName, 0);
         CurrentSaveGame = Cast<USLSaveGame>(Loaded);
         UE_LOG(LogTemp, Warning, TEXT("Data Load Succeed"));
-
+        
     }
     else
     {
@@ -46,6 +61,43 @@ void USLSaveGameSubsystem::NewGame()
     UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
     UE_LOG(LogTemp, Warning, TEXT("Save Data"));
 }
+
+const FWidgetSaveData& USLSaveGameSubsystem::GetCurrentWidgetDataByRef() const
+{
+    check(CurrentSaveGame);
+    return CurrentSaveGame->WidgetSaveData;
+}
+
+
+
+void USLSaveGameSubsystem::SaveWidgetData()
+{ 
+
+    UGameInstance* GameInstance = GetGameInstance();
+
+    check(GameInstance);
+
+    USLUserDataSubsystem* UserDataSubSystem = GameInstance->GetSubsystem<USLUserDataSubsystem>();
+
+    check(UserDataSubSystem);
+
+    CurrentSaveGame->WidgetSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
+    CurrentSaveGame->WidgetSaveData.LanguageType = UserDataSubSystem->GetCurrentLanguage();
+    CurrentSaveGame->WidgetSaveData.BgmVolume = UserDataSubSystem->GetCurrentBgmVolume();
+    CurrentSaveGame->WidgetSaveData.EffectVolume = UserDataSubSystem->GetCurrentEffectVolume();
+    CurrentSaveGame->WidgetSaveData.Brightness = UserDataSubSystem->GetCurrentBrightness();
+
+    TPair<float,float> ScreenSize = UserDataSubSystem->GetCurrentScreenSize();
+    CurrentSaveGame->WidgetSaveData.ScreenWidth = ScreenSize.Key;
+    CurrentSaveGame->WidgetSaveData.ScreenHeight = ScreenSize.Value;
+
+    CurrentSaveGame->WidgetSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
+    CurrentSaveGame->WidgetSaveData.KeySet = UserDataSubSystem->GetKeySet();
+   
+
+    UE_LOG(LogTemp, Warning, TEXT("Save Widget Data"));
+}
+
 
 
 
