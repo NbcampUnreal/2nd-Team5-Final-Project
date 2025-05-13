@@ -43,6 +43,14 @@ enum class ECombatPhase : uint8
 	Phase_Final     UMETA(DisplayName = "Final Phase")
 };
 
+UENUM(BlueprintType)
+enum class EToggleDamageType : uint8
+{
+	CurrentEquippedWeapon,
+	LeftHand,
+	RightHand
+};
+
 UCLASS()
 class STILLLOADING_API ASLAIBaseCharacter : public ASLBaseCharacter
 {
@@ -63,6 +71,24 @@ public:
 	
 	UFUNCTION()
 	virtual void OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION(BlueprintCallable)
+	float GetMaxHealth() const { return MaxHealth; }
+
+	UFUNCTION(BlueprintCallable)
+	float GetCurrentHealth() const { return CurrentHealth; }
+
+	UFUNCTION(BlueprintCallable)
+	float GetAttackPower() const { return AttackPower;}
+	
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentHealth(float NewHealth);
+
+	UFUNCTION(BlueprintCallable)
+	void SetIsHitReaction(bool bNewIsHitReaction);
+
+	UFUNCTION(BlueprintCallable)
+	void SetAttackPower(float NewAttackPower);
 	
 protected:
 	// --- AI References ---
@@ -79,6 +105,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attributes")
 	float CurrentHealth; // 현재 체력
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	float AttackPower;
+	
 	// --- State Flags ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool IsHitReaction; // 피격 반응을 할건지 여부

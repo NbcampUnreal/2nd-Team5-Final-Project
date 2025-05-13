@@ -131,3 +131,18 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 		// 오버랩 되면 데미지 입힐거임
 	}
 }
+
+void ASLAIBaseCharacter::SetCurrentHealth(float NewHealth)
+{
+	CurrentHealth = NewHealth;
+}
+
+void ASLAIBaseCharacter::SetIsHitReaction(bool bNewIsHitReaction)
+{
+	IsHitReaction = bNewIsHitReaction;
+}
+
+void ASLAIBaseCharacter::SetAttackPower(float NewAttackPower)
+{
+	AttackPower = NewAttackPower;
+}
