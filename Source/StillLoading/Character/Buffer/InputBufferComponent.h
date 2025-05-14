@@ -43,12 +43,16 @@ private:
 	UFUNCTION()
 	void ExecuteInput(EInputActionType Action);
 	UFUNCTION()
-	bool CanConsumeInput() const;
+	bool CanConsumeInput(EInputActionType NextInput) const;
 
+	UPROPERTY()
+	TObjectPtr<ASLCharacter> OwnerCharacter;
 	UPROPERTY()
 	TArray<FBufferedInput> InputBuffer;
 	UPROPERTY()
-	float BufferDuration = 1.0f;
+	float BufferDuration = 5.0f;
 	UPROPERTY()
 	bool bBufferActive = false;
+	UPROPERTY()
+	int32 MaxInputBufferCount = 10;
 };

@@ -1,6 +1,6 @@
 #include "SLBattlePlayerState.h"
 
-#include "Character/DataAsset/CharacterStatData.h"
+#include "Character/DataAsset/CharacterStatDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 

@@ -1,5 +1,6 @@
 #include "InputBufferComponent.h"
 
+#include "Character/SLCharacter.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 
 UInputBufferComponent::UInputBufferComponent()
@@ -10,7 +11,11 @@ UInputBufferComponent::UInputBufferComponent()
 void UInputBufferComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (!OwnerCharacter)
+	{
+		OwnerCharacter = Cast<ASLCharacter>(GetOwner());
+	}
 }
 
 void UInputBufferComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -23,6 +28,12 @@ void UInputBufferComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UInputBufferComponent::AddBufferedInput(EInputActionType Action)
 {
+	if (InputBuffer.Num() >= MaxInputBufferCount)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("InputBufferComponent: Input buffer full."));
+		return;
+	}
+	
 	float CurrentTime = GetWorld()->GetTimeSeconds();
 	InputBuffer.Add({ Action, CurrentTime });
 }
@@ -36,25 +47,15 @@ void UInputBufferComponent::ProcessBufferedInputs()
 
 	InputBuffer = InputBuffer.FilterByPredicate([&](const FBufferedInput& Input)
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("InputBuffer Filtered: %d"), (int32)Input.Action);
 		return (CurrentTime - Input.Timestamp) <= BufferDuration;
 	});
-
-	FString BufferLog;
-	for (const FBufferedInput& Input : InputBuffer)
-	{
-		BufferLog += FString::Printf(TEXT("[%d, %.2f] "), static_cast<int32>(Input.Action), Input.Timestamp);
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("InputBuffer Contents: %s"), *BufferLog);
-
-	if (InputBuffer.IsEmpty()) // 추후에 문제 발생하면 지워야함
-		return;
 
 	if (InputBuffer.Num() > 0)
 	{
 		const EInputActionType NextInput = InputBuffer[0].Action;
 
-		if (CanConsumeInput())
+		if (CanConsumeInput(NextInput))
 		{
 			ExecuteInput(NextInput);
 			InputBuffer.RemoveAt(0);
@@ -73,14 +74,11 @@ void UInputBufferComponent::OnIMCActionStarted(EInputActionType ActionType)
 	AddBufferedInput(ActionType);
 }
 
-bool UInputBufferComponent::CanConsumeInput() const
+bool UInputBufferComponent::CanConsumeInput(EInputActionType NextInput) const
 {
 	//TODO::동작 조건 정의 필요
-
 	// 공격 연속 3회 -> 공격1 공격2 공격3
 	// 공격1 방어 공격1
-
-	
 	
 	return true;
 }
@@ -90,10 +88,9 @@ void UInputBufferComponent::ExecuteInput(EInputActionType Action)
 	AActor* Owner = GetOwner();
 	if (Owner)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ExecuteInput: %d on Actor %s"), (int32)Action, *Owner->GetName());
 		if (UMovementHandlerComponent* MovementComp = GetOwner()->FindComponentByClass<UMovementHandlerComponent>())
 		{
-			MovementComp->Attack();
+			MovementComp->HandleBufferedInput(Action);
 		}
 	}
 }

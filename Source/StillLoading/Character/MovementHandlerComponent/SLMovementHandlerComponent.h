@@ -5,6 +5,7 @@
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
+class UCombatHandlerComponent;
 class UBattleComponent;
 class UAnimationMontageComponent;
 class ASLCharacter;
@@ -15,21 +16,6 @@ enum class EInputActionType : uint8;
 class UInputAction;
 class UDynamicIMCComponent;
 
-UENUM(BlueprintType)
-enum class ECharacterState : uint8
-{
-	ECS_Idle UMETA(DisplayName = "Idle"),
-	ECS_Cinematic UMETA(DisplayName = "Cinematic"),
-	ECS_Moving UMETA(DisplayName = "Moving"),
-	ECS_Jumping UMETA(DisplayName = "Jumping"),
-	ECS_Falling UMETA(DisplayName = "Falling"),
-	ECS_Attacking UMETA(DisplayName = "Attacking"),
-	ECS_Dodging UMETA(DisplayName = "Dodging"),
-	ECS_Stunned UMETA(DisplayName = "Stunned"),
-	ECS_Dead UMETA(DisplayName = "Dead"),
-	ECS_InputLocked UMETA(DisplayName = "Input Locked")
-};
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UMovementHandlerComponent : public UActorComponent
 {
@@ -37,9 +23,13 @@ class STILLLOADING_API UMovementHandlerComponent : public UActorComponent
 
 public:
 	UMovementHandlerComponent();
-
+	
+	// 애니매이션 노티 확인용
 	UFUNCTION()
-	void Attack();
+	void OnAttackStageFinished(ECharacterMontageState AttackStage);
+	// 버퍼 출력 처리용
+	UFUNCTION()
+	void HandleBufferedInput(EInputActionType Action);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
 	float MinPitch = -80.f;
@@ -63,6 +53,8 @@ protected:
 	void BindIMCComponent();
 
 private:
+	UFUNCTION()
+	void Attack();
 	UFUNCTION()
 	void Look(const FVector2D& Value);
 	UFUNCTION()
@@ -91,8 +83,8 @@ private:
 	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
 	UPROPERTY()
 	TObjectPtr<UBattleComponent> CachedBattleComponent;
-
-	EMovementMode CachedMovementMode = MOVE_Walking;
+	UPROPERTY()
+	TObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
 
 	int32 CurrentIndex = 0; // Test용
 };
