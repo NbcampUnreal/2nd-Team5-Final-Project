@@ -29,6 +29,7 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	UFUNCTION()
 	void OnActionTriggered(EInputActionType ActionType, FInputActionValue Value);
@@ -42,11 +43,26 @@ protected:
 
 private:
 	UFUNCTION()
+	void EnableRetroMovement();
+
+	UFUNCTION()
+	void DisableRetroMovement();
+
+	UFUNCTION()
 	void Look(const FVector2D& Value);
 
 	UFUNCTION()
 	void Move(const float AxisValue, const EInputActionType ActionType);
 	
+	UFUNCTION()
+	void MoveInDirection(FVector Direction);
+
+	UFUNCTION()
+	void RotateToDirection(FVector Direction);
+
+	UFUNCTION()
+	bool CanMoveToLocation(FVector TargetLocation);
+
 	UFUNCTION()
 	void Interact();
 
@@ -61,7 +77,27 @@ private:
 	TObjectPtr<ASLBaseCharacter> OwnerCharacter;
 
 	UPROPERTY()
+	bool bIsMoving;
+
+	UPROPERTY()
 	float InputBufferDuration = 0.3f;
 
 	int32 CurrentIndex = 0; // Test용
+
+	UPROPERTY()
+	float OriginalMaxWalkSpeed = 0.0f;
+
+	UPROPERTY()
+	float OriginalBrakingFrictionFactor = 0.0f;
+
+	UPROPERTY()
+	float OriginalGravityScale = 0.0f;
+
+	UPROPERTY()
+	float OriginalGroundFriction = 0.0f;
+
+	UPROPERTY()
+	bool bOrigianlUseControllerDesiredRotation = true;
+
+	
 };

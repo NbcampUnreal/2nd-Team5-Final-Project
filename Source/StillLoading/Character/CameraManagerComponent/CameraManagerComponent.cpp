@@ -11,6 +11,11 @@ void UCameraManagerComponent::SetCameraRefs(UCameraComponent* InDefault, UCamera
 	SideViewCamera = InSideView;
 }
 
+void UCameraManagerComponent::SetRetroCameraRotation()
+{
+
+}
+
 void UCameraManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
