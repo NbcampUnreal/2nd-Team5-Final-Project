@@ -22,6 +22,15 @@ void ASLCharacter::BeginPlay()
 		Shield = GetWorld()->SpawnActor<AActor>(ShieldClass, GetActorLocation(), GetActorRotation());
 		AttachItemToHand(Shield, TEXT("l_weapon_socket"));
 	}
+
+	SetPrimaryState(TAG_Character_Movement_Dash);
+
+	if (PrimaryStateTags.HasTag(TAG_Character_Movement_Run))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Run"));
+	}
+
+	PrintPrimaryStateTags();
 }
 
 void ASLCharacter::Tick(float DeltaTime)

@@ -16,6 +16,21 @@ enum class EInputActionType : uint8;
 class UInputAction;
 class UDynamicIMCComponent;
 
+UENUM(BlueprintType)
+enum class ECharacterState : uint8
+{
+	ECS_Idle UMETA(DisplayName = "Idle"),
+	ECS_Cinematic UMETA(DisplayName = "Cinematic"),
+	ECS_Moving UMETA(DisplayName = "Moving"),
+	ECS_Jumping UMETA(DisplayName = "Jumping"),
+	ECS_Falling UMETA(DisplayName = "Falling"),
+	ECS_Attacking UMETA(DisplayName = "Attacking"),
+	ECS_Dodging UMETA(DisplayName = "Dodging"),
+	ECS_Stunned UMETA(DisplayName = "Stunned"),
+	ECS_Dead UMETA(DisplayName = "Dead"),
+	ECS_InputLocked UMETA(DisplayName = "Input Locked")
+};
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UMovementHandlerComponent : public UActorComponent
 {

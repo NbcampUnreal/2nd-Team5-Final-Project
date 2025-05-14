@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLTextPoolTypes.h"
 #include "Character//DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "SLUserDataSubsystem.generated.h"
 
@@ -13,6 +14,7 @@ class UInputMappingContext;
 class UGameUserSettings;
 class URendererSettings;
 class USLUISubsystem;
+class USLTextPoolSubsystem;
 struct FWidgetSaveData;
 
 UCLASS()
@@ -59,8 +61,8 @@ private:
 	void CheckValidOfGameUserSettings();
 	void CheckValidOfRendererSettings();
 	void CheckValidOfUISubsystem();
+	void CheckValidOfTextPoolSubsystem();
 	void CheckValidOfUserDataSettings();
-	
 
 private:
 	UPROPERTY()
@@ -74,6 +76,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<USLTextPoolSubsystem> TextPoolSubsystem = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<UInputMappingContext> PlayerIMC = nullptr;
