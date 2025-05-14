@@ -19,10 +19,12 @@ public:
 	{
 		OwningPawn.Reset();
 		TargetActor.Reset();
+		ElapsedTime = 0.0f;
 	}
 	
 	TWeakObjectPtr<APawn> OwningPawn;
 	TWeakObjectPtr<AActor> TargetActor;
+	float ElapsedTime;
 };
 
 /**
@@ -52,6 +54,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Face Target")
 	float RotationInterpSpeed;
 
+	UPROPERTY(EditAnywhere, Category = "Task")
+	float MaxRotationTime;
+	
 	UPROPERTY(EditAnywhere, Category = "Face Target")
 	FBlackboardKeySelector InTargetToFaceKey;
 };

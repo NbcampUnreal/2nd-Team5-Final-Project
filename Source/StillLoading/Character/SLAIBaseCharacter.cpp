@@ -37,13 +37,14 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	IsHitReaction = false;
 	IsDead = false;
 	MaxHealth = 100.0f;
+	CurrentHealth = MaxHealth;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CurrentHealth = MaxHealth;
+	//CurrentHealth = MaxHealth;
 	AIController = Cast<ASLBaseAIController>(GetController());
 	AnimInstancePtr = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
 }
