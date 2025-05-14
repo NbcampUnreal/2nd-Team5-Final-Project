@@ -14,7 +14,6 @@
 void USLUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-
 }
 
 void USLUISubsystem::SetInputModeAndCursor()
@@ -66,21 +65,6 @@ void USLUISubsystem::SetChapterToUI(ESLChapterType ChapterType)
 		}
 
 		ActiveWidget->ApplyOnChangedChapter(CurrentChapter);
-	}
-}
-
-void USLUISubsystem::SetLanguageToUI(ESLLanguageType LanguageType)
-{
-	CurrentLanguage = LanguageType;
-
-	for (USLBaseWidget* ActiveWidget : ActiveAdditiveWidgets)
-	{
-		if (!IsValid(ActiveWidget))
-		{
-			continue;
-		}
-
-		ActiveWidget->ApplyOnChangedLanguage(LanguageType);
 	}
 }
 
@@ -183,11 +167,6 @@ void USLUISubsystem::StopUISound()
 const ESLChapterType USLUISubsystem::GetCurrentChapter() const
 {
 	return CurrentChapter;
-}
-
-const ESLLanguageType USLUISubsystem::GetCurrentLanguage() const
-{
-	return CurrentLanguage;
 }
 
 const UDataTable* USLUISubsystem::GetImageDataTable()

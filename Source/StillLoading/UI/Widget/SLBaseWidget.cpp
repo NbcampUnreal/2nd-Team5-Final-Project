@@ -3,6 +3,7 @@
 
 #include "UI/Widget/SLBaseWidget.h"
 #include "UI/SLUISubsystem.h"
+#include "SubSystem/SLTextPoolSubsystem.h"
 #include "Animation/WidgetAnimation.h"
 
 void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
@@ -22,6 +23,11 @@ void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 	}
 
 	ApplyOnChangedChapter(ChapterType);
+	
+	CheckValidOfTextPoolSubsystem();
+	TextPoolSubsystem->LanguageDelegate.AddDynamic(this, &ThisClass::NotifyChangedLanguage);
+
+	ApplyTextData();
 }
 
 void USLBaseWidget::ApplyOnChangedChapter(ESLChapterType ChapterType)
@@ -56,6 +62,11 @@ void USLBaseWidget::OnEndedCloseAnim()
 	this->RemoveFromViewport();
 }
 
+void USLBaseWidget::NotifyChangedLanguage()
+{
+	ApplyTextData();
+}
+
 void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)
 {
 	CheckValidOfUISubsystem();
@@ -72,4 +83,15 @@ void USLBaseWidget::CheckValidOfUISubsystem()
 	checkf(IsValid(GetGameInstance()), TEXT("GameInstance is invalid"));
 	UISubsystem = GetGameInstance()->GetSubsystem<USLUISubsystem>();
 	checkf(IsValid(UISubsystem), TEXT("UISubsystem is invalid"));
+}
+
+void USLBaseWidget::CheckValidOfTextPoolSubsystem()
+{
+	if (IsValid(TextPoolSubsystem))
+	{
+		return;
+	}
+
+	TextPoolSubsystem = GetGameInstance()->GetSubsystem<USLTextPoolSubsystem>();
+	checkf(IsValid(TextPoolSubsystem), TEXT("TextPool Subsystem is invalid"));
 }

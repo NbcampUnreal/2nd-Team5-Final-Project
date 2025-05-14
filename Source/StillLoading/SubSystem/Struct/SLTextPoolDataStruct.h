@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/SLUITypes.h"
+#include "SubSystem/SLTextPoolTypes.h"
 #include "SLTextPoolDataStruct.generated.h"
 
 
@@ -13,9 +13,6 @@ struct STILLLOADING_API FSLTextPoolDataStruct
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY()
-	ESLLanguageType LanguageType = ESLLanguageType::EL_Kor;
-
-	UPROPERTY()
-	TSoftObjectPtr<UDataTable> TextDataTable = nullptr;
+	UPROPERTY(EditAnywhere)
+	TMap<ESLLanguageType, TSoftObjectPtr<UDataTable>> LanguageTextTableMap;
 };

@@ -40,13 +40,6 @@ enum class ESLChapterType : uint8
 };
 
 UENUM(BlueprintType)
-enum class ESLLanguageType : uint8
-{
-	EL_Kor = 0,
-	EL_Eng
-};
-
-UENUM(BlueprintType)
 enum class ESLInputModeType : uint8
 {
 	EIM_UIOnly = 0,

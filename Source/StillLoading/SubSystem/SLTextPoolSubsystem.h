@@ -11,26 +11,30 @@
 
 class USLTextPoolSettings;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnChangedLanguage);
+
 UCLASS()
 class STILLLOADING_API USLTextPoolSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 	
 public:
-	const TMap<ESLLanguageType, UDataTable*>& GetUITextPool(ESLLanguageType Language);
-	const TMap<ESLLanguageType, UDataTable*>& GetStoryTextPool(ESLLanguageType Language);
-	const TMap<ESLLanguageType, UDataTable*>& GetTalkTextPool(ESLLanguageType Language);
-	const TMap<ESLLanguageType, UDataTable*>& GetNotifyTextPool(ESLLanguageType Language);
-	const TMap<ESLLanguageType, UDataTable*>& GetOtherTextPool(ESLLanguageType Language);
+	void OnChangedLanguage(ESLLanguageType LanguageType);
+
+	const UDataTable* GetUITextPool();
+	const UDataTable* GetStoryTextPool();
+	const UDataTable* GetTalkTextPool();
+	const UDataTable* GetNotifyTextPool();
+	const UDataTable* GetOtherTextPool();
 
 private:
-
-	void CheckValidOfTextPool(ESLTextDataType TextDataType, 
-								ESLLanguageType TargetLanguage, 
-								TMap<ESLLanguageType, UDataTable*>& TargetMap);
-
+	void CheckValidOfTextPool(ESLTextDataType TextDataType);
 	void CheckValidOfTextPoolData(ESLTextDataType TextDataType);
 	void CheckValidOfTextPoolSettings();
+
+public:
+	UPROPERTY()
+	FOnChangedLanguage LanguageDelegate;
 
 private:
 	UPROPERTY()
@@ -40,17 +44,11 @@ private:
 	TMap<ESLTextDataType, FSLTextPoolDataStruct> TextPoolDataMap;
 
 	UPROPERTY()
-	TMap<ESLLanguageType, UDataTable*> UITextPoolMap;
+	TMap<ESLTextDataType, ESLLanguageType> CurrentPoolLanguageMap;
 
 	UPROPERTY()
-	TMap<ESLLanguageType, UDataTable*> StoryTextPoolMap;
+	TMap<ESLTextDataType, UDataTable*> TextPoolMap;
 
-	UPROPERTY()
-	TMap<ESLLanguageType, UDataTable*> TalkTextPoolMap;
 
-	UPROPERTY()
-	TMap<ESLLanguageType, UDataTable*> NotifyTextPoolMap;
-
-	UPROPERTY()
-	TMap<ESLLanguageType, UDataTable*> OtherTextPoolMap;
+	ESLLanguageType CurrentLanguage = ESLLanguageType::EL_Kor;
 };
