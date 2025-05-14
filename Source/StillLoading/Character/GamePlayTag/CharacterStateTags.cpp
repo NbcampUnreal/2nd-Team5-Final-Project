@@ -1,7 +1,11 @@
 #include "CharacterStateTags.h"
 #include "GamePlayTag.h"
 
+// Character
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character, "Character");
+
 // Hit Reactions
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction, "Character.HitReaction");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Weak, "Character.HitReaction.Weak");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Medium, "Character.HitReaction.Medium");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Area, "Character.HitReaction.Area");
@@ -10,6 +14,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Groggy, "Character.HitReaction.
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Knockback, "Character.HitReaction.Knockback");
 
 // Attacks
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack, "Character.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Basic1, "Character.Attack.Basic1");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Basic2, "Character.Attack.Basic2");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Basic3, "Character.Attack.Basic3");
@@ -23,10 +28,12 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Finisher1, "Character.Attack.Finishe
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Finisher2, "Character.Attack.Finisher2");
 
 // Defense
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Defense, "Character.Defense");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Defense_Block, "Character.Defense.Block");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Defense_Parry, "Character.Defense.Parry");
 
 // Movement
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement, "Character.Movement");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Forward, "Character.Movement.Forward");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Backward, "Character.Movement.Backward");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Dash, "Character.Movement.Dash");

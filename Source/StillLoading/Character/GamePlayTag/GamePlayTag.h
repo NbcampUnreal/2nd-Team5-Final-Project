@@ -1,7 +1,11 @@
 #pragma once
 #include "NativeGameplayTags.h"
 
+// Character
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character)
+
 // Hit Reactions
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Weak)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Medium)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Area)
@@ -10,6 +14,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Groggy)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Knockback)
 
 // Attacks
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Attack)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Attack_Basic1)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Attack_Basic2)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Attack_Basic3)
@@ -23,10 +28,12 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Attack_Finisher1)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Attack_Finisher2)
 
 // Defense
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Defense)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Defense_Block)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Defense_Parry)
 
 // Movement
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Movement)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Movement_Forward)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Movement_Backward)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Movement_Dash)

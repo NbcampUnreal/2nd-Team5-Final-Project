@@ -1,5 +1,7 @@
 #include "SLCharacter.h"
 
+#include "GamePlayTag/GamePlayTag.h"
+
 ASLCharacter::ASLCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -22,6 +24,15 @@ void ASLCharacter::BeginPlay()
 		Shield = GetWorld()->SpawnActor<AActor>(ShieldClass, GetActorLocation(), GetActorRotation());
 		AttachItemToHand(Shield, TEXT("l_weapon_socket"));
 	}
+
+	SetPrimaryState(TAG_Character_Movement_Dash);
+
+	if (PrimaryStateTags.HasTag(TAG_Character_Movement_Run))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Run"));
+	}
+
+	PrintPrimaryStateTags();
 }
 
 void ASLCharacter::Tick(float DeltaTime)
@@ -53,26 +64,75 @@ void ASLCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketName) c
 	);
 }
 
-/*/ 이동 시작 → 태그 추가
-    if (bIsMoving && !bWasMoving)
-    {
-        CharacterTags.AddTag(TAG_Character_Movement_Run);
-        UE_LOG(LogTemp, Log, TEXT("Run tag added (GAS-less)"));
-    }
+// 상태 관리
+void ASLCharacter::SetPrimaryState(FGameplayTag NewState)
+{
+	PrimaryStateTags.AddTag(NewState);
+}
 
-    // 이동 중지 → 태그 제거
-    if (!bIsMoving && bWasMoving)
-    {
-        CharacterTags.RemoveTag(TAG_Character_Movement_Run);
-        UE_LOG(LogTemp, Log, TEXT("Run tag removed (GAS-less)"));
-    }
+void ASLCharacter::AddSecondaryState(FGameplayTag NewState)
+{
+	SecondaryStateTags.AddTag(NewState);
+}
 
-    bWasMoving = bIsMoving;
+void ASLCharacter::RemoveSecondaryState(FGameplayTag StateToRemove)
+{
+	SecondaryStateTags.RemoveTag(StateToRemove);
+}
 
-    // 예시: 상태 체크
-    if (CharacterTags.HasTag(TAG_Character_Movement_Run))
-    {
-        UE_LOG(LogTemp, Log, TEXT("Character is running (GAS-less)"));
-    }
+void ASLCharacter::SetMovementState(FGameplayTag NewMovementState)
+{
+	TArray<FGameplayTag> TagsToRemove;
+	for (const FGameplayTag& Tag : PrimaryStateTags.GetGameplayTagArray())
+	{
+		if (Tag.MatchesTag(TAG_Character_Movement))
+		{
+			TagsToRemove.Add(Tag);
+		}
+	}
+	for (const FGameplayTag& Tag : TagsToRemove)
+	{
+		PrimaryStateTags.RemoveTag(Tag);
+	}
 
- */
+	PrimaryStateTags.AddTag(NewMovementState);
+}
+
+bool ASLCharacter::IsInPrimaryState(FGameplayTag StateToCheck) const
+{
+	return PrimaryStateTags.HasTag(StateToCheck);
+}
+
+bool ASLCharacter::HasSecondaryState(FGameplayTag StateToCheck) const
+{
+	return SecondaryStateTags.HasTag(StateToCheck);
+}
+
+bool ASLCharacter::IsInMovementState() const
+{
+	return PrimaryStateTags.HasTag(TAG_Character_Movement);
+}
+
+bool ASLCharacter::IsInAttackState() const
+{
+	return PrimaryStateTags.HasTag(TAG_Character_Attack);
+}
+
+bool ASLCharacter::IsInDefenseState() const
+{
+	return PrimaryStateTags.HasTag(TAG_Character_Defense);
+}
+
+bool ASLCharacter::IsInHitReactionState() const
+{
+	return PrimaryStateTags.HasTag(TAG_Character_HitReaction);
+}
+
+
+void ASLCharacter::PrintPrimaryStateTags() const
+{
+	for (const FGameplayTag& Tag : PrimaryStateTags.GetGameplayTagArray())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[PrimaryState] %s"), *Tag.ToString());
+	}
+}
