@@ -29,12 +29,26 @@ void UInputBufferComponent::AddBufferedInput(EInputActionType Action)
 
 void UInputBufferComponent::ProcessBufferedInputs()
 {
+	if (!GetWorld() || InputBuffer.IsEmpty())
+		return;
+	
 	float CurrentTime = GetWorld()->GetTimeSeconds();
 
 	InputBuffer = InputBuffer.FilterByPredicate([&](const FBufferedInput& Input)
 	{
 		return (CurrentTime - Input.Timestamp) <= BufferDuration;
 	});
+
+	FString BufferLog;
+	for (const FBufferedInput& Input : InputBuffer)
+	{
+		BufferLog += FString::Printf(TEXT("[%d, %.2f] "), static_cast<int32>(Input.Action), Input.Timestamp);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("InputBuffer Contents: %s"), *BufferLog);
+
+	if (InputBuffer.IsEmpty()) // 추후에 문제 발생하면 지워야함
+		return;
 
 	if (InputBuffer.Num() > 0)
 	{

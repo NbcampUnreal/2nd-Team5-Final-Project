@@ -48,7 +48,7 @@ private:
 	UPROPERTY()
 	TArray<FBufferedInput> InputBuffer;
 	UPROPERTY()
-	float BufferDuration = 0.3f;
+	float BufferDuration = 1.0f;
 	UPROPERTY()
 	bool bBufferActive = false;
 };
