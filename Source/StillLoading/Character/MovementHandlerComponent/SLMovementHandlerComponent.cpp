@@ -175,7 +175,7 @@ void UMovementHandlerComponent::Jump()
 {
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_JumpBlock))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Jump Blocked"));
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Jump Blocked"));
 		return;
 	}
 	
@@ -187,7 +187,7 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 {
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_MovementBlock))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Movement Blocked"));
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Movement Blocked"));
 		return;
 	}
 	
@@ -251,23 +251,30 @@ void UMovementHandlerComponent::Attack()
 {
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AttackBlock))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Attack Blocked"));
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Attack Blocked"));
 		return;
 	}
-	
-	if (CachedMontageComponent)
+
+	UAnimMontage* Montage = nullptr;
+	FName SectionName;
+
+	if (!CachedCombatComponent->GetCurrentComboInfo(Montage, SectionName))
 	{
-		CachedMontageComponent->PlayAttackMontage(FName("Attack1"));
+		UE_LOG(LogTemp, Warning, TEXT("No valid combo found"));
+		return;
 	}
+
+	if (CachedMontageComponent && Montage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SectionName[%s]"), *SectionName.ToString());
+		CachedMontageComponent->PlayAttackMontage(SectionName);
+	}
+	CachedCombatComponent->AdvanceCombo();
 	
 	if (CachedBattleComponent)
 	{
 		//TODO:: Data전달용으로 AI와 협의 필요
 		CachedBattleComponent->PerformAttack();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("BattleComponent not found on %s"), *GetOwner()->GetName());
 	}
 
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);

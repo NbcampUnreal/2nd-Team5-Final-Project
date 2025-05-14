@@ -12,14 +12,21 @@ void UCombatHandlerComponent::BeginPlay()
 
 bool UCombatHandlerComponent::GetCurrentComboInfo(UAnimMontage*& OutMontage, FName& OutSectionName) const
 {
-	if (!ComboDataAsset || ComboDataAsset->ComboChain.Num() == 0) return false;
-	if (CurrentComboIndex >= ComboDataAsset->ComboChain.Num()) return false;
+	UAttackComboDataAsset* ActiveComboAsset;
+	
+	GetActiveComboDataAsset(ActiveComboAsset);
 
-	const auto& [Montage, SectionName] = ComboDataAsset->ComboChain[CurrentComboIndex];
+	if (!ActiveComboAsset || ActiveComboAsset->ComboChain.Num() == 0)
+		return false;
+
+	if (CurrentComboIndex >= ActiveComboAsset->ComboChain.Num())
+		return false;
+
+	const auto& [Montage, SectionName] = ActiveComboAsset->ComboChain[CurrentComboIndex];
 	OutMontage = Montage;
 	OutSectionName = SectionName;
-	
-	return OutMontage != nullptr; 
+
+	return OutMontage != nullptr;
 }
 
 bool UCombatHandlerComponent::GetNextComboInfo(UAnimMontage*& OutMontage, FName& OutSectionName) const
@@ -43,5 +50,17 @@ void UCombatHandlerComponent::AdvanceCombo()
 	if (CurrentComboIndex >= ComboDataAsset->ComboChain.Num())
 	{
 		ResetCombo();
+	}
+}
+
+void UCombatHandlerComponent::GetActiveComboDataAsset(UAttackComboDataAsset*& DataAsset) const
+{
+	if (IsEmpowered() && EmpoweredComboDataAsset)
+	{
+		DataAsset = EmpoweredComboDataAsset;
+	}
+	else
+	{
+		DataAsset = ComboDataAsset;
 	}
 }

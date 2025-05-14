@@ -26,9 +26,14 @@ public:
 	bool GetNextComboInfo(UAnimMontage*& OutMontage, FName& OutSectionName) const;
 	UFUNCTION()
 	void AdvanceCombo();
+	UFUNCTION()
+	void GetActiveComboDataAsset(UAttackComboDataAsset*& DataAsset) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAttackComboDataAsset> ComboDataAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAttackComboDataAsset> EmpoweredComboDataAsset;
 
 protected:
 	virtual void BeginPlay() override;
@@ -50,8 +55,5 @@ public:
 	UFUNCTION()
 	FORCEINLINE void SetEmpowered(const ECharacterComboState Mode) { CurrentMode = Mode; }
 	UFUNCTION()
-	FORCEINLINE bool IsEmpowered() const
-	{
-		return CurrentMode == ECharacterComboState::CCS_Empowered;
-	}
+	FORCEINLINE bool IsEmpowered() const { return CurrentMode == ECharacterComboState::CCS_Empowered; }
 };

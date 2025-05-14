@@ -1,6 +1,7 @@
 #include "InputBufferComponent.h"
 
 #include "Character/SLCharacter.h"
+#include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 
 UInputBufferComponent::UInputBufferComponent()
@@ -40,16 +41,30 @@ void UInputBufferComponent::AddBufferedInput(EInputActionType Action)
 
 void UInputBufferComponent::ProcessBufferedInputs()
 {
-	if (!GetWorld() || InputBuffer.IsEmpty())
+	const UWorld* World = GetWorld();
+	if (!World || InputBuffer.IsEmpty())
 		return;
-	
-	float CurrentTime = GetWorld()->GetTimeSeconds();
+
+	const float CurrentTime = World->GetTimeSeconds();
+	bool bHadValidInput = false;
 
 	InputBuffer = InputBuffer.FilterByPredicate([&](const FBufferedInput& Input)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("InputBuffer Filtered: %d"), (int32)Input.Action);
-		return (CurrentTime - Input.Timestamp) <= BufferDuration;
+		if ((CurrentTime - Input.Timestamp) <= BufferDuration)
+		{
+			bHadValidInput = true;
+			return true;
+		}
+		return false;
 	});
+
+	if (!bHadValidInput)
+	{
+		if (UCombatHandlerComponent* CombatComp = GetOwner()->FindComponentByClass<UCombatHandlerComponent>())
+		{
+			CombatComp->ResetCombo();
+		}
+	}
 
 	if (InputBuffer.Num() > 0)
 	{
