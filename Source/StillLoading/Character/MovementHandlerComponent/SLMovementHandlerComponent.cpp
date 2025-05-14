@@ -249,11 +249,13 @@ void UMovementHandlerComponent::Interact()
 
 void UMovementHandlerComponent::Attack()
 {
+	/*
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AttackBlock))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Attack Blocked"));
 		return;
 	}
+	*/
 
 	UAnimMontage* Montage = nullptr;
 	FName SectionName;
@@ -338,9 +340,7 @@ EGameCameraType UMovementHandlerComponent::GetCurrentCameraType() const
 void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState AttackStage)
 {
 	if (!OwnerCharacter) return;
-	UE_LOG(LogTemp, Warning, TEXT("OnAttackStageFinished [%d]"), AttackStage);
-	OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
-
+	
 	switch (AttackStage)
 	{
 	case ECharacterMontageState::ECS_Idle:
@@ -366,26 +366,17 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 	case ECharacterMontageState::ECS_Hit_Knockback:
 		break;
 	case ECharacterMontageState::ECS_Attack_Basic1:
-		break;
 	case ECharacterMontageState::ECS_Attack_Basic2:
-		break;
 	case ECharacterMontageState::ECS_Attack_Basic3:
-		break;
 	case ECharacterMontageState::ECS_Attack_Special1:
-		break;
 	case ECharacterMontageState::ECS_Attack_Special2:
-		break;
 	case ECharacterMontageState::ECS_Attack_Special3:
-		break;
 	case ECharacterMontageState::ECS_Attack_Air1:
-		break;
 	case ECharacterMontageState::ECS_Attack_Air2:
-		break;
 	case ECharacterMontageState::ECS_Attack_Airborn1:
-		break;
 	case ECharacterMontageState::ECS_Attack_Finisher1:
-		break;
 	case ECharacterMontageState::ECS_Attack_Finisher2:
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
 		break;
 	case ECharacterMontageState::ECS_Defense_Block:
 		break;

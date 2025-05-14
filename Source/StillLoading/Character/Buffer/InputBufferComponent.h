@@ -34,6 +34,11 @@ public:
 	UFUNCTION()
 	void OnIMCActionStarted(EInputActionType ActionType);
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Input Buffer")
+	float BufferDuration = 3.0f;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Input Buffer")
+	int32 MaxInputBufferCount = 5;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
@@ -50,9 +55,5 @@ private:
 	UPROPERTY()
 	TArray<FBufferedInput> InputBuffer;
 	UPROPERTY()
-	float BufferDuration = 5.0f;
-	UPROPERTY()
-	bool bBufferActive = false;
-	UPROPERTY()
-	int32 MaxInputBufferCount = 10;
+	float LastInputTime = -1.0f;
 };

@@ -29,44 +29,44 @@ void UInputBufferComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UInputBufferComponent::AddBufferedInput(EInputActionType Action)
 {
-	if (InputBuffer.Num() >= MaxInputBufferCount)
+	if (InputBuffer.Num() > MaxInputBufferCount)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("InputBufferComponent: Input buffer full."));
 		return;
 	}
-	
-	float CurrentTime = GetWorld()->GetTimeSeconds();
+
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+	LastInputTime = GetWorld()->GetTimeSeconds();
 	InputBuffer.Add({ Action, CurrentTime });
 }
 
 void UInputBufferComponent::ProcessBufferedInputs()
 {
 	const UWorld* World = GetWorld();
-	if (!World || InputBuffer.IsEmpty())
+	if (!World) return;
+
+	if (LastInputTime < 0.0f)
 		return;
 
 	const float CurrentTime = World->GetTimeSeconds();
-	bool bHadValidInput = false;
 
-	InputBuffer = InputBuffer.FilterByPredicate([&](const FBufferedInput& Input)
-	{
-		if ((CurrentTime - Input.Timestamp) <= BufferDuration)
-		{
-			bHadValidInput = true;
-			return true;
-		}
-		return false;
-	});
-
-	if (!bHadValidInput)
+	if ((CurrentTime - LastInputTime) > BufferDuration)
 	{
 		if (UCombatHandlerComponent* CombatComp = GetOwner()->FindComponentByClass<UCombatHandlerComponent>())
 		{
 			CombatComp->ResetCombo();
+			UE_LOG(LogTemp, Warning, TEXT("Combo Reset!"));
 		}
+
+		LastInputTime = -1.0f;
 	}
 
-	if (InputBuffer.Num() > 0)
+	InputBuffer = InputBuffer.FilterByPredicate([&](const FBufferedInput& Input)
+	{
+		return (CurrentTime - Input.Timestamp) <= BufferDuration;
+	});
+
+	if (!InputBuffer.IsEmpty())
 	{
 		const EInputActionType NextInput = InputBuffer[0].Action;
 
@@ -94,6 +94,12 @@ bool UInputBufferComponent::CanConsumeInput(EInputActionType NextInput) const
 	//TODO::동작 조건 정의 필요
 	// 공격 연속 3회 -> 공격1 공격2 공격3
 	// 공격1 방어 공격1
+
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AttackBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Attack Blocked"));
+		return false;
+	}
 	
 	return true;
 }
