@@ -50,7 +50,6 @@ void USLSaveGameSubsystem::LoadGame()
         UE_LOG(LogTemp, Warning, TEXT("Save file does not exist created a new one"));
         CurrentSaveGame = NewObject<USLSaveGame>();
         UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
-      
     }
     
 

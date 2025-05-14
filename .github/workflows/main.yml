@@ -2,9 +2,9 @@ name: Check behind against origin/dev
 
 on:
   schedule:
-    - cron: '0 9-21/3 * * *'  # 오전 9시부터 오후 9시까지 3시간 간격으로 실행
+    - cron: '0 0-12/3 * * *'  # KST 오전 9시 ~ 오후 9시, 3시간 간격
   workflow_dispatch:
-
+  
 jobs:
   check-remote-behind:
     runs-on: ubuntu-latest
