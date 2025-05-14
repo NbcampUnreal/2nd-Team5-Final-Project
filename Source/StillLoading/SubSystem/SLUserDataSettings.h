@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLTextPoolTypes.h"
 #include "Character//DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "SLUserDataSettings.generated.h"
 

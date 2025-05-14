@@ -4,59 +4,59 @@
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/SLTextPoolSettings.h"
 
-
-const TMap<ESLLanguageType, UDataTable*>& USLTextPoolSubsystem::GetUITextPool(ESLLanguageType Language)
+void USLTextPoolSubsystem::OnChangedLanguage(ESLLanguageType LanguageType)
 {
-	CheckValidOfTextPool(ESLTextDataType::ETD_UI, Language, UITextPoolMap);
-	return UITextPoolMap;
+	CurrentLanguage = LanguageType;
+	LanguageDelegate.Broadcast();
 }
 
-const TMap<ESLLanguageType, UDataTable*>& USLTextPoolSubsystem::GetStoryTextPool(ESLLanguageType Language)
+const UDataTable* USLTextPoolSubsystem::GetUITextPool()
 {
-	CheckValidOfTextPool(ESLTextDataType::ETD_Story, Language, StoryTextPoolMap);
-	return StoryTextPoolMap;
+	CheckValidOfTextPool(ESLTextDataType::ETD_UI);
+	return TextPoolMap[ESLTextDataType::ETD_UI];
 }
 
-const TMap<ESLLanguageType, UDataTable*>& USLTextPoolSubsystem::GetTalkTextPool(ESLLanguageType Language)
+const UDataTable* USLTextPoolSubsystem::GetStoryTextPool()
 {
-	CheckValidOfTextPool(ESLTextDataType::ETD_Talk, Language, TalkTextPoolMap);
-	return TalkTextPoolMap;
+	CheckValidOfTextPool(ESLTextDataType::ETD_Story);
+	return TextPoolMap[ESLTextDataType::ETD_Story];
 }
 
-const TMap<ESLLanguageType, UDataTable*>& USLTextPoolSubsystem::GetNotifyTextPool(ESLLanguageType Language)
+const UDataTable* USLTextPoolSubsystem::GetTalkTextPool()
 {
-	CheckValidOfTextPool(ESLTextDataType::ETD_Notify, Language, NotifyTextPoolMap);
-	return NotifyTextPoolMap;
+	CheckValidOfTextPool(ESLTextDataType::ETD_Talk);
+	return TextPoolMap[ESLTextDataType::ETD_Talk];
 }
 
-const TMap<ESLLanguageType, UDataTable*>& USLTextPoolSubsystem::GetOtherTextPool(ESLLanguageType Language)
+const UDataTable* USLTextPoolSubsystem::GetNotifyTextPool()
 {
-	CheckValidOfTextPool(ESLTextDataType::ETD_Other, Language, OtherTextPoolMap);
-	return OtherTextPoolMap;
+	CheckValidOfTextPool(ESLTextDataType::ETD_Notify);
+	return TextPoolMap[ESLTextDataType::ETD_Notify];
 }
 
-void USLTextPoolSubsystem::CheckValidOfTextPool(ESLTextDataType TextDataType, ESLLanguageType TargetLanguage, TMap<ESLLanguageType, UDataTable*>& TargetMap)
+const UDataTable* USLTextPoolSubsystem::GetOtherTextPool()
 {
-	if (TargetMap.Contains(TargetLanguage))
+	CheckValidOfTextPool(ESLTextDataType::ETD_Other);
+	return TextPoolMap[ESLTextDataType::ETD_Other];
+}
+
+void USLTextPoolSubsystem::CheckValidOfTextPool(ESLTextDataType TextDataType)
+{
+	if (CurrentPoolLanguageMap.Contains(TextDataType) && 
+		CurrentPoolLanguageMap[TextDataType] == CurrentLanguage)
 	{
-		if (IsValid(TargetMap[TargetLanguage]))
+		if (IsValid(TextPoolMap[TextDataType]))
 		{
 			return;
 		}
 	}
 	
 	CheckValidOfTextPoolData(TextDataType);
-	
-	for (const TPair<ESLTextDataType, FSLTextPoolDataStruct>& TargetData : TextPoolDataMap)
-	{
-		if (TargetData.Value.LanguageType == TargetLanguage)
-		{
-			TargetMap.Add(TargetLanguage, TargetData.Value.TextDataTable.LoadSynchronous());
-			break;
-		}
-	}
 
-	checkf(IsValid(TargetMap[TargetLanguage]), TEXT("TextPool Data is invalid"));
+	TextPoolMap.Add(TextDataType, TextPoolDataMap[TextDataType].LanguageTextTableMap[CurrentLanguage].LoadSynchronous());
+	CurrentPoolLanguageMap.Add(TextDataType, CurrentLanguage);
+
+	checkf(IsValid(TextPoolMap[TextDataType]), TEXT("Target Data is invalid"));
 }
 
 void USLTextPoolSubsystem::CheckValidOfTextPoolData(ESLTextDataType TextDataType)

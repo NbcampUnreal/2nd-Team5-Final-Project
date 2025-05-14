@@ -5,9 +5,11 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLTextPoolTypes.h"
 #include "SLBaseWidget.generated.h"
 
 class USLUISubsystem;
+class USLTextPoolSubsystem;
 
 UCLASS()
 class STILLLOADING_API USLBaseWidget : public UUserWidget
@@ -22,7 +24,6 @@ public:
 	virtual void ActivateWidget(ESLChapterType ChapterType);
 	virtual void DeactivateWidget() {};
 
-	virtual void ApplyOnChangedLanguage(ESLLanguageType LanguageType) {};
 	void ApplyOnChangedChapter(ESLChapterType ChapterType);
 
 	ESLInputModeType GetWidgetInputMode() const;
@@ -35,17 +36,25 @@ protected:
 	UFUNCTION()
 	virtual void OnEndedCloseAnim();
 
+	UFUNCTION()
+	void NotifyChangedLanguage();
+
 	virtual void FindWidgetData() {};
 	virtual void ApplyImageData() {};
 	virtual void ApplyFontData() {};
+	virtual void ApplyTextData() {};
 
 	void PlayUISound(ESLUISoundType SoundType);
 
 	void CheckValidOfUISubsystem();
+	void CheckValidOfTextPoolSubsystem();
 
 protected:
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<USLTextPoolSubsystem> TextPoolSubsystem = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<UWidgetAnimation> OpenAnim = nullptr;
