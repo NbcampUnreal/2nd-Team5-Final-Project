@@ -9,6 +9,7 @@ ASLEnemyAIController::ASLEnemyAIController()
 {
 	AAIController::SetGenericTeamId(FGenericTeamId(2));
 	AISenseConfig_Sight->SightRadius = 2500.f;
+	AISenseConfig_Sight->LoseSightRadius = 2700.f;
 }
 
 ETeamAttitude::Type ASLEnemyAIController::GetTeamAttitudeTowards(const AActor& Other) const
