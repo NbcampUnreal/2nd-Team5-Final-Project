@@ -91,6 +91,13 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 	case EInputActionType::EIAT_Menu:
 		ToggleMenu();
 		break;
+	case EInputActionType::EIAT_Block:
+		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
+		{
+			BufferComp->AddBufferedInput(ActionType);
+		}
+		//Block(true);
+		break;
 
 	default:
 		break;
@@ -122,6 +129,10 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 	case EInputActionType::EIAT_Menu:
 		break;
 
+	case EInputActionType::EIAT_Block:
+		Block(false);
+		break;
+
 	default:
 		break;
 	}
@@ -147,7 +158,7 @@ void UMovementHandlerComponent::Look(const FVector2D& Value)
 	FRotator ControlRot = PC->GetControlRotation();
 
 	ControlRot.Yaw += Value.X * MouseSensitivity;
-	ControlRot.Pitch -= Value.Y * MouseSensitivity;
+	ControlRot.Pitch += Value.Y * MouseSensitivity;
 	ControlRot.Pitch = FMath::Clamp(ControlRot.Pitch, MinPitch, MaxPitch);
 
 	ControlRot.Roll = 0.f;
@@ -266,6 +277,19 @@ void UMovementHandlerComponent::ToggleMenu()
 	UE_LOG(LogTemp, Log, TEXT("Menu opened or closed"));
 	// TODO: UI 호출 / Input 모드 변경 등 처리
 	
+}
+
+void UMovementHandlerComponent::Block(const bool bIsBlocking)
+{
+	UE_LOG(LogTemp, Log, TEXT("Block"));
+	if (bIsBlocking)
+	{
+		
+	}
+	else
+	{
+		
+	}
 }
 
 EGameCameraType UMovementHandlerComponent::GetCurrentCameraType() const

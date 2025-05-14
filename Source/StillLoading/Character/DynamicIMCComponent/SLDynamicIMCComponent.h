@@ -20,6 +20,7 @@ enum class EInputActionType : uint8
 	EIAT_Attack UMETA(DisplayName = "Attack"),
 	EIAT_PointMove UMETA(DisplayName = "PointMove"),
 	EIAT_Walk UMETA(DisplayName = "Walk"),
+	EIAT_Block UMETA(DisplayName = "Block"),
 	EIAT_Menu UMETA(DisplayName = "Menu")
 };
 

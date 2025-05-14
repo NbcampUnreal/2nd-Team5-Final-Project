@@ -5,6 +5,7 @@
 #include "GameFramework/GameUserSettings.h"
 #include "Engine/RendererSettings.h"
 #include "UI/SLUISubsystem.h"
+#include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/SLUserDataSettings.h"
 #include "SaveLoad/SLSaveGameSubsystem.h"
 #include "InputMappingContext.h"
@@ -149,6 +150,8 @@ TSet<FKey> USLUserDataSubsystem::GetKeySet() const
 void USLUserDataSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Collection.InitializeDependency<USLUISubsystem>();
+	Collection.InitializeDependency<USLTextPoolSubsystem>();
+
 	Super::Initialize(Collection);
 
 	CheckValidOfUserDataSettings();
@@ -157,8 +160,8 @@ void USLUserDataSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void USLUserDataSubsystem::ApplyLanguageMode()
 {
-	CheckValidOfUISubsystem();
-	UISubsystem->SetLanguageToUI(LanguageType);
+	CheckValidOfTextPoolSubsystem();
+	TextPoolSubsystem->OnChangedLanguage(LanguageType);
 }
 
 void USLUserDataSubsystem::ApplyBgmVolume()
@@ -311,6 +314,17 @@ void USLUserDataSubsystem::CheckValidOfUISubsystem()
 
 	UISubsystem = GetGameInstance()->GetSubsystem<USLUISubsystem>();
 	checkf(IsValid(UISubsystem), TEXT("UI Subsystem is invalid"));
+}
+
+void USLUserDataSubsystem::CheckValidOfTextPoolSubsystem()
+{
+	if (IsValid(TextPoolSubsystem))
+	{
+		return;
+	}
+
+	TextPoolSubsystem = GetGameInstance()->GetSubsystem<USLTextPoolSubsystem>();
+	checkf(IsValid(TextPoolSubsystem), TEXT("TextPool Subsystem is invalid"));
 }
 
 void USLUserDataSubsystem::CheckValidOfUserDataSettings()

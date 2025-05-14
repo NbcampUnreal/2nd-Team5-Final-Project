@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLTextPoolTypes.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "SLSaveDataStructs.generated.h"
 /**
