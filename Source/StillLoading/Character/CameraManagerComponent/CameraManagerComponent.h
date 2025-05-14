@@ -29,6 +29,8 @@ public:
 	UFUNCTION()
 	void SetCameraRefs(UCameraComponent* InDefault, UCameraComponent* InBattle, UCameraComponent* InTopDown, UCameraComponent* InSideView);
 	
+	void SetRetroCameraRotation();
+
 protected:
 	virtual void BeginPlay() override;
 
