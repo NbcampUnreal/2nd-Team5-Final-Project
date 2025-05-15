@@ -3,19 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
-#include "UI/SLUITypes.h"
+#include "UI/Widget/AdditiveWidget/SLBaseTextPrintWidget.h"
 #include "SLTalkWidget.generated.h"
 
-class UButton;
-class UTextBlock;
 class UImage;
-class UCanvasPanel;
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMovedNextTalk, int32, TalkIndex);
 
 UCLASS()
-class STILLLOADING_API USLTalkWidget : public USLAdditiveWidget
+class STILLLOADING_API USLTalkWidget : public USLBaseTextPrintWidget
 {
 	GENERATED_BODY()
 	
@@ -30,20 +24,6 @@ protected:
 	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
-
-private:
-	UFUNCTION()
-	void OnClickedNextButton();
-
-	void PrintTalkText();
-	void ChangeTargetText();
-
-public:
-	UPROPERTY(EditAnywhere)
-	float PrintTime = 0.3f;
-
-	UPROPERTY()
-	FOnMovedNextTalk TalkDelegate;
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -65,16 +45,6 @@ private:
 	TObjectPtr<UCanvasPanel> NamePanel = nullptr;
 
 
-	UPROPERTY()
-	TArray<FName> NameArray;
-
-	UPROPERTY()
-	TArray<FText> TalkArray;
-
-	FTimerHandle TextPrintTimer;
-	FText TargetText = FText::GetEmpty();
 	ESLTalkTargetType CurrentTalkType = ESLTalkTargetType::ETT_None;
 	int32 CurrentTalkIndex = 0;
-	int32 TargetTextIndex = 0;
-	int32 CurrentTextIndex = -1;
 };

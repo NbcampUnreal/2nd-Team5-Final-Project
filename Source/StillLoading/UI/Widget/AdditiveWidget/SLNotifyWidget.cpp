@@ -5,6 +5,7 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
+#include "SubSystem/Struct/SLTextPoolDataRows.h"
 
 void USLNotifyWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
@@ -29,8 +30,20 @@ void USLNotifyWidget::ActivateWidget(ESLChapterType ChapterType)
 void USLNotifyWidget::UpdateNotifyText(ESLGameMapType MapType, ESLNotifyType NotiType)
 {
 	CheckValidOfTextPoolSubsystem();
-	const UDataTable* NotifyTextPoolData = TextPoolSubsystem->GetNotifyTextPool();
-	//NotifyText->SetText(NewText);
+	const UDataTable* NotifyDataTable = TextPoolSubsystem->GetNotifyTextPool();
+	
+	TArray<FSLNotifyTextPoolDataRow*> NotifyDataArray;
+	NotifyDataTable->GetAllRows(TEXT("Notify Text Context"), NotifyDataArray);
+
+	for (const FSLNotifyTextPoolDataRow* NotifyData : NotifyDataArray)
+	{
+		if (NotifyData->Chapter == CurrentChapter &&
+			NotifyData->TextMap.Contains(MapType))
+		{
+			NotifyText->SetText(NotifyData->TextMap[MapType].NotifyMap[NotiType]);
+			break;
+		}
+	}
 }
 
 void USLNotifyWidget::OnEndedOpenAnim()

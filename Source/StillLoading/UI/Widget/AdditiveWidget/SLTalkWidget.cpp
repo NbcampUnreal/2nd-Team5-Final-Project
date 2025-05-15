@@ -14,23 +14,27 @@ void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	bIsVisibleCursor = true;
 
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	ParentNamePanel = NamePanel;
+	ParentNameText = NameText;
+	ParentNextButton = NextButton;
+	ParentTalkText = TalkText;
 
-	NextButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedNextButton);
+	Super::InitWidget(NewUISubsystem, ChapterType);
 }
 
 void USLTalkWidget::ActivateWidget(ESLChapterType ChapterType)
 {
 	Super::ActivateWidget(ChapterType);
 
-	TargetTextIndex = 0;
-	ChangeTargetText();
+	
 }
 
 void USLTalkWidget::DeactivateWidget()
 {
 	Super::DeactivateWidget();
 
+	TalkArray.Empty();
+	NameArray.Empty();
 	OnEndedCloseAnim();
 }
 
@@ -79,61 +83,5 @@ void USLTalkWidget::ApplyTextData()
 	GetWorld()->GetTimerManager().ClearTimer(TextPrintTimer);
 	UpdateTalkState(CurrentTalkType, CurrentTalkIndex);
 	ChangeTargetText();
-	PrintTalkText();
-}
-
-void USLTalkWidget::OnClickedNextButton()
-{
-	GetWorld()->GetTimerManager().ClearTimer(TextPrintTimer);
-
-	if (CurrentTextIndex >= 0)
-	{
-		CurrentTextIndex = -1;
-		TalkText->SetText(TalkArray[TargetTextIndex]);
-		return;
-	}
-
-	++TargetTextIndex;
-
-	if (TargetTextIndex >= TalkArray.Num())
-	{
-		CloseWidget();
-		return;
-	}
-
-	ChangeTargetText();
-}
-
-void USLTalkWidget::PrintTalkText()
-{
-	if (CurrentTextIndex < 0)
-	{
-		return;
-	}
-
-	TalkText->SetText(FText::FromString(TargetText.ToString().LeftChop(CurrentTextIndex)));
-	--CurrentTextIndex;
-
-	GetWorld()->GetTimerManager().SetTimer(TextPrintTimer, this, &ThisClass::PrintTalkText, PrintTime, false);
-}
-
-void USLTalkWidget::ChangeTargetText()
-{
-	TalkText->SetText(FText::GetEmpty());
-
-	TargetText = TalkArray[TargetTextIndex];
-	CurrentTextIndex = TalkArray[TargetTextIndex].ToString().Len() - 1;
-
-	FName TargetName = NameArray[TargetTextIndex];
-
-	if (TargetName == "None")
-	{
-		NamePanel->SetVisibility(ESlateVisibility::Collapsed);
-		return;
-	}
-
-	NameText->SetText(FText::FromName(TargetName));
-	NamePanel->SetVisibility(ESlateVisibility::Visible);
-
 	PrintTalkText();
 }
