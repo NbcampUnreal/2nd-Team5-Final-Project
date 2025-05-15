@@ -42,11 +42,6 @@ protected:
 
 
 private:
-	UFUNCTION()
-	void EnableRetroMovement();
-
-	UFUNCTION()
-	void DisableRetroMovement();
 
 	UFUNCTION()
 	void Look(const FVector2D& Value);
@@ -55,13 +50,10 @@ private:
 	void Move(const float AxisValue, const EInputActionType ActionType);
 	
 	UFUNCTION()
-	void MoveInDirection(FVector Direction);
+	void MoveGrid(FVector InputDir);
 
 	UFUNCTION()
 	void RotateToDirection(FVector Direction);
-
-	UFUNCTION()
-	bool CanMoveToLocation(FVector TargetLocation);
 
 	UFUNCTION()
 	void Interact();
@@ -76,28 +68,25 @@ private:
 	UPROPERTY()
 	TObjectPtr<ASLBaseCharacter> OwnerCharacter;
 
-	UPROPERTY()
-	bool bIsMoving;
+	bool bIsMoving = false;
+
+	FVector StartLocation;
+
+	FVector TargetLocation;
+
+	float MoveDuration = 0.05f; // 100cm 이동에 걸리는 시간
+
+	float MoveElapsed = 0.0f;
+
+	float StepDistance = 50.0f;
+
+	FVector NextMove;
 
 	UPROPERTY()
 	float InputBufferDuration = 0.3f;
 
 	int32 CurrentIndex = 0; // Test용
 
-	UPROPERTY()
-	float OriginalMaxWalkSpeed = 0.0f;
-
-	UPROPERTY()
-	float OriginalBrakingFrictionFactor = 0.0f;
-
-	UPROPERTY()
-	float OriginalGravityScale = 0.0f;
-
-	UPROPERTY()
-	float OriginalGroundFriction = 0.0f;
-
-	UPROPERTY()
-	bool bOrigianlUseControllerDesiredRotation = true;
 
 	
 };
