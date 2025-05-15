@@ -6,6 +6,9 @@
 #include "Chaos/ChaosEngineInterface.h"
 #include "GeometryCollection/GeometryCollectionActor.h"
 #include "GeometryCollection\GeometryCollectionComponent.h"
+#include "Components\SphereComponent.h"
+#include "StillLoading\Character\SLBaseCharacter.h"
+#include "Field\FieldSystemObjects.h"
 //#include "DestructibleComponent"
 
 ASLReactiveObjectPortal::ASLReactiveObjectPortal()
@@ -13,18 +16,38 @@ ASLReactiveObjectPortal::ASLReactiveObjectPortal()
     // GeometryCollectionComponent 생성
     GeometryCollectionComp = CreateDefaultSubobject<UGeometryCollectionComponent>(TEXT("GeometryCollectionComp"));
 
+    RootComponent = GeometryCollectionComp;
+    
+    CollisionComp->SetupAttachment(GeometryCollectionComp);
+    StaticMeshComp->SetupAttachment(GeometryCollectionComp);
+    StaticMeshComp->SetHiddenInGame(true);
+    StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     // 시뮬레이션 설정
     GeometryCollectionComp->SetSimulatePhysics(true);
     GeometryCollectionComp->SetNotifyRigidBodyCollision(true);
     GeometryCollectionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     GeometryCollectionComp->SetCollisionObjectType(ECC_PhysicsBody);
+
+    CollisionComp->SetSimulatePhysics(false);
+    CollisionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    CollisionComp->SetCollisionObjectType(ECC_PhysicsBody);
+
+    GeometryCollectionComp->SetSimulatePhysics(false);
+    GeometryCollectionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
 }
 
-void ASLReactiveObjectPortal::OnReacted(const ASLBaseCharacter*, ESLReactiveTriggerType InTriggerType)
+void ASLReactiveObjectPortal::BeginPlay()
 {
-    if (ObjectHp <= 0) return;
+
+    GeometryCollectionComp->SetSimulatePhysics(true);
+}
+
+void ASLReactiveObjectPortal::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
+{
     if (InTriggerType == ESLReactiveTriggerType::ERT_InteractKey)
     {
+        if (ObjectHp <= 0) return;
         if (!DestinationLevelName.IsNone())
         {
             UGameplayStatics::OpenLevel(this, DestinationLevelName);
@@ -38,23 +61,15 @@ void ASLReactiveObjectPortal::OnReacted(const ASLBaseCharacter*, ESLReactiveTrig
         }
         else
         {
-            FVector HitLocation = GetActorLocation(); // 파괴 중심 위치
-            //float Radius = 100.0f; // 파괴 범위
-            float Strain = 500.0f; // 응력 강도
-            int32 PropagationDepth = 1; // 얼마나 깊이 퍼질지
-            float PropagationFactor = 0.5f; // 응력 전파 감쇠율
-
-            if (GeometryCollectionComp)
-            {
-                GeometryCollectionComp->ApplyInternalStrain(
-                    0, // 첫 번째 조각부터
-                    HitLocation,
-                    Radius,
-                    PropagationDepth,
-                    PropagationFactor,
-                    Strain
-                );
-            }
+            StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+            FTimerHandle CollisionOffTimer;
+            GetWorld()->GetTimerManager().SetTimer(CollisionOffTimer,
+                [this]
+                {
+                    StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                },
+                0.5f,
+                false);
         }
     }
 }

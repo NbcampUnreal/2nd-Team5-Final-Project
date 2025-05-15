@@ -16,6 +16,7 @@ class STILLLOADING_API ASLReactiveObjectPortal : public ASLBaseReactiveObject
 public:
 	ASLReactiveObjectPortal();
 protected:
+	virtual void BeginPlay();
 	virtual void OnReacted(const ASLBaseCharacter*, ESLReactiveTriggerType TriggerType);
 
 protected:

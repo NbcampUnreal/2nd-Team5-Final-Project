@@ -21,15 +21,12 @@ void ASLReactiveObjectRotationStatue::OnReacted(const ASLBaseCharacter* InCharac
 		RotationHandle,
 		[this, NextRotation]
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Timer"));
 			FRotator MyRot = GetActorRotation();
 			float LerpRotZ = FMath::FInterpConstantTo(MyRot.Yaw, NextRotation.Yaw, GetWorld()->GetDeltaSeconds(), LerpSpeed);
 			MyRot.Yaw = LerpRotZ;
 			SetActorRotation(MyRot);
 			if (FMath::IsNearlyEqual(MyRot.Yaw, NextRotation.Yaw, KINDA_SMALL_NUMBER))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("End Timer"));
-
 				GetWorld()->GetTimerManager().ClearTimer(RotationHandle);
 			}
 		},
