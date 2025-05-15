@@ -39,7 +39,7 @@ protected:
 	virtual void OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType TriggerType);
 
 	UFUNCTION()
-	void BeginOverlapCollision(
+	virtual void BeginOverlapCollision(
 		UPrimitiveComponent* OverlappedComponent, 
 		AActor* OtherActor, 
 		UPrimitiveComponent* OtherComp, 
