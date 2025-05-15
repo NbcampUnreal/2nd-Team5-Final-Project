@@ -21,7 +21,7 @@ void ASLMonster::BeginPlay()
 {
 	Super::BeginPlay();
 	LastAttackTime = 0.0f;
-    GetCharacterMovement()->MaxWalkSpeed = 650.f;
+    GetCharacterMovement()->MaxWalkSpeed = 200.f;
 	
 }
 

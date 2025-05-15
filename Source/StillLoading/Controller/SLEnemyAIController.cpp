@@ -8,7 +8,8 @@
 ASLEnemyAIController::ASLEnemyAIController()
 {
 	AAIController::SetGenericTeamId(FGenericTeamId(2));
-	AISenseConfig_Sight->SightRadius = 2500.f;
+	AISenseConfig_Sight->SightRadius = 1600.f;
+	AISenseConfig_Sight->PeripheralVisionAngleDegrees = 30.f;
 }
 
 ETeamAttitude::Type ASLEnemyAIController::GetTeamAttitudeTowards(const AActor& Other) const

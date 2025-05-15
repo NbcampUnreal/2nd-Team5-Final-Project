@@ -19,6 +19,9 @@ class STILLLOADING_API ASLBaseAIController : public ADetourCrowdAIController
 public:
 	ASLBaseAIController();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	AActor* TargetActor;
+
 protected:
 	UFUNCTION()
 	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);

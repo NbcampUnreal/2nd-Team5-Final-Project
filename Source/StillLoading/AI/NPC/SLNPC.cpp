@@ -11,6 +11,14 @@ ASLNPC::ASLNPC()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+    UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+    if (MovementComponent)
+    {
+        MovementComponent->bUseRVOAvoidance = true;
+        MovementComponent->AvoidanceConsiderationRadius = AvoidanceRadius;
+        MovementComponent->AvoidanceWeight = 0.5f;
+    }
 }
 
 void ASLNPC::BeginPlay()
@@ -25,7 +33,7 @@ void ASLNPC::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    AActor* ClosestEnemy = nullptr;
+    /*AActor* ClosestEnemy = nullptr;
     float ClosestDistance = MAX_FLT;
 
     for (TActorIterator<APawn> It(GetWorld()); It; ++It)
@@ -67,7 +75,7 @@ void ASLNPC::Tick(float DeltaTime)
                 LastAttackTime = CurrentTime;
             }
         }
-    }
+    }*/
 }
 
 void ASLNPC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -78,7 +86,21 @@ void ASLNPC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ASLNPC::Attack()
 {
-	TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
-	AnimInstance->SetIsAttacking(true);
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    if (CurrentTime - LastAttackTime > AttackCooldown)
+    {
+        TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
+        AnimInstance->SetIsAttacking(true);
+        LastAttackTime = CurrentTime;
+    }
+}
+
+void ASLNPC::SetRVOAvoidanceEnabled(bool Enable)
+{
+    UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+    if (MovementComponent)
+    {
+        MovementComponent->bUseRVOAvoidance = true;
+    }
 }
 
