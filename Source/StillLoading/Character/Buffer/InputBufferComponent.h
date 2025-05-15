@@ -34,6 +34,11 @@ public:
 	UFUNCTION()
 	void OnIMCActionStarted(EInputActionType ActionType);
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Input Buffer")
+	float BufferDuration = 3.0f;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Input Buffer")
+	int32 MaxInputBufferCount = 5;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
@@ -43,12 +48,12 @@ private:
 	UFUNCTION()
 	void ExecuteInput(EInputActionType Action);
 	UFUNCTION()
-	bool CanConsumeInput() const;
+	bool CanConsumeInput(EInputActionType NextInput) const;
 
+	UPROPERTY()
+	TObjectPtr<ASLCharacter> OwnerCharacter;
 	UPROPERTY()
 	TArray<FBufferedInput> InputBuffer;
 	UPROPERTY()
-	float BufferDuration = 1.0f;
-	UPROPERTY()
-	bool bBufferActive = false;
+	float LastInputTime = -1.0f;
 };

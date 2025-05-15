@@ -82,12 +82,28 @@ void USLUISubsystem::ActivateFade(bool bIsFadeIn)
 	AddAdditveWidget(FadeType);
 }
 
-void USLUISubsystem::ActivateNotify(const FText& NotifyText)
+void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType)
 {
 	ESLAdditiveWidgetType NotifyType = ESLAdditiveWidgetType::EAW_NotifyWidget;
 	CheckValidOfAdditiveWidget(NotifyType);
-	Cast<USLNotifyWidget>(AdditiveWidgetMap[NotifyType])->UpdateNotifyText(NotifyText);
 	AddAdditveWidget(NotifyType);
+	Cast<USLNotifyWidget>(AdditiveWidgetMap[NotifyType])->UpdateNotifyText(MapType, NotiType);
+}
+
+void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, int32 TargetIndex)
+{
+	ESLAdditiveWidgetType StoryType = ESLAdditiveWidgetType::EAW_StoryWidget;
+	CheckValidOfAdditiveWidget(StoryType);
+	Cast<USLStoryWidget>(AdditiveWidgetMap[StoryType])->UpdateStoryState(CurrentChapter, TargetStoryType, TargetIndex);
+	AddAdditveWidget(StoryType);
+}
+
+void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex)
+{
+	ESLAdditiveWidgetType TalkType = ESLAdditiveWidgetType::EAW_TalkWidget;
+	CheckValidOfAdditiveWidget(TalkType);
+	Cast<USLTalkWidget>(AdditiveWidgetMap[TalkType])->UpdateTalkState(TalkTargetType, TargetIndex);
+	AddAdditveWidget(TalkType);
 }
 
 void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
