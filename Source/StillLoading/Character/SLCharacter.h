@@ -3,7 +3,25 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "SLBaseCharacter.h"
+#include "DataAsset/TagQueryDataAsset.h"
 #include "SLCharacter.generated.h"
+
+UENUM(BlueprintType)
+enum class EQueryType : uint8 // enum class 는 앞에 안붙이는게 더 낫다
+{
+	EQT_MovementBlock UMETA(DisplayName = "Movement Block"),
+	EQT_AttackBlock UMETA(DisplayName = "Attack Block"),
+	EQT_JumpBlock UMETA(DisplayName = "Jump Block"),
+};
+
+USTRUCT(BlueprintType)
+struct FTagQueryAssetPair
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<TObjectPtr<UTagQueryDataAsset>> QueryAssets;
+};
 
 UCLASS()
 class STILLLOADING_API ASLCharacter : public ASLBaseCharacter
@@ -32,24 +50,17 @@ protected:
 private:
 	UFUNCTION()
 	void AttachItemToHand(AActor* ItemActor, const FName SocketName) const;
+
+	// Debug용 함수
+	UFUNCTION(BlueprintCallable, Category = "Debug")
+	void PrintPrimaryStateTags() const;
 	
 	UPROPERTY()
 	TObjectPtr<AActor> Sword;
 	UPROPERTY()
 	TObjectPtr<AActor> Shield;
-
-	// Debug용 함수
-	UFUNCTION(BlueprintCallable, Category = "Debug")
-	void PrintPrimaryStateTags() const;
-
+	
 public:
-	// 상태 태그 컨테이너
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
-	FGameplayTagContainer PrimaryStateTags;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
-	FGameplayTagContainer SecondaryStateTags;
-
 	// 상태 태그 추가/제거 함수
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void SetPrimaryState(FGameplayTag NewState);
@@ -72,14 +83,26 @@ public:
 	bool HasSecondaryState(FGameplayTag StateToCheck) const;
 
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
-	bool IsInMovementState() const;
+	bool IsConditionBlocked(EQueryType QueryType) const;
+
+	// 상태 태그 개별 제거 함수
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	void RemovePrimaryState(FGameplayTag StateToRemove);
 
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
-	bool IsInAttackState() const;
+	void ClearAllPrimaryStates();
 
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
-	bool IsInDefenseState() const;
+	void ClearAllSecondaryStates();
 
-	UFUNCTION(BlueprintCallable, Category = "State Tags")
-	bool IsInHitReactionState() const;
+	// 상태 태그 컨테이너
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
+	FGameplayTagContainer PrimaryStateTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
+	FGameplayTagContainer SecondaryStateTags;
+
+	// 상태 조건 맵
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
+	TMap<EQueryType, FTagQueryAssetPair> ConditionQueryMap;
 };

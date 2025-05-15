@@ -5,6 +5,7 @@
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
+class UCombatHandlerComponent;
 class UBattleComponent;
 class UAnimationMontageComponent;
 class ASLCharacter;
@@ -37,9 +38,13 @@ class STILLLOADING_API UMovementHandlerComponent : public UActorComponent
 
 public:
 	UMovementHandlerComponent();
-
+	
+	// 애니매이션 노티 확인용
 	UFUNCTION()
-	void Attack();
+	void OnAttackStageFinished(ECharacterMontageState AttackStage);
+	// 버퍼 출력 처리용
+	UFUNCTION()
+	void HandleBufferedInput(EInputActionType Action);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
 	float MinPitch = -80.f;
@@ -63,6 +68,8 @@ protected:
 	void BindIMCComponent();
 
 private:
+	UFUNCTION()
+	void Attack();
 	UFUNCTION()
 	void Look(const FVector2D& Value);
 	UFUNCTION()
@@ -91,8 +98,8 @@ private:
 	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
 	UPROPERTY()
 	TObjectPtr<UBattleComponent> CachedBattleComponent;
-
-	EMovementMode CachedMovementMode = MOVE_Walking;
+	UPROPERTY()
+	TObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
 
 	int32 CurrentIndex = 0; // Test용
 };
