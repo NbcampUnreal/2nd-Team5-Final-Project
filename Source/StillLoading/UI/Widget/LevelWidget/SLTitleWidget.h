@@ -22,6 +22,7 @@ public:
 protected:
 	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
+	virtual void ApplyTextData() override;
 
 private:
 	UFUNCTION()
@@ -68,4 +69,9 @@ private:
 	static const FName TitleTextImgIndex;
 	static const FName ButtonsBackgroundImgIndex;
 	static const FName ButtonImgIndex;
+
+	static const FName TitleTextIndex;
+	static const FName StartButtonIndex;
+	static const FName OptionButtonIndex;
+	static const FName QuitButtonIndex;
 };
