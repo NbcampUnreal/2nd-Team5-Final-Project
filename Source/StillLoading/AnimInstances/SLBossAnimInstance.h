@@ -16,16 +16,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetBossAttackPattern(EBossAttackPattern NewBossAttackPattern);
 	
-	// 액터를 생성하는 함수 - 소켓 이름 매개변수 추가
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	AActor* SpawnActorToThrow(TSubclassOf<AActor> ActorClass = nullptr, FName SocketName = NAME_None);
     
-	// 액터를 던지는 함수 - 소켓 이름 매개변수 추가
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	AActor* ThrowActorAtTarget(float LaunchSpeed = 1000.f, float ArcParam = 0.5f, FName SocketName = NAME_None);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
-	bool JumpToTarget(float JumpSpeed = 700.f, float JumpArc = 0.7f, bool bUpdateRotation = true, float RemainingAnimTime = 0.0f);
+	bool JumpToTarget(bool bUpdateRotation = true, float RemainingAnimTime = 0.0f);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void FinishJump();

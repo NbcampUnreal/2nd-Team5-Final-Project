@@ -80,7 +80,6 @@ void ASLBaseAIController::OnPossess(APawn* InPawn)
 
 		ASLAIBaseCharacter* AiCharacter = Cast<ASLAIBaseCharacter>(InPawn);
 		BlackboardComponent->SetValueAsFloat(FName("DefaultMaxWalkSpeed"), AiCharacter->GetCharacterMovement()->MaxWalkSpeed);
-		
 		BlackboardComponent->SetValueAsFloat(FName("MaxHealth"), AiCharacter->GetMaxHealth());
 		BlackboardComponent->SetValueAsFloat(FName("CurrentHealth"), AiCharacter->GetCurrentHealth());
 	}

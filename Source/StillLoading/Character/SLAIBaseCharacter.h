@@ -90,7 +90,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetAttackPower(float NewAttackPower);
-	
+
+	UFUNCTION(BlueprintCallable)
+	void SetCombatPhase(ECombatPhase NewCombatPhase);
+
+	UFUNCTION(BlueprintCallable)
+	ECombatPhase GetCombatPhase();
 protected:
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -135,5 +140,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
-	
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	ECombatPhase CombatPhase;
 };
