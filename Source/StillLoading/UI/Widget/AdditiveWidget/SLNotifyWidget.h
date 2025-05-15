@@ -18,7 +18,7 @@ public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
 	virtual void ActivateWidget(ESLChapterType ChapterType) override;
 
-	void UpdateNotifyText(const FText& NewText);
+	void UpdateNotifyText(ESLGameMapType MapType, ESLNotifyType NotiType);
 
 protected:
 	virtual void OnEndedOpenAnim() override;

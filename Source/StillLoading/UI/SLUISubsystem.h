@@ -21,7 +21,7 @@ public:
 	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 
 	void ActivateFade(bool bIsFadeIn);
-	void ActivateNotify(const FText& NotifyText);
+	void ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType);
 	//void ActivateStory();
 	//void ActivateTalk();
 
