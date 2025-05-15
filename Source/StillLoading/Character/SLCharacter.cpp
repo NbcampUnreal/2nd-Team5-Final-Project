@@ -5,8 +5,6 @@
 ASLCharacter::ASLCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	
 }
 
 void ASLCharacter::BeginPlay()
@@ -108,24 +106,34 @@ bool ASLCharacter::HasSecondaryState(FGameplayTag StateToCheck) const
 	return SecondaryStateTags.HasTag(StateToCheck);
 }
 
-bool ASLCharacter::IsInMovementState() const
+void ASLCharacter::RemovePrimaryState(FGameplayTag StateToRemove)
 {
-	return PrimaryStateTags.HasTag(TAG_Character_Movement);
+	PrimaryStateTags.RemoveTag(StateToRemove);
 }
 
-bool ASLCharacter::IsInAttackState() const
+void ASLCharacter::ClearAllPrimaryStates()
 {
-	return PrimaryStateTags.HasTag(TAG_Character_Attack);
+	PrimaryStateTags.Reset();
 }
 
-bool ASLCharacter::IsInDefenseState() const
+void ASLCharacter::ClearAllSecondaryStates()
 {
-	return PrimaryStateTags.HasTag(TAG_Character_Defense);
+	SecondaryStateTags.Reset();
 }
 
-bool ASLCharacter::IsInHitReactionState() const
+bool ASLCharacter::IsConditionBlocked(EQueryType QueryType) const
 {
-	return PrimaryStateTags.HasTag(TAG_Character_HitReaction);
+	if (const FTagQueryAssetPair* QueryPair = ConditionQueryMap.Find(QueryType))
+	{
+		for (const TObjectPtr<UTagQueryDataAsset>& QueryAsset : QueryPair->QueryAssets)
+		{
+			if (QueryAsset && QueryAsset->TagQuery.Matches(PrimaryStateTags))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 

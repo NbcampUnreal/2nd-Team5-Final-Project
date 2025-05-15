@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "CharacterStatData.generated.h"
+#include "CharacterStatDataAsset.generated.h"
 
 UCLASS()
-class STILLLOADING_API UCharacterStatData : public UDataAsset
+class STILLLOADING_API UCharacterStatDataAsset : public UDataAsset
 {
 	GENERATED_BODY()
 
