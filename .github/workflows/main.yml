@@ -1,0 +1,50 @@
+name: Check behind against origin/dev
+
+on:
+  schedule:
+    - cron: '0 0-12/3 * * *'  # KST 오전 9시 ~ 오후 9시, 3시간 간격
+  workflow_dispatch:
+  
+jobs:
+  check-remote-behind:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all remote branches
+        run: git fetch --all
+
+      - name: Compare each origin branch to origin/dev
+        run: |
+          DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/1371797628018495599/oG34B8I09mlhsh65sN5erjGWcJSqMStxHskgUMpNCLTFbMDznl1Of6kpJ-XO42ZLHyqs"
+
+          TARGET_BRANCH="origin/dev"
+
+          git for-each-ref --format='%(refname:short)' refs/remotes/origin/ | while read remote_branch; do
+            # origin/dev 자신은 제외
+            if [ "$remote_branch" = "$TARGET_BRANCH" ]; then
+              continue
+            fi
+            if [ "$remote_branch" = "origin/main" ]; then
+              continue
+            fi
+
+            # origin/dev..origin/feature 같은 식으로 비교 (뒤처진 커밋 수)
+            behind_count=$(git rev-list --left-right --count "$TARGET_BRANCH...$remote_branch" | awk '{print $1}')
+            echo "$remote_branch is $behind_count commits behind $TARGET_BRANCH"
+
+            if [ "$behind_count" -ge 10 ]; then
+              short_branch="${remote_branch#origin/}"
+              message="🚨 브랜치 \`$short_branch\`가 \`dev\`보다 $behind_count 커밋 뒤처져 있습니다!"
+              echo "$message"
+
+              curl -H "Content-Type: application/json" \
+                   -X POST \
+                   -d "{\"content\": \"$message\"}" \
+                   $DISCORD_WEBHOOK_URL
+            fi
+          done

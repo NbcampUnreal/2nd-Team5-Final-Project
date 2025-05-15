@@ -9,7 +9,7 @@
 
 class USLBaseWidget;
 
-UCLASS(Config = UISetting, DefaultConfig, meta = (DisplayName = "UISubsystemSettings"))
+UCLASS(Config = UISetting, DefaultConfig, meta = (DisplayName = "UI Subsystem Settings"))
 class STILLLOADING_API USLUISettings : public UDeveloperSettings
 {
 	GENERATED_BODY()

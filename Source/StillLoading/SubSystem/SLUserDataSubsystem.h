@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLTextPoolTypes.h"
 #include "Character//DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "SLUserDataSubsystem.generated.h"
 
@@ -13,6 +14,8 @@ class UInputMappingContext;
 class UGameUserSettings;
 class URendererSettings;
 class USLUISubsystem;
+class USLTextPoolSubsystem;
+struct FWidgetSaveData;
 
 UCLASS()
 class STILLLOADING_API USLUserDataSubsystem : public UGameInstanceSubsystem
@@ -20,7 +23,7 @@ class STILLLOADING_API USLUserDataSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
-	void ApplyLoadedUserData();
+	void ApplyLoadedUserData(const FWidgetSaveData& LoadData);
 	void ApplyDefaultUserData();
 
 	void SetLanguage(ESLLanguageType NewType);
@@ -50,17 +53,16 @@ private:
 	void ApplyResolution();
 	void ApplyBrightness();
 	void ApplyWindowMode();
+	void ApplyMappingKey(EInputActionType TargetType, const FKey& KeyValue);
 
 	void LoadKeyMapFromIMC();
-	void LoadWidgetDataFromSaveSubSystem();
-
 	void AddMappingDataToKeyMap(const FEnhancedActionKeyMapping& ActionKeyMapping);
 
 	void CheckValidOfGameUserSettings();
 	void CheckValidOfRendererSettings();
 	void CheckValidOfUISubsystem();
+	void CheckValidOfTextPoolSubsystem();
 	void CheckValidOfUserDataSettings();
-	
 
 private:
 	UPROPERTY()
@@ -74,6 +76,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<USLTextPoolSubsystem> TextPoolSubsystem = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<UInputMappingContext> PlayerIMC = nullptr;

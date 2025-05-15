@@ -20,12 +20,6 @@ void ASLBaseHUD::SetChapterToLevelWidget(ESLChapterType ChapterType)
 	ApplyLevelWidgetInputMode();
 }
 
-void ASLBaseHUD::SetLanguageToLevelWidget(ESLLanguageType LanguageType)
-{
-	CheckValidOfLevelWidget();
-	LevelWidgetObj->ApplyOnChangedLanguage(LanguageType);
-}
-
 void ASLBaseHUD::BeginPlay()
 {
 	Super::BeginPlay();

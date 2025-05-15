@@ -27,6 +27,9 @@ public:
 protected:
 	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
+	virtual void ApplyTextData() override;
+
+	void InitOptionVariable();
 
 private:
 	// Language Funtion
@@ -84,6 +87,9 @@ private:
 	void UpdateResolution(int32 ResolutionNum);
 
 private:
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> TitleText = nullptr;
+
 	// Language Setting
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UButton> KorButton = nullptr;
@@ -144,11 +150,20 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USlider> EffectVolumeSlider = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> BgmVolumeText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> EffectVolumeText = nullptr;
 	//
 
 	// Brightness Setting
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USlider> BrightnessSlider = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> BrightnessText = nullptr;
 	//
 
 	// Key Setting
@@ -177,4 +192,19 @@ private:
 	TObjectPtr<USLUserDataSubsystem> UserDataSubsystem = nullptr;
 
 	static const TArray<TPair<float, float>> ResolutionSet;
+
+	static const FName TitleTextIndex;
+	static const FName LanguageTagIndex;
+	static const FName WindowModeTagIndex;
+	static const FName ResolutionTagIndex;
+	static const FName BgmTagIndex;
+	static const FName EffectTagIndex;
+	static const FName BrigthnessTagIndex;
+	static const FName KorButtonIndex;
+	static const FName EngButtonIndex;
+	static const FName FullScreenButtonIndex;
+	static const FName WindowedButtonIndex;
+	static const FName KeySettingButtonIndex;
+	static const FName QuitGameButtonIndex;
+	static const FName CloseButtonIndex;
 };

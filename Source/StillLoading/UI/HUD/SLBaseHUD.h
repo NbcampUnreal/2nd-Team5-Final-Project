@@ -20,9 +20,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetChapterToLevelWidget(ESLChapterType ChapterType);
 
-	UFUNCTION(BlueprintCallable)
-	void SetLanguageToLevelWidget(ESLLanguageType LanguageType);
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnStartedHUD() {};

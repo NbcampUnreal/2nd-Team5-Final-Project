@@ -106,6 +106,7 @@ void UDynamicIMCComponent::BindInputForAction(const UInputAction* Action, const 
 	case EInputActionType::EIAT_Attack:
 	case EInputActionType::EIAT_PointMove:
 	case EInputActionType::EIAT_Menu:
+	case EInputActionType::EIAT_Block:
 		InputComp->BindAction(Action, ETriggerEvent::Started, this, &UDynamicIMCComponent::HandleActionStarted);
 		InputComp->BindAction(Action, ETriggerEvent::Completed, this, &UDynamicIMCComponent::HandleActionCompleted);
 		break;
