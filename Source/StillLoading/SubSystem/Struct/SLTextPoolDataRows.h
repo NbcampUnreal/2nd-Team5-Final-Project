@@ -18,6 +18,19 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLTalkTextData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	TArray<FName> TalkOwnArray;
+
+	UPROPERTY(EditAnywhere)
+	TArray<FText> TalkTextArray;
+};
+
+USTRUCT(BlueprintType)
 struct STILLLOADING_API FSLNotifyTextData
 {
 	GENERATED_BODY()
@@ -46,7 +59,11 @@ struct STILLLOADING_API FSLStoryTextPoolDataRow : public FTableRowBase
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditAnywhere)
+	ESLChapterType Chapter = ESLChapterType::EC_Intro;
 
+	UPROPERTY(EditAnywhere)
+	TMap<ESLStoryType, FSLTalkTextData> TextMap;
 };
 
 USTRUCT(BlueprintType)
@@ -55,7 +72,11 @@ struct STILLLOADING_API FSLTalkTextPoolDataRow : public FTableRowBase
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditAnywhere)
+	ESLTalkTargetType TalkTarget = ESLTalkTargetType::ETT_None;
 
+	UPROPERTY(EditAnywhere)
+	TMap<int32, FSLTalkTextData> TalkMap;
 };
 
 USTRUCT(BlueprintType)
