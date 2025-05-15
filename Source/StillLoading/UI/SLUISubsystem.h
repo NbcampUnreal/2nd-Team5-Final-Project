@@ -21,8 +21,10 @@ public:
 	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 
 	void ActivateFade(bool bIsFadeIn);
+	UFUNCTION(BlueprintCallable)
 	void ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType);
-	//void ActivateStory();
+	UFUNCTION(BlueprintCallable)
+	void ActivateStory(ESLStoryType TargetStoryType, int32 TargetIndex);
 	UFUNCTION(BlueprintCallable)
 	void ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex);
 
