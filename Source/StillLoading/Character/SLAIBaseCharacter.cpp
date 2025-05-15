@@ -37,10 +37,6 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
 	
-	IsHitReaction = false;
-	IsDead = false;
-	MaxHealth = 100.0f;
-	CurrentHealth = MaxHealth;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -50,6 +46,12 @@ void ASLAIBaseCharacter::BeginPlay()
 	//CurrentHealth = MaxHealth;
 	AIController = Cast<ASLBaseAIController>(GetController());
 	AnimInstancePtr = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
+
+	IsHitReaction = false;
+	IsDead = false;
+	MaxHealth = 100.0f;
+	CurrentHealth = MaxHealth;
+	CombatPhase = ECombatPhase::Phase_None;
 }
 
 float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -65,35 +67,42 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
             if (!IsDead)
             {
                 IsDead = true;
-
-                if (AIController)
-                {
-                    AIController->GetBrainComponent()->StopLogic("Character Died"); //AI 로직 중지
-                }
-
-                GetCharacterMovement()->StopMovementImmediately();
-                GetCharacterMovement()->DisableMovement();
             	
                 GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
                 GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
 
-                if (AnimInstancePtr)
-                {
-                    if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
-                    {
-                        SLAIAnimInstance->SetIsDead(IsDead);
-                    }
+            	GetCharacterMovement()->StopMovementImmediately();
+            	GetCharacterMovement()->DisableMovement();
+            	
+            	if (AIController)
+            	{
+            		AIController->GetBrainComponent()->StopLogic("Character Died"); 
+            	}
+            	
+            	if (AnimInstancePtr)
+            	{
+            		if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+            		{
+            			SLAIAnimInstance->SetIsDead(IsDead);
+            			SLAIAnimInstance->SetIsHit(false);  
+            			SLAIAnimInstance->SetIsDown(false);
+            			SLAIAnimInstance->SetIsStun(false);
+            			SLAIAnimInstance->SetIsAttacking(false);
+            		}
                 	
-                    if (DeathMontages.Num() > 0)
-                    {
-                        const int32 MontageIndex = FMath::RandRange(0, DeathMontages.Num() - 1);
-                        UAnimMontage* MontageToPlay = DeathMontages[MontageIndex];
-                        if (MontageToPlay)
-                        {
-                            AnimInstancePtr->Montage_Play(MontageToPlay);
-                        }
-                    }
-                }
+            		if (DeathMontages.Num() > 0)
+            		{
+            			const int32 MontageIndex = FMath::RandRange(0, DeathMontages.Num() - 1);
+            			UAnimMontage* MontageToPlay = DeathMontages[MontageIndex];
+            			if (MontageToPlay)
+            			{
+            				AnimInstancePtr->Montage_Play(MontageToPlay);
+            			}
+            		}
+            	}
+
+            	
+            	
             }
         }
         else if (DamageCauser && IsHitReaction && AnimInstancePtr)
@@ -149,4 +158,14 @@ void ASLAIBaseCharacter::SetIsHitReaction(bool bNewIsHitReaction)
 void ASLAIBaseCharacter::SetAttackPower(float NewAttackPower)
 {
 	AttackPower = NewAttackPower;
+}
+
+void ASLAIBaseCharacter::SetCombatPhase(ECombatPhase NewCombatPhase)
+{
+	CombatPhase = NewCombatPhase;
+}
+
+ECombatPhase ASLAIBaseCharacter::GetCombatPhase()
+{
+	return CombatPhase;
 }

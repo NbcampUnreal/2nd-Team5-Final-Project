@@ -26,15 +26,13 @@ AActor* USLBossAnimInstance::SpawnActorToThrow(TSubclassOf<AActor> ActorClass, F
         return nullptr;
     }
     
-    // 소켓 유효성 확인
     if (!OwningCharacter->GetMesh()->DoesSocketExist(SocketName))
     {
         UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on character mesh"), *SocketName.ToString());
         return nullptr;
     }
     
-    // 액터 생성 - 월드에 생성하고 나중에 어태치
-    FVector SpawnLocation = OwningCharacter->GetActorLocation(); // 임시 위치
+    FVector SpawnLocation = OwningCharacter->GetActorLocation(); 
     FRotator SpawnRotation = OwningCharacter->GetActorRotation();
     
     FActorSpawnParameters SpawnParams;
@@ -64,7 +62,7 @@ AActor* USLBossAnimInstance::SpawnActorToThrow(TSubclassOf<AActor> ActorClass, F
                 SocketName
             );
             
-            // 위치 및 회전 재설정 (필요한 경우)
+            // 위치 및 회전 재설정
             RootComp->SetRelativeLocation(FVector::ZeroVector);
             RootComp->SetRelativeRotation(FRotator::ZeroRotator);
         }
@@ -95,7 +93,7 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float ArcPara
         RootComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
     }
     
-    // 던질 액터의 현재 위치 (지정된 소켓 위치)
+    // 던질 액터의 현재 위치
     FVector StartLocation = OwningCharacter->GetMesh()->GetSocketLocation(SocketName);
     
     // 액터가 분리됐으므로 시작 위치 설정 
@@ -137,7 +135,7 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float ArcPara
     float DistanceXY = FVector::Dist2D(StartLocation, TargetLocation);
     float LaunchAngle = FMath::DegreesToRadians(45.0f * ArcParam); // ArcParam으로 궤적 높이 조절
     
-    // 수직 속도 계산 (포물선 공식)
+    // 수직 속도 계산
     float Vz = LaunchSpeed * FMath::Sin(LaunchAngle);
     
     // 최종 발사 속도
@@ -154,7 +152,7 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float ArcPara
     return ThrownActor;
 }
 
-bool USLBossAnimInstance::JumpToTarget(float JumpSpeed, float JumpArc, bool bUpdateRotation, float RemainingAnimTime)
+bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnimTime)
 {
     // 타겟과 소유 캐릭터가 유효한지 확인
     if (!TargetCharacter || !OwningCharacter)
@@ -163,8 +161,8 @@ bool USLBossAnimInstance::JumpToTarget(float JumpSpeed, float JumpArc, bool bUpd
         return false;
     }
     
-    // 남은 애니메이션 시간 자동 계산 (필요한 경우)
-    float EstimatedJumpTime = 1.0f; // 기본값
+    // 남은 애니메이션 시간 자동 계산
+    float EstimatedJumpTime = 1.0f;
     
     if (RemainingAnimTime <= 0.0f)
     {
@@ -182,11 +180,10 @@ bool USLBossAnimInstance::JumpToTarget(float JumpSpeed, float JumpArc, bool bUpd
     }
     else
     {
-        // 직접 지정된 값 사용
         EstimatedJumpTime = RemainingAnimTime;
     }
     
-    // 최소 시간 보장 (너무 짧으면 속도가 너무 빨라짐)
+    // 최소 시간 보장
     if (EstimatedJumpTime < 0.2f)
     {
         EstimatedJumpTime = 0.2f;
@@ -195,7 +192,7 @@ bool USLBossAnimInstance::JumpToTarget(float JumpSpeed, float JumpArc, bool bUpd
     // 출발 위치
     FVector StartLocation = OwningCharacter->GetActorLocation();
     
-    // 타겟 위치 (더 앞에 도착하도록 조정)
+    // 타겟 위치
     FVector TargetLocation = TargetCharacter->GetActorLocation();
     FVector TargetForward = TargetCharacter->GetActorForwardVector();
     TargetLocation -= TargetForward * 150.0f; // 타겟 앞 150cm에 착지 (오버슈팅 방지를 위해 증가)
@@ -205,15 +202,12 @@ bool USLBossAnimInstance::JumpToTarget(float JumpSpeed, float JumpArc, bool bUpd
     FVector DirectionXY = FVector(ToTarget.X, ToTarget.Y, 0.0f).GetSafeNormal();
     float DistanceXY = FVector::Dist2D(StartLocation, TargetLocation);
     
-    // 캐릭터 회전 (타겟을 향하도록)
+    // 캐릭터 회전
     if (bUpdateRotation)
     {
         FRotator NewRotation = FRotationMatrix::MakeFromX(DirectionXY).Rotator();
         OwningCharacter->SetActorRotation(NewRotation);
     }
-    
-    // 점프 각도 계산 (JumpArc로 높이 조절)
-    float JumpAngle = FMath::DegreesToRadians(45.0f * JumpArc);
     
     // 물리 방정식을 사용하여 필요한 초기 속도 계산
     float Gravity = GetWorld()->GetGravityZ() * -1.0f;
