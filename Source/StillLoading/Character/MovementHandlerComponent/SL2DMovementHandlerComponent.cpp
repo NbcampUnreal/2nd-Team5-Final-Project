@@ -29,14 +29,12 @@ void USL2DMovementHandlerComponent::BeginPlay()
 	Super::BeginPlay();
 
 	OwnerCharacter = Cast<ASLCharacter>(GetOwner());
+	check(OwnerCharacter); // 캐릭터가 아닌 경우 에러
 
-	if (OwnerCharacter)
-	{
-		BindIMCComponent();
-		EnableRetroMovement();
-		SetTopDownView();
-	}
-	
+	BindIMCComponent();
+	SetTopDownView();
+
+
 }
 
 void USL2DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
@@ -98,55 +96,39 @@ void USL2DMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick Ti
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (bIsMoving)
+	{
+		MoveElapsed += DeltaTime;
+		float Alpha = FMath::Clamp(MoveElapsed / MoveDuration, 0.0f, 1.0f);
 
+		FVector NewLocation = FMath::Lerp(StartLocation, TargetLocation, Alpha);
+		OwnerCharacter->SetActorLocation(NewLocation);
 
-	// ...
+		if (Alpha >= 1.0f)
+		{
+			bIsMoving = false;
+
+			// 다음 이동 처리
+			if (NextMove != FVector::ZeroVector)
+			{
+				FVector NextDir = NextMove;
+				NextMove = FVector::ZeroVector;
+				MoveGrid(NextDir);
+			}
+		}
+	}
 }
 
 void USL2DMovementHandlerComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 
-	DisableRetroMovement();
 	UE_LOG(LogTemp, Warning, TEXT("2DMovementHandlerComponent destroyed!"));
 
 }
 
-void USL2DMovementHandlerComponent::EnableRetroMovement()
-{
-	checkf(OwnerCharacter, TEXT("OwnerCharacter is null"));
 
-	OriginalMaxWalkSpeed = OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed;
-	OriginalBrakingFrictionFactor = OwnerCharacter->GetCharacterMovement()->BrakingFrictionFactor;
-	OriginalGravityScale = OwnerCharacter->GetCharacterMovement()->GravityScale;
-	OriginalGroundFriction = OwnerCharacter->GetCharacterMovement()->GroundFriction;
-	bOrigianlUseControllerDesiredRotation = OwnerCharacter->GetCharacterMovement()->bUseControllerDesiredRotation;
-	//OriginalMovementMode = OwnerCharacter->GetCharacterMovement()->
 
-	OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 0.0f;
-	OwnerCharacter->GetCharacterMovement()->BrakingFrictionFactor = 0.0f;
-	OwnerCharacter->GetCharacterMovement()->GravityScale = 0.0f;
-	OwnerCharacter->GetCharacterMovement()->GroundFriction = 0.f;
-	OwnerCharacter->GetCharacterMovement()->bUseControllerDesiredRotation = false;
-	//OwnerCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Walking); // or MOVE_Custom
-	//OwnerCharacter->GetCharacterMovement()->SetPlaneConstraintEnabled(true);
-	//OwnerCharacter->GetCharacterMovement()->SetPlaneConstraintAxisSetting(EPlaneConstraintAxisSetting::Z); // Z 고정, XY 이동
-
-	
-	UE_LOG(LogTemp, Warning, TEXT("EnableRetroMovement succeed"));
-
-}
-
-void USL2DMovementHandlerComponent::DisableRetroMovement()
-{
-	checkf(OwnerCharacter, TEXT("OwnerCharacter is null"));
-
-	OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = OriginalMaxWalkSpeed;
-	OwnerCharacter->GetCharacterMovement()->BrakingFrictionFactor = OriginalBrakingFrictionFactor;
-	OwnerCharacter->GetCharacterMovement()->GravityScale = OriginalGravityScale;
-
-	UE_LOG(LogTemp, Warning, TEXT("DisableRetroMovement succeed"));
-}
 
 void USL2DMovementHandlerComponent::Look(const FVector2D& Value)
 {
@@ -154,76 +136,54 @@ void USL2DMovementHandlerComponent::Look(const FVector2D& Value)
 
 void USL2DMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)
 {
-	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
-
-	//AController* Controller = OwnerCharacter->GetController();
-	//if (!Controller) return;
-
-	//FRotator ControlRotation = Controller->GetControlRotation();
-	//FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
-
-	//FVector ForwardDir = FVector::ForwardVector;
-		//FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	//FVector RightDir = FVector::RightVector;
-		//FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-	//ForwardDir.Z = 0.f;
-	//RightDir.Z = 0.f;
-	//ForwardDir.Normalize();
-	//RightDir.Normalize();
+	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue))
+	{
+		return;
+	}
 
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_MoveUp:
-		MoveInDirection(FVector::ForwardVector);
-		//OwnerCharacter->AddMovementInput(ForwardDir, AxisValue);
+		MoveGrid(FVector::ForwardVector);
 		break;
+
 	case EInputActionType::EIAT_MoveDown:
-		MoveInDirection(-FVector::ForwardVector);
-
-		//OwnerCharacter->AddMovementInput(-ForwardDir, AxisValue);
+		MoveGrid(-FVector::ForwardVector);
 		break;
+
 	case EInputActionType::EIAT_MoveLeft:
-		MoveInDirection(-FVector::RightVector);
+		MoveGrid(-FVector::RightVector);
+		break;
 
-		//OwnerCharacter->AddMovementInput(-RightDir, AxisValue);
-		break;
 	case EInputActionType::EIAT_MoveRight:
-		MoveInDirection(FVector::RightVector);
-		//OwnerCharacter->AddMovementInput(RightDir, AxisValue);
+		MoveGrid(FVector::RightVector);
 		break;
+
 	default:
 		break;
 	}
 }
 
-void USL2DMovementHandlerComponent::MoveInDirection(FVector Direction)
+void USL2DMovementHandlerComponent::MoveGrid(FVector InputDir)
 {
-	if (bIsMoving) return;
-
-	const float StepSize = 100.0f;
-	FVector TargetLocation = OwnerCharacter->GetActorLocation() + Direction * StepSize;
-
-	RotateToDirection(Direction);
-
-	if (!CanMoveToLocation(TargetLocation))
+	if (bIsMoving)
 	{
+		NextMove = InputDir;
 		return;
 	}
 
-	bIsMoving = true;
-	// 위치 스냅: 격자 정렬
-	TargetLocation.X = FMath::GridSnap(TargetLocation.X, StepSize);
-	TargetLocation.Y = FMath::GridSnap(TargetLocation.Y, StepSize);
+	StartLocation = OwnerCharacter->GetActorLocation();
 
-	// 일정 시간 후 완료 처리
-	FTimerHandle MoveTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(MoveTimerHandle, [this, TargetLocation]()
-		{
-			OwnerCharacter->SetActorLocation(TargetLocation);
-			bIsMoving = false;
-		}, 0.5f, false);
+	TargetLocation = StartLocation + InputDir.GetSafeNormal() * StepDistance;
+
+	MoveElapsed = 0.0f;
+	 
+	bIsMoving = true;
+
 }
+
+
+
 
 void USL2DMovementHandlerComponent::RotateToDirection(FVector Direction)
 {
@@ -236,29 +196,6 @@ void USL2DMovementHandlerComponent::RotateToDirection(FVector Direction)
 	OwnerCharacter->SetActorRotation(TargetRotation); // 즉시 회전
 }
 
-bool USL2DMovementHandlerComponent::CanMoveToLocation(FVector TargetLocation)
-{
-
-	FHitResult Hit;
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(OwnerCharacter); // 자기 자신은 제외
-
-	FVector Start = OwnerCharacter->GetActorLocation();
-	FVector End = TargetLocation;
-
-	// SweepSphere로 충돌 확인
-	bool bHit = GetWorld()->SweepSingleByChannel(
-		Hit,
-		Start,
-		End,
-		FQuat::Identity,
-		ECC_WorldStatic, // 충돌 채널: 고정 오브젝트
-		FCollisionShape::MakeSphere(10.f), // 반지름 설정 (캐릭터 크기보다 살짝 작게)
-		Params
-	);
-
-	return !bHit;
-}
 
 void USL2DMovementHandlerComponent::Interact()
 {
