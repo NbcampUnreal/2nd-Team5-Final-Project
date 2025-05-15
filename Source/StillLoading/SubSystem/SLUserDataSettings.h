@@ -5,12 +5,13 @@
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLTextPoolTypes.h"
 #include "Character//DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "SLUserDataSettings.generated.h"
 
 class UInputMappingContext;
 
-UCLASS(Config = UserDataSettings, DefaultConfig, meta = (DisplayName = "UserDataSubsystemSettings"))
+UCLASS(Config = UserDataSettings, DefaultConfig, meta = (DisplayName = "UserData Subsystem Settings"))
 class STILLLOADING_API USLUserDataSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()

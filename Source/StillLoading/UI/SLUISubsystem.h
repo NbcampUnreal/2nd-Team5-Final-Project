@@ -18,11 +18,10 @@ class STILLLOADING_API USLUISubsystem : public UGameInstanceSubsystem
 	
 public:
 	void SetChapterToUI(ESLChapterType ChapterType);
-	void SetLanguageToUI(ESLLanguageType LanguageType);
 	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 
 	void ActivateFade(bool bIsFadeIn);
-	void ActivateNotify(const FText& NotifyText);
+	void ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType);
 	//void ActivateStory();
 	//void ActivateTalk();
 
@@ -34,8 +33,7 @@ public:
 	void PlayUISound(ESLUISoundType SoundType);
 	void StopUISound();
 	
-	const ESLChapterType GetCurrentChapter() const;
-	const ESLLanguageType GetCurrentLanguage() const;
+	const ESLChapterType GetCurrentChapter() const; //
 
 	const UDataTable* GetImageDataTable();
 
@@ -75,7 +73,6 @@ private:
 	int32 ActiveCount = 0;
 
 	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
-	ESLLanguageType CurrentLanguage = ESLLanguageType::EL_Kor;
 	ESLInputModeType CurrentLevelInputMode = ESLInputModeType::EIM_UIOnly;
 
 	bool bIsVisibleLevelCursor = true;

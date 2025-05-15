@@ -9,9 +9,26 @@
 #include "UI/SLUISubsystem.h"
 #include "Animation/WidgetAnimation.h"
 #include "SubSystem/SLUserDataSubsystem.h"
+#include "SubSystem/SLTextPoolSubsystem.h"
+#include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "Kismet/GameplayStatics.h"
 
 const TArray<TPair<float, float>> USLOptionWidget::ResolutionSet = { {1920, 1080}, {1280, 800}, {1680, 1050} };
+
+const FName USLOptionWidget::TitleTextIndex = "TitleText";
+const FName USLOptionWidget::LanguageTagIndex = "LanguageTag";
+const FName USLOptionWidget::WindowModeTagIndex = "WindowModeTag";
+const FName USLOptionWidget::ResolutionTagIndex = "ResolutionTag";
+const FName USLOptionWidget::BgmTagIndex = "BgmTag";
+const FName USLOptionWidget::EffectTagIndex = "EffectTag";
+const FName USLOptionWidget::BrigthnessTagIndex = "BrigthnessTag";
+const FName USLOptionWidget::KorButtonIndex = "KorButton";
+const FName USLOptionWidget::EngButtonIndex = "EngButton";
+const FName USLOptionWidget::FullScreenButtonIndex = "FullScreenButton";
+const FName USLOptionWidget::WindowedButtonIndex = "WindowedButton";
+const FName USLOptionWidget::KeySettingButtonIndex = "KeySettingButton";
+const FName USLOptionWidget::QuitGameButtonIndex = "QuitGameButton";
+const FName USLOptionWidget::CloseButtonIndex = "CloseButton";
 
 void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
@@ -39,6 +56,8 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType 
 	KeySettingButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedKeySetting);
 	QuitGameButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuit);
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
+
+	InitOptionVariable();
 }
 
 void USLOptionWidget::ActivateWidget(ESLChapterType ChapterType)
@@ -85,6 +104,58 @@ void USLOptionWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
 
+}
+
+void USLOptionWidget::ApplyTextData()
+{
+	Super::ApplyTextData();
+
+	CheckValidOfTextPoolSubsystem();
+	const UDataTable* TextPool = TextPoolSubsystem->GetUITextPool();
+
+	TArray<FSLUITextPoolDataRow*> TempArray;
+	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
+
+	TMap<FName, FSLUITextData> OptionTextMap;
+
+	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
+	{
+		if (UITextPool->TargetWidget == ESLTargetWidgetType::ETW_Option)
+		{
+			OptionTextMap = UITextPool->TextMap;
+			break;
+		}
+	}
+
+	TitleText->SetText(OptionTextMap[TitleTextIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	KorText->SetText(OptionTextMap[KorButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	EngText->SetText(OptionTextMap[EngButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	LanguageModeText->SetText(OptionTextMap[LanguageTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	WindowModeText->SetText(OptionTextMap[WindowModeTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	FullScreenText->SetText(OptionTextMap[FullScreenButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	WindowScreenText->SetText(OptionTextMap[WindowedButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	ResolutionText->SetText(OptionTextMap[ResolutionTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	BgmVolumeText->SetText(OptionTextMap[BgmTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	EffectVolumeText->SetText(OptionTextMap[EffectTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	BrightnessText->SetText(OptionTextMap[BrigthnessTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	KeySettingText->SetText(OptionTextMap[KeySettingButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	QuitGameText->SetText(OptionTextMap[QuitGameButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	CloseText->SetText(OptionTextMap[CloseButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+}
+
+void USLOptionWidget::InitOptionVariable()
+{
+	CheckValidOfUserDataSubsystem();
+
+	TPair<float, float> CurrentReolution =  UserDataSubsystem->GetCurrentScreenSize();
+
+	CurrentResolutionText->SetText(FText::FromString(FString::Printf(TEXT("%.0f * %.0f"), 
+		CurrentReolution.Key, CurrentReolution.Value)));
+
+	BgmVolumeSlider->SetValue(UserDataSubsystem->GetCurrentBgmVolume());
+	EffectVolumeSlider->SetValue(UserDataSubsystem->GetCurrentEffectVolume());
+
+	BrightnessSlider->SetValue(UserDataSubsystem->GetCurrentBrightness());
 }
 
 void USLOptionWidget::OnClickedKor()

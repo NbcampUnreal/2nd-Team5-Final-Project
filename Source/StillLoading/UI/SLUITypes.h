@@ -40,13 +40,6 @@ enum class ESLChapterType : uint8
 };
 
 UENUM(BlueprintType)
-enum class ESLLanguageType : uint8
-{
-	EL_Kor = 0,
-	EL_Eng
-};
-
-UENUM(BlueprintType)
 enum class ESLInputModeType : uint8
 {
 	EIM_UIOnly = 0,
@@ -66,6 +59,33 @@ enum class ESLGameMapType : uint8
 	EGM_DebugRoom,
 	EGM_Boss,
 	EGM_Max
+};
+
+UENUM(BlueprintType)
+enum class ESLNotifyType : uint8
+{
+	EN_None = 0,
+	EN_Find,
+	EN_Spawn,
+	EN_Info,
+	EN_Encounter
+};
+
+UENUM(BlueprintType)
+enum class ESLTalkTargetType : uint8
+{
+	ETT_None = 0,
+	ETT_Self,
+	ETT_Serena,
+	ETT_NPC,
+	ETT_Object
+};
+
+UENUM(BlueprintType)
+enum class ESLStoryType : uint8
+{
+	ES_Start = 0,
+	ES_End
 };
 
 UCLASS()

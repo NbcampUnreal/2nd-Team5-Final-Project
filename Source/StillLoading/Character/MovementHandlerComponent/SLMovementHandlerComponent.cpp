@@ -2,10 +2,14 @@
 
 #include "Character/SLBaseCharacter.h"
 #include "Character/SLCharacter.h"
+#include "Character/Animation/AnimNotify_SLCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/Buffer/InputBufferComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
+#include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
+#include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
@@ -21,6 +25,9 @@ void UMovementHandlerComponent::BeginPlay()
 	
 	if (OwnerCharacter)
 	{
+		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
+		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
+		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
 		BindIMCComponent();
 	}
 }
@@ -76,7 +83,6 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 		{
 			BufferComp->AddBufferedInput(ActionType);
 		}
-		//Attack();
 		break;
 	case EInputActionType::EIAT_PointMove:
 		PointMove();
@@ -86,6 +92,13 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 		break;
 	case EInputActionType::EIAT_Menu:
 		ToggleMenu();
+		break;
+	case EInputActionType::EIAT_Block:
+		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
+		{
+			BufferComp->AddBufferedInput(ActionType);
+		}
+		//Block(true);
 		break;
 
 	default:
@@ -106,6 +119,7 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 	case EInputActionType::EIAT_MoveDown:
 	case EInputActionType::EIAT_MoveLeft:
 	case EInputActionType::EIAT_MoveRight:
+		
 		break;
 	case EInputActionType::EIAT_Walk:
 		ToggleWalk(false);
@@ -114,8 +128,14 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 	case EInputActionType::EIAT_Jump:
 	case EInputActionType::EIAT_Interaction:
 	case EInputActionType::EIAT_Attack:
+		
+		break;
 	case EInputActionType::EIAT_PointMove:
 	case EInputActionType::EIAT_Menu:
+		break;
+
+	case EInputActionType::EIAT_Block:
+		Block(false);
 		break;
 
 	default:
@@ -143,7 +163,7 @@ void UMovementHandlerComponent::Look(const FVector2D& Value)
 	FRotator ControlRot = PC->GetControlRotation();
 
 	ControlRot.Yaw += Value.X * MouseSensitivity;
-	ControlRot.Pitch -= Value.Y * MouseSensitivity;
+	ControlRot.Pitch += Value.Y * MouseSensitivity;
 	ControlRot.Pitch = FMath::Clamp(ControlRot.Pitch, MinPitch, MaxPitch);
 
 	ControlRot.Roll = 0.f;
@@ -153,12 +173,24 @@ void UMovementHandlerComponent::Look(const FVector2D& Value)
 
 void UMovementHandlerComponent::Jump()
 {
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_JumpBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Jump Blocked"));
+		return;
+	}
+	
 	UE_LOG(LogTemp, Warning, TEXT("Jump"));
 	if (OwnerCharacter) OwnerCharacter->Jump();
 }
 
 void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)
 {
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_MovementBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Movement Blocked"));
+		return;
+	}
+	
 	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
 
 	AController* Controller = OwnerCharacter->GetController();
@@ -217,17 +249,37 @@ void UMovementHandlerComponent::Interact()
 
 void UMovementHandlerComponent::Attack()
 {
-	UE_LOG(LogTemp, Log, TEXT("Attack triggered"));
+	/*
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AttackBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Attack Blocked"));
+		return;
+	}
+	*/
+
+	UAnimMontage* Montage = nullptr;
+	FName SectionName;
+
+	if (!CachedCombatComponent->GetCurrentComboInfo(Montage, SectionName))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No valid combo found"));
+		return;
+	}
+
+	if (CachedMontageComponent && Montage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SectionName[%s]"), *SectionName.ToString());
+		CachedMontageComponent->PlayAttackMontage(SectionName);
+	}
+	CachedCombatComponent->AdvanceCombo();
 	
-	// TODO: 무기/애니메이션 처리 연결
-	if (auto* BC = GetOwner()->FindComponentByClass<UBattleComponent>())
+	if (CachedBattleComponent)
 	{
-		BC->PerformAttack();
+		//TODO:: Data전달용으로 AI와 협의 필요
+		CachedBattleComponent->PerformAttack();
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("BattleComponent not found on %s"), *GetOwner()->GetName());
-	}
+
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
 }
 
 void UMovementHandlerComponent::PointMove()
@@ -262,6 +314,18 @@ void UMovementHandlerComponent::ToggleMenu()
 	
 }
 
+void UMovementHandlerComponent::Block(const bool bIsBlocking)
+{
+	if (bIsBlocking)
+	{
+		OwnerCharacter->SetPrimaryState(TAG_Character_Defense);
+	}
+	else
+	{
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Defense);
+	}
+}
+
 EGameCameraType UMovementHandlerComponent::GetCurrentCameraType() const
 {
 	if (auto* CMC = GetOwner()->FindComponentByClass<UCameraManagerComponent>())
@@ -270,4 +334,71 @@ EGameCameraType UMovementHandlerComponent::GetCurrentCameraType() const
 	}
 
 	return EGameCameraType::EGCT_Default;
+}
+
+// 애니매이션 노티용
+void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState AttackStage)
+{
+	if (!OwnerCharacter) return;
+	
+	switch (AttackStage)
+	{
+	case ECharacterMontageState::ECS_Idle:
+		break;
+	case ECharacterMontageState::ECS_Falling:
+		break;
+	case ECharacterMontageState::ECS_Dodging:
+		break;
+	case ECharacterMontageState::ECS_Dead:
+		break;
+	case ECharacterMontageState::ECS_InputLocked:
+		break;
+	case ECharacterMontageState::ECS_Hit_Weak:
+		break;
+	case ECharacterMontageState::ECS_Hit_Medium:
+		break;
+	case ECharacterMontageState::ECS_Hit_Area:
+		break;
+	case ECharacterMontageState::ECS_Hit_Airborne:
+		break;
+	case ECharacterMontageState::ECS_Hit_Groggy:
+		break;
+	case ECharacterMontageState::ECS_Hit_Knockback:
+		break;
+	case ECharacterMontageState::ECS_Attack_Basic1:
+	case ECharacterMontageState::ECS_Attack_Basic2:
+	case ECharacterMontageState::ECS_Attack_Basic3:
+	case ECharacterMontageState::ECS_Attack_Special1:
+	case ECharacterMontageState::ECS_Attack_Special2:
+	case ECharacterMontageState::ECS_Attack_Special3:
+	case ECharacterMontageState::ECS_Attack_Air1:
+	case ECharacterMontageState::ECS_Attack_Air2:
+	case ECharacterMontageState::ECS_Attack_Airborn1:
+	case ECharacterMontageState::ECS_Attack_Finisher1:
+	case ECharacterMontageState::ECS_Attack_Finisher2:
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
+		break;
+	case ECharacterMontageState::ECS_Defense_Block:
+		break;
+	case ECharacterMontageState::ECS_Defense_Parry:
+		break;
+	default:
+		break;
+	}
+}
+
+// 버퍼 수행용
+void UMovementHandlerComponent::HandleBufferedInput(EInputActionType Action)
+{
+	switch (Action)
+	{
+	case EInputActionType::EIAT_Attack:
+		Attack();
+		break;
+	case EInputActionType::EIAT_Block:
+		Block(true);
+		break;
+	default:
+		break;
+	}
 }

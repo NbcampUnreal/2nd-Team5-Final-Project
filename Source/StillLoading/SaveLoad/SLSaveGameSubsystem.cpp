@@ -10,6 +10,7 @@
 
 void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+    Collection.InitializeDependency<USLUserDataSubsystem>();
     Super::Initialize(Collection);
     LoadGame();
 
@@ -42,13 +43,13 @@ void USLSaveGameSubsystem::LoadGame()
         CurrentSaveGame = Cast<USLSaveGame>(Loaded);
         UE_LOG(LogTemp, Warning, TEXT("Data Load Succeed"));
         
+        SendWidgetData();
     }
     else
     {
         UE_LOG(LogTemp, Warning, TEXT("Save file does not exist created a new one"));
         CurrentSaveGame = NewObject<USLSaveGame>();
         UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
-      
     }
     
 
@@ -87,6 +88,7 @@ void USLSaveGameSubsystem::SaveWidgetData()
     CurrentSaveGame->WidgetSaveData.EffectVolume = UserDataSubSystem->GetCurrentEffectVolume();
     CurrentSaveGame->WidgetSaveData.Brightness = UserDataSubSystem->GetCurrentBrightness();
 
+    CurrentSaveGame->WidgetSaveData.WindowMode = UserDataSubSystem->GetCurrentWindowMode();
     TPair<float,float> ScreenSize = UserDataSubSystem->GetCurrentScreenSize();
     CurrentSaveGame->WidgetSaveData.ScreenWidth = ScreenSize.Key;
     CurrentSaveGame->WidgetSaveData.ScreenHeight = ScreenSize.Value;
@@ -96,6 +98,15 @@ void USLSaveGameSubsystem::SaveWidgetData()
    
 
     UE_LOG(LogTemp, Warning, TEXT("Save Widget Data"));
+}
+
+void USLSaveGameSubsystem::SendWidgetData()
+{
+    USLUserDataSubsystem* UserDataSubsystem = GetGameInstance()->GetSubsystem<USLUserDataSubsystem>();
+    checkf(IsValid(UserDataSubsystem), TEXT("User Data Subsystem is invalid"));
+
+    checkf(IsValid(CurrentSaveGame), TEXT("Current Save Game is invalid"));
+    UserDataSubsystem->ApplyLoadedUserData(CurrentSaveGame->WidgetSaveData);
 }
 
 

@@ -4,6 +4,7 @@
 #include "UI/Widget/AdditiveWidget/SLNotifyWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "SubSystem/SLTextPoolSubsystem.h"
 
 void USLNotifyWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
@@ -25,9 +26,11 @@ void USLNotifyWidget::ActivateWidget(ESLChapterType ChapterType)
 	PlayUISound(ESLUISoundType::EUS_Notify);
 }
 
-void USLNotifyWidget::UpdateNotifyText(const FText& NewText)
+void USLNotifyWidget::UpdateNotifyText(ESLGameMapType MapType, ESLNotifyType NotiType)
 {
-	NotifyText->SetText(NewText);
+	CheckValidOfTextPoolSubsystem();
+	const UDataTable* NotifyTextPoolData = TextPoolSubsystem->GetNotifyTextPool();
+	//NotifyText->SetText(NewText);
 }
 
 void USLNotifyWidget::OnEndedOpenAnim()

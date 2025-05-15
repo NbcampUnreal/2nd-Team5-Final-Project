@@ -14,7 +14,6 @@
 void USLUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-
 }
 
 void USLUISubsystem::SetInputModeAndCursor()
@@ -69,21 +68,6 @@ void USLUISubsystem::SetChapterToUI(ESLChapterType ChapterType)
 	}
 }
 
-void USLUISubsystem::SetLanguageToUI(ESLLanguageType LanguageType)
-{
-	CurrentLanguage = LanguageType;
-
-	for (USLBaseWidget* ActiveWidget : ActiveAdditiveWidgets)
-	{
-		if (!IsValid(ActiveWidget))
-		{
-			continue;
-		}
-
-		ActiveWidget->ApplyOnChangedLanguage(LanguageType);
-	}
-}
-
 void USLUISubsystem::SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor)
 {
 	CurrentLevelInputMode = InputModeType;
@@ -98,12 +82,12 @@ void USLUISubsystem::ActivateFade(bool bIsFadeIn)
 	AddAdditveWidget(FadeType);
 }
 
-void USLUISubsystem::ActivateNotify(const FText& NotifyText)
+void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType)
 {
 	ESLAdditiveWidgetType NotifyType = ESLAdditiveWidgetType::EAW_NotifyWidget;
 	CheckValidOfAdditiveWidget(NotifyType);
-	Cast<USLNotifyWidget>(AdditiveWidgetMap[NotifyType])->UpdateNotifyText(NotifyText);
 	AddAdditveWidget(NotifyType);
+	Cast<USLNotifyWidget>(AdditiveWidgetMap[NotifyType])->UpdateNotifyText(MapType, NotiType);
 }
 
 void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
@@ -183,11 +167,6 @@ void USLUISubsystem::StopUISound()
 const ESLChapterType USLUISubsystem::GetCurrentChapter() const
 {
 	return CurrentChapter;
-}
-
-const ESLLanguageType USLUISubsystem::GetCurrentLanguage() const
-{
-	return CurrentLanguage;
 }
 
 const UDataTable* USLUISubsystem::GetImageDataTable()
