@@ -61,6 +61,16 @@ enum class ESLGameMapType : uint8
 	EGM_Max
 };
 
+UENUM(BlueprintType)
+enum class ESLNotifyType : uint8
+{
+	EN_None = 0,
+	EN_Find,
+	EN_Spawn,
+	EN_Info,
+	EN_Encounter
+};
+
 UCLASS()
 class STILLLOADING_API USLUITypes : public UObject
 {

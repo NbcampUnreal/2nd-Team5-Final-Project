@@ -18,6 +18,16 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLNotifyTextData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	TMap<ESLNotifyType, FText> NotifyMap;
+};
+
+USTRUCT(BlueprintType)
 struct STILLLOADING_API FSLUITextPoolDataRow : public FTableRowBase
 {
 	GENERATED_BODY()
@@ -28,4 +38,44 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TMap<FName, FSLUITextData> TextMap;
+};
+
+USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLStoryTextPoolDataRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+
+};
+
+USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLTalkTextPoolDataRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+
+};
+
+USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLNotifyTextPoolDataRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	ESLChapterType Chapter = ESLChapterType::EC_Intro;
+
+	UPROPERTY(EditAnywhere)
+	TMap<ESLGameMapType, FSLNotifyTextData> TextMap;
+};
+
+USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLOtherTextPoolDataRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+	
 };

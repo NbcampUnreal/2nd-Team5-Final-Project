@@ -45,7 +45,8 @@ void USLTextPoolSubsystem::CheckValidOfTextPool(ESLTextDataType TextDataType)
 	if (CurrentPoolLanguageMap.Contains(TextDataType) && 
 		CurrentPoolLanguageMap[TextDataType] == CurrentLanguage)
 	{
-		if (IsValid(TextPoolMap[TextDataType]))
+		if (TextPoolMap.Contains(TextDataType) &&
+			IsValid(TextPoolMap[TextDataType]))
 		{
 			return;
 		}
