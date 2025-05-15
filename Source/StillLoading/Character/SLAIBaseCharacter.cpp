@@ -1,6 +1,7 @@
 #include "SLAIBaseCharacter.h"
 
 #include "BrainComponent.h"
+#include "MotionWarpingComponent.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/BoxComponent.h"
@@ -33,6 +34,8 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	RightHandCollisionBox->SetupAttachment(GetMesh());
 	RightHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RightHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+
+	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
 	
 	IsHitReaction = false;
 	IsDead = false;
