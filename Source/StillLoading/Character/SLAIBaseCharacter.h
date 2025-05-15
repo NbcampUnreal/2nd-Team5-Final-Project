@@ -6,6 +6,7 @@
 #include "SLBaseCharacter.h"
 #include "SLAIBaseCharacter.generated.h"
 
+class UMotionWarpingComponent;
 class UBoxComponent;
 class UBlackboardComponent;
 class ASLBaseAIController;
@@ -121,15 +122,18 @@ protected:
 	
 	// --- Collision Components ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
-	UBoxComponent* LeftHandCollisionBox;
+	TObjectPtr<UBoxComponent> LeftHandCollisionBox;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	FName LeftHandCollisionBoxAttachBoneName;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
-	UBoxComponent* RightHandCollisionBox;
+	TObjectPtr<UBoxComponent> RightHandCollisionBox;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	FName RightHandCollisionBoxAttachBoneName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
 	
 };
