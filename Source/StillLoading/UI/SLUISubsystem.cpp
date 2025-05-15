@@ -90,6 +90,14 @@ void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiTy
 	Cast<USLNotifyWidget>(AdditiveWidgetMap[NotifyType])->UpdateNotifyText(MapType, NotiType);
 }
 
+void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex)
+{
+	ESLAdditiveWidgetType TalkType = ESLAdditiveWidgetType::EAW_TalkWidget;
+	CheckValidOfAdditiveWidget(TalkType);
+	Cast<USLTalkWidget>(AdditiveWidgetMap[TalkType])->UpdateTalkState(TalkTargetType, TargetIndex);
+	AddAdditveWidget(TalkType);
+}
+
 void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
 {
 	CheckValidOfAdditiveWidget(WidgetType);

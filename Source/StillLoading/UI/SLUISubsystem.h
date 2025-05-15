@@ -23,7 +23,8 @@ public:
 	void ActivateFade(bool bIsFadeIn);
 	void ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType);
 	//void ActivateStory();
-	//void ActivateTalk();
+	UFUNCTION(BlueprintCallable)
+	void ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex);
 
 	UFUNCTION(BlueprintCallable)
 	void AddAdditveWidget(ESLAdditiveWidgetType WidgetType);
