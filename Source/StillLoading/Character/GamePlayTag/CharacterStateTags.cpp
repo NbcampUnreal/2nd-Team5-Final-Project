@@ -27,6 +27,11 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airborn1, "Character.Attack.Airborn1
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Finisher1, "Character.Attack.Finisher1");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Finisher2, "Character.Attack.Finisher2");
 
+// Charge
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Charge, "Character.Charge");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Charge_Basic, "Character.Charge.Basic");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Charge_Special, "Character.Charge.Special");
+
 // Defense
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Defense, "Character.Defense");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Defense_Block, "Character.Defense.Block");

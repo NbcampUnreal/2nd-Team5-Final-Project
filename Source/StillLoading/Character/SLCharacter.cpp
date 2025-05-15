@@ -1,6 +1,7 @@
 #include "SLCharacter.h"
 
 #include "GamePlayTag/GamePlayTag.h"
+#include "MovementHandlerComponent/SLMovementHandlerComponent.h"
 
 ASLCharacter::ASLCharacter()
 {
@@ -47,6 +48,11 @@ void ASLCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
+	if (UMovementHandlerComponent* MoveComp = FindComponentByClass<UMovementHandlerComponent>())
+	{
+		MoveComp->OnLanded(Hit);
+	}
+
 	LastLandTime = GetWorld()->GetTimeSeconds();
 	UE_LOG(LogTemp, Log, TEXT("Landed at time: %f"), LastLandTime);
 }
@@ -76,24 +82,6 @@ void ASLCharacter::AddSecondaryState(FGameplayTag NewState)
 void ASLCharacter::RemoveSecondaryState(FGameplayTag StateToRemove)
 {
 	SecondaryStateTags.RemoveTag(StateToRemove);
-}
-
-void ASLCharacter::SetMovementState(FGameplayTag NewMovementState)
-{
-	TArray<FGameplayTag> TagsToRemove;
-	for (const FGameplayTag& Tag : PrimaryStateTags.GetGameplayTagArray())
-	{
-		if (Tag.MatchesTag(TAG_Character_Movement))
-		{
-			TagsToRemove.Add(Tag);
-		}
-	}
-	for (const FGameplayTag& Tag : TagsToRemove)
-	{
-		PrimaryStateTags.RemoveTag(Tag);
-	}
-
-	PrimaryStateTags.AddTag(NewMovementState);
 }
 
 bool ASLCharacter::IsInPrimaryState(FGameplayTag StateToCheck) const
@@ -135,7 +123,6 @@ bool ASLCharacter::IsConditionBlocked(EQueryType QueryType) const
 	}
 	return false;
 }
-
 
 void ASLCharacter::PrintPrimaryStateTags() const
 {

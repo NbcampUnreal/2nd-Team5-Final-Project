@@ -27,12 +27,17 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Attack_Airborn1)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Attack_Finisher1)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Attack_Finisher2)
 
+// Charge
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Charge)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Charge_Basic)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Charge_Special)
+
 // Defense
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Defense)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Defense_Block)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Defense_Parry)
 
-// Movement
+// Movement (Secondary)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Movement)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Movement_Forward)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Movement_Backward)

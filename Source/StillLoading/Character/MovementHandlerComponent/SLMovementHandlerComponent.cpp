@@ -32,6 +32,12 @@ void UMovementHandlerComponent::BeginPlay()
 	}
 }
 
+void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
+{
+	UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnLanded"));
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_Jump);
+}
+
 void UMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                               FActorComponentTickFunction* ThisTickFunction)
 {
@@ -119,13 +125,12 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 	case EInputActionType::EIAT_MoveDown:
 	case EInputActionType::EIAT_MoveLeft:
 	case EInputActionType::EIAT_MoveRight:
-		
 		break;
 	case EInputActionType::EIAT_Walk:
 		ToggleWalk(false);
 		break;
-
 	case EInputActionType::EIAT_Jump:
+		break;
 	case EInputActionType::EIAT_Interaction:
 	case EInputActionType::EIAT_Attack:
 		
@@ -181,6 +186,9 @@ void UMovementHandlerComponent::Jump()
 	
 	UE_LOG(LogTemp, Warning, TEXT("Jump"));
 	if (OwnerCharacter) OwnerCharacter->Jump();
+	CachedCombatComponent->ResetCombo();
+
+	OwnerCharacter->AddSecondaryState(TAG_Character_Movement_Jump);
 }
 
 void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)
@@ -264,6 +272,11 @@ void UMovementHandlerComponent::Attack()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No valid combo found"));
 		return;
+	}
+
+	if (SectionName == FName("Attack3"))
+	{
+		CachedCombatComponent->StartCharging();
 	}
 
 	if (CachedMontageComponent && Montage)
@@ -381,6 +394,16 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 	case ECharacterMontageState::ECS_Defense_Block:
 		break;
 	case ECharacterMontageState::ECS_Defense_Parry:
+		break;
+	case ECharacterMontageState::ECS_Cinematic:
+		break;
+	case ECharacterMontageState::ECS_Moving:
+		break;
+	case ECharacterMontageState::ECS_Jumping:
+		break;
+	case ECharacterMontageState::ECS_Charge_Basic:
+		break;
+	case ECharacterMontageState::ECS_Charge_Special:
 		break;
 	default:
 		break;

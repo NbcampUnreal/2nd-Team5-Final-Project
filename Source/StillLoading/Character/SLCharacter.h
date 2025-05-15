@@ -71,10 +71,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void RemoveSecondaryState(FGameplayTag StateToRemove);
 
-	// 그룹 기반 상태 전환
-	UFUNCTION(BlueprintCallable, Category = "State Tags")
-	void SetMovementState(FGameplayTag NewMovementState);
-
 	// 상태 검사 함수
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	bool IsInPrimaryState(FGameplayTag StateToCheck) const;
