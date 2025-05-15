@@ -7,7 +7,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "NavigationSystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
-
+#include "AnimInstances/SLAICharacterAnimInstance.h"
 
 ASLNPCAIController::ASLNPCAIController()
 {
@@ -77,10 +77,8 @@ void ASLNPCAIController::InitializePatrolPoints()
 void ASLNPCAIController::UpdateAIState()
 {
 	if (!TargetActor) return;
-	
 	APawn* ControlledPawn = GetPawn();
 	if (!ControlledPawn) return;
-
 	float DistanceToTarget = FVector::Dist(ControlledPawn->GetActorLocation(), TargetActor->GetActorLocation());
 
 	switch (CurrentState)
@@ -107,7 +105,8 @@ void ASLNPCAIController::UpdateAIState()
 
 		if (DistanceToTarget <= CombatRadius)
 		{
-			StopMovement();
+			bHasFixedTarget = true;
+			/*StopMovement();
 			FVector RightVector = ControlledPawn->GetActorRightVector();
 			FVector FrontVector = ControlledPawn->GetActorForwardVector();
 			FVector CurrentLocation = ControlledPawn->GetActorLocation();
@@ -130,9 +129,9 @@ void ASLNPCAIController::UpdateAIState()
 
 			MoveToLocation(NewLocation, 10.f);
 
-			CurrentState = EAIState::Waiting;
+			CurrentState = EAIState::Waiting;*/
 
-			/*CurrentState = EAIState::Combat;*/
+			CurrentState = EAIState::Combat;
 			
 		}
 		else if (DistanceToTarget > LoseInterestRadius)
@@ -157,20 +156,48 @@ void ASLNPCAIController::UpdateAIState()
 				MovementComp->bOrientRotationToMovement = true;
 			}
 		}
+
 		bIsChasing = false;
-		bHasFixedTarget = true;
 		AISenseConfig_Sight->PeripheralVisionAngleDegrees = 180.f;
 
+		USLAICharacterAnimInstance* AnimInstance = Cast<USLAICharacterAnimInstance>(NPC->GetMesh()->GetAnimInstance());
+
+		FVector CurrentLocation = ControlledPawn->GetActorLocation();
+		FVector ToTarget = TargetActor->GetActorLocation() - CurrentLocation;
+		ToTarget.Normalize();
+		float Dot = FVector::DotProduct(ControlledPawn -> GetActorForwardVector(), ToTarget);
 
 
-		if (DistanceToTarget <= AttackRange)
+		if (DistanceToTarget <= AttackRange )
 		{
-			NPC->Attack();
+			if (Dot >= 0.85f)
+			{
+				StopMovement();
+				NPC->Attack();
+			}
+			else
+			{
+				NPC->bUseControllerRotationYaw = true;
+				SetFocus(TargetActor);
+				if (DistanceToTarget < CombatRadius && AnimInstance->GetIsAttacking() == false)
+				{
+					FVector Forward = ControlledPawn->GetActorForwardVector();
+					FVector TargetLocation = CurrentLocation - Forward * 300.f;
+					MoveToLocation(TargetLocation);
+				} 
+			}
+		}
+		else if (DistanceToTarget < CombatRadius && AnimInstance->GetIsAttacking() == true)
+		{
+			/*NPC->bUseControllerRotationYaw = false;
+			ClearFocus(EAIFocusPriority::Gameplay);*/
+			StopMovement();
 		}
 		else
 		{
+				MoveToActor(TargetActor, 110.f);
+				AnimInstance->SetIsAttacking(false);
 			
-			MoveToActor(TargetActor, 110.f);
 		}
 		
 

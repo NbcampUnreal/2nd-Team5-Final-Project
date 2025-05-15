@@ -46,7 +46,7 @@ public:
 	float ChaseRadius = 1500.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float CombatRadius = 400.f;
+	float CombatRadius = 550.f;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
@@ -65,7 +65,7 @@ protected:
 	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float AttackRange = 250.f;
+	float AttackRange = 190.f;
 
 	bool bHasFixedTarget = false;
 

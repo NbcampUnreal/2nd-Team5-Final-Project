@@ -102,3 +102,8 @@ void USLAICharacterAnimInstance::AnimNotify_AttackEnd()
 {
 	SetIsAttacking(false);
 }
+
+bool USLAICharacterAnimInstance::GetIsAttacking()
+{
+	return IsAttacking;
+}

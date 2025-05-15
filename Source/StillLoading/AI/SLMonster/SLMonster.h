@@ -15,23 +15,35 @@ class STILLLOADING_API ASLMonster : public ASLAIBaseCharacter
 public:
 	ASLMonster();
 
-protected:
-    virtual void BeginPlay() override;
-    virtual void Tick(float DeltaTime) override;
-
-    void Attack();
-
-    UPROPERTY(EditAnywhere, Category = "AI")
-    float AttackRange = 180.0f;
-
-    UPROPERTY(EditAnywhere, Category = "AI")
-    float AttackCooldown = 2.5f;
-
-    float LastAttackTime;
-
     UPROPERTY()
     AActor* TargetActor;
 
-    
+    void Attack();
+
+protected:
+	virtual void BeginPlay() override;
+	UPROPERTY(EditAnywhere, Category = "AI")
+	float AttackRange = 200.0f;
+
+	UPROPERTY(EditAnywhere, Category = "AI")
+	float AttackCooldown = 0.7f;
+
+	float LastAttackTime;
+
+	/*UFUNCTION(BlueprintCallable, Category = "RVO")
+	void SetRVOAvoidanceEnabled(bool bEnable);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RVO")
+	float AvoidanceRadius = 350.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RVO")
+	float AvoidanceWeight = 0.5f;*/
+
+public:
+	virtual void Tick(float DeltaTime) override;
+
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+private:
+
 
 };
