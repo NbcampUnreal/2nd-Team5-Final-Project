@@ -7,11 +7,18 @@
 #include "Components/Image.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/SLUISubsystem.h"
+#include "SubSystem/Struct/SLTextPoolDataRows.h"
+#include "SubSystem/SLTextPoolSubsystem.h"
 
 const FName USLTitleWidget::BackgroundImgIndex = "BackgroundImg";
 const FName USLTitleWidget::TitleTextImgIndex = "TitleTextImg";
 const FName USLTitleWidget::ButtonsBackgroundImgIndex = "ButtonsBackground";
 const FName USLTitleWidget::ButtonImgIndex = "ButtonImg";
+
+const FName USLTitleWidget::TitleTextIndex = "TitleText";
+const FName USLTitleWidget::StartButtonIndex = "StartButton";
+const FName USLTitleWidget::OptionButtonIndex = "OptionButton";
+const FName USLTitleWidget::QuitButtonIndex = "QuitButton";
 
 void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
 {
@@ -75,6 +82,33 @@ void USLTitleWidget::ApplyFontData()
 	StartText->SetFont(FontInfo);
 	OptionText->SetFont(FontInfo);
 	QuitText->SetFont(FontInfo);*/
+}
+
+void USLTitleWidget::ApplyTextData()
+{
+	Super::ApplyTextData();
+
+	CheckValidOfTextPoolSubsystem();
+	const UDataTable* TextPool = TextPoolSubsystem->GetUITextPool();
+
+	TArray<FSLUITextPoolDataRow*> TempArray;
+	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
+
+	TMap<FName, FSLUITextData> OptionTextMap;
+
+	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
+	{
+		if (UITextPool->TargetWidget == ESLTargetWidgetType::ETW_Title)
+		{
+			OptionTextMap = UITextPool->TextMap;
+			break;
+		}
+	}
+
+	TitleText->SetText(OptionTextMap[TitleTextIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	StartText->SetText(OptionTextMap[StartButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	OptionText->SetText(OptionTextMap[OptionButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	QuitText->SetText(OptionTextMap[QuitButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 }
 
 void USLTitleWidget::OnClickedStartButton()
