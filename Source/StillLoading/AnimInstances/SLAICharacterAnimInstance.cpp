@@ -7,13 +7,13 @@
 #include "KismetAnimationLibrary.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLAIBaseCharacter.h"
-#include "Character/SLBasePlayerCharacter.h"
+#include "Character/SLPlayerCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 void USLAICharacterAnimInstance::NativeInitializeAnimation()
 {
-	OwningCharacter = Cast<ASLBaseCharacter>(TryGetPawnOwner());
+	OwningCharacter = Cast<ASLPlayerCharacterBase>(TryGetPawnOwner());
 
 	if (OwningCharacter)
 	{
@@ -55,7 +55,7 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 		{  
 			if (BlackboardComp->GetValueAsObject(FName("TargetActor"))) 
 			{
-				TargetCharacter = Cast<ASLBaseCharacter>(BlackboardComp->GetValueAsObject(FName("TargetActor")));
+				TargetCharacter = Cast<ASLPlayerCharacterBase>(BlackboardComp->GetValueAsObject(FName("TargetActor")));
 			}
 		}
 	}

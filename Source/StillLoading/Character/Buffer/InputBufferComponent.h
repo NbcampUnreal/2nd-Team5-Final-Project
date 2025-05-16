@@ -51,7 +51,7 @@ private:
 	bool CanConsumeInput(EInputActionType NextInput) const;
 
 	UPROPERTY()
-	TObjectPtr<ASLCharacter> OwnerCharacter;
+	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
 	UPROPERTY()
 	TArray<FBufferedInput> InputBuffer;
 	UPROPERTY()

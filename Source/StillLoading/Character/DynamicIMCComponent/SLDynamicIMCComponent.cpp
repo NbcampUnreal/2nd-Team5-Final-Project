@@ -2,7 +2,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Character/SLBasePlayerCharacter.h"
+#include "Character/SLPlayerCharacterBase.h"
 
 UDynamicIMCComponent::UDynamicIMCComponent()
 {
@@ -75,7 +75,7 @@ void UDynamicIMCComponent::SetKeyForAction(EInputActionType ActionType, const FK
 	{
 		CurrentIMC->MapKey(Action, NewKey);
 
-		if (ASLBaseCharacter* OwnerChar = Cast<ASLBaseCharacter>(GetOwner()))
+		if (ASLPlayerCharacterBase* OwnerChar = Cast<ASLPlayerCharacterBase>(GetOwner()))
 		{
 			if (auto* InputComp = Cast<UEnhancedInputComponent>(OwnerChar->InputComponent))
 			{

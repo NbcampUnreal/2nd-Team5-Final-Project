@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "SLBasePlayerCharacter.h"
+#include "SLPlayerCharacterBase.h"
 #include "DataAsset/TagQueryDataAsset.h"
 #include "SLPlayerCharacter.generated.h"
 
@@ -25,12 +25,12 @@ struct FTagQueryAssetPair
 };
 
 UCLASS()
-class STILLLOADING_API ASLCharacter : public ASLBaseCharacter
+class STILLLOADING_API ASLPlayerCharacter : public ASLPlayerCharacterBase
 {
 	GENERATED_BODY()
 
 public:
-	ASLCharacter();
+	ASLPlayerCharacter();
 
 protected:
 	virtual void BeginPlay() override;
@@ -105,4 +105,11 @@ public:
 	// 상태 조건 맵
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	TMap<EQueryType, FTagQueryAssetPair> ConditionQueryMap;
+
+	// Spring Arm & Camera
+	UPROPERTY(VisibleAnywhere) 
+	TObjectPtr<USpringArmComponent> CameraBoom;
+	
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UCameraComponent> ThirdPersonCamera;
 };

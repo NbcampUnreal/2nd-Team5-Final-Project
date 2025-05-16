@@ -8,8 +8,8 @@
 class UCombatHandlerComponent;
 class UBattleComponent;
 class UAnimationMontageComponent;
-class ASLCharacter;
-class ASLBaseCharacter;
+class ASLPlayerCharacter;
+class ASLPlayerCharacterBase;
 struct FInputActionValue;
 enum class EInputActionType : uint8;
 
@@ -84,7 +84,7 @@ private:
 	float InputBufferDuration = 0.3f;
 
 	UPROPERTY()
-	TObjectPtr<ASLCharacter> OwnerCharacter;
+	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
 	UPROPERTY()
 	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
 	UPROPERTY()

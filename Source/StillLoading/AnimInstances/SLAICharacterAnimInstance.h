@@ -8,7 +8,7 @@
 #include "SLAICharacterAnimInstance.generated.h"
 
 class UCharacterMovementComponent;
-class ASLBaseCharacter;
+class ASLPlayerCharacterBase;
 /**
  * 
  */
@@ -51,13 +51,13 @@ protected:
 
 	// --- Anim Data | References ---
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
-	TObjectPtr<ASLBaseCharacter> OwningCharacter;
+	TObjectPtr<ASLPlayerCharacterBase> OwningCharacter;
 
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
 	TObjectPtr<UCharacterMovementComponent> OwningMovementComponent; 
 
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
-	TObjectPtr<ASLBaseCharacter> TargetCharacter;
+	TObjectPtr<ASLPlayerCharacterBase> TargetCharacter;
 
 	// --- Anim Data | Movement ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")

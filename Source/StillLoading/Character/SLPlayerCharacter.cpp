@@ -1,14 +1,30 @@
 #include "SLPlayerCharacter.h"
 
+#include "GameFramework/SpringArmComponent.h"
 #include "GamePlayTag/GamePlayTag.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
 
-ASLCharacter::ASLCharacter()
+ASLPlayerCharacter::ASLPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationPitch = false;
+	//GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
+	//GetCharacterMovement()->RotationRate = FRotator(0.f, 80.f, 0.f);
+	
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->TargetArmLength = 300.f;
+	CameraBoom->bUsePawnControlRotation = true; // 자체 회전 제어
+	//CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 3.f;
+
+	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
+	ThirdPersonCamera->SetupAttachment(CameraBoom);
 }
 
-void ASLCharacter::BeginPlay()
+void ASLPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -34,17 +50,17 @@ void ASLCharacter::BeginPlay()
 	PrintPrimaryStateTags();
 }
 
-void ASLCharacter::Tick(float DeltaTime)
+void ASLPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-void ASLCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ASLPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
-void ASLCharacter::Landed(const FHitResult& Hit)
+void ASLPlayerCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
@@ -57,7 +73,7 @@ void ASLCharacter::Landed(const FHitResult& Hit)
 	UE_LOG(LogTemp, Log, TEXT("Landed at time: %f"), LastLandTime);
 }
 
-void ASLCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketName) const
+void ASLPlayerCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketName) const
 {
 	if (!ItemActor || !GetMesh()) return;
 
@@ -68,53 +84,53 @@ void ASLCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketName) c
 	);
 }
 
-bool ASLCharacter::IsBlocking() const
+bool ASLPlayerCharacter::IsBlocking() const
 {
 	return PrimaryStateTags.HasTag(TAG_Character_Defense_Block);
 }
 
 // 상태 관리
-void ASLCharacter::SetPrimaryState(FGameplayTag NewState)
+void ASLPlayerCharacter::SetPrimaryState(FGameplayTag NewState)
 {
 	PrimaryStateTags.AddTag(NewState);
 }
 
-void ASLCharacter::AddSecondaryState(FGameplayTag NewState)
+void ASLPlayerCharacter::AddSecondaryState(FGameplayTag NewState)
 {
 	SecondaryStateTags.AddTag(NewState);
 }
 
-void ASLCharacter::RemoveSecondaryState(FGameplayTag StateToRemove)
+void ASLPlayerCharacter::RemoveSecondaryState(FGameplayTag StateToRemove)
 {
 	SecondaryStateTags.RemoveTag(StateToRemove);
 }
 
-bool ASLCharacter::IsInPrimaryState(FGameplayTag StateToCheck) const
+bool ASLPlayerCharacter::IsInPrimaryState(FGameplayTag StateToCheck) const
 {
 	return PrimaryStateTags.HasTag(StateToCheck);
 }
 
-bool ASLCharacter::HasSecondaryState(FGameplayTag StateToCheck) const
+bool ASLPlayerCharacter::HasSecondaryState(FGameplayTag StateToCheck) const
 {
 	return SecondaryStateTags.HasTag(StateToCheck);
 }
 
-void ASLCharacter::RemovePrimaryState(FGameplayTag StateToRemove)
+void ASLPlayerCharacter::RemovePrimaryState(FGameplayTag StateToRemove)
 {
 	PrimaryStateTags.RemoveTag(StateToRemove);
 }
 
-void ASLCharacter::ClearAllPrimaryStates()
+void ASLPlayerCharacter::ClearAllPrimaryStates()
 {
 	PrimaryStateTags.Reset();
 }
 
-void ASLCharacter::ClearAllSecondaryStates()
+void ASLPlayerCharacter::ClearAllSecondaryStates()
 {
 	SecondaryStateTags.Reset();
 }
 
-bool ASLCharacter::IsConditionBlocked(EQueryType QueryType) const
+bool ASLPlayerCharacter::IsConditionBlocked(EQueryType QueryType) const
 {
 	if (const FTagQueryAssetPair* QueryPair = ConditionQueryMap.Find(QueryType))
 	{
@@ -134,7 +150,7 @@ bool ASLCharacter::IsConditionBlocked(EQueryType QueryType) const
 	return false;
 }
 
-void ASLCharacter::PrintPrimaryStateTags() const
+void ASLPlayerCharacter::PrintPrimaryStateTags() const
 {
 	for (const FGameplayTag& Tag : PrimaryStateTags.GetGameplayTagArray())
 	{

@@ -6,7 +6,7 @@
 #include "DetourCrowdAIController.h"
 #include "SLBaseAIController.generated.h"
 
-class ASLBaseCharacter;
+class ASLPlayerCharacterBase;
 struct FAIStimulus;
 class UAISenseConfig_Damage;
 class UAISenseConfig_Sight;
@@ -58,7 +58,7 @@ protected:
 	//Avoidance 관련 변수끝
 	
 	UPROPERTY(BlueprintReadWrite, Category = "AI|Reference")
-	TObjectPtr<ASLBaseCharacter> PosseedAIPawn;
+	TObjectPtr<ASLPlayerCharacterBase> PosseedAIPawn;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AI|Behavior")
 	bool bIsHostileToOtherAI;
