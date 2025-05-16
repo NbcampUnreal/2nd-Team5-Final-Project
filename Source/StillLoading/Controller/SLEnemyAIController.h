@@ -69,5 +69,5 @@ private:
 
 	bool bIsChasing = false;
 
-	EAIState CurrentState = EAIState::Idle;
+	EAIState CurrentState = EAIState::EAIS_Idle;
 };

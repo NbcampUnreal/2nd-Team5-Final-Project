@@ -67,5 +67,5 @@ private:
 	FVector CurrentTargetLocation;
 	FVector LastKnownLocation;
 	bool bIsChasing = false;
-	EAIState CurrentState = EAIState::Idle;
+	EAIState CurrentState = EAIState::EAIS_Idle;
 };

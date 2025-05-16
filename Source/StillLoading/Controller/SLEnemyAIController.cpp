@@ -23,12 +23,12 @@ void ASLEnemyAIController::Tick(float DeltaTime)
 
 	UpdateAIState();
 
-	if (CurrentState == EAIState::Waiting)
+	if (CurrentState == EAIState::EAIS_Waiting)
 	{
 		WaitTime -= DeltaTime;
 		if (WaitTime <= 0.f)
 		{
-			CurrentState = EAIState::Combat;
+			CurrentState = EAIState::EAIS_Combat;
 		}
 	}
 }
@@ -71,23 +71,23 @@ void ASLEnemyAIController::UpdateAIState()
 
 	switch (CurrentState)
 	{
-	case EAIState::Idle:
+	case EAIState::EAIS_Idle:
 		if (DistanceToTarget <= DetectionRadius)
 		{
-			CurrentState = EAIState::Suspicious;
+			CurrentState = EAIState::EAIS_Suspicious;
 		}
 		break;
-	case EAIState::Suspicious:
+	case EAIState::EAIS_Suspicious:
 		if (DistanceToTarget <= ChaseRadius)
 		{
 			StartChasing(TargetActor);
 		}
 		else if (DistanceToTarget > DetectionRadius)
 		{
-			CurrentState = EAIState::Idle;
+			CurrentState = EAIState::EAIS_Idle;
 		}
 		break;
-	case EAIState::Chasing:
+	case EAIState::EAIS_Chasing:
 
 		MoveToActor(TargetActor, 250.f);
 
@@ -119,7 +119,7 @@ void ASLEnemyAIController::UpdateAIState()
 
 			CurrentState = EAIState::Waiting;*/
 
-			CurrentState = EAIState::Combat;
+			CurrentState = EAIState::EAIS_Combat;
 
 		}
 		else if (DistanceToTarget > LoseInterestRadius)
@@ -127,12 +127,12 @@ void ASLEnemyAIController::UpdateAIState()
 			StopChasing();
 		}
 		break;
-	case EAIState::Waiting:
+	case EAIState::EAIS_Waiting:
 
 
 		break;
 
-	case EAIState::Combat:
+	case EAIState::EAIS_Combat:
 
 		ASLMonster* Monster = Cast<ASLMonster>(GetPawn());
 		if (Monster)
@@ -197,7 +197,7 @@ void ASLEnemyAIController::StopChasing()
 {
 	bIsChasing = false;
 	StopMovement();
-	CurrentState = EAIState::Idle;
+	CurrentState = EAIState::EAIS_Idle;
 }
 
 void ASLEnemyAIController::StartChasing(AActor* Target)
@@ -209,7 +209,7 @@ void ASLEnemyAIController::StartChasing(AActor* Target)
 	{
 		LastKnownLocation = Target->GetActorLocation();
 	}
-	CurrentState = EAIState::Chasing;
+	CurrentState = EAIState::EAIS_Chasing;
 
 }
 
@@ -234,7 +234,7 @@ void ASLEnemyAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 					}
 					else if (Distance <= DetectionRadius)
 					{
-						CurrentState = EAIState::Suspicious;
+						CurrentState = EAIState::EAIS_Suspicious;
 					}
 				}
 
@@ -245,10 +245,10 @@ void ASLEnemyAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 		{
 
 			GetBlackboardComponent()->ClearValue(FName("TargetActor"));
-			if (CurrentState == EAIState::Chasing)
+			if (CurrentState == EAIState::EAIS_Chasing)
 			{
 				MoveToLocation(LastKnownLocation, 100.f);
-				CurrentState = EAIState::Suspicious;
+				CurrentState = EAIState::EAIS_Suspicious;
 			}
 		}
 	}

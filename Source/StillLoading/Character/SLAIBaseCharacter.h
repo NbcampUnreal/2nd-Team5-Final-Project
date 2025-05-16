@@ -17,14 +17,14 @@ class UAnimMontage;
 UENUM(BlueprintType)
 enum class EAIState : uint8
 {
-	Idle        UMETA(DisplayName = "Idle"),
-	Patrol      UMETA(DisplayName = "Patrol"),
-	Suspicious  UMETA(DisplayName = "Suspicious"),
-	Chasing     UMETA(DisplayName = "Chasing"),
-	Waiting     UMETA(DisplayName = "Waiting"),
-	Moving      UMETA(DisplayName = "Moving"),
-	Combat		UMETA(DisplayName = "Combat"),
-	Dead        UMETA(DisplayName = "Dead")
+	EAIS_Idle        UMETA(DisplayName = "Idle"),
+	EAIS_Patrol      UMETA(DisplayName = "Patrol"),
+	EAIS_Suspicious  UMETA(DisplayName = "Suspicious"),
+	EAIS_Chasing     UMETA(DisplayName = "Chasing"),
+	EAIS_Waiting     UMETA(DisplayName = "Waiting"),
+	EAIS_Moving      UMETA(DisplayName = "Moving"),
+	EAIS_Combat		UMETA(DisplayName = "Combat"),
+	EAIS_Dead        UMETA(DisplayName = "Dead")
 };
 
 // 피격 방향
