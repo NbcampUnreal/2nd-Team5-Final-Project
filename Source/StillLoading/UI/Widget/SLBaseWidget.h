@@ -27,6 +27,7 @@ public:
 	void ApplyOnChangedChapter(ESLChapterType ChapterType);
 
 	ESLInputModeType GetWidgetInputMode() const;
+	int32 GetWidgetOrder() const;
 	bool GetWidgetCursorMode() const;
 
 protected:
@@ -71,6 +72,7 @@ protected:
 	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
 	ESLInputModeType WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 
+	int32 WidgetOrder = 0;
 	bool bIsVisibleCursor = true;
 
 	FWidgetAnimationDynamicEvent EndOpenAnimDelegate;
