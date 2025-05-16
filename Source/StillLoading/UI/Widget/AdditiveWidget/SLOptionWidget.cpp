@@ -34,6 +34,7 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType 
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	WidgetOrder = 15;
 	bIsVisibleCursor = true;
 	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
 	Super::InitWidget(NewUISubsystem, ChapterType);

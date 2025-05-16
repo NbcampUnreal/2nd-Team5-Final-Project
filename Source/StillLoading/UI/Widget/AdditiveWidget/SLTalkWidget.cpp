@@ -12,6 +12,7 @@ void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_TalkWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	WidgetOrder = 10;
 	bIsVisibleCursor = true;
 
 	ParentNamePanel = NamePanel;

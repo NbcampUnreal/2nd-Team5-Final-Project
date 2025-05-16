@@ -23,6 +23,7 @@ void USLKeySettingWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterT
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_KeySettingWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	WidgetOrder = 17;
 	bIsVisibleCursor = true;
 	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
 	Super::InitWidget(NewUISubsystem, ChapterType);

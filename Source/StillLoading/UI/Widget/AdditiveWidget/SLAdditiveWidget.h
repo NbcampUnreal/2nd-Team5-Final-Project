@@ -11,6 +11,9 @@ class STILLLOADING_API USLAdditiveWidget : public USLBaseWidget
 {
 	GENERATED_BODY()
 	
+public:
+	ESLAdditiveWidgetType GetWidgetType() const;
+
 protected:
 	UFUNCTION()
 	void CloseWidget();
