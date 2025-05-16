@@ -40,7 +40,11 @@ enum class ECharacterMontageState : uint8
 
 	// 방어 모션
 	ECS_Defense_Block UMETA(DisplayName = "Defense Block"),
-	ECS_Defense_Parry UMETA(DisplayName = "Defense Parry (Shield Strike)")
+	ECS_Defense_Parry UMETA(DisplayName = "Defense Parry (Shield Strike)"),
+
+	// 차징 모션
+	ECS_Charge_Basic UMETA(DisplayName = "Basic Charge"),
+	ECS_Charge_Special UMETA(DisplayName = "Special Charge"),
 };
 
 UCLASS()

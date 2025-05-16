@@ -45,6 +45,7 @@ public:
 	// 버퍼 출력 처리용
 	UFUNCTION()
 	void HandleBufferedInput(EInputActionType Action);
+	void OnLanded(const FHitResult& Hit);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
 	float MinPitch = -80.f;
@@ -68,23 +69,14 @@ protected:
 	void BindIMCComponent();
 
 private:
-	UFUNCTION()
 	void Attack();
-	UFUNCTION()
 	void Look(const FVector2D& Value);
-	UFUNCTION()
 	void Jump();
-	UFUNCTION()
 	void Move(const float AxisValue, const EInputActionType ActionType);
-	UFUNCTION()
 	void Interact();
-	UFUNCTION()
 	void PointMove();
-	UFUNCTION()
 	void ToggleWalk(const bool bNewWalking);
-	UFUNCTION()
 	void ToggleMenu();
-	UFUNCTION()
 	void Block(const bool bIsBlocking);
 
 

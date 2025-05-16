@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "SLBaseCharacter.generated.h"
+#include "SLBasePlayerCharacter.generated.h"
 
 class UCameraManagerComponent;
 class USpringArmComponent;

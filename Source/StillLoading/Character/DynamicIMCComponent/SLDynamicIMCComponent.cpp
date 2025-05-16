@@ -2,7 +2,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Character/SLBaseCharacter.h"
+#include "Character/SLBasePlayerCharacter.h"
 
 UDynamicIMCComponent::UDynamicIMCComponent()
 {

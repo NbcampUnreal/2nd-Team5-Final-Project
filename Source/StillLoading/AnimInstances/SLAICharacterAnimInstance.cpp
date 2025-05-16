@@ -7,7 +7,7 @@
 #include "KismetAnimationLibrary.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLAIBaseCharacter.h"
-#include "Character/SLBaseCharacter.h"
+#include "Character/SLBasePlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 

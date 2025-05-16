@@ -1,6 +1,6 @@
 #include "CameraManagerComponent.h"
 
-#include "Character/SLBaseCharacter.h"
+#include "Character/SLBasePlayerCharacter.h"
 #include "Camera/CameraComponent.h"
 
 void UCameraManagerComponent::SetCameraRefsofCharacter(
@@ -66,7 +66,7 @@ void UCameraManagerComponent::SwitchCamera(const EGameCameraType NewMode)
 
     switch (NewMode)
     {
-    case EGameCameraType::EGCT_ThirdPerson: //3ÀÎÄª
+    case EGameCameraType::EGCT_ThirdPerson: //3ï¿½ï¿½Äª
         if (ThirdPersonCamera)
         {
             ThirdPersonCamera->SetActive(true);
@@ -76,7 +76,7 @@ void UCameraManagerComponent::SwitchCamera(const EGameCameraType NewMode)
         }
         break;
 
-    case EGameCameraType::EGCT_FirstPerson: //1ÀÎÄª
+    case EGameCameraType::EGCT_FirstPerson: //1ï¿½ï¿½Äª
         if (FirstPersonCamera)
         {
             FirstPersonCamera->SetActive(true);
@@ -87,7 +87,7 @@ void UCameraManagerComponent::SwitchCamera(const EGameCameraType NewMode)
         }
         break;
 
-    case EGameCameraType::EGCT_SideView: //¿·
+    case EGameCameraType::EGCT_SideView: //ï¿½ï¿½
         if (SideViewCamera)
         {
             SideViewCamera->SetActive(true);
@@ -99,7 +99,7 @@ void UCameraManagerComponent::SwitchCamera(const EGameCameraType NewMode)
         }
         break;
 
-    case EGameCameraType::EGCT_TopDown: //Å¾´Ù¿î, ½Ã³×¸¶Æ½ ¿ÜºÎ Ä«¸Þ¶ó ¾×ÅÍ
+    case EGameCameraType::EGCT_TopDown: //Å¾ï¿½Ù¿ï¿½, ï¿½Ã³×¸ï¿½Æ½ ï¿½Üºï¿½ Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ï¿½
     case EGameCameraType::EGCT_Cinematic:
         if (CameraManagerActor)
         {

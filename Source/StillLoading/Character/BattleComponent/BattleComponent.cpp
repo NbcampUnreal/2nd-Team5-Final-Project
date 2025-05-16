@@ -55,9 +55,9 @@ void UBattleComponent::DoAttack()
 
 	if (bShowDebugLine)
 	{
-		DrawDebugSphere(GetWorld(), Start, AttackRadius, 12, FColor::Blue, false, 1.f);
-		DrawDebugSphere(GetWorld(), End, AttackRadius, 12, FColor::Red, false, 1.f);
-		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 2.f);
+		//DrawDebugSphere(GetWorld(), Start, AttackRadius, 12, FColor::Blue, false, 1.f);
+		//DrawDebugSphere(GetWorld(), End, AttackRadius, 12, FColor::Red, false, 1.f);
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 2.f);
 	}
 	
 	if (bHit)

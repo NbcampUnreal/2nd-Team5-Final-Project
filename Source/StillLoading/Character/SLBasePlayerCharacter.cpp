@@ -1,4 +1,4 @@
-#include "SLBaseCharacter.h"
+#include "SLBasePlayerCharacter.h"
 
 #include "BattleComponent/BattleComponent.h"
 #include "Buffer/InputBufferComponent.h"

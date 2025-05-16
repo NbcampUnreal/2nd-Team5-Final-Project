@@ -10,18 +10,19 @@ UENUM(BlueprintType)
 enum class EInputActionType : uint8
 {
 	EIAT_None UMETA(DisplayName = "None"),
-	EIAT_Jump UMETA(DisplayName = "Jump"),
-	EIAT_Look UMETA(DisplayName = "Look"),
 	EIAT_MoveUp UMETA(DisplayName = "MoveUp"),
 	EIAT_MoveDown UMETA(DisplayName = "MoveDown"),
 	EIAT_MoveLeft UMETA(DisplayName = "MoveLeft"),
 	EIAT_MoveRight UMETA(DisplayName = "MoveRight"),
-	EIAT_Interaction UMETA(DisplayName = "Interaction"),
+	EIAT_Jump UMETA(DisplayName = "Jump"),
+	EIAT_Look UMETA(DisplayName = "Look"),
 	EIAT_Attack UMETA(DisplayName = "Attack"),
-	EIAT_PointMove UMETA(DisplayName = "PointMove"),
-	EIAT_Walk UMETA(DisplayName = "Walk"),
 	EIAT_Block UMETA(DisplayName = "Block"),
-	EIAT_Menu UMETA(DisplayName = "Menu")
+	EIAT_Interaction UMETA(DisplayName = "Interaction"),
+	EIAT_Walk UMETA(DisplayName = "Walk"),
+	EIAT_PointMove UMETA(DisplayName = "PointMove"),
+	EIAT_Menu UMETA(DisplayName = "Menu"),
+	EIAT_Max UMETA(DisplayName = "Max")
 };
 
 USTRUCT(BlueprintType)

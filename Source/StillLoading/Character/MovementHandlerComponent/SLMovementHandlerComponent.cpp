@@ -1,7 +1,7 @@
 #include "SLMovementHandlerComponent.h"
 
-#include "Character/SLBaseCharacter.h"
-#include "Character/SLCharacter.h"
+#include "Character/SLBasePlayerCharacter.h"
+#include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/AnimNotify_SLCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/Buffer/InputBufferComponent.h"
@@ -30,6 +30,12 @@ void UMovementHandlerComponent::BeginPlay()
 		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
 		BindIMCComponent();
 	}
+}
+
+void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
+{
+	UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnLanded"));
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_Jump);
 }
 
 void UMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -119,13 +125,12 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 	case EInputActionType::EIAT_MoveDown:
 	case EInputActionType::EIAT_MoveLeft:
 	case EInputActionType::EIAT_MoveRight:
-		
 		break;
 	case EInputActionType::EIAT_Walk:
 		ToggleWalk(false);
 		break;
-
 	case EInputActionType::EIAT_Jump:
+		break;
 	case EInputActionType::EIAT_Interaction:
 	case EInputActionType::EIAT_Attack:
 		
@@ -155,6 +160,12 @@ void UMovementHandlerComponent::BindIMCComponent()
 
 void UMovementHandlerComponent::Look(const FVector2D& Value)
 {
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_LookBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Look Blocked"));
+		return;
+	}
+	
 	if (!OwnerCharacter || Value.IsNearlyZero()) return;
 
 	APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController());
@@ -181,6 +192,9 @@ void UMovementHandlerComponent::Jump()
 	
 	UE_LOG(LogTemp, Warning, TEXT("Jump"));
 	if (OwnerCharacter) OwnerCharacter->Jump();
+	CachedCombatComponent->ResetCombo();
+
+	OwnerCharacter->AddSecondaryState(TAG_Character_Movement_Jump);
 }
 
 void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)
@@ -229,7 +243,15 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
-	 UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Interact"));
+	if (CachedCombatComponent->IsEmpowered())
+	{
+		CachedCombatComponent->SetEmpowered(ECharacterComboState::CCS_Normal);
+	}
+	else
+	{
+		CachedCombatComponent->SetEmpowered(ECharacterComboState::CCS_Empowered);
+	}
+	
 	// Test
 	if (auto* CMC = GetOwner()->FindComponentByClass<UCameraManagerComponent>())
 	{
@@ -265,10 +287,23 @@ void UMovementHandlerComponent::Attack()
 		return;
 	}
 
+	if (SectionName == FName("Attack3")) // 3타에 게이징
+	{
+		if (!CachedCombatComponent->IsEmpowered())
+		{
+			OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic3);
+			CachedCombatComponent->StartCharging();
+		}
+		else
+		{
+			OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Special3);
+		}
+	}
+
 	if (CachedMontageComponent && Montage)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("SectionName[%s]"), *SectionName.ToString());
-		CachedMontageComponent->PlayAttackMontage(SectionName);
+		CachedMontageComponent->PlayMontage(Montage, SectionName);
 	}
 	CachedCombatComponent->AdvanceCombo();
 	
@@ -317,11 +352,11 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 {
 	if (bIsBlocking)
 	{
-		OwnerCharacter->SetPrimaryState(TAG_Character_Defense);
+		OwnerCharacter->SetPrimaryState(TAG_Character_Defense_Block);
 	}
 	else
 	{
-		OwnerCharacter->RemovePrimaryState(TAG_Character_Defense);
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Defense_Block);
 	}
 }
 
@@ -359,9 +394,23 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 	case ECharacterMontageState::ECS_Attack_Basic1:
 	case ECharacterMontageState::ECS_Attack_Basic2:
 	case ECharacterMontageState::ECS_Attack_Basic3:
+		if (CachedMontageComponent)
+		{
+			CachedMontageComponent->StopAttackMontage();
+		}
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Basic3);
+		break;
 	case ECharacterMontageState::ECS_Attack_Special1:
 	case ECharacterMontageState::ECS_Attack_Special2:
 	case ECharacterMontageState::ECS_Attack_Special3:
+		if (CachedMontageComponent)
+		{
+			CachedMontageComponent->StopAttackMontage();
+		}
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Special3);
+		break;
 	case ECharacterMontageState::ECS_Attack_Air1:
 	case ECharacterMontageState::ECS_Attack_Air2:
 	case ECharacterMontageState::ECS_Attack_Airborn1:
@@ -372,6 +421,16 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 	case ECharacterMontageState::ECS_Defense_Block:
 		break;
 	case ECharacterMontageState::ECS_Defense_Parry:
+		break;
+	case ECharacterMontageState::ECS_Cinematic:
+		break;
+	case ECharacterMontageState::ECS_Moving:
+		break;
+	case ECharacterMontageState::ECS_Jumping:
+		break;
+	case ECharacterMontageState::ECS_Charge_Basic:
+		break;
+	case ECharacterMontageState::ECS_Charge_Special:
 		break;
 	default:
 		break;
