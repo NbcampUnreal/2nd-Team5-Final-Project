@@ -12,7 +12,7 @@
 
 ASLMonster::ASLMonster()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
     AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
     /*UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
@@ -30,11 +30,6 @@ void ASLMonster::BeginPlay()
     Super::BeginPlay();
     LastAttackTime = 0.0f;
     GetCharacterMovement()->MaxWalkSpeed = 350.0f;
-}
-
-void ASLMonster::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
 }
 
 void ASLMonster::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

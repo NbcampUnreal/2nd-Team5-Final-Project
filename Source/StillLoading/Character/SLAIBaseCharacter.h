@@ -106,5 +106,4 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	FName RightHandCollisionBoxAttachBoneName;
-	
 };

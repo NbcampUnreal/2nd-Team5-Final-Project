@@ -20,7 +20,7 @@ public:
 	ASLBaseAIController();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	AActor* TargetActor;
+	TObjectPtr<AActor> TargetActor;
 
 protected:
 	UFUNCTION()
@@ -63,6 +63,4 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AI|Behavior")
 	bool bIsHostileToOtherAI;
-
-	
 };

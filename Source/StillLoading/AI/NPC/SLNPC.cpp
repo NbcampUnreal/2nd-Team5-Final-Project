@@ -7,7 +7,7 @@
 
 ASLNPC::ASLNPC()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
     /*UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
@@ -25,11 +25,6 @@ void ASLNPC::BeginPlay()
 	Super::BeginPlay();
 	LastAttackTime = 0.0f;
 	GetCharacterMovement()->MaxWalkSpeed = 650.0f;
-}
-
-void ASLNPC::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 
 void ASLNPC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
