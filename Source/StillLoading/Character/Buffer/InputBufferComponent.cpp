@@ -1,6 +1,6 @@
 #include "InputBufferComponent.h"
 
-#include "Character/SLCharacter.h"
+#include "Character/SLPlayerCharacter.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 
@@ -34,10 +34,12 @@ void UInputBufferComponent::AddBufferedInput(EInputActionType Action)
 		UE_LOG(LogTemp, Warning, TEXT("InputBufferComponent: Input buffer full."));
 		return;
 	}
-
+	
 	const float CurrentTime = GetWorld()->GetTimeSeconds();
 	LastInputTime = GetWorld()->GetTimeSeconds();
 	InputBuffer.Add({ Action, CurrentTime });
+
+	UE_LOG(LogTemp, Warning, TEXT("InputBufferComponent: Input [%s] array [%d]."), *UEnum::GetValueAsString(Action), InputBuffer.Num());
 }
 
 void UInputBufferComponent::ProcessBufferedInputs()

@@ -1,6 +1,7 @@
-#include "SLCharacter.h"
+#include "SLPlayerCharacter.h"
 
 #include "GamePlayTag/GamePlayTag.h"
+#include "MovementHandlerComponent/SLMovementHandlerComponent.h"
 
 ASLCharacter::ASLCharacter()
 {
@@ -47,6 +48,11 @@ void ASLCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
+	if (UMovementHandlerComponent* MoveComp = FindComponentByClass<UMovementHandlerComponent>())
+	{
+		MoveComp->OnLanded(Hit);
+	}
+
 	LastLandTime = GetWorld()->GetTimeSeconds();
 	UE_LOG(LogTemp, Log, TEXT("Landed at time: %f"), LastLandTime);
 }
@@ -60,6 +66,11 @@ void ASLCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketName) c
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		SocketName
 	);
+}
+
+bool ASLCharacter::IsBlocking() const
+{
+	return PrimaryStateTags.HasTag(TAG_Character_Defense_Block);
 }
 
 // 상태 관리
@@ -76,24 +87,6 @@ void ASLCharacter::AddSecondaryState(FGameplayTag NewState)
 void ASLCharacter::RemoveSecondaryState(FGameplayTag StateToRemove)
 {
 	SecondaryStateTags.RemoveTag(StateToRemove);
-}
-
-void ASLCharacter::SetMovementState(FGameplayTag NewMovementState)
-{
-	TArray<FGameplayTag> TagsToRemove;
-	for (const FGameplayTag& Tag : PrimaryStateTags.GetGameplayTagArray())
-	{
-		if (Tag.MatchesTag(TAG_Character_Movement))
-		{
-			TagsToRemove.Add(Tag);
-		}
-	}
-	for (const FGameplayTag& Tag : TagsToRemove)
-	{
-		PrimaryStateTags.RemoveTag(Tag);
-	}
-
-	PrimaryStateTags.AddTag(NewMovementState);
 }
 
 bool ASLCharacter::IsInPrimaryState(FGameplayTag StateToCheck) const
@@ -125,9 +118,14 @@ bool ASLCharacter::IsConditionBlocked(EQueryType QueryType) const
 {
 	if (const FTagQueryAssetPair* QueryPair = ConditionQueryMap.Find(QueryType))
 	{
+		// Primary + Secondary를 합친 태그 컨테이너 생성
+		FGameplayTagContainer CombinedTags = PrimaryStateTags;
+		CombinedTags.AppendTags(SecondaryStateTags);
+
+		// 쿼리 에셋 리스트 검사
 		for (const TObjectPtr<UTagQueryDataAsset>& QueryAsset : QueryPair->QueryAssets)
 		{
-			if (QueryAsset && QueryAsset->TagQuery.Matches(PrimaryStateTags))
+			if (QueryAsset && QueryAsset->TagQuery.Matches(CombinedTags))
 			{
 				return true;
 			}
@@ -135,7 +133,6 @@ bool ASLCharacter::IsConditionBlocked(EQueryType QueryType) const
 	}
 	return false;
 }
-
 
 void ASLCharacter::PrintPrimaryStateTags() const
 {

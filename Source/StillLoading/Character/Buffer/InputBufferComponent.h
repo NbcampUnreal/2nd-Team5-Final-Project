@@ -35,7 +35,7 @@ public:
 	void OnIMCActionStarted(EInputActionType ActionType);
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Input Buffer")
-	float BufferDuration = 3.0f;
+	float BufferDuration = 1.2f;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Input Buffer")
 	int32 MaxInputBufferCount = 5;
 
