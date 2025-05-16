@@ -229,14 +229,13 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
-	
+	 UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Interact"));
 	// Test
 	if (auto* CMC = GetOwner()->FindComponentByClass<UCameraManagerComponent>())
 	{
 		static const TArray<EGameCameraType> CameraOrder = {
-			EGameCameraType::EGCT_Default,
-			EGameCameraType::EGCT_Battle,
-			EGameCameraType::EGCT_TopDown,
+			EGameCameraType::EGCT_ThirdPerson,
+			EGameCameraType::EGCT_FirstPerson,
 			EGameCameraType::EGCT_SideView
 		};
 
@@ -326,15 +325,7 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 	}
 }
 
-EGameCameraType UMovementHandlerComponent::GetCurrentCameraType() const
-{
-	if (auto* CMC = GetOwner()->FindComponentByClass<UCameraManagerComponent>())
-	{
-		return CMC->GetCurrentCameraType();
-	}
 
-	return EGameCameraType::EGCT_Default;
-}
 
 // 애니매이션 노티용
 void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState AttackStage)
