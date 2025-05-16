@@ -2,21 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Character/CameraManagerComponent/SLCameraManagerActor.h"
+#include "Character/CameraManagerComponent/SLCameraType.h"
 #include "CameraManagerComponent.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 
-UENUM(BlueprintType)
-enum class EGameCameraType : uint8
-{
-	EGCT_Default UMETA(DisplayName = "Default"),
-	EGCT_Battle UMETA(DisplayName = "Battle"),
-	EGCT_TopDown UMETA(DisplayName = "TopDown"),
-	EGCT_SideView UMETA(DisplayName = "SideView"),
 
-	EGCT_MAX UMETA(Hidden) // 범위 체크용
-};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UCameraManagerComponent : public UActorComponent
@@ -24,37 +17,39 @@ class STILLLOADING_API UCameraManagerComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	UCameraManagerComponent();
+
 	UFUNCTION()
 	void SwitchCamera(const EGameCameraType NewType);
 	UFUNCTION()
-	void SetCameraRefs(UCameraComponent* InDefault, UCameraComponent* InBattle, UCameraComponent* InTopDown, UCameraComponent* InSideView);
+	void SetCameraRefsofCharacter(UCameraComponent* InThirdPerson, UCameraComponent* InFirstPerson,UCameraComponent* InSideView);
 	
-	void SetRetroCameraRotation();
+	EGameCameraType GetCurrnetCameraMode();
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
-	UFUNCTION()
-	void UpdateView();
-	UFUNCTION()
-	UCameraComponent* GetCameraByType(EGameCameraType Type) const;
+
+	void SpawnCameraActor();
+
+	void HideCamera(UCameraComponent* Camera);
 
 	UPROPERTY()
-	TObjectPtr<UCameraComponent> DefaultCamera;
+	TObjectPtr<UCameraComponent> ThirdPersonCamera;
+
 	UPROPERTY()
-	TObjectPtr<UCameraComponent> BattleCamera;
-	UPROPERTY()
-	TObjectPtr<UCameraComponent> TopDownCamera;
+	TObjectPtr<UCameraComponent> FirstPersonCamera;
+
 	UPROPERTY()
 	TObjectPtr<UCameraComponent> SideViewCamera;
-	UPROPERTY()
-	TObjectPtr<UCameraComponent> CurrentCamera;
 
 	UPROPERTY()
-	EGameCameraType CurrentType = EGameCameraType::EGCT_Default;
+	TObjectPtr<ASLCameraManagerActor> CameraManagerActor;
 
-public:
-	UFUNCTION()
-	FORCEINLINE_DEBUGGABLE EGameCameraType GetCurrentCameraType() const { return CurrentType; }
+
+
+	UPROPERTY()
+	EGameCameraType CurrentCameraMode = EGameCameraType::EGCT_ThirdPerson;
+
 };

@@ -171,12 +171,15 @@ void USL2DMovementHandlerComponent::MoveGrid(FVector InputDir)
 		NextMove = InputDir;
 		return;
 	}
+	RotateToDirection(InputDir);
 
 	StartLocation = OwnerCharacter->GetActorLocation();
 
 	TargetLocation = StartLocation + InputDir.GetSafeNormal() * StepDistance;
 
 	MoveElapsed = 0.0f;
+
+	
 	 
 	bIsMoving = true;
 

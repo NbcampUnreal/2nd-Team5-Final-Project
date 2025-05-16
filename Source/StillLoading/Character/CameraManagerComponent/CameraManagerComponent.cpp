@@ -1,65 +1,115 @@
 #include "CameraManagerComponent.h"
 
+#include "Character/SLBaseCharacter.h"
 #include "Camera/CameraComponent.h"
 
-void UCameraManagerComponent::SetCameraRefs(UCameraComponent* InDefault, UCameraComponent* InBattle,
-	UCameraComponent* InTopDown, UCameraComponent* InSideView)
+void UCameraManagerComponent::SetCameraRefsofCharacter(
+    UCameraComponent* InThirdPerson, UCameraComponent* InFirstPerson, UCameraComponent* InSideView)
 {
-	DefaultCamera = InDefault;
-	BattleCamera = InBattle;
-	TopDownCamera = InTopDown;
+    FirstPersonCamera = InThirdPerson;
+    ThirdPersonCamera = InFirstPerson;
 	SideViewCamera = InSideView;
 }
 
-void UCameraManagerComponent::SetRetroCameraRotation()
+EGameCameraType UCameraManagerComponent::GetCurrnetCameraMode()
 {
-
+    return CurrentCameraMode;
 }
 
 void UCameraManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
+    SpawnCameraActor();
+    SwitchCamera(CurrentCameraMode);
 
-	CurrentCamera = DefaultCamera;
-	if (CurrentCamera)
-	{
-		CurrentCamera->Activate();
-		UpdateView();
-	}
-	CurrentType = EGameCameraType::EGCT_Default;
 }
 
-void UCameraManagerComponent::SwitchCamera(const EGameCameraType NewType)
+void UCameraManagerComponent::SpawnCameraActor()
 {
-	UCameraComponent* NewCam = GetCameraByType(NewType);
-	if (!NewCam || NewCam == CurrentCamera)
-		return;
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	if (CurrentCamera) CurrentCamera->Deactivate();
-	NewCam->Activate();
-	CurrentCamera = NewCam;
-	CurrentType = NewType;
+   
+    FVector SpawnLocation = GetOwner()->GetActorLocation();
+    FRotator SpawnRotation = FRotator::ZeroRotator;
 
-	UpdateView();
+    CameraManagerActor = GetWorld()->SpawnActor<ASLCameraManagerActor>(
+        ASLCameraManagerActor::StaticClass(),
+        SpawnLocation,
+        SpawnRotation,
+        SpawnParams
+    );
 }
 
-void UCameraManagerComponent::UpdateView()
+void UCameraManagerComponent::HideCamera(UCameraComponent* Camera)
 {
-	APlayerController* PC = Cast<APlayerController>(GetOwner()->GetInstigatorController());
-	if (PC && CurrentCamera)
-	{
-		PC->SetViewTargetWithBlend(GetOwner(), 0.4f);
-	}
+    if (Camera)
+    {
+        Camera->SetActive(false);
+    }
 }
 
-UCameraComponent* UCameraManagerComponent::GetCameraByType(const EGameCameraType Type) const
+UCameraManagerComponent::UCameraManagerComponent()
 {
-	switch (Type)
-	{
-	case EGameCameraType::EGCT_Default: return DefaultCamera;
-	case EGameCameraType::EGCT_Battle: return BattleCamera;
-	case EGameCameraType::EGCT_TopDown: return TopDownCamera;
-	case EGameCameraType::EGCT_SideView: return SideViewCamera;
-	default: return nullptr;
-	}
+    CameraManagerActor = nullptr;
 }
+
+void UCameraManagerComponent::SwitchCamera(const EGameCameraType NewMode)
+{
+    ACharacter* OwnerChar = Cast<ACharacter>(GetOwner());
+    if (!OwnerChar) return;
+
+    APlayerController* PC = Cast<APlayerController>(OwnerChar->GetController());
+    if (!PC) return;
+
+    CurrentCameraMode = NewMode;
+
+    switch (NewMode)
+    {
+    case EGameCameraType::EGCT_ThirdPerson: //3ÀÎÄª
+        if (ThirdPersonCamera)
+        {
+            ThirdPersonCamera->SetActive(true);
+            HideCamera(FirstPersonCamera);
+            HideCamera(SideViewCamera);
+            PC->SetViewTargetWithBlend(OwnerChar, 0.3f);
+        }
+        break;
+
+    case EGameCameraType::EGCT_FirstPerson: //1ÀÎÄª
+        if (FirstPersonCamera)
+        {
+            FirstPersonCamera->SetActive(true);
+            HideCamera(ThirdPersonCamera);
+            HideCamera(SideViewCamera);
+
+            PC->SetViewTargetWithBlend(OwnerChar, 0.3f);
+        }
+        break;
+
+    case EGameCameraType::EGCT_SideView: //¿·
+        if (SideViewCamera)
+        {
+            SideViewCamera->SetActive(true);
+           
+            HideCamera(FirstPersonCamera);
+            HideCamera(ThirdPersonCamera);
+
+            PC->SetViewTargetWithBlend(OwnerChar, 0.3f);
+        }
+        break;
+
+    case EGameCameraType::EGCT_TopDown: //Å¾´Ù¿î, ½Ã³×¸¶Æ½ ¿ÜºÎ Ä«¸Þ¶ó ¾×ÅÍ
+    case EGameCameraType::EGCT_Cinematic:
+        if (CameraManagerActor)
+        {
+            HideCamera(FirstPersonCamera);
+            HideCamera(ThirdPersonCamera);
+            HideCamera(SideViewCamera);
+            CameraManagerActor->SetCameraMode(NewMode);
+        }
+        break;
+    }
+}
+
+
