@@ -99,7 +99,6 @@ void UCombatHandlerComponent::CancelCharging()
 bool UCombatHandlerComponent::GetCurrentComboInfo(UAnimMontage*& OutMontage, FName& OutSectionName)
 {
 	UAttackComboDataAsset* ActiveComboAsset;
-	
 	GetActiveComboDataAsset(ActiveComboAsset);
 
 	if (!ActiveComboAsset || ActiveComboAsset->ComboChain.Num() == 0)

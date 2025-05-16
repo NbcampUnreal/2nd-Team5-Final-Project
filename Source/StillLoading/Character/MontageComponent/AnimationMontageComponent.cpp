@@ -88,16 +88,10 @@ void UAnimationMontageComponent::PlayDeathMontage()
 		PlayMontage(MontageData->DeathMontage, NAME_None);
 }
 
-void UAnimationMontageComponent::PlayDefenceMontage()
+void UAnimationMontageComponent::StopAttackMontage()
 {
 	if (MontageData)
-		PlayMontage(MontageData->DefenceMontage, NAME_None);
-}
-
-void UAnimationMontageComponent::StopDefenceMontage()
-{
-	if (MontageData)
-		StopMontage(MontageData->DefenceMontage, 0.2f);
+		StopMontage(MontageData->AttackMontage, 0.2f);
 }
 
 void UAnimationMontageComponent::StopMontage(UAnimMontage* Montage, float BlendOutTime)

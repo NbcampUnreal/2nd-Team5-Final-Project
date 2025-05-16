@@ -1,6 +1,6 @@
 #include "InputBufferComponent.h"
 
-#include "Character/SLCharacter.h"
+#include "Character/SLPlayerCharacter.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 

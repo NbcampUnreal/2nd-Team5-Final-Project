@@ -121,8 +121,8 @@ public:
     TObjectPtr<UAttackComboDataAsset> EmpoweredComboDataAsset;
 
     /** 충전 유지 시간 */
-    UPROPERTY(EditAnywhere, Category = "Charging", meta = (ClampMin = "0.1", ClampMax = "5.0"))
-    float ChargingDuration = 0.5f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Charging", meta = (ClampMin = "0.1", ClampMax = "5.0"))
+    float ChargingDuration = 0.4f;
 
     /** Charging Widget Actor Blueprint Class */
     UPROPERTY(EditDefaultsOnly, Category = "Charging")

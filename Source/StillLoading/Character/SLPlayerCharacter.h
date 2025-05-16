@@ -2,9 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "SLBaseCharacter.h"
+#include "SLBasePlayerCharacter.h"
 #include "DataAsset/TagQueryDataAsset.h"
-#include "SLCharacter.generated.h"
+#include "SLPlayerCharacter.generated.h"
 
 UENUM(BlueprintType)
 enum class EQueryType : uint8 // enum class 는 앞에 안붙이는게 더 낫다
@@ -12,6 +12,7 @@ enum class EQueryType : uint8 // enum class 는 앞에 안붙이는게 더 낫�
 	EQT_MovementBlock UMETA(DisplayName = "Movement Block"),
 	EQT_AttackBlock UMETA(DisplayName = "Attack Block"),
 	EQT_JumpBlock UMETA(DisplayName = "Jump Block"),
+	EQT_LookBlock UMETA(DisplayName = "Look Block"),
 };
 
 USTRUCT(BlueprintType)

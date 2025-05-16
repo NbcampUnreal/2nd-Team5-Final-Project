@@ -1,4 +1,4 @@
-#include "SLCharacter.h"
+#include "SLPlayerCharacter.h"
 
 #include "GamePlayTag/GamePlayTag.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
@@ -66,8 +66,6 @@ void ASLCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketName) c
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		SocketName
 	);
-	
-	UAnimMontage* b = Hi();
 }
 
 bool ASLCharacter::IsBlocking() const
@@ -120,9 +118,14 @@ bool ASLCharacter::IsConditionBlocked(EQueryType QueryType) const
 {
 	if (const FTagQueryAssetPair* QueryPair = ConditionQueryMap.Find(QueryType))
 	{
+		// Primary + Secondary를 합친 태그 컨테이너 생성
+		FGameplayTagContainer CombinedTags = PrimaryStateTags;
+		CombinedTags.AppendTags(SecondaryStateTags);
+
+		// 쿼리 에셋 리스트 검사
 		for (const TObjectPtr<UTagQueryDataAsset>& QueryAsset : QueryPair->QueryAssets)
 		{
-			if (QueryAsset && QueryAsset->TagQuery.Matches(PrimaryStateTags))
+			if (QueryAsset && QueryAsset->TagQuery.Matches(CombinedTags))
 			{
 				return true;
 			}

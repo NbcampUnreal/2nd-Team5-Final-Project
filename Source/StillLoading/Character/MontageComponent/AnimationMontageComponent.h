@@ -24,8 +24,7 @@ public:
 	void PlayDodgeMontage(FName Section = NAME_None);
 	void PlayHitReactMontage();
 	void PlayDeathMontage();
-	void PlayDefenceMontage();
-	void StopDefenceMontage();
+	void StopAttackMontage();
 	UFUNCTION()
 	bool IsAttackMontagePlaying() const;
 	

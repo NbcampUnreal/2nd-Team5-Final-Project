@@ -24,7 +24,4 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> DeathMontage;
-
-
-	UAnimMontage* Hi();
 };
