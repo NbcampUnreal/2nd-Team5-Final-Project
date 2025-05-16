@@ -8,6 +8,9 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/ScrollBox.h"
+#include "Components/Image.h"
+
+const FName USLCreditWidget::CreditBackIndex = "Background";
 
 void USLCreditWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -54,6 +57,12 @@ void USLCreditWidget::DeactivateWidget()
 void USLCreditWidget::ApplyImageData()
 {
 	Super::ApplyImageData();
+
+	if (ImageMap.Contains(CreditBackIndex) &&
+		IsValid(ImageMap[CreditBackIndex]))
+	{
+		BackgroundImg->SetBrushFromTexture(ImageMap[CreditBackIndex]);
+	}
 }
 
 void USLCreditWidget::ApplyFontData()

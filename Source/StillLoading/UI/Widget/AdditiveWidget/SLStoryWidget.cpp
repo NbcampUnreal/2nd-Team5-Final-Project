@@ -10,7 +10,7 @@
 #include "Components/CanvasPanel.h"
 #include "Components/Image.h"
 
-const FName USLStoryWidget::StoryBackImgIndex = "TalkBackImg";
+const FName USLStoryWidget::StoryBackImgIndex = "StoryBackImg";
 const FName USLStoryWidget::NameBackImgIndex = "NameBackImg";
 
 void USLStoryWidget::InitWidget(USLUISubsystem* NewUISubsystem)

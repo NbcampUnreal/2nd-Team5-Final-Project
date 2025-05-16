@@ -9,6 +9,7 @@
 class UButton;
 class UTextBlock;
 class UScrollBox;
+class UImage;
 class USLCreditTextWidget;
 
 UCLASS()
@@ -38,4 +39,9 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UScrollBox> CreditBox = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> BackgroundImg = nullptr;
+
+	static const FName CreditBackIndex;
 };

@@ -9,6 +9,7 @@
 class UButton;
 class UTextBlock;
 class USlider;
+class UImage;
 class UExpandableArea;
 class UGameUserSettings;
 class URendererSettings;
@@ -89,6 +90,9 @@ private:
 private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> TitleText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> BackgroundImg = nullptr;
 
 	// Language Setting
 	UPROPERTY(Meta = (BindWidget))
@@ -207,4 +211,6 @@ private:
 	static const FName KeySettingButtonIndex;
 	static const FName QuitGameButtonIndex;
 	static const FName CloseButtonIndex;
+
+	static const FName BackgroundIndex;
 };
