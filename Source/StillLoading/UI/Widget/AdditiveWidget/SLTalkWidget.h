@@ -3,13 +3,48 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
+#include "UI/Widget/AdditiveWidget/SLBaseTextPrintWidget.h"
 #include "SLTalkWidget.generated.h"
 
+class UImage;
 
 UCLASS()
-class STILLLOADING_API USLTalkWidget : public USLAdditiveWidget
+class STILLLOADING_API USLTalkWidget : public USLBaseTextPrintWidget
 {
 	GENERATED_BODY()
 	
+public:
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
+	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void DeactivateWidget() override;
+
+	void UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 TargetIndex);
+
+protected:
+	virtual void ApplyImageData() override;
+	virtual void ApplyFontData() override;
+	virtual void ApplyTextData() override;
+
+private:
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> NextButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> NameText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> TalkText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> TalkBack = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> NameBack = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UCanvasPanel> NamePanel = nullptr;
+
+
+	ESLTalkTargetType CurrentTalkType = ESLTalkTargetType::ETT_None;
+	int32 CurrentTalkIndex = 0;
 };

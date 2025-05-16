@@ -14,6 +14,7 @@ class STILLLOADING_API USLLevelWidget : public USLBaseWidget
 	GENERATED_BODY()
 	
 public:
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType);
 	virtual void ActivateWidget(ESLChapterType ChapterType) override;
 	virtual void SetLevelWidgetData(const FSLLevelWidgetDataRow& LevelWidgetData);
 

@@ -5,6 +5,12 @@
 #include "UI/SLUISubsystem.h"
 #include "UI/Struct/SLLevelWidgetDataRow.h"
 
+void USLLevelWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+{
+	WidgetOrder = 0;
+	Super::InitWidget(NewUISubsystem, ChapterType);
+}
+
 void USLLevelWidget::ActivateWidget(ESLChapterType ChapterType)
 {
 	Super::ActivateWidget(ChapterType);

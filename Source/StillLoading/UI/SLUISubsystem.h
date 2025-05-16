@@ -7,7 +7,7 @@
 #include "UI/SLUITypes.h"
 #include "SLUISubsystem.generated.h"
 
-class USLBaseWidget;
+class USLAdditiveWidget;
 class USLUISettings;
 class UAudioComponent;
 
@@ -21,13 +21,16 @@ public:
 	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 
 	void ActivateFade(bool bIsFadeIn);
+	UFUNCTION(BlueprintCallable)
 	void ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType);
-	//void ActivateStory();
-	//void ActivateTalk();
+	UFUNCTION(BlueprintCallable)
+	void ActivateStory(ESLStoryType TargetStoryType, int32 TargetIndex);
+	UFUNCTION(BlueprintCallable)
+	void ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex);
 
 	UFUNCTION(BlueprintCallable)
 	void AddAdditveWidget(ESLAdditiveWidgetType WidgetType);
-	void RemoveCurrentAdditiveWidget();
+	void RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveAllAdditveWidget();
 
 	void PlayUISound(ESLUISoundType SoundType);
@@ -56,21 +59,19 @@ private:
 	const USLUISettings* UISettings;
 
 	UPROPERTY()
-	TMap<ESLAdditiveWidgetType, USLBaseWidget*> AdditiveWidgetMap;
+	TMap<ESLAdditiveWidgetType, USLAdditiveWidget*> AdditiveWidgetMap;
 
 	UPROPERTY()
 	TMap<ESLUISoundType, USoundBase*> UISoundMap;
 
 	UPROPERTY()
-	TArray<USLBaseWidget*> ActiveAdditiveWidgets;
+	TArray<USLAdditiveWidget*> ActiveAdditiveWidgets;
 
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> AudioComp = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<UDataTable> WidgetImageData = nullptr;
-
-	int32 ActiveCount = 0;
 
 	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
 	ESLInputModeType CurrentLevelInputMode = ESLInputModeType::EIM_UIOnly;
