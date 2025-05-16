@@ -18,6 +18,10 @@ UENUM(BlueprintType)
 enum class EAIState : uint8
 {
 	EAIS_Idle        UMETA(DisplayName = "Idle"),
+	EAIS_Patrol      UMETA(DisplayName = "Patrol"),
+	EAIS_Suspicious  UMETA(DisplayName = "Suspicious"),
+	EAIS_Chasing     UMETA(DisplayName = "Chasing"),
+	EAIS_Waiting     UMETA(DisplayName = "Waiting"),
 	EAIS_Moving      UMETA(DisplayName = "Moving"),
 	EAIS_Combat		UMETA(DisplayName = "Combat"),
 	EAIS_Dead        UMETA(DisplayName = "Dead")

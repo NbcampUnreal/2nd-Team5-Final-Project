@@ -40,7 +40,10 @@ public:
 	void SetIsAttacking(bool bNewIsAttacking);
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
-	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer); 
+	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
+	bool GetIsAttacking();
 	
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
@@ -82,7 +85,7 @@ protected:
 
 	// --- Anim Data | State ---
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
-	bool IsAttacking; 
+	bool IsAttacking = false; 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State") 
     bool bIsHit;

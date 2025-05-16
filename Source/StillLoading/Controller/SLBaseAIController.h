@@ -19,6 +19,9 @@ class STILLLOADING_API ASLBaseAIController : public ADetourCrowdAIController
 public:
 	ASLBaseAIController();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	TObjectPtr<AActor> TargetActor;
+
 protected:
 	UFUNCTION()
 	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
@@ -59,6 +62,4 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AI|Behavior")
 	bool bIsHostileToOtherAI;
-
-	
 };
