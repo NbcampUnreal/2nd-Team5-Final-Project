@@ -14,11 +14,17 @@ public:
 	TObjectPtr<UAnimMontage> AttackMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
-	TObjectPtr<UAnimMontage> DodgeMontage;
+	TObjectPtr<UAnimMontage> SpecialAttackMontage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
+	TObjectPtr<UAnimMontage> DodgeMontage;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> HitReactMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> DeathMontage;
+
+
+	UAnimMontage* Hi();
 };

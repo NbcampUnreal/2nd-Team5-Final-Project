@@ -88,6 +88,26 @@ void UAnimationMontageComponent::PlayDeathMontage()
 		PlayMontage(MontageData->DeathMontage, NAME_None);
 }
 
+void UAnimationMontageComponent::PlayDefenceMontage()
+{
+	if (MontageData)
+		PlayMontage(MontageData->DefenceMontage, NAME_None);
+}
+
+void UAnimationMontageComponent::StopDefenceMontage()
+{
+	if (MontageData)
+		StopMontage(MontageData->DefenceMontage, 0.2f);
+}
+
+void UAnimationMontageComponent::StopMontage(UAnimMontage* Montage, float BlendOutTime)
+{
+	if (AnimInstance && Montage && AnimInstance->Montage_IsPlaying(Montage))
+	{
+		AnimInstance->Montage_Stop(BlendOutTime, Montage);
+	}
+}
+
 bool UAnimationMontageComponent::IsAttackMontagePlaying() const
 {
     return IsMontagePlayingHelper(MontageData ? MontageData->AttackMontage : nullptr);

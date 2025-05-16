@@ -274,7 +274,7 @@ void UMovementHandlerComponent::Attack()
 		return;
 	}
 
-	if (SectionName == FName("Attack3"))
+	if (SectionName == FName("Attack3")) // 3타에 게이징
 	{
 		CachedCombatComponent->StartCharging();
 	}
@@ -331,11 +331,11 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 {
 	if (bIsBlocking)
 	{
-		OwnerCharacter->SetPrimaryState(TAG_Character_Defense);
+		OwnerCharacter->SetPrimaryState(TAG_Character_Defense_Block);
 	}
 	else
 	{
-		OwnerCharacter->RemovePrimaryState(TAG_Character_Defense);
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Defense_Block);
 	}
 }
 

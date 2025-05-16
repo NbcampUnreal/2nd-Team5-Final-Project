@@ -19,13 +19,13 @@ public:
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName Section);
 	UFUNCTION()
+	void StopMontage(UAnimMontage* Montage, float BlendOutTime);
 	void PlayAttackMontage(FName Section = NAME_None);
-	UFUNCTION()
 	void PlayDodgeMontage(FName Section = NAME_None);
-	UFUNCTION()
 	void PlayHitReactMontage();
-	UFUNCTION()
 	void PlayDeathMontage();
+	void PlayDefenceMontage();
+	void StopDefenceMontage();
 	UFUNCTION()
 	bool IsAttackMontagePlaying() const;
 	
@@ -38,7 +38,6 @@ protected:
 	TObjectPtr<UAnimInstance> AnimInstance;
 
 private:
-	UFUNCTION()
 	void GetAnimInstance();
 	UFUNCTION()
 	void OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);

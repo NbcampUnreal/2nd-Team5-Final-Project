@@ -66,6 +66,13 @@ void ASLCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketName) c
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		SocketName
 	);
+	
+	UAnimMontage* b = Hi();
+}
+
+bool ASLCharacter::IsBlocking() const
+{
+	return PrimaryStateTags.HasTag(TAG_Character_Defense_Block);
 }
 
 // 상태 관리

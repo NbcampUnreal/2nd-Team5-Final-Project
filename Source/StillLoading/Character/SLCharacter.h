@@ -38,6 +38,9 @@ protected:
 
 	virtual void Landed(const FHitResult& Hit) override;
 
+	UFUNCTION(BlueprintCallable, Category = "State")
+	bool IsBlocking() const;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Character|Movement")
 	float LastLandTime = 0.0f;
 	
