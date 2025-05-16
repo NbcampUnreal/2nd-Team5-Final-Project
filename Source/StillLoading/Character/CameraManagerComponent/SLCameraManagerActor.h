@@ -19,15 +19,15 @@ public:
 	ASLCameraManagerActor();
 
 	UPROPERTY(VisibleAnywhere)
-	USceneComponent* Root;
+	TObjectPtr<USceneComponent> Root;
 
 	UPROPERTY(VisibleAnywhere)
-	UCameraComponent* TopDownCamera;
+	TObjectPtr<UCameraComponent> TopDownCamera;
 
 	UPROPERTY(VisibleAnywhere)
-	UCameraComponent* CinematicCamera;
+	TObjectPtr<UCameraComponent>  CinematicCamera;
 
-	void SetCameraMode(EGameCameraType Mode); // ³»ºÎ È°¼º ÀüÈ¯
+	void SetCameraMode(EGameCameraType Mode); // ë‚´ë¶€ í™œì„± ì „í™˜
 
 protected:
 	// Called when the game starts or when spawned
