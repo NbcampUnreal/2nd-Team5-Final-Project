@@ -4,9 +4,10 @@
 #include "UI/Widget/SLBaseWidget.h"
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "Animation/WidgetAnimation.h"
 
-void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	UISubsystem = NewUISubsystem;
 
@@ -22,18 +23,16 @@ void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 		BindToAnimationFinished(CloseAnim, EndCloseAnimDelegate);
 	}
 
-	ApplyOnChangedChapter(ChapterType);
-	
 	CheckValidOfTextPoolSubsystem();
 	TextPoolSubsystem->LanguageDelegate.AddDynamic(this, &ThisClass::NotifyChangedLanguage);
 
 	ApplyTextData();
 }
 
-void USLBaseWidget::ApplyOnChangedChapter(ESLChapterType ChapterType)
+void USLBaseWidget::ApplyOnChangedChapter(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	CurrentChapter = ChapterType;
-	FindWidgetData();
+	CurrentChapter = WidgetActivateBuffer.CurrentChapter;
+	FindWidgetData(WidgetActivateBuffer);
 
 	ApplyImageData();
 	ApplyFontData();
@@ -54,11 +53,11 @@ bool USLBaseWidget::GetWidgetCursorMode() const
 	return bIsVisibleCursor;
 }
 
-void USLBaseWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLBaseWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	if (CurrentChapter != ChapterType)
+	if (CurrentChapter != WidgetActivateBuffer.CurrentChapter)
 	{
-		ApplyOnChangedChapter(ChapterType);
+		ApplyOnChangedChapter(WidgetActivateBuffer);
 	}
 }
 

@@ -9,12 +9,17 @@
 #include "Components/CanvasPanel.h"
 #include "Animation/WidgetAnimation.h"
 
-void USLInGameWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+const FName USLInGameWidget::HitEffectIndex = "HitEffectImg";
+const FName USLInGameWidget::TimerBackIndex = "TimerBackImg";
+const FName USLInGameWidget::GameStateBackIndex = "GameStateBackImg";
+const FName USLInGameWidget::PlayerStateBackIndex = "PlayerStateBackImg";
+
+void USLInGameWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetInputMode = ESLInputModeType::EIM_GameOnly;
 	bIsVisibleCursor = false;
 
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 
 }
 
@@ -88,12 +93,29 @@ void USLInGameWidget::ApplyImageData()
 {
 	Super::ApplyImageData();
 
+	if (ImageMap.Contains(HitEffectIndex) &&
+		IsValid(ImageMap[HitEffectIndex])) 
+		HitEffectImg->SetBrushFromTexture(ImageMap[HitEffectIndex]);
+
+	if (ImageMap.Contains(TimerBackIndex) &&
+		IsValid(ImageMap[TimerBackIndex]))
+		TimerBack->SetBrushFromTexture(ImageMap[TimerBackIndex]);
+
+	if (ImageMap.Contains(GameStateBackIndex) &&
+		IsValid(ImageMap[GameStateBackIndex]))
+		GameStateBack->SetBrushFromTexture(ImageMap[GameStateBackIndex]);
+
+	if (ImageMap.Contains(PlayerStateBackIndex) && 
+		IsValid(ImageMap[PlayerStateBackIndex]))
+		PlayerStateBack->SetBrushFromTexture(ImageMap[PlayerStateBackIndex]);
 }
 
 void USLInGameWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
 
+	//TimerText->SetFont(FontInfo);
+	//GameStateText->SetFont(FontInfo);
 }
 
 void USLInGameWidget::SetIsSubWidgetActivate(bool bIsActived, UWidgetAnimation* ActiveAnim, UWidgetAnimation* DeactiveAnim)

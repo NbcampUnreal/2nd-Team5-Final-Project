@@ -18,12 +18,16 @@ class STILLLOADING_API USLKeyMappingWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void InitWidget(const FName& NewTagText, EInputActionType NewActionType);
-	void UpdateTagText(const FName& NewTagText);
+	void InitWidget(EInputActionType NewActionType, const FName& NewTagIndex, const FName& KeyText);
+	void UpdateTextIndex(const FName& NewTagIndex);
+	void UpdateTextFont(const FSlateFontInfo& FontInfo);
+	void UpdateTagText(const FText& NewTagText);
 	void UpdateKeyText(const FName& KeyText);
 
 	void SetVisibilityButton(bool bIsVisible);
 	void SetIsEnabledButton(bool bIsEnable);
+
+	const FName& GetTagIndex() const;
 
 private:
 	UFUNCTION()
@@ -44,5 +48,6 @@ private:
 	TObjectPtr<UTextBlock> TagText = nullptr;
 
 	EInputActionType ActionType = EInputActionType::EIAT_None;
+	FName TagIndex = "";
 	FKey InputKey;
 };

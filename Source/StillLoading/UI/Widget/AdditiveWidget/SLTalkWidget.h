@@ -14,16 +14,17 @@ class STILLLOADING_API USLTalkWidget : public USLBaseTextPrintWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
-	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void DeactivateWidget() override;
-
-	void UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 TargetIndex);
 
 protected:
 	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
+
+private:
+	void UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 TargetIndex);
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -47,4 +48,7 @@ private:
 
 	ESLTalkTargetType CurrentTalkType = ESLTalkTargetType::ETT_None;
 	int32 CurrentTalkIndex = 0;
+
+	static const FName TalkBackImgIndex;
+	static const FName NameBackImgIndex;
 };

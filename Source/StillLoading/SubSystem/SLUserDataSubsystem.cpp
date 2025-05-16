@@ -278,6 +278,10 @@ void USLUserDataSubsystem::AddMappingDataToKeyMap(const FEnhancedActionKeyMappin
 	{
 		ActionType = EInputActionType::EIAT_Look;
 	}
+	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("Block")))
+	{
+		ActionType = EInputActionType::EIAT_Block;
+	}
 
 	KeySet.Add(ActionKeyMapping.Key);
 	ActionKeyMap.Add(ActionType, ActionKeyMapping);

@@ -30,14 +30,14 @@ const FName USLOptionWidget::KeySettingButtonIndex = "KeySettingButton";
 const FName USLOptionWidget::QuitGameButtonIndex = "QuitGameButton";
 const FName USLOptionWidget::CloseButtonIndex = "CloseButton";
 
-void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	WidgetOrder = 15;
 	bIsVisibleCursor = true;
 	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 
 	FullScreenButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedFullScreen);
 	WindowScreenButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedWindowScreen);
@@ -61,9 +61,9 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType 
 	InitOptionVariable();
 }
 
-void USLOptionWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
+	Super::ActivateWidget(WidgetActivateBuffer);
 
 	if (IsValid(OpenAnim))
 	{

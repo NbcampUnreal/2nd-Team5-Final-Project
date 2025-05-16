@@ -22,3 +22,25 @@ public:
 	UPROPERTY(EditAnywhere)
 	TMap<FName, TSoftObjectPtr<UTexture2D>> ImageMap;
 };
+
+USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLMapListDataRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	ESLGameMapType GameMapType = ESLGameMapType::EGM_None;
+
+	UPROPERTY(EditAnywhere)
+	FName MapName = "";
+
+	UPROPERTY(EditAnywhere)
+	FName ImageIndex = "";
+
+	UPROPERTY(EditAnywhere)
+	int32 TargetRow = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 TargetCol = 0;
+};

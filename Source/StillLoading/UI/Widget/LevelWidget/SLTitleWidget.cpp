@@ -20,12 +20,12 @@ const FName USLTitleWidget::StartButtonIndex = "StartButton";
 const FName USLTitleWidget::OptionButtonIndex = "OptionButton";
 const FName USLTitleWidget::QuitButtonIndex = "QuitButton";
 
-void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	bIsVisibleCursor = true;
 	
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 
 	StartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedStartButton);
 	OptionButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedOptionButton);

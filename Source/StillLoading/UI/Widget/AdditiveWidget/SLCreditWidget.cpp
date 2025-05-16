@@ -9,21 +9,21 @@
 #include "Components/VerticalBox.h"
 #include "Components/ScrollBox.h"
 
-void USLCreditWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLCreditWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_CreditWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	WidgetOrder = 19;
 	bIsVisibleCursor = true;
 	
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
 }
 
-void USLCreditWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLCreditWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
+	Super::ActivateWidget(WidgetActivateBuffer);
 
 	PlayAnimation(OpenAnim);
 

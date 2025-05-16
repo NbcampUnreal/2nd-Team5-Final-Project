@@ -16,7 +16,7 @@ class STILLLOADING_API USLTitleWidget : public USLLevelWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void DeactivateWidget() override;
 
 protected:

@@ -6,11 +6,11 @@
 #include "UI/Struct/SLWidgetImageDataRow.h"
 #include "Engine/Font.h"
 
-void USLAdditiveWidget::FindWidgetData()
+void USLAdditiveWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	CheckValidOfUISubsystem();
+	Super::FindWidgetData(WidgetActivateBuffer);
 
-	const UDataTable* ImageDataTable = UISubsystem->GetImageDataTable();
+	const UDataTable* ImageDataTable = WidgetActivateBuffer.WidgetImageData;
 	const FString ContextString(TEXT("Image Data Table"));
 
 	TArray<FSLWidgetImageDataRow*> ImageData;

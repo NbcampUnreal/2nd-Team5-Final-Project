@@ -13,5 +13,4 @@ class STILLLOADING_API ASLMapListHUD : public ASLBaseHUD
 	
 protected:
 	virtual void OnStartedHUD() override;
-	virtual void InitLevelWidget() override;
 };
