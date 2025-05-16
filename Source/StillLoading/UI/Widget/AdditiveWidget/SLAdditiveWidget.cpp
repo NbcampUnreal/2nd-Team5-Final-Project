@@ -35,8 +35,13 @@ void USLAdditiveWidget::FindWidgetData()
 	}
 }
 
+ESLAdditiveWidgetType USLAdditiveWidget::GetWidgetType() const
+{
+	return WidgetType;
+}
+
 void USLAdditiveWidget::CloseWidget()
 {
 	CheckValidOfUISubsystem();
-	UISubsystem->RemoveCurrentAdditiveWidget();
+	UISubsystem->RemoveCurrentAdditiveWidget(WidgetType);
 }

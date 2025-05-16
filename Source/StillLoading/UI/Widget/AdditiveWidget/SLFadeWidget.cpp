@@ -10,6 +10,7 @@ void USLFadeWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_FadeWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	WidgetOrder = 20;
 	bIsVisibleCursor = false;
 
 	OpenAnim = FadeInAnim;
