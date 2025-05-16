@@ -17,7 +17,7 @@ class STILLLOADING_API USLInGameWidget : public USLLevelWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void DeactivateWidget() override;
 
 	void SetIsTimerActivate(bool bIsActived);
@@ -92,4 +92,9 @@ protected:
 
 	UPROPERTY(Meta = (BindWidgetAnim), Transient)
 	TObjectPtr<UWidgetAnimation> ActiveHitEffectAnim = nullptr;
+
+	static const FName HitEffectIndex;
+	static const FName TimerBackIndex;
+	static const FName GameStateBackIndex;
+	static const FName PlayerStateBackIndex;
 };

@@ -15,10 +15,8 @@ class STILLLOADING_API USLNotifyWidget : public USLAdditiveWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
-	virtual void ActivateWidget(ESLChapterType ChapterType) override;
-
-	void UpdateNotifyText(ESLGameMapType MapType, ESLNotifyType NotiType);
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 
 protected:
 	virtual void OnEndedOpenAnim() override;
@@ -26,6 +24,9 @@ protected:
 
 	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
+
+private:
+	void UpdateNotifyText(ESLGameMapType MapType, ESLNotifyType NotiType);
 
 private:
 	UPROPERTY(Meta = (BindWidget))

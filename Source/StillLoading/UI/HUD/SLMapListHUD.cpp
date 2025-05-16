@@ -8,16 +8,7 @@
 void ASLMapListHUD::OnStartedHUD()
 {
 	Super::OnStartedHUD();
+
 	CheckValidOfUISubsystem();
 	UISubsystem->ActivateFade(true);
-}
-
-void ASLMapListHUD::InitLevelWidget()
-{
-	Super::InitLevelWidget();
-
-	checkf(ChapterWidgetDataMap.Contains(CurrentChapter), TEXT("Widget Data Map is not contains ChapterType"));
-	LevelWidgetObj->SetLevelWidgetData(ChapterWidgetDataMap[CurrentChapter]);
-	CheckValidOfUISubsystem();
-	LevelWidgetObj->InitWidget(UISubsystem, CurrentChapter);
 }

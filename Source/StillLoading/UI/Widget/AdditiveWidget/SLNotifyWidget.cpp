@@ -6,8 +6,9 @@
 #include "Components/TextBlock.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 
-void USLNotifyWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLNotifyWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_NotifyWidget;
 	WidgetInputMode = ESLInputModeType::EIM_GameAndUI;
@@ -16,13 +17,14 @@ void USLNotifyWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType 
 	OpenAnim = VisibleNotifyAnim;
 	CloseAnim = InvisibleNotifyAnim;
 
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 }
 
-void USLNotifyWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLNotifyWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
-
+	Super::ActivateWidget(WidgetActivateBuffer);
+	
+	UpdateNotifyText(WidgetActivateBuffer.TargetMap, WidgetActivateBuffer.TargetNotify);
 	PlayAnimation(OpenAnim);
 	PlayUISound(ESLUISoundType::EUS_Notify);
 }

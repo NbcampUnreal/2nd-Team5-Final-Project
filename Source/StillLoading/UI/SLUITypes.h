@@ -32,7 +32,8 @@ enum class ESLUISoundType : uint8
 UENUM(BlueprintType)
 enum class ESLChapterType : uint8
 {
-	EC_Intro = 0,
+	EC_None = 0,
+	EC_Intro,
 	EC_Chapter2D,
 	EC_Chapter2_5D,
 	EC_Chapter3D,

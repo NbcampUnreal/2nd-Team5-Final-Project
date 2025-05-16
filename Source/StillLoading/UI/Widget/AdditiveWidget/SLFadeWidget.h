@@ -15,10 +15,8 @@ class STILLLOADING_API USLFadeWidget : public USLAdditiveWidget
 	
 
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
-	virtual void ActivateWidget(ESLChapterType ChapterType) override;
-
-	void SetIsFadeIn(bool FadeValue);
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 
 protected:
 	virtual void OnEndedOpenAnim() override;
@@ -34,8 +32,6 @@ private:
 
 	UPROPERTY(Meta = (BindWidgetAnim), Transient)
 	TObjectPtr<UWidgetAnimation> FadeOutAnim = nullptr;
-
-	bool bIsFadeIn = true;
 
 	static const FName FadeImgName;
 };

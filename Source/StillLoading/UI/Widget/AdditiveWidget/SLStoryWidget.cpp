@@ -4,11 +4,16 @@
 #include "UI/Widget/AdditiveWidget/SLStoryWidget.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanel.h"
+#include "Components/Image.h"
 
-void USLStoryWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+const FName USLStoryWidget::StoryBackImgIndex = "TalkBackImg";
+const FName USLStoryWidget::NameBackImgIndex = "NameBackImg";
+
+void USLStoryWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_StoryWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
@@ -20,13 +25,13 @@ void USLStoryWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType C
 	ParentNextButton = NextButton;
 	ParentTalkText = StoryText;
 
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 }
 
-void USLStoryWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLStoryWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
-
+	UpdateStoryState(WidgetActivateBuffer.CurrentChapter, WidgetActivateBuffer.TargetStory, WidgetActivateBuffer.TargetIndex);
+	Super::ActivateWidget(WidgetActivateBuffer);
 }
 
 void USLStoryWidget::DeactivateWidget()
@@ -64,11 +69,22 @@ void USLStoryWidget::UpdateStoryState(ESLChapterType ChapterType, ESLStoryType T
 void USLStoryWidget::ApplyImageData()
 {
 	Super::ApplyImageData();
+
+	if (ImageMap.Contains(StoryBackImgIndex) &&
+		IsValid(ImageMap[StoryBackImgIndex]))
+		StoryBack->SetBrushFromTexture(ImageMap[StoryBackImgIndex]);
+
+	if (ImageMap.Contains(NameBackImgIndex) &&
+		IsValid(ImageMap[NameBackImgIndex]))
+		NameBack->SetBrushFromTexture(ImageMap[NameBackImgIndex]);
 }
 
 void USLStoryWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
+
+	/*StoryText->SetFont(FontInfo);
+	NameText->SetFont(FontInfo);*/
 }
 
 void USLStoryWidget::ApplyTextData()

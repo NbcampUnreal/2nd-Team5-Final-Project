@@ -7,24 +7,40 @@
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/UniformGridPanel.h"
+#include "UI/Struct/SLLevelWidgetDataRow.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 
-void USLMapListWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLMapListWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	bIsVisibleCursor = true;
 
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
+}
 
-	for (int32 TypeNum = 1; TypeNum < (int32)ESLGameMapType::EGM_Max; ++TypeNum)
+void USLMapListWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
+{
+	if (!IsValid(WidgetActivateBuffer.LevelWidgetData))
 	{
-		ESLGameMapType MapType = (ESLGameMapType)TypeNum;
+		return;
+	}
+
+	TArray<FSLMapListDataRow*> MapListDataArray;
+	WidgetActivateBuffer.LevelWidgetData->GetAllRows(TEXT("Map List Context"), MapListDataArray);
+
+	for (const FSLMapListDataRow* MapListData : MapListDataArray)
+	{
+		ESLGameMapType MapType = MapListData->GameMapType;
 		USLMapElementWidget* NewElement = CreateWidget<USLMapElementWidget>(this, MapElementWidgetClass);
 
 		NewElement->InitMapElement(MapType);
+		NewElement->SetElementImgIndex(MapListData->ImageIndex);
 		NewElement->OnClickedMapElement.AddDynamic(this, &ThisClass::OnClickedElement);
-		GridPanel->AddChildToUniformGrid(NewElement, MapElementDataMap[MapType].TargetRow, MapElementDataMap[MapType].TargetCol);
+		GridPanel->AddChildToUniformGrid(NewElement, MapListData->TargetRow, MapListData->TargetCol);
 		ElementMap.Add(MapType, NewElement);
 	}
+
+	Super::ActivateWidget(WidgetActivateBuffer);
 }
 
 void USLMapListWidget::DeactivateWidget()
@@ -39,8 +55,8 @@ void USLMapListWidget::OnClickedElement(ESLGameMapType TargetMapType)
 	//checkf(ElementMap.Contains(TargetMapType), TEXT("Target Map not contains TargetMapType"));
 	//USLMapElementWidget* TargetElement = ElementMap[TargetMapType];
 
-	checkf(MapElementDataMap.Contains(TargetMapType), TEXT("Element Data not contains TargetMapType"));
-	UE_LOG(LogTemp, Warning, TEXT("On Clicked %s"), *MapElementDataMap[TargetMapType].MapName.ToString());
+	checkf(ElementMap.Contains(TargetMapType), TEXT("Element Data not contains TargetMapType"));
+	UE_LOG(LogTemp, Warning, TEXT("On Clicked %s"), *ElementMap[TargetMapType]->GetName());
 
 	UGameplayStatics::OpenLevel(GetWorld(), "TestInGameLevel");
 }
@@ -48,6 +64,17 @@ void USLMapListWidget::OnClickedElement(ESLGameMapType TargetMapType)
 void USLMapListWidget::ApplyImageData()
 {
 	Super::ApplyImageData();
+
+	for (TPair<ESLGameMapType, USLMapElementWidget*>& Element : ElementMap)
+	{
+		FName Index = Element.Value->GetElementImgIndex();
+
+		if (ImageMap.Contains(Index) &&
+			IsValid(ImageMap[Index]))
+		{
+			Element.Value->SetMapElementImage(ImageMap[Index]);
+		}
+	}
 }
 
 void USLMapListWidget::ApplyFontData()

@@ -18,7 +18,7 @@ protected:
 	UFUNCTION()
 	void CloseWidget();
 
-	virtual void FindWidgetData() override;
+	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 
 protected:
 	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;

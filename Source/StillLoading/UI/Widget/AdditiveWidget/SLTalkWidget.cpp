@@ -4,11 +4,16 @@
 #include "UI/Widget/AdditiveWidget/SLTalkWidget.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanel.h"
+#include "Components/Image.h"
 
-void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+const FName USLTalkWidget::TalkBackImgIndex = "TalkBackImg";
+const FName USLTalkWidget::NameBackImgIndex = "NameBackImg";
+
+void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_TalkWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
@@ -20,14 +25,13 @@ void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 	ParentNextButton = NextButton;
 	ParentTalkText = TalkText;
 
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 }
 
-void USLTalkWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLTalkWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
-
-	
+	UpdateTalkState(WidgetActivateBuffer.TargetTalk, WidgetActivateBuffer.TargetIndex);
+	Super::ActivateWidget(WidgetActivateBuffer);	
 }
 
 void USLTalkWidget::DeactivateWidget()
@@ -65,11 +69,22 @@ void USLTalkWidget::UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 Targ
 void USLTalkWidget::ApplyImageData()
 {
 	Super::ApplyImageData();
+
+	if (ImageMap.Contains(TalkBackImgIndex) &&
+		IsValid(ImageMap[TalkBackImgIndex]))
+		TalkBack->SetBrushFromTexture(ImageMap[TalkBackImgIndex]);
+
+	if (ImageMap.Contains(NameBackImgIndex) &&
+		IsValid(ImageMap[NameBackImgIndex]))
+		NameBack->SetBrushFromTexture(ImageMap[NameBackImgIndex]);
 }
 
 void USLTalkWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
+
+	/*NameText->SetFont(FontInfo);
+	TalkText->SetFont(FontInfo);*/
 }
 
 void USLTalkWidget::ApplyTextData()

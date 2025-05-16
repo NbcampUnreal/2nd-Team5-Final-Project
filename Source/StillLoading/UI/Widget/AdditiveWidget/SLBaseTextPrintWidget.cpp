@@ -6,16 +6,16 @@
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanel.h"
 
-void USLBaseTextPrintWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLBaseTextPrintWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 
 	ParentNextButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedNextButton);
 }
 
-void USLBaseTextPrintWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLBaseTextPrintWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
+	Super::ActivateWidget(WidgetActivateBuffer);
 
 	TargetTextIndex = 0;
 	ChangeTargetText();

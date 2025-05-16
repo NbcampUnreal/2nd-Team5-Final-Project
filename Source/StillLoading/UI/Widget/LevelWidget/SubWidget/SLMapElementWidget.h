@@ -21,6 +21,9 @@ public:
 	void InitMapElement(ESLGameMapType NewType);
 	void SetMapElementImage(UTexture2D* ImageSource);
 	void SetIsEnabledButton(bool bIsEndabled);
+	void SetElementImgIndex(const FName& NewIndex);
+
+	const FName& GetElementImgIndex();
 
 private:
 	UFUNCTION()
@@ -38,4 +41,5 @@ private:
 	TObjectPtr<UImage> ElementImg = nullptr;
 
 	ESLGameMapType ElementType = ESLGameMapType::EGM_None;
+	FName ImageIndex = "";
 };

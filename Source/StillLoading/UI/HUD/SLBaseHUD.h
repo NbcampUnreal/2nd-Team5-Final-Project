@@ -15,14 +15,10 @@ UCLASS()
 class STILLLOADING_API ASLBaseHUD : public AHUD
 {
 	GENERATED_BODY()
-	
-public:
-	UFUNCTION(BlueprintCallable)
-	void SetChapterToLevelWidget(ESLChapterType ChapterType);
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnStartedHUD() {};
+	virtual void OnStartedHUD();
 	virtual void InitLevelWidget() {};
 
 	void ApplyLevelWidgetInputMode();
@@ -34,7 +30,10 @@ public:
 	TSubclassOf<USLLevelWidget> LevelWidgetClass = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
-	TMap<ESLChapterType, FSLLevelWidgetDataRow> ChapterWidgetDataMap;
+	TSoftObjectPtr<UDataTable> LevelWidgetData = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
+	TSoftObjectPtr<UDataTable> WidgetImageData = nullptr;
 
 protected:
 	UPROPERTY()
