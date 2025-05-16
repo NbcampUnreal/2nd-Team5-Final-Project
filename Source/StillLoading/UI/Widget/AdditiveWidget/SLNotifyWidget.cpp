@@ -8,6 +8,8 @@
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
 
+const FName USLNotifyWidget::NotifyBackIndex = "NotifyBack";
+
 void USLNotifyWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_NotifyWidget;
@@ -65,11 +67,17 @@ void USLNotifyWidget::OnEndedCloseAnim()
 void USLNotifyWidget::ApplyImageData()
 {
 	Super::ApplyImageData();
-	//BackgroundImg->SetBrushFromTexture();
+	
+	if (ImageMap.Contains(NotifyBackIndex) &&
+		IsValid(ImageMap[NotifyBackIndex]))
+	{
+		BackgroundImg->SetBrushFromTexture(ImageMap[NotifyBackIndex]);
+	}
 }
 
 void USLNotifyWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
-	//NotifyText->SetFont();
+
+	//NotifyText->SetFont(FontInfo);
 }

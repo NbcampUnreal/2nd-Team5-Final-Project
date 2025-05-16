@@ -53,7 +53,7 @@ void USLCreditWidget::DeactivateWidget()
 
 void USLCreditWidget::ApplyImageData()
 {
-
+	Super::ApplyImageData();
 }
 
 void USLCreditWidget::ApplyFontData()

@@ -43,4 +43,6 @@ private:
 
 	UPROPERTY()
 	TMap<ESLGameMapType, USLMapElementWidget*> ElementMap;
+
+	static const FName ListBackIndex;
 };

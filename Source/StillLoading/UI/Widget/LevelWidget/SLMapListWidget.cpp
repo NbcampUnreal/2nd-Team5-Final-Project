@@ -10,6 +10,8 @@
 #include "UI/Struct/SLLevelWidgetDataRow.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
 
+const FName USLMapListWidget::ListBackIndex = "MapListBack";
+
 void USLMapListWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
@@ -74,6 +76,12 @@ void USLMapListWidget::ApplyImageData()
 		{
 			Element.Value->SetMapElementImage(ImageMap[Index]);
 		}
+	}
+
+	if (ImageMap.Contains(ListBackIndex) &&
+		IsValid(ImageMap[ListBackIndex]))
+	{
+		BackgroundImg->SetBrushFromTexture(ImageMap[ListBackIndex]);
 	}
 }
 
