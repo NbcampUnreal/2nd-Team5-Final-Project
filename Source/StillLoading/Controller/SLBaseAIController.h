@@ -34,7 +34,6 @@ protected:
 
 	virtual void SetAITeamId(const FGenericTeamId& NewTeamID);
 	
-	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent;
 
