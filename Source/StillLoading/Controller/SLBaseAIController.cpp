@@ -4,6 +4,7 @@
 #include "Controller/SLBaseAIController.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Character/SLAIBaseCharacter.h"
 #include "Character/SLBaseCharacter.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -77,9 +78,10 @@ void ASLBaseAIController::OnPossess(APawn* InPawn)
 	{
 		BlackboardComponent->SetValueAsVector(FName("StartLocation"), InPawn->GetActorLocation());
 
-		TObjectPtr<ASLBaseCharacter> AiCharacter = Cast<ASLBaseCharacter>(InPawn);
+		ASLAIBaseCharacter* AiCharacter = Cast<ASLAIBaseCharacter>(InPawn);
 		BlackboardComponent->SetValueAsFloat(FName("DefaultMaxWalkSpeed"), AiCharacter->GetCharacterMovement()->MaxWalkSpeed);
-		PosseedAIPawn = Cast<ASLBaseCharacter>(GetPawn()); 
+		BlackboardComponent->SetValueAsFloat(FName("MaxHealth"), AiCharacter->GetMaxHealth());
+		BlackboardComponent->SetValueAsFloat(FName("CurrentHealth"), AiCharacter->GetCurrentHealth());
 	}
 }
 

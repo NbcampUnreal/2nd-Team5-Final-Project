@@ -6,6 +6,7 @@
 #include "SLBaseCharacter.h"
 #include "SLAIBaseCharacter.generated.h"
 
+class UMotionWarpingComponent;
 class UBoxComponent;
 class UBlackboardComponent;
 class ASLBaseAIController;
@@ -16,31 +17,39 @@ class UAnimMontage;
 UENUM(BlueprintType)
 enum class EAIState : uint8
 {
-	Idle        UMETA(DisplayName = "Idle"),
-	Moving      UMETA(DisplayName = "Moving"),
-	Combat		UMETA(DisplayName = "Combat"),
-	Dead        UMETA(DisplayName = "Dead")
+	EAIS_Idle        UMETA(DisplayName = "Idle"),
+	EAIS_Moving      UMETA(DisplayName = "Moving"),
+	EAIS_Combat		UMETA(DisplayName = "Combat"),
+	EAIS_Dead        UMETA(DisplayName = "Dead")
 };
 
 // 피격 방향
 UENUM(BlueprintType)
 enum class EHitDirection : uint8
 {
-	Front,
-	Back,
-	Left,
-	Right
+	EHD_Front,
+	EHD_Back,
+	EHD_Left,
+	EHD_Right
 };
 
 // AI의 전투 페이즈 
 UENUM(BlueprintType)
 enum class ECombatPhase : uint8
 {
-	Phase_None      UMETA(DisplayName = "None / Not In Combat"),
-	Phase_One       UMETA(DisplayName = "Phase 1"),
-	Phase_Two       UMETA(DisplayName = "Phase 2"),
-	Phase_Three     UMETA(DisplayName = "Phase 3"),
-	Phase_Final     UMETA(DisplayName = "Final Phase")
+	ECP_Phase_None      UMETA(DisplayName = "None / Not In Combat"),
+	ECP_Phase_One       UMETA(DisplayName = "Phase 1"),
+	ECP_Phase_Two       UMETA(DisplayName = "Phase 2"),
+	ECP_Phase_Three     UMETA(DisplayName = "Phase 3"),
+	ECP_Phase_Final     UMETA(DisplayName = "Final Phase")
+};
+
+UENUM(BlueprintType)
+enum class EToggleDamageType : uint8
+{
+	ETDT_CurrentEquippedWeapon,
+	ETDT_LeftHand,
+	ETDT_RightHand
 };
 
 UCLASS()
@@ -63,7 +72,30 @@ public:
 	
 	UFUNCTION()
 	virtual void OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE float GetCurrentHealth() const { return CurrentHealth; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE float GetAttackPower() const { return AttackPower;}
 	
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentHealth(float NewHealth);
+
+	UFUNCTION(BlueprintCallable)
+	void SetIsHitReaction(bool bNewIsHitReaction);
+
+	UFUNCTION(BlueprintCallable)
+	void SetAttackPower(float NewAttackPower);
+
+	UFUNCTION(BlueprintCallable)
+	void SetCombatPhase(ECombatPhase NewCombatPhase);
+
+	UFUNCTION(BlueprintCallable)
+	ECombatPhase GetCombatPhase();
 protected:
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -79,6 +111,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attributes")
 	float CurrentHealth; // 현재 체력
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	float AttackPower;
+	
 	// --- State Flags ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool IsHitReaction; // 피격 반응을 할건지 여부
@@ -92,15 +127,20 @@ protected:
 	
 	// --- Collision Components ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
-	UBoxComponent* LeftHandCollisionBox;
+	TObjectPtr<UBoxComponent> LeftHandCollisionBox;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	FName LeftHandCollisionBoxAttachBoneName;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
-	UBoxComponent* RightHandCollisionBox;
+	TObjectPtr<UBoxComponent> RightHandCollisionBox;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	FName RightHandCollisionBoxAttachBoneName;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	ECombatPhase CombatPhase;
 };

@@ -10,7 +10,7 @@
 ASLBossCharacter::ASLBossCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	BossAttackPattern = EBossAttackPattern::None;
+	BossAttackPattern = EBossAttackPattern::EBAP_None;
 }
 
 void ASLBossCharacter::SetBossAttackPattern(EBossAttackPattern NewPattern)
