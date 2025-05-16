@@ -40,4 +40,6 @@ private:
 
 	UPROPERTY(Meta = (BindWidgetAnim), Transient)
 	TObjectPtr<UWidgetAnimation> InvisibleNotifyAnim = nullptr;
+
+	static const FName NotifyBackIndex;
 };

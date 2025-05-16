@@ -60,7 +60,10 @@ void USLFadeWidget::ApplyImageData()
 {
 	Super::ApplyImageData();
 
-	checkf(ImageMap.Contains(FadeImgName), TEXT("Image Name is Not Contains"));
-	checkf(IsValid(ImageMap[FadeImgName]), TEXT("Image Source is invalid"));
-	FadeImage->SetBrushFromTexture(ImageMap[FadeImgName]);
+	if (ImageMap.Contains(FadeImgName) &&
+		IsValid(ImageMap[FadeImgName]))
+	{
+		FadeImage->SetBrushFromTexture(ImageMap[FadeImgName]);
+	}
+	
 }

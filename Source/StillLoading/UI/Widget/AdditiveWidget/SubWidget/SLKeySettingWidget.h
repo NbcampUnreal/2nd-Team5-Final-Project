@@ -74,4 +74,6 @@ private:
 
 	EInputActionType TargetActionType = EInputActionType::EIAT_None;
 	bool bOnClickedChange = false;
+
+	static const FName SettingBackIndex;
 };

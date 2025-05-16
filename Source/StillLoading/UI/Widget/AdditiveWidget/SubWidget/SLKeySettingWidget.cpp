@@ -8,7 +8,10 @@
 #include "Animation/WidgetAnimation.h"
 #include "Components/Button.h"
 #include "Components/GridPanel.h"
+#include "Components/Image.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
+
+const FName USLKeySettingWidget::SettingBackIndex = "KeySettingBack";
 
 void USLKeySettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -57,6 +60,12 @@ void USLKeySettingWidget::DeactivateWidget()
 void USLKeySettingWidget::ApplyImageData()
 {
 	Super::ApplyImageData();
+
+	if (ImageMap.Contains(SettingBackIndex) &&
+		IsValid(ImageMap[SettingBackIndex]))
+	{
+		BackgroundImg->SetBrushFromTexture(ImageMap[SettingBackIndex]);
+	}
 }
 
 void USLKeySettingWidget::ApplyFontData()
@@ -157,8 +166,6 @@ FReply USLKeySettingWidget::NativeOnKeyDown(const FGeometry& InGeometry, const F
 		return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Input Key is %s"), *InKeyEvent.GetKey().ToString());
-
 	bOnClickedChange = false;
 
 	UpdateKeyMapping(InKeyEvent.GetKey());
@@ -173,8 +180,6 @@ FReply USLKeySettingWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry,
 		return Super::NativeOnMouseButtonDown(InGeometry, InPointerEvent);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Mouse Button Down. Key Name : %s"), *InPointerEvent.GetEffectingButton().ToString());
-	
 	bOnClickedChange = false;
 
 	UpdateKeyMapping(InPointerEvent.GetEffectingButton());
