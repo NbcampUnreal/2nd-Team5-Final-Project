@@ -17,39 +17,39 @@ class UAnimMontage;
 UENUM(BlueprintType)
 enum class EAIState : uint8
 {
-	Idle        UMETA(DisplayName = "Idle"),
-	Moving      UMETA(DisplayName = "Moving"),
-	Combat		UMETA(DisplayName = "Combat"),
-	Dead        UMETA(DisplayName = "Dead")
+	EAIS_Idle        UMETA(DisplayName = "Idle"),
+	EAIS_Moving      UMETA(DisplayName = "Moving"),
+	EAIS_Combat		UMETA(DisplayName = "Combat"),
+	EAIS_Dead        UMETA(DisplayName = "Dead")
 };
 
 // 피격 방향
 UENUM(BlueprintType)
 enum class EHitDirection : uint8
 {
-	Front,
-	Back,
-	Left,
-	Right
+	EHD_Front,
+	EHD_Back,
+	EHD_Left,
+	EHD_Right
 };
 
 // AI의 전투 페이즈 
 UENUM(BlueprintType)
 enum class ECombatPhase : uint8
 {
-	Phase_None      UMETA(DisplayName = "None / Not In Combat"),
-	Phase_One       UMETA(DisplayName = "Phase 1"),
-	Phase_Two       UMETA(DisplayName = "Phase 2"),
-	Phase_Three     UMETA(DisplayName = "Phase 3"),
-	Phase_Final     UMETA(DisplayName = "Final Phase")
+	ECP_Phase_None      UMETA(DisplayName = "None / Not In Combat"),
+	ECP_Phase_One       UMETA(DisplayName = "Phase 1"),
+	ECP_Phase_Two       UMETA(DisplayName = "Phase 2"),
+	ECP_Phase_Three     UMETA(DisplayName = "Phase 3"),
+	ECP_Phase_Final     UMETA(DisplayName = "Final Phase")
 };
 
 UENUM(BlueprintType)
 enum class EToggleDamageType : uint8
 {
-	CurrentEquippedWeapon,
-	LeftHand,
-	RightHand
+	ETDT_CurrentEquippedWeapon,
+	ETDT_LeftHand,
+	ETDT_RightHand
 };
 
 UCLASS()
@@ -74,13 +74,13 @@ public:
 	virtual void OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION(BlueprintCallable)
-	float GetMaxHealth() const { return MaxHealth; }
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 
 	UFUNCTION(BlueprintCallable)
-	float GetCurrentHealth() const { return CurrentHealth; }
+	FORCEINLINE float GetCurrentHealth() const { return CurrentHealth; }
 
 	UFUNCTION(BlueprintCallable)
-	float GetAttackPower() const { return AttackPower;}
+	FORCEINLINE float GetAttackPower() const { return AttackPower;}
 	
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentHealth(float NewHealth);
