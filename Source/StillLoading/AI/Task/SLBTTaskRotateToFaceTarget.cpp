@@ -13,7 +13,8 @@ USLBTTaskRotateToFaceTarget::USLBTTaskRotateToFaceTarget()
 	NodeName = TEXT("Native Rotate to Face Target Actor");
 	AnglePrecision = 10.f;		//목표를 향해 회전할 때의 각도 오차를 설정
 	RotationInterpSpeed = 5.f;		//회전 속도를 설정
-
+	MaxRotationTime = 3.0f;
+	
 	bNotifyTick = true;		//프레임(틱)마다 업데이트
 	bNotifyTaskFinished = true;	//태스크가 끝났을 때, 완료된 것을 알림
 	bCreateNodeInstance = false;	//이 태스크는 새로운 노드 인스턴스를 생성하지 않도록 설정
@@ -83,7 +84,7 @@ EBTNodeResult::Type USLBTTaskRotateToFaceTarget::ExecuteTask(UBehaviorTreeCompon
 	//InTargetToFaceKey.SelectedKeyName에 해당하는 객체를 가지고와서 Actor로 형변환
 	UObject* ActorObject = OwnerComp.GetBlackboardComponent()->GetValueAsObject(InTargetToFaceKey.SelectedKeyName);
 	AActor* TargetActor = Cast<AActor>(ActorObject);
-
+	
 	//Ai 폰을 저장
 	APawn* OwningPawn = OwnerComp.GetAIOwner()->GetPawn();
 
@@ -94,6 +95,7 @@ EBTNodeResult::Type USLBTTaskRotateToFaceTarget::ExecuteTask(UBehaviorTreeCompon
 
 	Memory->OwningPawn = OwningPawn;
 	Memory->TargetActor = TargetActor;
+	Memory->ElapsedTime = 0.0f;
 
 	//메모리가 유효하지 않으면 작업 실패를 리턴
 	if (!Memory->IsValid())
@@ -118,33 +120,46 @@ void USLBTTaskRotateToFaceTarget::TickTask(UBehaviorTreeComponent& OwnerComp, ui
 
 	FRotateToFaceTargetTaskMemory* Memory = CastInstanceNodeMemory<FRotateToFaceTargetTaskMemory>(NodeMemory);
 
+	// 시간 누적
+	Memory->ElapsedTime += DeltaSeconds;
+
 	//메모리의 유효성을 확인
 	if (!Memory->IsValid())
 	{
 		//태스크가 실패로 끝났다고 알림
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+		return;
 	}
+
+	// 최대 회전 시간을 초과한 경우
+	if (Memory->ElapsedTime >= MaxRotationTime)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Rotation time exceeded. Task completed by timeout."));
+		Memory->Reset();
+		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+		return;
+	}
+
 	//AI 캐릭터가 목표를 향해 설정된 각도 정밀도 내에 있는지 확인
 	if (HasReachedAnglePrecision(Memory->OwningPawn.Get(), Memory->TargetActor.Get()))
 	{
 		Memory->Reset();
 		//태스크가 성공으로 끝났다고 알림
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+		return;
 	}
-	else //회전이 완료되지 않은 경우
-	{
-		//타겟을 보도록 회전
-		const FRotator CurrentRot = Memory->OwningPawn->GetActorRotation();
-		const FRotator LookAtRot = UKismetMathLibrary::FindLookAtRotation(
-			Memory->OwningPawn->GetActorLocation(), 
-			Memory->TargetActor->GetActorLocation()
-		);
-		FRotator TargetRot = FMath::RInterpTo(CurrentRot, LookAtRot, DeltaSeconds, RotationInterpSpeed);
 
-		// 위아래 회전(Pitch)은 그대로 유지하도록 현재 값으로 설정
-		TargetRot.Pitch = CurrentRot.Pitch;
+	//회전이 완료되지 않은 경우
+	//타겟을 보도록 회전
+	const FRotator CurrentRot = Memory->OwningPawn->GetActorRotation();
+	const FRotator LookAtRot = UKismetMathLibrary::FindLookAtRotation(
+		Memory->OwningPawn->GetActorLocation(), 
+		Memory->TargetActor->GetActorLocation()
+	);
+	FRotator TargetRot = FMath::RInterpTo(CurrentRot, LookAtRot, DeltaSeconds, RotationInterpSpeed);
 
-		Memory->OwningPawn->SetActorRotation(TargetRot);
+	// 위아래 회전(Pitch)은 그대로 유지하도록 현재 값으로 설정
+	TargetRot.Pitch = CurrentRot.Pitch;
 
-	}
+	Memory->OwningPawn->SetActorRotation(TargetRot);
 }

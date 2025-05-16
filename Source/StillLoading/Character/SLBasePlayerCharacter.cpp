@@ -23,14 +23,11 @@ ASLBaseCharacter::ASLBaseCharacter()
 	//CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 3.f;
 
-	DefaultCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("DefaultCamera"));
-	DefaultCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
+	ThirdPersonCamera->SetupAttachment(CameraBoom);
 
-	BattleCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("BattleCamera"));
-	BattleCamera->SetupAttachment(RootComponent);
-
-	TopDownCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
-	TopDownCamera->SetupAttachment(RootComponent);
+	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
+	FirstPersonCamera->SetupAttachment(RootComponent);
 
 	SideViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
 	SideViewCamera->SetupAttachment(RootComponent);
@@ -53,7 +50,7 @@ void ASLBaseCharacter::BeginPlay()
 
 	if (CameraManager)
 	{
-		CameraManager->SetCameraRefs(DefaultCamera, BattleCamera, TopDownCamera, SideViewCamera);
+		CameraManager->SetCameraRefsofCharacter(ThirdPersonCamera, FirstPersonCamera, SideViewCamera);
 	}
 }
 

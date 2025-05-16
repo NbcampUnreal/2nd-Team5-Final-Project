@@ -19,6 +19,17 @@ void USLAICharacterAnimInstance::NativeInitializeAnimation()
 	{
 		OwningMovementComponent = OwningCharacter->GetCharacterMovement();
 	}
+
+	bHasAcceleration = false;
+	bIsHit = false;
+	IsDead = false;
+	IsDown = false;
+	IsStun = false;
+	IsAttacking = false;
+	ShouldLookAtPlayer = false;
+	FaceYaw = 0.f;
+	FacePitch = 0.f;
+	Angle = 0.f;
 }
 
 void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)

@@ -78,10 +78,9 @@ private:
 	void ToggleWalk(const bool bNewWalking);
 	void ToggleMenu();
 	void Block(const bool bIsBlocking);
-	UFUNCTION()
-	EGameCameraType GetCurrentCameraType() const;
 
-	UPROPERTY()
+
+	//UPROPERTY()
 	float InputBufferDuration = 0.3f;
 
 	UPROPERTY()
