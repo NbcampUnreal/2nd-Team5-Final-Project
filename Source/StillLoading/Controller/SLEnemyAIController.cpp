@@ -60,18 +60,6 @@ ETeamAttitude::Type ASLEnemyAIController::GetTeamAttitudeTowards(const AActor& O
 void ASLEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	/*if (AISenseConfig_Sight && GetPerceptionComponent())
-	{
-		GetPerceptionComponent()->ConfigureSense(*AISenseConfig_Sight);
-		GetPerceptionComponent()->SetDominantSense(AISenseConfig_Sight->GetSenseImplementation());
-		GetPerceptionComponent()->OnTargetPerceptionUpdated.AddDynamic(this, &ASLEnemyAIController::OnAIPerceptionUpdated);
-	}*/
-}
-
-void ASLEnemyAIController::InitializePatrolPoints()
-{
-
 }
 
 void ASLEnemyAIController::UpdateAIState()
@@ -203,11 +191,6 @@ void ASLEnemyAIController::UpdateAIState()
 
 		break;
 	}
-}
-
-void ASLEnemyAIController::Nothing()
-{
-
 }
 
 void ASLEnemyAIController::StopChasing()

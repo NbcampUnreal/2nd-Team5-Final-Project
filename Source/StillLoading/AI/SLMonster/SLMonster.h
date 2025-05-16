@@ -15,17 +15,18 @@ class STILLLOADING_API ASLMonster : public ASLAIBaseCharacter
 public:
 	ASLMonster();
 
-    UPROPERTY()
-    AActor* TargetActor;
+	void Attack();
 
-    void Attack();
+    UPROPERTY()
+    TObjectPtr<AActor> TargetActor;
 
 protected:
 	virtual void BeginPlay() override;
-	UPROPERTY(EditAnywhere, Category = "AI")
-	float AttackRange = 200.0f;
 
 	UPROPERTY(EditAnywhere, Category = "AI")
+	float AttackRange = 200.0f;
+	UPROPERTY(EditAnywhere, Category = "AI")
+
 	float AttackCooldown = 0.7f;
 
 	float LastAttackTime;
@@ -43,7 +44,4 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-private:
-
-
 };

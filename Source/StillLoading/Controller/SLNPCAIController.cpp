@@ -60,18 +60,6 @@ ETeamAttitude::Type ASLNPCAIController::GetTeamAttitudeTowards(const AActor& Oth
 void ASLNPCAIController::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	/*if (AISenseConfig_Sight && GetPerceptionComponent())
-	{
-		GetPerceptionComponent()->ConfigureSense(*AISenseConfig_Sight);
-		GetPerceptionComponent()->SetDominantSense(AISenseConfig_Sight->GetSenseImplementation());
-		GetPerceptionComponent()->OnTargetPerceptionUpdated.AddDynamic(this, &ASLNPCAIController::OnAIPerceptionUpdated);
-	}*/
-}
-
-void ASLNPCAIController::InitializePatrolPoints()
-{
-
 }
 
 void ASLNPCAIController::UpdateAIState()
@@ -199,15 +187,8 @@ void ASLNPCAIController::UpdateAIState()
 				AnimInstance->SetIsAttacking(false);
 			
 		}
-		
-
 		break;
 	}
-}
-
-void ASLNPCAIController::Nothing()
-{
-
 }
 
 void ASLNPCAIController::StopChasing()
@@ -227,7 +208,6 @@ void ASLNPCAIController::StartChasing(AActor* Target)
 		LastKnownLocation = Target->GetActorLocation();
 	}
 	CurrentState = EAIState::Chasing;
-
 }
 
 void ASLNPCAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
