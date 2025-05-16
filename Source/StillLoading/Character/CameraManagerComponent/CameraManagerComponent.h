@@ -19,7 +19,7 @@ class STILLLOADING_API UCameraManagerComponent : public UActorComponent
 public:
 	UCameraManagerComponent();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SwitchCamera(const EGameCameraType NewType);
 	UFUNCTION()
 	void SetCameraRefsofCharacter(UCameraComponent* InThirdPerson, UCameraComponent* InFirstPerson,UCameraComponent* InSideView);

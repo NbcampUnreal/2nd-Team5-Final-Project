@@ -102,6 +102,7 @@ void USL2DMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick Ti
 		float Alpha = FMath::Clamp(MoveElapsed / MoveDuration, 0.0f, 1.0f);
 
 		FVector NewLocation = FMath::Lerp(StartLocation, TargetLocation, Alpha);
+		FVector::Distance(StartLocation, TargetLocation);
 		OwnerCharacter->SetActorLocation(NewLocation);
 
 		if (Alpha >= 1.0f)

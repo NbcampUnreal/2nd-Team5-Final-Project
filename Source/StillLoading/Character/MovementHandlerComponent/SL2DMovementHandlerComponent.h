@@ -68,18 +68,25 @@ private:
 	UPROPERTY()
 	TObjectPtr<ASLBaseCharacter> OwnerCharacter;
 
+	UPROPERTY()
 	bool bIsMoving = false;
 
+	UPROPERTY()
 	FVector StartLocation;
 
+	UPROPERTY()
 	FVector TargetLocation;
 
-	float MoveDuration = 0.05f; // 100cm 이동에 걸리는 시간
+	UPROPERTY()
+	float MoveDuration = 0.15f; // 이동에 걸리는 시간
 
+	UPROPERTY()
 	float MoveElapsed = 0.0f;
 
-	float StepDistance = 50.0f;
-
+	UPROPERTY()
+	float StepDistance = 100.0f;
+	               
+	UPROPERTY()
 	FVector NextMove;
 
 	UPROPERTY()
