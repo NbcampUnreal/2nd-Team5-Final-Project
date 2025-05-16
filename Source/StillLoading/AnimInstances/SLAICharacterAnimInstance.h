@@ -41,6 +41,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
 	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer);
+	bool IsTargetBehindCharacter(float AngleThreshold) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
 	bool GetIsAttacking();
@@ -69,7 +70,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
 	float LocomotionDirection;
 
-	
+
 	// --- Anim Data | Aiming & Looking ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AnimData|Movement")	// 수정 예정
 	float Angle;
