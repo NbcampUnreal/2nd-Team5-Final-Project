@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SLBaseCharacter.h"
+#include "SLBasePlayerCharacter.h"
 #include "SLAIBaseCharacter.generated.h"
 
 class UMotionWarpingComponent;

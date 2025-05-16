@@ -3,8 +3,8 @@
 
 #include "Character/MovementHandlerComponent/SL2DMovementHandlerComponent.h"
 
-#include "Character/SLBaseCharacter.h"
-#include "Character/SLCharacter.h"
+#include "Character/SLBasePlayerCharacter.h"
+#include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/Buffer/InputBufferComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
