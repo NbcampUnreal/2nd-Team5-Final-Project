@@ -18,7 +18,7 @@ ASLCameraManagerActor::ASLCameraManagerActor()
 
 	TopDownCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCamera->SetupAttachment(Root);
-	TopDownCamera->SetRelativeLocation(FVector(0.f, 0.f, 1000.f));
+	TopDownCamera->SetRelativeLocation(FVector(0.f, 0.f, 600.f));
 	TopDownCamera->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
 	TopDownCamera->bAutoActivate = true;
 	TopDownCamera->ProjectionMode = ECameraProjectionMode::Orthographic;
@@ -89,7 +89,7 @@ void ASLCameraManagerActor::TargetFollow(float DeltaTime)
 		if (PlayerPawn)
 		{
 			FVector TargetLocation = PlayerPawn->GetActorLocation();
-			TargetLocation.Z += 1000.f; // ∞Ìµµ ¿Ø¡ˆ
+			TargetLocation.Z += 600.0f; // Í≥†ÎèÑ Ïú†ÏßÄ
 			SetActorLocation(FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, 10.f));
 		}
 	}
