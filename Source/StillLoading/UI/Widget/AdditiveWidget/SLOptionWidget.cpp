@@ -6,6 +6,7 @@
 #include "Components/TextBlock.h"
 #include "Components/ExpandableArea.h"
 #include "Components/Slider.h"
+#include "Components/Image.h"
 #include "UI/SLUISubsystem.h"
 #include "Animation/WidgetAnimation.h"
 #include "SubSystem/SLUserDataSubsystem.h"
@@ -29,6 +30,8 @@ const FName USLOptionWidget::WindowedButtonIndex = "WindowedButton";
 const FName USLOptionWidget::KeySettingButtonIndex = "KeySettingButton";
 const FName USLOptionWidget::QuitGameButtonIndex = "QuitGameButton";
 const FName USLOptionWidget::CloseButtonIndex = "CloseButton";
+
+const FName USLOptionWidget::BackgroundIndex = "Background";
 
 void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -98,7 +101,11 @@ void USLOptionWidget::ApplyImageData()
 {
 	Super::ApplyImageData();
 
-
+	if (ImageMap.Contains(BackgroundIndex) &&
+		IsValid(ImageMap[BackgroundIndex]))
+	{
+		BackgroundImg->SetBrushFromTexture(ImageMap[BackgroundIndex]);
+	}
 }
 
 void USLOptionWidget::ApplyFontData()
