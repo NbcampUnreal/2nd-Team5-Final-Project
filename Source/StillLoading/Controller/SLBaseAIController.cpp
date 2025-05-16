@@ -5,7 +5,7 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLAIBaseCharacter.h"
-#include "Character/SLBasePlayerCharacter.h"
+#include "Character/SLPlayerCharacterBase.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/CrowdFollowingComponent.h"

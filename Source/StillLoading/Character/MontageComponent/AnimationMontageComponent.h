@@ -5,7 +5,7 @@
 #include "AnimationMontageComponent.generated.h"
 
 class UBattleComponent;
-class ASLCharacter;
+class ASLPlayerCharacter;
 class UMontageDataAsset;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
