@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SLBasePlayerCharacter.h"
+#include "SLPlayerCharacterBase.h"
 #include "SLAIBaseCharacter.generated.h"
 
 class UMotionWarpingComponent;
@@ -57,7 +57,7 @@ enum class EToggleDamageType : uint8
 };
 
 UCLASS()
-class STILLLOADING_API ASLAIBaseCharacter : public ASLBaseCharacter
+class STILLLOADING_API ASLAIBaseCharacter : public ASLPlayerCharacterBase
 {
 	GENERATED_BODY()
 

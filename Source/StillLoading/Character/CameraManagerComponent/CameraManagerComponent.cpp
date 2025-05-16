@@ -1,6 +1,6 @@
 #include "CameraManagerComponent.h"
 
-#include "Character/SLBasePlayerCharacter.h"
+#include "Character/SLPlayerCharacterBase.h"
 #include "Camera/CameraComponent.h"
 
 void UCameraManagerComponent::SetCameraRefsofCharacter(
