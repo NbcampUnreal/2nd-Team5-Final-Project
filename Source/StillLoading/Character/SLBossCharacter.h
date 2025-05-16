@@ -10,19 +10,19 @@
 UENUM(BlueprintType)
 enum class EBossAttackPattern : uint8
 {
-	None                UMETA(DisplayName = "None"), // 공격 없음 또는 기본 상태
-	Attack_01           UMETA(DisplayName = "Attack 01"),
-	Attack_02           UMETA(DisplayName = "Attack 02"),
-	Attack_03           UMETA(DisplayName = "Attack 03"),
-	Attack_04           UMETA(DisplayName = "Attack 04"),
-	DashAttack          UMETA(DisplayName = "Dash Attack"),
-	FootAttack_Left     UMETA(DisplayName = "Foot Attack - Left"),
-	FootAttack_Right    UMETA(DisplayName = "Foot Attack - Right"),
-	GroundSlam_01       UMETA(DisplayName = "Ground Slam 01"),
-	GroundSlam_02       UMETA(DisplayName = "Ground Slam 02"),
-	JumpAttack          UMETA(DisplayName = "Jump Attack"),
-	ThrowStone          UMETA(DisplayName = "Throw Stone"),
-	Whirlwind           UMETA(DisplayName = "Whirlwind Attack")
+	EBAP_None                UMETA(DisplayName = "None"), // 공격 없음 또는 기본 상태
+	EBAP_Attack_01           UMETA(DisplayName = "Attack 01"),
+	EBAP_Attack_02           UMETA(DisplayName = "Attack 02"),
+	EBAP_Attack_03           UMETA(DisplayName = "Attack 03"),
+	EBAP_Attack_04           UMETA(DisplayName = "Attack 04"),
+	EBAP_DashAttack          UMETA(DisplayName = "Dash Attack"),
+	EBAP_FootAttack_Left     UMETA(DisplayName = "Foot Attack - Left"),
+	EBAP_FootAttack_Right    UMETA(DisplayName = "Foot Attack - Right"),
+	EBAP_GroundSlam_01       UMETA(DisplayName = "Ground Slam 01"),
+	EBAP_GroundSlam_02       UMETA(DisplayName = "Ground Slam 02"),
+	EBAP_JumpAttack          UMETA(DisplayName = "Jump Attack"),
+	EBAP_ThrowStone          UMETA(DisplayName = "Throw Stone"),
+	EBAP_Whirlwind           UMETA(DisplayName = "Whirlwind Attack")
 };
 
 UCLASS()

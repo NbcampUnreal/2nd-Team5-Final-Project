@@ -51,7 +51,7 @@ void ASLAIBaseCharacter::BeginPlay()
 	IsDead = false;
 	MaxHealth = 100.0f;
 	CurrentHealth = MaxHealth;
-	CombatPhase = ECombatPhase::Phase_None;
+	CombatPhase = ECombatPhase::ECP_Phase_None;
 }
 
 float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -88,6 +88,7 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
             			SLAIAnimInstance->SetIsDown(false);
             			SLAIAnimInstance->SetIsStun(false);
             			SLAIAnimInstance->SetIsAttacking(false);
+            			SLAIAnimInstance->SetShouldLookAtPlayer(false);
             		}
                 	
             		if (DeathMontages.Num() > 0)
@@ -121,11 +122,11 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 
                  if (AbsY > AbsX)
                  {
-                     HitDir = (LocalHitDirection.Y > 0) ? EHitDirection::Right : EHitDirection::Left;
+                     HitDir = (LocalHitDirection.Y > 0) ? EHitDirection::EHD_Right : EHitDirection::EHD_Left;
                  }
                  else 
                  {
-                     HitDir = (LocalHitDirection.X > 0) ? EHitDirection::Front : EHitDirection::Back;
+                     HitDir = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
                  }
                  
                  SLAIAnimInstance->SetHitDirection(HitDir);
