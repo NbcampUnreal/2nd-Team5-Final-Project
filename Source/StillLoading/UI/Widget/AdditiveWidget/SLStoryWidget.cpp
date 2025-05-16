@@ -12,6 +12,7 @@ void USLStoryWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType C
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_StoryWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	WidgetOrder = 12;
 	bIsVisibleCursor = true;
 
 	ParentNamePanel = NamePanel;

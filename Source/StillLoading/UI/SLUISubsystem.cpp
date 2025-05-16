@@ -4,7 +4,6 @@
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUISettings.h"
 #include "Kismet/GameplayStatics.h"
-#include "UI/Widget/SLBaseWidget.h"
 #include "UI/Widget/AdditiveWidget/SLFadeWidget.h"
 #include "UI/Widget/AdditiveWidget/SLNotifyWidget.h"
 #include "UI/Widget/AdditiveWidget/SLStoryWidget.h"
@@ -28,8 +27,10 @@ void USLUISubsystem::SetInputModeAndCursor()
 	}
 	else
 	{
-		TargetInputMode = ActiveAdditiveWidgets[ActiveCount - 1]->GetWidgetInputMode();
-		bIsVisibleTargetCursor = ActiveAdditiveWidgets[ActiveCount - 1]->GetWidgetCursorMode();
+		int32 ActiveCount = ActiveAdditiveWidgets.Num() - 1;
+
+		TargetInputMode = ActiveAdditiveWidgets[ActiveCount]->GetWidgetInputMode();
+		bIsVisibleTargetCursor = ActiveAdditiveWidgets[ActiveCount]->GetWidgetCursorMode();
 	}
 
 	APlayerController* CurrentPC = GetWorld()->GetPlayerControllerIterator()->Get();
@@ -57,14 +58,12 @@ void USLUISubsystem::SetChapterToUI(ESLChapterType ChapterType)
 {
 	CurrentChapter = ChapterType;
 
-	for (USLBaseWidget* ActiveWidget : ActiveAdditiveWidgets)
+	for (USLAdditiveWidget* ActiveWidget : ActiveAdditiveWidgets)
 	{
-		if (!IsValid(ActiveWidget))
+		if (IsValid(ActiveWidget))
 		{
-			continue;
+			ActiveWidget->ApplyOnChangedChapter(CurrentChapter);
 		}
-
-		ActiveWidget->ApplyOnChangedChapter(CurrentChapter);
 	}
 }
 
@@ -113,46 +112,43 @@ void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
 	if (!ActiveAdditiveWidgets.Contains(AdditiveWidgetMap[WidgetType]))
 	{
 		ActiveAdditiveWidgets.Add(AdditiveWidgetMap[WidgetType]);
-		++ActiveCount;
 
-		ActiveAdditiveWidgets[ActiveCount - 1]->ActivateWidget(CurrentChapter);
-		ActiveAdditiveWidgets[ActiveCount - 1]->AddToViewport(ActiveCount);
+		AdditiveWidgetMap[WidgetType]->ActivateWidget(CurrentChapter);
+		AdditiveWidgetMap[WidgetType]->AddToViewport(AdditiveWidgetMap[WidgetType]->GetWidgetOrder());
+
 		SetInputModeAndCursor();
 	}
 }
 
-void USLUISubsystem::RemoveCurrentAdditiveWidget()
+void USLUISubsystem::RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType)
 {
 	if (ActiveAdditiveWidgets.IsEmpty())
 	{
 		return;
 	}
 
-	if (!IsValid(ActiveAdditiveWidgets[ActiveCount - 1]))
+	if (AdditiveWidgetMap.Contains(WidgetType) &&
+		!ActiveAdditiveWidgets.Contains(AdditiveWidgetMap[WidgetType]))
 	{
 		return;
 	}
 
-	ActiveAdditiveWidgets[ActiveCount - 1]->DeactivateWidget();
-	ActiveAdditiveWidgets.RemoveAt(ActiveCount - 1);
-	--ActiveCount;
+	AdditiveWidgetMap[WidgetType]->DeactivateWidget();
+	ActiveAdditiveWidgets.Remove(AdditiveWidgetMap[WidgetType]);
 	SetInputModeAndCursor();
 }
 
 void USLUISubsystem::RemoveAllAdditveWidget()
 {
-	for (USLBaseWidget* ActiveWidget : ActiveAdditiveWidgets)
+	for (USLAdditiveWidget* ActiveWidget : ActiveAdditiveWidgets)
 	{
-		if (!IsValid(ActiveWidget))
+		if (IsValid(ActiveWidget))
 		{
-			continue;
+			ActiveWidget->DeactivateWidget();
 		}
-
-		ActiveWidget->DeactivateWidget();
 	}
 
 	ActiveAdditiveWidgets.Empty();
-	ActiveCount = 0;
 	SetInputModeAndCursor();
 }
 
@@ -217,7 +213,7 @@ void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType
 	UClass* WidgetClass = UISettings->WidgetClassMap[WidgetType].LoadSynchronous();
 	checkf(IsValid(WidgetClass), TEXT("WidgetClass is invalid"));
 
-	USLBaseWidget* TempWidget = CreateWidget<USLBaseWidget>(GetGameInstance(), WidgetClass);
+	USLAdditiveWidget* TempWidget = CreateWidget<USLAdditiveWidget>(GetGameInstance(), WidgetClass);
 	checkf(IsValid(TempWidget), TEXT("Fail Create Widget"));
 
 	TempWidget->InitWidget(this, CurrentChapter);

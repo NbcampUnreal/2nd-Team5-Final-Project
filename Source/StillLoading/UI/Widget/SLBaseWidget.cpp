@@ -44,6 +44,11 @@ ESLInputModeType USLBaseWidget::GetWidgetInputMode() const
 	return WidgetInputMode;
 }
 
+int32 USLBaseWidget::GetWidgetOrder() const
+{
+	return WidgetOrder;
+}
+
 bool USLBaseWidget::GetWidgetCursorMode() const
 {
 	return bIsVisibleCursor;

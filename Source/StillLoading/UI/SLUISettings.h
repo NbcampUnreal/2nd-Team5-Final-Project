@@ -7,7 +7,7 @@
 #include "UI/SLUITypes.h"
 #include "SLUISettings.generated.h"
 
-class USLBaseWidget;
+class USLAdditiveWidget;
 
 UCLASS(Config = UISetting, DefaultConfig, meta = (DisplayName = "UI Subsystem Settings"))
 class STILLLOADING_API USLUISettings : public UDeveloperSettings
@@ -16,7 +16,7 @@ class STILLLOADING_API USLUISettings : public UDeveloperSettings
 	
 public:
 	UPROPERTY(EditAnywhere, Config, Category = "WidgetClass")
-	TMap<ESLAdditiveWidgetType, TSoftClassPtr<USLBaseWidget>> WidgetClassMap;
+	TMap<ESLAdditiveWidgetType, TSoftClassPtr<USLAdditiveWidget>> WidgetClassMap;
 
 	UPROPERTY(EditAnywhere, Config, Category = "WidgetData")
 	TSoftObjectPtr<UDataTable> WidgetDataTable = nullptr;
