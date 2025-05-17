@@ -20,7 +20,4 @@ public:
 
 	UPROPERTY(EditAnywhere, Config, Category = "WidgetData")
 	TSoftObjectPtr<UDataAsset> WidgetPublicDataAsset = nullptr;
-
-	UPROPERTY(EditAnywhere, Config, Category = "SFXData")
-	TMap<ESLUISoundType, TSoftObjectPtr<USoundBase>> WidgetSoundMap;
 };

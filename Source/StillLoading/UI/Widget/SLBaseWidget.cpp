@@ -4,6 +4,7 @@
 #include "UI/Widget/SLBaseWidget.h"
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
+#include "SubSystem/SLSoundSubsystem.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "Animation/WidgetAnimation.h"
 #include "UI/Widget/SLWidgetImageDataAsset.h"
@@ -207,8 +208,8 @@ bool USLBaseWidget::ApplyOtherImage()
 
 void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)
 {
-	CheckValidOfUISubsystem();
-	UISubsystem->PlayUISound(SoundType);
+	CheckValidOfSoundSubsystem();
+	SoundSubsystem->PlayUISound(SoundType);
 }
 
 void USLBaseWidget::CheckValidOfUISubsystem()
@@ -232,4 +233,15 @@ void USLBaseWidget::CheckValidOfTextPoolSubsystem()
 
 	TextPoolSubsystem = GetGameInstance()->GetSubsystem<USLTextPoolSubsystem>();
 	checkf(IsValid(TextPoolSubsystem), TEXT("TextPool Subsystem is invalid"));
+}
+
+void USLBaseWidget::CheckValidOfSoundSubsystem()
+{
+	if (IsValid(SoundSubsystem))
+	{
+		return;
+	}
+
+	SoundSubsystem = GetGameInstance()->GetSubsystem<USLSoundSubsystem>();
+	checkf(IsValid(SoundSubsystem), TEXT("Sound Subsystem is invalid"));
 }

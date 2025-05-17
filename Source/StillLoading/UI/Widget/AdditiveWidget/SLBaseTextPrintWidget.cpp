@@ -94,6 +94,8 @@ void USLBaseTextPrintWidget::PrintTalkText()
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(TextPrintTimer, this, &ThisClass::PrintTalkText, NextPrintTime, false);
+
+	PlayUISound(ESLUISoundType::EUS_Talk);
 }
 
 void USLBaseTextPrintWidget::ChangeTargetText()
