@@ -7,16 +7,29 @@
 #include "Components/TextBlock.h"
 
 
-void USLKeyMappingWidget::InitWidget(const FName& NewTagText, EInputActionType NewActionType)
+void USLKeyMappingWidget::InitWidget(EInputActionType NewActionType, const FName& NewTagIndex, const FName& KeyText)
 {
 	ActionType = NewActionType;
 	ChangeButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedChangeKey);
-	UpdateTagText(NewTagText);
+
+	UpdateTextIndex(NewTagIndex);
+	UpdateKeyText(KeyText);
 }
 
-void USLKeyMappingWidget::UpdateTagText(const FName& NewTagText)
+void USLKeyMappingWidget::UpdateTextIndex(const FName& NewTagIndex)
 {
-	TagText->SetText(FText::FromName(NewTagText));
+	TagIndex = NewTagIndex;
+}
+
+void USLKeyMappingWidget::UpdateTextFont(const FSlateFontInfo& FontInfo)
+{
+	/*TagText->SetFont(FontInfo);
+	KeyTextBox->SetFont(FontInfo);*/
+}
+
+void USLKeyMappingWidget::UpdateTagText(const FText& NewTagText)
+{
+	TagText->SetText(NewTagText);
 }
 
 void USLKeyMappingWidget::UpdateKeyText(const FName& KeyText)
@@ -39,6 +52,11 @@ void USLKeyMappingWidget::SetVisibilityButton(bool bIsVisible)
 void USLKeyMappingWidget::SetIsEnabledButton(bool bIsEnable)
 {
 	ChangeButton->SetIsEnabled(bIsEnable);
+}
+
+const FName& USLKeyMappingWidget::GetTagIndex() const
+{
+	return TagIndex;
 }
 
 void USLKeyMappingWidget::OnClickedChangeKey()

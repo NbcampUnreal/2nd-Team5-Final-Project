@@ -19,11 +19,8 @@ public:
 	TMap<ESLAdditiveWidgetType, TSoftClassPtr<USLAdditiveWidget>> WidgetClassMap;
 
 	UPROPERTY(EditAnywhere, Config, Category = "WidgetData")
-	TSoftObjectPtr<UDataTable> WidgetDataTable = nullptr;
+	TSoftObjectPtr<UDataAsset> WidgetPublicDataAsset = nullptr;
 
 	UPROPERTY(EditAnywhere, Config, Category = "SFXData")
 	TMap<ESLUISoundType, TSoftObjectPtr<USoundBase>> WidgetSoundMap;
-
-	UPROPERTY(EditAnywhere, Config, Category = "Test Var")
-	int32 CurrentChapter = 0;
 };

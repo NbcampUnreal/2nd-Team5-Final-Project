@@ -23,5 +23,8 @@ void USLMapElementWidget::SetIsEnabledButton(bool bIsEndabled)
 
 void USLMapElementWidget::OnClickedMapElementButton()
 {
-	OnClickedMapElement.Broadcast(ElementType);
+	if (ElementButton->GetIsEnabled())
+	{
+		OnClickedMapElement.Broadcast(ElementType);
+	}
 }

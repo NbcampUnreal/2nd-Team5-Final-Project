@@ -8,22 +8,23 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/ScrollBox.h"
+#include "Components/Image.h"
 
-void USLCreditWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLCreditWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_CreditWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	WidgetOrder = 19;
 	bIsVisibleCursor = true;
 	
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
 }
 
-void USLCreditWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLCreditWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
+	Super::ActivateWidget(WidgetActivateBuffer);
 
 	PlayAnimation(OpenAnim);
 
@@ -51,14 +52,27 @@ void USLCreditWidget::DeactivateWidget()
 	}
 }
 
-void USLCreditWidget::ApplyImageData()
-{
-
-}
-
 void USLCreditWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
 
 	//TitleText->SetFont(FontInfo);
+}
+
+void USLCreditWidget::ApplyTextData()
+{
+	Super::ApplyTextData();
+
+}
+
+bool USLCreditWidget::ApplyBackgroundImage()
+{
+	if (!Super::ApplyBackgroundImage())
+	{
+		return false;
+	}
+
+	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
+
+	return true;
 }

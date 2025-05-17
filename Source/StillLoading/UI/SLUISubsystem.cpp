@@ -4,10 +4,7 @@
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUISettings.h"
 #include "Kismet/GameplayStatics.h"
-#include "UI/Widget/AdditiveWidget/SLFadeWidget.h"
-#include "UI/Widget/AdditiveWidget/SLNotifyWidget.h"
-#include "UI/Widget/AdditiveWidget/SLStoryWidget.h"
-#include "UI/Widget/AdditiveWidget/SLTalkWidget.h"
+#include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
 #include "Components/AudioComponent.h"
 
 void USLUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -56,13 +53,13 @@ void USLUISubsystem::SetInputModeAndCursor()
 
 void USLUISubsystem::SetChapterToUI(ESLChapterType ChapterType)
 {
-	CurrentChapter = ChapterType;
+	WidgetActivateBuffer.CurrentChapter = ChapterType;
 
 	for (USLAdditiveWidget* ActiveWidget : ActiveAdditiveWidgets)
 	{
 		if (IsValid(ActiveWidget))
 		{
-			ActiveWidget->ApplyOnChangedChapter(CurrentChapter);
+			ActiveWidget->ApplyOnChangedChapter(WidgetActivateBuffer);
 		}
 	}
 }
@@ -75,34 +72,33 @@ void USLUISubsystem::SetLevelInputMode(ESLInputModeType InputModeType, bool bIsV
 
 void USLUISubsystem::ActivateFade(bool bIsFadeIn)
 {
-	ESLAdditiveWidgetType FadeType = ESLAdditiveWidgetType::EAW_FadeWidget;
-	CheckValidOfAdditiveWidget(FadeType);
-	Cast<USLFadeWidget>(AdditiveWidgetMap[FadeType])->SetIsFadeIn(bIsFadeIn);
-	AddAdditveWidget(FadeType);
+	WidgetActivateBuffer.bIsFade = bIsFadeIn;
+
+	AddAdditveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
 }
 
 void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType)
 {
-	ESLAdditiveWidgetType NotifyType = ESLAdditiveWidgetType::EAW_NotifyWidget;
-	CheckValidOfAdditiveWidget(NotifyType);
-	AddAdditveWidget(NotifyType);
-	Cast<USLNotifyWidget>(AdditiveWidgetMap[NotifyType])->UpdateNotifyText(MapType, NotiType);
+	WidgetActivateBuffer.TargetMap = MapType;
+	WidgetActivateBuffer.TargetNotify = NotiType;
+
+	AddAdditveWidget(ESLAdditiveWidgetType::EAW_NotifyWidget);
 }
 
 void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, int32 TargetIndex)
 {
-	ESLAdditiveWidgetType StoryType = ESLAdditiveWidgetType::EAW_StoryWidget;
-	CheckValidOfAdditiveWidget(StoryType);
-	Cast<USLStoryWidget>(AdditiveWidgetMap[StoryType])->UpdateStoryState(CurrentChapter, TargetStoryType, TargetIndex);
-	AddAdditveWidget(StoryType);
+	WidgetActivateBuffer.TargetStory = TargetStoryType;
+	WidgetActivateBuffer.TargetIndex = TargetIndex;
+
+	AddAdditveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
 }
 
 void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex)
 {
-	ESLAdditiveWidgetType TalkType = ESLAdditiveWidgetType::EAW_TalkWidget;
-	CheckValidOfAdditiveWidget(TalkType);
-	Cast<USLTalkWidget>(AdditiveWidgetMap[TalkType])->UpdateTalkState(TalkTargetType, TargetIndex);
-	AddAdditveWidget(TalkType);
+	WidgetActivateBuffer.TargetTalk = TalkTargetType;
+	WidgetActivateBuffer.TargetIndex = TargetIndex;
+
+	AddAdditveWidget(ESLAdditiveWidgetType::EAW_TalkWidget);
 }
 
 void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
@@ -113,7 +109,7 @@ void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
 	{
 		ActiveAdditiveWidgets.Add(AdditiveWidgetMap[WidgetType]);
 
-		AdditiveWidgetMap[WidgetType]->ActivateWidget(CurrentChapter);
+		AdditiveWidgetMap[WidgetType]->ActivateWidget(WidgetActivateBuffer);
 		AdditiveWidgetMap[WidgetType]->AddToViewport(AdditiveWidgetMap[WidgetType]->GetWidgetOrder());
 
 		SetInputModeAndCursor();
@@ -178,13 +174,13 @@ void USLUISubsystem::StopUISound()
 
 const ESLChapterType USLUISubsystem::GetCurrentChapter() const
 {
-	return CurrentChapter;
+	return WidgetActivateBuffer.CurrentChapter;
 }
 
-const UDataTable* USLUISubsystem::GetImageDataTable()
+UDataAsset* USLUISubsystem::GetPublicImageData()
 {
-	CheckValidOfImageDataTable();
-	return WidgetImageData;
+	CheckValidOfWidgetDataAsset();
+	return WidgetActivateBuffer.WidgetPublicData;
 }
 
 void USLUISubsystem::SetEffectVolume(float VolumeValue)
@@ -216,8 +212,10 @@ void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType
 	USLAdditiveWidget* TempWidget = CreateWidget<USLAdditiveWidget>(GetGameInstance(), WidgetClass);
 	checkf(IsValid(TempWidget), TEXT("Fail Create Widget"));
 
-	TempWidget->InitWidget(this, CurrentChapter);
+	TempWidget->InitWidget(this);
 	AdditiveWidgetMap.Add(WidgetType, TempWidget);
+
+	CheckValidOfWidgetDataAsset();
 }
 
 void USLUISubsystem::CheckValidOfUISettings()
@@ -250,14 +248,14 @@ void USLUISubsystem::CheckValidOfSoundSource(ESLUISoundType SoundType)
 	UISoundMap.Add(SoundType, SoundSource);
 }
 
-void USLUISubsystem::CheckValidOfImageDataTable()
+void USLUISubsystem::CheckValidOfWidgetDataAsset()
 {
-	if (IsValid(WidgetImageData))
+	if (IsValid(WidgetActivateBuffer.WidgetPublicData))
 	{
 		return;
 	}
 
 	CheckValidOfUISettings();
-	WidgetImageData = UISettings->WidgetDataTable.LoadSynchronous();
-	checkf(IsValid(WidgetImageData), TEXT("Widget ImageData is invalid"));
+	WidgetActivateBuffer.WidgetPublicData = UISettings->WidgetPublicDataAsset.LoadSynchronous();
+	checkf(IsValid(WidgetActivateBuffer.WidgetPublicData), TEXT("Widget ImageData is invalid"));
 }

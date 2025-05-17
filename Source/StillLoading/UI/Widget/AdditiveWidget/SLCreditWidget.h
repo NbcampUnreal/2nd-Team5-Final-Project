@@ -9,6 +9,7 @@
 class UButton;
 class UTextBlock;
 class UScrollBox;
+class UImage;
 class USLCreditTextWidget;
 
 UCLASS()
@@ -17,13 +18,15 @@ class STILLLOADING_API USLCreditWidget : public USLAdditiveWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
-	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void DeactivateWidget() override;
 
 protected:
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
+	virtual void ApplyTextData() override;
+
+	virtual bool ApplyBackgroundImage() override;
 
 public:
 	UPROPERTY(EditAnywhere)
@@ -38,4 +41,7 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UScrollBox> CreditBox = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> BackgroundImg = nullptr;
 };
