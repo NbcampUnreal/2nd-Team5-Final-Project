@@ -20,7 +20,12 @@ public class StillLoading : ModuleRules
 			"MotionWarping",
 			"AnimGraphRuntime",
 			"GameplayTags",
-		});
+			"Niagara",
+            "GeometryCollectionEngine",
+            "FieldSystemEngine",       
+			"Chaos",                  
+			"ChaosSolverEngine"
+        });
 
         PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 
