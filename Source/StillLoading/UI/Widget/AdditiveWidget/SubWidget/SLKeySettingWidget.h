@@ -25,9 +25,11 @@ public:
 	virtual void DeactivateWidget() override;
 
 protected:
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
+
+	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
+	virtual bool ApplyBorderImage() override;
 
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InPointerEvent) override;
@@ -43,9 +45,6 @@ private:
 	void CheckValidOfUserDateSubsystem();
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
-	TObjectPtr<UDataTable> WidgetDataTable = nullptr;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
 	TSubclassOf<USLKeyMappingWidget> KeyMappingWidgetClass = nullptr;
 
@@ -74,6 +73,4 @@ private:
 
 	EInputActionType TargetActionType = EInputActionType::EIAT_None;
 	bool bOnClickedChange = false;
-
-	static const FName SettingBackIndex;
 };

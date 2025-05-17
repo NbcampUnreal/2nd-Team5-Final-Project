@@ -5,8 +5,6 @@
 #include "Components/Image.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
 
-const FName USLFadeWidget::FadeImgName = "FadeImage";
-
 void USLFadeWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_FadeWidget;
@@ -56,14 +54,17 @@ void USLFadeWidget::OnEndedCloseAnim()
 	CloseWidget();
 }
 
-void USLFadeWidget::ApplyImageData()
+bool USLFadeWidget::ApplyOtherImage()
 {
-	Super::ApplyImageData();
+	Super::ApplyOtherImage();
 
-	if (ImageMap.Contains(FadeImgName) &&
-		IsValid(ImageMap[FadeImgName]))
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Fade) ||
+		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Fade]))
 	{
-		FadeImage->SetBrushFromTexture(ImageMap[FadeImgName]);
+		return false;
 	}
 	
+	FadeImage->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Fade]);
+
+	return true;
 }

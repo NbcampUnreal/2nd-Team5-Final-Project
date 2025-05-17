@@ -21,7 +21,8 @@ public:
 protected:
 	virtual void OnEndedOpenAnim() override;
 	virtual void OnEndedCloseAnim() override;
-	virtual void ApplyImageData() override;
+
+	virtual bool ApplyOtherImage() override;
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -32,6 +33,4 @@ private:
 
 	UPROPERTY(Meta = (BindWidgetAnim), Transient)
 	TObjectPtr<UWidgetAnimation> FadeOutAnim = nullptr;
-
-	static const FName FadeImgName;
 };

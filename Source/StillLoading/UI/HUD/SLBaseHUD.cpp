@@ -26,14 +26,14 @@ void ASLBaseHUD::OnStartedHUD()
 	FSLWidgetActivateBuffer ActivateBuffer;
 	ActivateBuffer.CurrentChapter = CurrentChapter;
 
-	if (!IsValid(ActivateBuffer.LevelWidgetData))
+	if (!IsValid(ActivateBuffer.WidgetPrivateData))
 	{
-		ActivateBuffer.LevelWidgetData = LevelWidgetData.LoadSynchronous();
+		ActivateBuffer.WidgetPrivateData = PrivateDataAsset.LoadSynchronous();
 	}
 	
-	if (!IsValid(ActivateBuffer.WidgetImageData))
+	if (!IsValid(ActivateBuffer.WidgetPublicData))
 	{
-		ActivateBuffer.WidgetImageData = WidgetImageData.LoadSynchronous();
+		ActivateBuffer.WidgetPublicData = UISubsystem->GetPublicImageData();
 	}
 
 	LevelWidgetObj->ActivateWidget(ActivateBuffer);

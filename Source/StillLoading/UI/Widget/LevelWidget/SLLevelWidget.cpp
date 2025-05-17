@@ -24,36 +24,3 @@ void USLLevelWidget::RequestAddedWidgetToUISubsystem(ESLAdditiveWidgetType Targe
 	CheckValidOfUISubsystem();
 	UISubsystem->AddAdditveWidget(TargetWidgetType);
 }
-
-void USLLevelWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
-{
-	Super::FindWidgetData(WidgetActivateBuffer);
-
-	if (WidgetActivateBuffer.WidgetImageData == nullptr)
-	{
-		return;
-	}
-
-	const UDataTable* ImageDataTable = WidgetActivateBuffer.WidgetImageData;
-	const FString ContextString(TEXT("Image Data Table"));
-
-	TArray<FSLLevelWidgetDataRow*> ImageData;
-
-	ImageDataTable->GetAllRows(ContextString, ImageData);
-	ImageMap.Empty();
-
-	for (const FSLLevelWidgetDataRow* WidgetImgData : ImageData)
-	{
-		if (WidgetImgData->TargetChapter == WidgetActivateBuffer.CurrentChapter)
-		{
-			for (const TPair<FName, TSoftObjectPtr<UTexture2D>>& ImagePair : WidgetImgData->ImageMap)
-			{
-				ImageMap.Add(ImagePair.Key, ImagePair.Value.LoadSynchronous());
-			}
-
-			FontInfo = WidgetImgData->FontInfo;
-
-			break;
-		}
-	}
-}

@@ -19,9 +19,10 @@ public:
 	virtual void DeactivateWidget() override;
 
 protected:
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
+	virtual bool ApplyTextBorderImage() override;
+	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
 
 private:
 	void UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 TargetIndex);
@@ -29,6 +30,12 @@ private:
 private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UButton> NextButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> SkipButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> FastButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> NameText = nullptr;
@@ -48,7 +55,4 @@ private:
 
 	ESLTalkTargetType CurrentTalkType = ESLTalkTargetType::ETT_None;
 	int32 CurrentTalkIndex = 0;
-
-	static const FName TalkBackImgIndex;
-	static const FName NameBackImgIndex;
 };

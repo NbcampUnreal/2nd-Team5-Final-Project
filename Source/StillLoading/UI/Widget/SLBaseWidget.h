@@ -5,11 +5,13 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLSoundTypes.h"
 #include "SubSystem/SLTextPoolTypes.h"
 #include "SLBaseWidget.generated.h"
 
 class USLUISubsystem;
 class USLTextPoolSubsystem;
+class USLSoundSubsystem;
 struct FSLWidgetActivateBuffer;
 
 UCLASS()
@@ -41,15 +43,24 @@ protected:
 	UFUNCTION()
 	void NotifyChangedLanguage();
 
-	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) {};
-	virtual void ApplyImageData() {};
+	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
+	virtual void ApplyImageData();
 	virtual void ApplyFontData() {};
 	virtual void ApplyTextData() {};
 
+	virtual bool ApplyBackgroundImage();
+	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
+	virtual bool ApplySliderImage(FSliderStyle& SliderStyle);
+	virtual bool ApplyBorderImage();
+	virtual bool ApplyTextBorderImage();
+	virtual bool ApplyProgressBarImage(FProgressBarStyle& ProgressBarStyle);
+	virtual bool ApplyOtherImage();
+	
 	void PlayUISound(ESLUISoundType SoundType);
 
 	void CheckValidOfUISubsystem();
 	void CheckValidOfTextPoolSubsystem();
+	void CheckValidOfSoundSubsystem();
 
 protected:
 	UPROPERTY()
@@ -59,13 +70,16 @@ protected:
 	TObjectPtr<USLTextPoolSubsystem> TextPoolSubsystem = nullptr;
 
 	UPROPERTY()
+	TObjectPtr<USLSoundSubsystem> SoundSubsystem = nullptr;
+
+	UPROPERTY()
 	TObjectPtr<UWidgetAnimation> OpenAnim = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<UWidgetAnimation> CloseAnim = nullptr;
 
 	UPROPERTY()
-	TMap<FName, UTexture2D*> ImageMap;
+	TMap<ESLPublicWidgetImageType, UTexture2D*> PublicImageMap;
 
 	UPROPERTY()
 	FSlateFontInfo FontInfo;

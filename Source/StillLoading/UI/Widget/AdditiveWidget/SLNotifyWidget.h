@@ -22,8 +22,8 @@ protected:
 	virtual void OnEndedOpenAnim() override;
 	virtual void OnEndedCloseAnim() override;
 
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
+	virtual bool ApplyBackgroundImage() override;
 
 private:
 	void UpdateNotifyText(ESLGameMapType MapType, ESLNotifyType NotiType);
@@ -40,6 +40,4 @@ private:
 
 	UPROPERTY(Meta = (BindWidgetAnim), Transient)
 	TObjectPtr<UWidgetAnimation> InvisibleNotifyAnim = nullptr;
-
-	static const FName NotifyBackIndex;
 };

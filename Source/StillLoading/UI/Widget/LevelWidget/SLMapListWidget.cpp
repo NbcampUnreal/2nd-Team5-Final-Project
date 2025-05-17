@@ -9,8 +9,7 @@
 #include "Components/UniformGridPanel.h"
 #include "UI/Struct/SLLevelWidgetDataRow.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
-
-const FName USLMapListWidget::ListBackIndex = "MapListBack";
+#include "UI/Widget/SLWidgetPrivateDataAsset.h"
 
 void USLMapListWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -22,24 +21,29 @@ void USLMapListWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 void USLMapListWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	if (!IsValid(WidgetActivateBuffer.LevelWidgetData))
+	if (IsValid(WidgetActivateBuffer.WidgetPrivateData))
 	{
-		return;
-	}
+		USLMapListPrivateDataAsset* PrivateData = Cast<USLMapListPrivateDataAsset>(WidgetActivateBuffer.WidgetPrivateData);
+		TMap<ESLGameMapType, UTexture2D*> MapImages = PrivateData->GetMapImageByChapter(WidgetActivateBuffer.CurrentChapter).MapImageMap;
+		TMap<ESLGameMapType, FSLMapListDataRow> MapDatas = PrivateData->GetMapDataByChapter(WidgetActivateBuffer.CurrentChapter).DataMap;
 
-	TArray<FSLMapListDataRow*> MapListDataArray;
-	WidgetActivateBuffer.LevelWidgetData->GetAllRows(TEXT("Map List Context"), MapListDataArray);
+		for (const TPair<ESLGameMapType, FSLMapListDataRow>& MapData : MapDatas)
+		{
+			USLMapElementWidget* NewElement = CreateWidget<USLMapElementWidget>(this, MapElementWidgetClass);
 
-	for (const FSLMapListDataRow* MapListData : MapListDataArray)
-	{
-		ESLGameMapType MapType = MapListData->GameMapType;
-		USLMapElementWidget* NewElement = CreateWidget<USLMapElementWidget>(this, MapElementWidgetClass);
+			NewElement->InitMapElement(MapData.Key);
+			NewElement->OnClickedMapElement.AddDynamic(this, &ThisClass::OnClickedElement);
+			//NewElement->SetIsEnabledButton(MapData.Value.DefaultEnabled);
+			NewElement->SetIsEnabled(MapData.Value.DefaultEnabled);
 
-		NewElement->InitMapElement(MapType);
-		NewElement->SetElementImgIndex(MapListData->ImageIndex);
-		NewElement->OnClickedMapElement.AddDynamic(this, &ThisClass::OnClickedElement);
-		GridPanel->AddChildToUniformGrid(NewElement, MapListData->TargetRow, MapListData->TargetCol);
-		ElementMap.Add(MapType, NewElement);
+			if (MapImages.Contains(MapData.Key))
+			{
+				NewElement->SetMapElementImage(MapImages[MapData.Key]);
+			}
+
+			GridPanel->AddChildToUniformGrid(NewElement, MapData.Value.TargetRow, MapData.Value.TargetCol);
+			ElementMap.Add(MapData.Key, NewElement);
+		}
 	}
 
 	Super::ActivateWidget(WidgetActivateBuffer);
@@ -63,11 +67,26 @@ void USLMapListWidget::OnClickedElement(ESLGameMapType TargetMapType)
 	UGameplayStatics::OpenLevel(GetWorld(), "TestInGameLevel");
 }
 
-void USLMapListWidget::ApplyImageData()
+void USLMapListWidget::ApplyFontData()
 {
-	Super::ApplyImageData();
+	Super::ApplyFontData();
+}
 
-	for (TPair<ESLGameMapType, USLMapElementWidget*>& Element : ElementMap)
+bool USLMapListWidget::ApplyBackgroundImage()
+{
+	if (!Super::ApplyBorderImage())
+	{
+		return false;
+	}
+
+	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
+	return true;
+}
+
+bool USLMapListWidget::ApplyOtherImage()
+{
+	Super::ApplyOtherImage();
+	/*for (TPair<ESLGameMapType, USLMapElementWidget*>& Element : ElementMap)
 	{
 		FName Index = Element.Value->GetElementImgIndex();
 
@@ -76,16 +95,6 @@ void USLMapListWidget::ApplyImageData()
 		{
 			Element.Value->SetMapElementImage(ImageMap[Index]);
 		}
-	}
-
-	if (ImageMap.Contains(ListBackIndex) &&
-		IsValid(ImageMap[ListBackIndex]))
-	{
-		BackgroundImg->SetBrushFromTexture(ImageMap[ListBackIndex]);
-	}
-}
-
-void USLMapListWidget::ApplyFontData()
-{
-	Super::ApplyFontData();
+	}*/
+	return false;
 }

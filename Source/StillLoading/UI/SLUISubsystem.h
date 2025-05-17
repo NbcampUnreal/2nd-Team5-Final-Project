@@ -35,11 +35,8 @@ public:
 	void RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveAllAdditveWidget();
 
-	void PlayUISound(ESLUISoundType SoundType);
-	void StopUISound();
-	
 	const ESLChapterType GetCurrentChapter() const; //
-
+	UDataAsset* GetPublicImageData();
 	//temp
 	void SetEffectVolume(float VolumeValue);
 
@@ -50,9 +47,7 @@ private:
 
 	void CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void CheckValidOfUISettings();
-
-	void CheckValidOfSoundSource(ESLUISoundType SoundType);
-	void CheckValidOfImageDataTable();
+	void CheckValidOfWidgetDataAsset();
 
 private:
 	UPROPERTY()
@@ -62,16 +57,10 @@ private:
 	TMap<ESLAdditiveWidgetType, USLAdditiveWidget*> AdditiveWidgetMap;
 
 	UPROPERTY()
-	TMap<ESLUISoundType, USoundBase*> UISoundMap;
-
-	UPROPERTY()
 	TArray<USLAdditiveWidget*> ActiveAdditiveWidgets;
 
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> AudioComp = nullptr;
-
-	UPROPERTY()
-	TObjectPtr<UDataTable> WidgetImageData = nullptr;
 
 	UPROPERTY()
 	FSLWidgetActivateBuffer WidgetActivateBuffer;

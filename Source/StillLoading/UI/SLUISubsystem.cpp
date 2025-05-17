@@ -148,33 +148,15 @@ void USLUISubsystem::RemoveAllAdditveWidget()
 	SetInputModeAndCursor();
 }
 
-void USLUISubsystem::PlayUISound(ESLUISoundType SoundType)
-{
-	CheckValidOfSoundSource(SoundType);
-
-	if (!IsValid(AudioComp))
-	{
-		AudioComp = UGameplayStatics::CreateSound2D(GetGameInstance(), UISoundMap[SoundType], EffectVolume);
-		AudioComp->bAutoDestroy = false;
-	}
-
-	StopUISound();
-
-	AudioComp->SetSound(UISoundMap[SoundType]);
-	AudioComp->Play();
-}
-
-void USLUISubsystem::StopUISound()
-{
-	if (IsValid(AudioComp) && AudioComp->IsPlaying())
-	{
-		AudioComp->Stop();
-	}
-}
-
 const ESLChapterType USLUISubsystem::GetCurrentChapter() const
 {
 	return WidgetActivateBuffer.CurrentChapter;
+}
+
+UDataAsset* USLUISubsystem::GetPublicImageData()
+{
+	CheckValidOfWidgetDataAsset();
+	return WidgetActivateBuffer.WidgetPublicData;
 }
 
 void USLUISubsystem::SetEffectVolume(float VolumeValue)
@@ -209,11 +191,7 @@ void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType
 	TempWidget->InitWidget(this);
 	AdditiveWidgetMap.Add(WidgetType, TempWidget);
 
-	if (!IsValid(WidgetActivateBuffer.WidgetImageData))
-	{
-		CheckValidOfImageDataTable();
-		WidgetActivateBuffer.WidgetImageData = WidgetImageData;
-	}
+	CheckValidOfWidgetDataAsset();
 }
 
 void USLUISubsystem::CheckValidOfUISettings()
@@ -227,33 +205,14 @@ void USLUISubsystem::CheckValidOfUISettings()
 	checkf(IsValid(UISettings), TEXT("UI Settings is invalid"));
 }
 
-void USLUISubsystem::CheckValidOfSoundSource(ESLUISoundType SoundType)
+void USLUISubsystem::CheckValidOfWidgetDataAsset()
 {
-	if (UISoundMap.Contains(SoundType))
-	{
-		if (IsValid(UISoundMap[SoundType]))
-		{
-			return;
-		}
-	}
-
-	CheckValidOfUISettings();
-	checkf(UISettings->WidgetSoundMap.Contains(SoundType), TEXT("Widget Sound Map is not contains soundtype"));
-
-	USoundBase* SoundSource = UISettings->WidgetSoundMap[SoundType].LoadSynchronous();
-	checkf(IsValid(SoundSource), TEXT("SoundSource is invalid"));
-
-	UISoundMap.Add(SoundType, SoundSource);
-}
-
-void USLUISubsystem::CheckValidOfImageDataTable()
-{
-	if (IsValid(WidgetImageData))
+	if (IsValid(WidgetActivateBuffer.WidgetPublicData))
 	{
 		return;
 	}
 
 	CheckValidOfUISettings();
-	WidgetImageData = UISettings->WidgetDataTable.LoadSynchronous();
-	checkf(IsValid(WidgetImageData), TEXT("Widget ImageData is invalid"));
+	WidgetActivateBuffer.WidgetPublicData = UISettings->WidgetPublicDataAsset.LoadSynchronous();
+	checkf(IsValid(WidgetActivateBuffer.WidgetPublicData), TEXT("Widget ImageData is invalid"));
 }
