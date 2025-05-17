@@ -11,6 +11,7 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
 {
@@ -28,6 +29,8 @@ void UMovementHandlerComponent::BeginPlay()
 		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
 		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
 		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
+
+		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 550.f;
 		BindIMCComponent();
 	}
 }
