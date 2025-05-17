@@ -30,10 +30,7 @@ public:
 	TSubclassOf<USLLevelWidget> LevelWidgetClass = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
-	TSoftObjectPtr<UDataTable> LevelWidgetData = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
-	TSoftObjectPtr<UDataTable> WidgetImageData = nullptr;
+	TSoftObjectPtr<UDataAsset> PrivateDataAsset = nullptr;
 
 protected:
 	UPROPERTY()

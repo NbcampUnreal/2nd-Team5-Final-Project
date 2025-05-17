@@ -39,7 +39,7 @@ public:
 	void StopUISound();
 	
 	const ESLChapterType GetCurrentChapter() const; //
-
+	UDataAsset* GetPublicImageData();
 	//temp
 	void SetEffectVolume(float VolumeValue);
 
@@ -52,7 +52,7 @@ private:
 	void CheckValidOfUISettings();
 
 	void CheckValidOfSoundSource(ESLUISoundType SoundType);
-	void CheckValidOfImageDataTable();
+	void CheckValidOfWidgetDataAsset();
 
 private:
 	UPROPERTY()
@@ -69,9 +69,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> AudioComp = nullptr;
-
-	UPROPERTY()
-	TObjectPtr<UDataTable> WidgetImageData = nullptr;
 
 	UPROPERTY()
 	FSLWidgetActivateBuffer WidgetActivateBuffer;

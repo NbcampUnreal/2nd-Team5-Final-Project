@@ -19,9 +19,10 @@ public:
 	virtual void DeactivateWidget() override;
 
 protected:
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
+	virtual bool ApplyTextBorderImage() override;
+	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
 
 private:
 	void UpdateStoryState(ESLChapterType ChapterType, ESLStoryType TargetStoryType, int32 TargetIndex);
@@ -29,6 +30,12 @@ private:
 private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UButton> NextButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> SkipButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> FastButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> NameText = nullptr;
@@ -51,7 +58,4 @@ private:
 
 	ESLStoryType CurrentStoryType = ESLStoryType::ES_Start;
 	int32 CurrentStoryIndex = 0;
-
-	static const FName StoryBackImgIndex;
-	static const FName NameBackImgIndex;
 };

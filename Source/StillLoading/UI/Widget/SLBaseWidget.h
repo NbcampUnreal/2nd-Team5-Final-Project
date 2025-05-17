@@ -41,11 +41,19 @@ protected:
 	UFUNCTION()
 	void NotifyChangedLanguage();
 
-	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) {};
-	virtual void ApplyImageData() {};
+	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
+	virtual void ApplyImageData();
 	virtual void ApplyFontData() {};
 	virtual void ApplyTextData() {};
 
+	virtual bool ApplyBackgroundImage();
+	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
+	virtual bool ApplySliderImage(FSliderStyle& SliderStyle);
+	virtual bool ApplyBorderImage();
+	virtual bool ApplyTextBorderImage();
+	virtual bool ApplyProgressBarImage(FProgressBarStyle& ProgressBarStyle);
+	virtual bool ApplyOtherImage();
+	
 	void PlayUISound(ESLUISoundType SoundType);
 
 	void CheckValidOfUISubsystem();
@@ -65,7 +73,7 @@ protected:
 	TObjectPtr<UWidgetAnimation> CloseAnim = nullptr;
 
 	UPROPERTY()
-	TMap<FName, UTexture2D*> ImageMap;
+	TMap<ESLPublicWidgetImageType, UTexture2D*> PublicImageMap;
 
 	UPROPERTY()
 	FSlateFontInfo FontInfo;

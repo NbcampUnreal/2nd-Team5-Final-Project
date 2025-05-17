@@ -21,17 +21,10 @@ void USLMapElementWidget::SetIsEnabledButton(bool bIsEndabled)
 	ElementButton->SetIsEnabled(bIsEnabled);
 }
 
-void USLMapElementWidget::SetElementImgIndex(const FName& NewIndex)
-{
-	ImageIndex = NewIndex;
-}
-
-const FName& USLMapElementWidget::GetElementImgIndex()
-{
-	return ImageIndex;
-}
-
 void USLMapElementWidget::OnClickedMapElementButton()
 {
-	OnClickedMapElement.Broadcast(ElementType);
+	if (ElementButton->GetIsEnabled())
+	{
+		OnClickedMapElement.Broadcast(ElementType);
+	}
 }

@@ -19,5 +19,4 @@ public:
 
 protected:
 	void RequestAddedWidgetToUISubsystem(ESLAdditiveWidgetType TargetWidgetType);
-	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 };

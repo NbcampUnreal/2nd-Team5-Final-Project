@@ -25,8 +25,9 @@ protected:
 	UFUNCTION()
 	void OnClickedElement(ESLGameMapType TargetMapType);
 
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
+	virtual bool ApplyBackgroundImage() override;
+	virtual bool ApplyOtherImage() override;
 
 private:
 
@@ -43,6 +44,4 @@ private:
 
 	UPROPERTY()
 	TMap<ESLGameMapType, USLMapElementWidget*> ElementMap;
-
-	static const FName ListBackIndex;
 };

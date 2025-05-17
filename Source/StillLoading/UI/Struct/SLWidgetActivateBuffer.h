@@ -34,8 +34,8 @@ public:
 	bool bIsFade = true;
 
 	UPROPERTY()
-	TObjectPtr<UDataTable> WidgetImageData = nullptr;
+	TObjectPtr<UDataAsset> WidgetPublicData = nullptr;
 
 	UPROPERTY()
-	TObjectPtr<UDataTable> LevelWidgetData = nullptr;
+	TObjectPtr<UDataAsset> WidgetPrivateData = nullptr;
 };

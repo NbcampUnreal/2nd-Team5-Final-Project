@@ -10,7 +10,20 @@ void USLBaseTextPrintWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	Super::InitWidget(NewUISubsystem);
 
-	ParentNextButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedNextButton);
+	if (IsValid(ParentNextButton))
+	{
+		ParentNextButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedNextButton);
+	}
+
+	if (IsValid(ParentNextButton))
+	{
+		ParentSkipButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedSkipButton);
+	}
+
+	if (IsValid(ParentNextButton))
+	{
+		ParentFastButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedFaseButton);
+	}
 }
 
 void USLBaseTextPrintWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
@@ -18,6 +31,12 @@ void USLBaseTextPrintWidget::ActivateWidget(const FSLWidgetActivateBuffer& Widge
 	Super::ActivateWidget(WidgetActivateBuffer);
 
 	TargetTextIndex = 0;
+
+	if (TalkArray.IsEmpty())
+	{
+		return;
+	}
+
 	ChangeTargetText();
 }
 
@@ -36,11 +55,25 @@ void USLBaseTextPrintWidget::OnClickedNextButton()
 
 	if (TargetTextIndex >= TalkArray.Num())
 	{
+		TalkArray.Empty();
 		CloseWidget();
 		return;
 	}
 
 	ChangeTargetText();
+}
+
+void USLBaseTextPrintWidget::OnClickedSkipButton()
+{
+	GetWorld()->GetTimerManager().ClearTimer(TextPrintTimer);
+
+	TalkArray.Empty();
+	CloseWidget();
+}
+
+void USLBaseTextPrintWidget::OnClickedFaseButton()
+{
+	bIsFasted = !bIsFasted;
 }
 
 void USLBaseTextPrintWidget::PrintTalkText()
@@ -53,7 +86,14 @@ void USLBaseTextPrintWidget::PrintTalkText()
 	ParentTalkText->SetText(FText::FromString(TargetText.ToString().LeftChop(CurrentTextIndex)));
 	--CurrentTextIndex;
 
-	GetWorld()->GetTimerManager().SetTimer(TextPrintTimer, this, &ThisClass::PrintTalkText, PrintTime, false);
+	float NextPrintTime = PrintTime;
+
+	if (bIsFasted && !FMath::IsNearlyZero(Accelerator))
+	{
+		NextPrintTime /= Accelerator;
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(TextPrintTimer, this, &ThisClass::PrintTalkText, NextPrintTime, false);
 }
 
 void USLBaseTextPrintWidget::ChangeTargetText()

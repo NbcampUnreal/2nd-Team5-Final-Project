@@ -10,9 +10,6 @@
 #include "Components/CanvasPanel.h"
 #include "Components/Image.h"
 
-const FName USLStoryWidget::StoryBackImgIndex = "StoryBackImg";
-const FName USLStoryWidget::NameBackImgIndex = "NameBackImg";
-
 void USLStoryWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_StoryWidget;
@@ -23,6 +20,8 @@ void USLStoryWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	ParentNamePanel = NamePanel;
 	ParentNameText = NameText;
 	ParentNextButton = NextButton;
+	ParentSkipButton = SkipButton;
+	ParentFastButton = FastButton;
 	ParentTalkText = StoryText;
 
 	Super::InitWidget(NewUISubsystem);
@@ -66,19 +65,6 @@ void USLStoryWidget::UpdateStoryState(ESLChapterType ChapterType, ESLStoryType T
 	}
 }
 
-void USLStoryWidget::ApplyImageData()
-{
-	Super::ApplyImageData();
-
-	if (ImageMap.Contains(StoryBackImgIndex) &&
-		IsValid(ImageMap[StoryBackImgIndex]))
-		StoryBack->SetBrushFromTexture(ImageMap[StoryBackImgIndex]);
-
-	if (ImageMap.Contains(NameBackImgIndex) &&
-		IsValid(ImageMap[NameBackImgIndex]))
-		NameBack->SetBrushFromTexture(ImageMap[NameBackImgIndex]);
-}
-
 void USLStoryWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
@@ -100,4 +86,29 @@ void USLStoryWidget::ApplyTextData()
 	UpdateStoryState(CurrentChapter, CurrentStoryType, CurrentStoryIndex);
 	ChangeTargetText();
 	PrintTalkText();
+}
+
+bool USLStoryWidget::ApplyTextBorderImage()
+{
+	if (!Super::ApplyTextBorderImage())
+	{
+		return false;
+	}
+
+	StoryBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_TextBorder]);
+	NameBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_TextBorder]);
+	return true;
+}
+
+bool USLStoryWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
+{
+	if (!Super::ApplyButtonImage(ButtonStyle))
+	{
+		return false;
+	}
+
+	SkipButton->SetStyle(ButtonStyle);
+	FastButton->SetStyle(ButtonStyle);
+
+	return true;
 }

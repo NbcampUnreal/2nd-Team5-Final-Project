@@ -20,9 +20,12 @@ public:
 	virtual void DeactivateWidget() override;
 
 protected:
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
+
+	virtual bool ApplyBackgroundImage() override;
+	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
+	virtual bool ApplyBorderImage() override;
 
 private:
 	UFUNCTION()
@@ -64,11 +67,6 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> ButtonsBackground = nullptr;
-
-	static const FName BackgroundImgIndex;
-	static const FName TitleTextImgIndex;
-	static const FName ButtonsBackgroundImgIndex;
-	static const FName ButtonImgIndex;
 
 	static const FName TitleTextIndex;
 	static const FName StartButtonIndex;
