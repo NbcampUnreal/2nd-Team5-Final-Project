@@ -5,11 +5,13 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLSoundTypes.h"
 #include "SubSystem/SLTextPoolTypes.h"
 #include "SLBaseWidget.generated.h"
 
 class USLUISubsystem;
 class USLTextPoolSubsystem;
+class USLSoundSubsystem;
 struct FSLWidgetActivateBuffer;
 
 UCLASS()
@@ -58,6 +60,7 @@ protected:
 
 	void CheckValidOfUISubsystem();
 	void CheckValidOfTextPoolSubsystem();
+	void CheckValidOfSoundSubsystem();
 
 protected:
 	UPROPERTY()
@@ -65,6 +68,9 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<USLTextPoolSubsystem> TextPoolSubsystem = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<USLSoundSubsystem> SoundSubsystem = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<UWidgetAnimation> OpenAnim = nullptr;

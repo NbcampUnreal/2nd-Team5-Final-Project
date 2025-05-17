@@ -35,9 +35,6 @@ public:
 	void RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveAllAdditveWidget();
 
-	void PlayUISound(ESLUISoundType SoundType);
-	void StopUISound();
-	
 	const ESLChapterType GetCurrentChapter() const; //
 	UDataAsset* GetPublicImageData();
 	//temp
@@ -50,8 +47,6 @@ private:
 
 	void CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void CheckValidOfUISettings();
-
-	void CheckValidOfSoundSource(ESLUISoundType SoundType);
 	void CheckValidOfWidgetDataAsset();
 
 private:
@@ -60,9 +55,6 @@ private:
 
 	UPROPERTY()
 	TMap<ESLAdditiveWidgetType, USLAdditiveWidget*> AdditiveWidgetMap;
-
-	UPROPERTY()
-	TMap<ESLUISoundType, USoundBase*> UISoundMap;
 
 	UPROPERTY()
 	TArray<USLAdditiveWidget*> ActiveAdditiveWidgets;
