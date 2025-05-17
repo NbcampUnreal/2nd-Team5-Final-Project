@@ -19,17 +19,6 @@ enum class ESLAdditiveWidgetType : uint8
 };
 
 UENUM(BlueprintType)
-enum class ESLUISoundType : uint8
-{
-	EUS_None = 0,
-	EUS_Click,
-	EUS_Hover,
-	EUS_Open,
-	EUS_Close,
-	EUS_Notify
-};
-
-UENUM(BlueprintType)
 enum class ESLChapterType : uint8
 {
 	EC_None = 0,

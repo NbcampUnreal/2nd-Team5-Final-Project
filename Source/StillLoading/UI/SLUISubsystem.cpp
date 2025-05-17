@@ -148,30 +148,6 @@ void USLUISubsystem::RemoveAllAdditveWidget()
 	SetInputModeAndCursor();
 }
 
-void USLUISubsystem::PlayUISound(ESLUISoundType SoundType)
-{
-	CheckValidOfSoundSource(SoundType);
-
-	if (!IsValid(AudioComp))
-	{
-		AudioComp = UGameplayStatics::CreateSound2D(GetGameInstance(), UISoundMap[SoundType], EffectVolume);
-		AudioComp->bAutoDestroy = false;
-	}
-
-	StopUISound();
-
-	AudioComp->SetSound(UISoundMap[SoundType]);
-	AudioComp->Play();
-}
-
-void USLUISubsystem::StopUISound()
-{
-	if (IsValid(AudioComp) && AudioComp->IsPlaying())
-	{
-		AudioComp->Stop();
-	}
-}
-
 const ESLChapterType USLUISubsystem::GetCurrentChapter() const
 {
 	return WidgetActivateBuffer.CurrentChapter;
@@ -227,25 +203,6 @@ void USLUISubsystem::CheckValidOfUISettings()
 
 	UISettings = GetDefault<USLUISettings>();
 	checkf(IsValid(UISettings), TEXT("UI Settings is invalid"));
-}
-
-void USLUISubsystem::CheckValidOfSoundSource(ESLUISoundType SoundType)
-{
-	if (UISoundMap.Contains(SoundType))
-	{
-		if (IsValid(UISoundMap[SoundType]))
-		{
-			return;
-		}
-	}
-
-	CheckValidOfUISettings();
-	checkf(UISettings->WidgetSoundMap.Contains(SoundType), TEXT("Widget Sound Map is not contains soundtype"));
-
-	USoundBase* SoundSource = UISettings->WidgetSoundMap[SoundType].LoadSynchronous();
-	checkf(IsValid(SoundSource), TEXT("SoundSource is invalid"));
-
-	UISoundMap.Add(SoundType, SoundSource);
 }
 
 void USLUISubsystem::CheckValidOfWidgetDataAsset()
