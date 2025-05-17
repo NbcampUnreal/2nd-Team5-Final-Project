@@ -30,21 +30,9 @@ void UMovementHandlerComponent::BeginPlay()
 		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
 		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
 
-		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 550.f;
+		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 450.f;
 		BindIMCComponent();
 	}
-}
-
-void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
-{
-	UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnLanded"));
-	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_Jump);
-}
-
-void UMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-                                              FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void UMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
@@ -94,6 +82,10 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 		}
 		break;
 	case EInputActionType::EIAT_PointMove:
+		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
+		{
+			BufferComp->AddBufferedInput(ActionType);
+		}
 		PointMove();
 		break;
 	case EInputActionType::EIAT_Walk:
@@ -200,6 +192,13 @@ void UMovementHandlerComponent::Jump()
 	OwnerCharacter->AddSecondaryState(TAG_Character_Movement_Jump);
 }
 
+void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
+{
+	UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnLanded"));
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_Jump);
+	CachedCombatComponent->ResetCombo();
+}
+
 void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)
 {
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_MovementBlock))
@@ -248,11 +247,11 @@ void UMovementHandlerComponent::Interact()
 	// TODO: 인터랙션 대상 탐색 및 처리
 	if (CachedCombatComponent->IsEmpowered())
 	{
-		CachedCombatComponent->SetEmpowered(ECharacterComboState::CCS_Normal);
+		CachedCombatComponent->SetCombatMode(ECharacterComboState::CCS_Normal);
 	}
 	else
 	{
-		CachedCombatComponent->SetEmpowered(ECharacterComboState::CCS_Empowered);
+		CachedCombatComponent->SetCombatMode(ECharacterComboState::CCS_Empowered);
 	}
 	
 	// Test
@@ -290,7 +289,13 @@ void UMovementHandlerComponent::Attack()
 		return;
 	}
 
-	if (SectionName == FName("Attack3")) // 3타에 게이징
+	const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
+	if (bIsFalling)
+	{
+		OwnerCharacter->GetCharacterMovement()->GravityScale = 0.3f;
+	}
+
+	if (SectionName == FName("Attack3") && !bIsFalling) // 3타에 게이징
 	{
 		if (!CachedCombatComponent->IsEmpowered())
 		{
@@ -415,7 +420,17 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Special3);
 		break;
 	case ECharacterMontageState::ECS_Attack_Air1:
+		OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
+		break;
 	case ECharacterMontageState::ECS_Attack_Air2:
+		OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
+		break;
+	case ECharacterMontageState::ECS_Attack_Air3:
+		OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
+		break;
 	case ECharacterMontageState::ECS_Attack_Airborn1:
 	case ECharacterMontageState::ECS_Attack_Finisher1:
 	case ECharacterMontageState::ECS_Attack_Finisher2:
@@ -450,6 +465,8 @@ void UMovementHandlerComponent::HandleBufferedInput(EInputActionType Action)
 		break;
 	case EInputActionType::EIAT_Block:
 		Block(true);
+		break;
+	case EInputActionType::EIAT_PointMove:
 		break;
 	default:
 		break;
