@@ -10,6 +10,7 @@
 
 class USLUISubsystem;
 class USLTextPoolSubsystem;
+struct FSLWidgetActivateBuffer;
 
 UCLASS()
 class STILLLOADING_API USLBaseWidget : public UUserWidget
@@ -18,13 +19,13 @@ class STILLLOADING_API USLBaseWidget : public UUserWidget
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType);
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem);
 
 	UFUNCTION(BlueprintCallable)
-	virtual void ActivateWidget(ESLChapterType ChapterType);
+	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
 	virtual void DeactivateWidget() {};
 
-	void ApplyOnChangedChapter(ESLChapterType ChapterType);
+	void ApplyOnChangedChapter(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
 
 	ESLInputModeType GetWidgetInputMode() const;
 	int32 GetWidgetOrder() const;
@@ -40,11 +41,19 @@ protected:
 	UFUNCTION()
 	void NotifyChangedLanguage();
 
-	virtual void FindWidgetData() {};
-	virtual void ApplyImageData() {};
+	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
+	virtual void ApplyImageData();
 	virtual void ApplyFontData() {};
 	virtual void ApplyTextData() {};
 
+	virtual bool ApplyBackgroundImage();
+	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
+	virtual bool ApplySliderImage(FSliderStyle& SliderStyle);
+	virtual bool ApplyBorderImage();
+	virtual bool ApplyTextBorderImage();
+	virtual bool ApplyProgressBarImage(FProgressBarStyle& ProgressBarStyle);
+	virtual bool ApplyOtherImage();
+	
 	void PlayUISound(ESLUISoundType SoundType);
 
 	void CheckValidOfUISubsystem();
@@ -64,12 +73,12 @@ protected:
 	TObjectPtr<UWidgetAnimation> CloseAnim = nullptr;
 
 	UPROPERTY()
-	TMap<FName, UTexture2D*> ImageMap;
+	TMap<ESLPublicWidgetImageType, UTexture2D*> PublicImageMap;
 
 	UPROPERTY()
 	FSlateFontInfo FontInfo;
 
-	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
+	ESLChapterType CurrentChapter = ESLChapterType::EC_None;
 	ESLInputModeType WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 
 	int32 WidgetOrder = 0;

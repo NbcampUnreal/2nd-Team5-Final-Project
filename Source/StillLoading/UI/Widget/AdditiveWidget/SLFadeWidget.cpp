@@ -3,10 +3,9 @@
 
 #include "UI/Widget/AdditiveWidget/SLFadeWidget.h"
 #include "Components/Image.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 
-const FName USLFadeWidget::FadeImgName = "FadeImage";
-
-void USLFadeWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLFadeWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_FadeWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
@@ -16,14 +15,14 @@ void USLFadeWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 	OpenAnim = FadeInAnim;
 	CloseAnim = FadeOutAnim;
 
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 }
 
-void USLFadeWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLFadeWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
+	Super::ActivateWidget(WidgetActivateBuffer);
 
-	if (bIsFadeIn)
+	if (WidgetActivateBuffer.bIsFade)
 	{
 		if (IsPlayingAnimation())
 		{
@@ -41,11 +40,6 @@ void USLFadeWidget::ActivateWidget(ESLChapterType ChapterType)
 	}
 }
 
-void USLFadeWidget::SetIsFadeIn(bool FadeValue)
-{
-	bIsFadeIn = FadeValue;
-}
-
 void USLFadeWidget::OnEndedOpenAnim()
 {
 	Super::OnEndedOpenAnim();
@@ -60,11 +54,17 @@ void USLFadeWidget::OnEndedCloseAnim()
 	CloseWidget();
 }
 
-void USLFadeWidget::ApplyImageData()
+bool USLFadeWidget::ApplyOtherImage()
 {
-	Super::ApplyImageData();
+	Super::ApplyOtherImage();
 
-	checkf(ImageMap.Contains(FadeImgName), TEXT("Image Name is Not Contains"));
-	checkf(IsValid(ImageMap[FadeImgName]), TEXT("Image Source is invalid"));
-	FadeImage->SetBrushFromTexture(ImageMap[FadeImgName]);
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Fade) ||
+		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Fade]))
+	{
+		return false;
+	}
+	
+	FadeImage->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Fade]);
+
+	return true;
 }

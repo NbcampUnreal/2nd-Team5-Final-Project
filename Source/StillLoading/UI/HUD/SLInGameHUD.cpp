@@ -11,17 +11,6 @@ void ASLInGameHUD::OnStartedHUD()
 
 	CheckValidOfUISubsystem();
 	UISubsystem->ActivateFade(true);
-}
-
-void ASLInGameHUD::InitLevelWidget()
-{
-	Super::InitLevelWidget();
-
-	checkf(ChapterWidgetDataMap.Contains(CurrentChapter), TEXT("Widget Data Map is not contains ChapterType"));
-	LevelWidgetObj->SetLevelWidgetData(ChapterWidgetDataMap[CurrentChapter]);
-
-	CheckValidOfUISubsystem();
-	LevelWidgetObj->InitWidget(UISubsystem, CurrentChapter);
 
 	InGameWidget = Cast<USLInGameWidget>(LevelWidgetObj);
 	checkf(IsValid(InGameWidget), TEXT("Cast Fail. Level Widget To InGame Widget"));

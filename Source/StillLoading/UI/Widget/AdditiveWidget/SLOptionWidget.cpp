@@ -6,6 +6,7 @@
 #include "Components/TextBlock.h"
 #include "Components/ExpandableArea.h"
 #include "Components/Slider.h"
+#include "Components/Image.h"
 #include "UI/SLUISubsystem.h"
 #include "Animation/WidgetAnimation.h"
 #include "SubSystem/SLUserDataSubsystem.h"
@@ -30,14 +31,14 @@ const FName USLOptionWidget::KeySettingButtonIndex = "KeySettingButton";
 const FName USLOptionWidget::QuitGameButtonIndex = "QuitGameButton";
 const FName USLOptionWidget::CloseButtonIndex = "CloseButton";
 
-void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	WidgetOrder = 15;
 	bIsVisibleCursor = true;
 	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 
 	FullScreenButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedFullScreen);
 	WindowScreenButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedWindowScreen);
@@ -61,9 +62,9 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType 
 	InitOptionVariable();
 }
 
-void USLOptionWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
+	Super::ActivateWidget(WidgetActivateBuffer);
 
 	if (IsValid(OpenAnim))
 	{
@@ -92,13 +93,6 @@ void USLOptionWidget::DeactivateWidget()
 	}
 
 	PlayUISound(ESLUISoundType::EUS_Close);
-}
-
-void USLOptionWidget::ApplyImageData()
-{
-	Super::ApplyImageData();
-
-
 }
 
 void USLOptionWidget::ApplyFontData()
@@ -142,6 +136,101 @@ void USLOptionWidget::ApplyTextData()
 	KeySettingText->SetText(OptionTextMap[KeySettingButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 	QuitGameText->SetText(OptionTextMap[QuitGameButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 	CloseText->SetText(OptionTextMap[CloseButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+}
+
+bool USLOptionWidget::ApplyBackgroundImage()
+{
+	if (!Super::ApplyBackgroundImage())
+	{
+		return false;
+	}
+
+	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
+
+	return true;
+}
+
+bool USLOptionWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
+{
+	if (!Super::ApplyButtonImage(ButtonStyle))
+	{
+		return false;
+	}
+
+	KorButton->SetStyle(ButtonStyle);
+	EngButton->SetStyle(ButtonStyle);
+	FullScreenButton->SetStyle(ButtonStyle);
+	WindowScreenButton->SetStyle(ButtonStyle);
+	KeySettingButton->SetStyle(ButtonStyle);
+	QuitGameButton->SetStyle(ButtonStyle);
+	CloseButton->SetStyle(ButtonStyle);
+
+	FirstResolutionButton->SetStyle(ButtonStyle);
+	SecondResolutionButton->SetStyle(ButtonStyle);
+	ThirdResolutionButton->SetStyle(ButtonStyle);
+
+	return true;
+}
+
+bool USLOptionWidget::ApplySliderImage(FSliderStyle& SliderStyle)
+{
+	if (!Super::ApplySliderImage(SliderStyle))
+	{
+		return false;
+	}
+
+	BgmVolumeSlider->SetWidgetStyle(SliderStyle);
+	EffectVolumeSlider->SetWidgetStyle(SliderStyle);
+	BrightnessSlider->SetWidgetStyle(SliderStyle);
+
+	return true;
+}
+
+bool USLOptionWidget::ApplyBorderImage()
+{
+	if (!Super::ApplyBorderImage())
+	{
+		return false;
+	}
+
+	OptionPanelBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+
+	return true;
+}
+
+bool USLOptionWidget::ApplyOtherImage()
+{
+	Super::ApplyOtherImage();
+
+	if (PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Expandable) &&
+		IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Expandable]))
+	{
+		FSlateBrush SlateBrush;
+
+		SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_Expandable]);
+		ResolutionList->SetBorderBrush(SlateBrush);
+		LanguageList->SetBorderBrush(SlateBrush);
+	}
+
+	if (PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Expanded) &&
+		PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Collapsed) &&
+		IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Expanded]) &&
+		IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Collapsed]))
+	{
+		FExpandableAreaStyle ExpandableAreaStyle;
+		FSlateBrush SlateBrush;
+		
+		SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_Collapsed]);
+		ExpandableAreaStyle.SetCollapsedImage(SlateBrush);
+
+		SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_Expanded]);
+		ExpandableAreaStyle.SetExpandedImage(SlateBrush);
+
+		ResolutionList->SetStyle(ExpandableAreaStyle);
+		LanguageList->SetStyle(ExpandableAreaStyle);
+	}
+
+	return true;
 }
 
 void USLOptionWidget::InitOptionVariable()
@@ -271,15 +360,20 @@ void USLOptionWidget::UpdateLanguageButton()
 	CheckValidOfUserDataSubsystem();
 	
 	ESLLanguageType CurrentLanguage = UserDataSubsystem->GetCurrentLanguage();
-	bool bIsKor = false;
+	
+	FText TargetText = FText::GetEmpty();
 
 	if (CurrentLanguage == ESLLanguageType::EL_Kor)
 	{
-		bIsKor = true;
+		TargetText = KorText->GetText();
+	}
+	else if (CurrentLanguage == ESLLanguageType::EL_Eng)
+	{
+		TargetText = EngText->GetText();
 	}
 
-	KorButton->SetIsEnabled(!bIsKor);
-	EngButton->SetIsEnabled(bIsKor);
+	CurrentLanguageText->SetText(TargetText);
+	LanguageList->SetIsExpanded(false);
 }
 
 void USLOptionWidget::UpdateResolution(int32 ResolutionNum)

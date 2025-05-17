@@ -10,8 +10,5 @@ UCLASS()
 class STILLLOADING_API ASLIntroHUD : public ASLBaseHUD
 {
 	GENERATED_BODY()
-	
-protected:
-	virtual void OnStartedHUD() override;
-	virtual void InitLevelWidget() override;
+
 };
