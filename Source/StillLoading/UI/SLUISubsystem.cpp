@@ -177,6 +177,12 @@ const ESLChapterType USLUISubsystem::GetCurrentChapter() const
 	return WidgetActivateBuffer.CurrentChapter;
 }
 
+UDataAsset* USLUISubsystem::GetPublicImageData()
+{
+	CheckValidOfWidgetDataAsset();
+	return WidgetActivateBuffer.WidgetPublicData;
+}
+
 void USLUISubsystem::SetEffectVolume(float VolumeValue)
 {
 	EffectVolume = FMath::Clamp(VolumeValue, 0.0f, 1.0f);
@@ -209,11 +215,7 @@ void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType
 	TempWidget->InitWidget(this);
 	AdditiveWidgetMap.Add(WidgetType, TempWidget);
 
-	if (!IsValid(WidgetActivateBuffer.WidgetImageData))
-	{
-		CheckValidOfImageDataTable();
-		WidgetActivateBuffer.WidgetImageData = WidgetImageData;
-	}
+	CheckValidOfWidgetDataAsset();
 }
 
 void USLUISubsystem::CheckValidOfUISettings()
@@ -246,14 +248,14 @@ void USLUISubsystem::CheckValidOfSoundSource(ESLUISoundType SoundType)
 	UISoundMap.Add(SoundType, SoundSource);
 }
 
-void USLUISubsystem::CheckValidOfImageDataTable()
+void USLUISubsystem::CheckValidOfWidgetDataAsset()
 {
-	if (IsValid(WidgetImageData))
+	if (IsValid(WidgetActivateBuffer.WidgetPublicData))
 	{
 		return;
 	}
 
 	CheckValidOfUISettings();
-	WidgetImageData = UISettings->WidgetDataTable.LoadSynchronous();
-	checkf(IsValid(WidgetImageData), TEXT("Widget ImageData is invalid"));
+	WidgetActivateBuffer.WidgetPublicData = UISettings->WidgetPublicDataAsset.LoadSynchronous();
+	checkf(IsValid(WidgetActivateBuffer.WidgetPublicData), TEXT("Widget ImageData is invalid"));
 }

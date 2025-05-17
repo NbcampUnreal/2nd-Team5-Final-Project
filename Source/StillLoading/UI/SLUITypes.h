@@ -89,6 +89,35 @@ enum class ESLStoryType : uint8
 	ES_End
 };
 
+UENUM(BlueprintType)
+enum class ESLPublicWidgetImageType : uint8
+{
+	EPWI_None = 0,
+	EPWI_NormalBorder,
+	EPWI_TextBorder,
+	EPWI_Button,
+	EPWI_SliderBack,
+	EPWI_SliderBar,
+	EPWI_ProgressBack,
+	EPWI_ProgressBar,
+	EPWI_Expandable,
+	EPWI_Collapsed,
+	EPWI_Expanded,
+	EPWI_Background,
+	EPWI_Fade
+};
+
+UENUM(BlueprintType)
+enum class ESLInGamePrivateImageType : uint8
+{
+	EGPI_None = 0,
+	EGPI_HitEffect,
+	EGPI_PlayerHpBack,
+	EGPI_PlayerHpBar,
+	EGPI_BossHpBack,
+	EGPI_BossHpBar
+};
+
 UCLASS()
 class STILLLOADING_API USLUITypes : public UObject
 {

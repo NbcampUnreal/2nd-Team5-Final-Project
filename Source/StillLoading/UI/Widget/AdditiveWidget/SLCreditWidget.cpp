@@ -10,8 +10,6 @@
 #include "Components/ScrollBox.h"
 #include "Components/Image.h"
 
-const FName USLCreditWidget::CreditBackIndex = "Background";
-
 void USLCreditWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_CreditWidget;
@@ -54,20 +52,27 @@ void USLCreditWidget::DeactivateWidget()
 	}
 }
 
-void USLCreditWidget::ApplyImageData()
-{
-	Super::ApplyImageData();
-
-	if (ImageMap.Contains(CreditBackIndex) &&
-		IsValid(ImageMap[CreditBackIndex]))
-	{
-		BackgroundImg->SetBrushFromTexture(ImageMap[CreditBackIndex]);
-	}
-}
-
 void USLCreditWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
 
 	//TitleText->SetFont(FontInfo);
+}
+
+void USLCreditWidget::ApplyTextData()
+{
+	Super::ApplyTextData();
+
+}
+
+bool USLCreditWidget::ApplyBackgroundImage()
+{
+	if (!Super::ApplyBackgroundImage())
+	{
+		return false;
+	}
+
+	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
+
+	return true;
 }

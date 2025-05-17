@@ -23,8 +23,10 @@ public:
 	virtual void DeactivateWidget() override;
 
 protected:
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
+	virtual void ApplyTextData() override;
+
+	virtual bool ApplyBackgroundImage() override;
 
 public:
 	UPROPERTY(EditAnywhere)
@@ -42,6 +44,4 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> BackgroundImg = nullptr;
-
-	static const FName CreditBackIndex;
 };

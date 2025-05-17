@@ -23,12 +23,21 @@ protected:
 	UFUNCTION()
 	void OnClickedNextButton();
 
+	UFUNCTION()
+	void OnClickedSkipButton();
+
+	UFUNCTION()
+	void OnClickedFaseButton();
+
 	void PrintTalkText();
 	void ChangeTargetText();
 
 public:
 	UPROPERTY(EditAnywhere)
 	float PrintTime = 0.3f;
+
+	UPROPERTY(EditAnywhere)
+	float Accelerator = 2.0f;
 
 protected:
 	UPROPERTY()
@@ -44,6 +53,12 @@ protected:
 	TObjectPtr<UCanvasPanel> ParentNamePanel = nullptr;
 
 	UPROPERTY()
+	TObjectPtr<UButton> ParentSkipButton = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UButton> ParentFastButton = nullptr;
+
+	UPROPERTY()
 	TArray<FName> NameArray;
 
 	UPROPERTY()
@@ -54,4 +69,6 @@ protected:
 
 	int32 TargetTextIndex = 0;
 	int32 CurrentTextIndex = -1;
+
+	bool bIsFasted = false;
 };

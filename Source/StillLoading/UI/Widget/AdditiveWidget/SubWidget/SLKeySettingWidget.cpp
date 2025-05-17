@@ -11,8 +11,6 @@
 #include "Components/Image.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 
-const FName USLKeySettingWidget::SettingBackIndex = "KeySettingBack";
-
 void USLKeySettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_KeySettingWidget;
@@ -57,17 +55,6 @@ void USLKeySettingWidget::DeactivateWidget()
 	PlayUISound(ESLUISoundType::EUS_Close);
 }
 
-void USLKeySettingWidget::ApplyImageData()
-{
-	Super::ApplyImageData();
-
-	if (ImageMap.Contains(SettingBackIndex) &&
-		IsValid(ImageMap[SettingBackIndex]))
-	{
-		BackgroundImg->SetBrushFromTexture(ImageMap[SettingBackIndex]);
-	}
-}
-
 void USLKeySettingWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
@@ -109,6 +96,30 @@ void USLKeySettingWidget::ApplyTextData()
 			ActionPair.Value->UpdateTagText(KeySettingTextMap[Index].ChapterTextMap[ESLChapterType::EC_Intro]);
 		}
 	}
+}
+
+bool USLKeySettingWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
+{
+	if (!Super::ApplyButtonImage(ButtonStyle))
+	{
+		return false;
+	}
+
+	CloseButton->SetStyle(ButtonStyle);
+
+	return true;
+}
+
+bool USLKeySettingWidget::ApplyBorderImage()
+{
+	if (!Super::ApplyBorderImage())
+	{
+		return false;
+	}
+
+	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+
+	return true;
 }
 
 void USLKeySettingWidget::OnClickedKeyDataButton(EInputActionType TargetAction)
@@ -195,18 +206,22 @@ void USLKeySettingWidget::InitElementWidget()
 	checkf(IsValid(KeyMappingWidgetClass), TEXT("Key Mapping Widget Class is invalid"));
 
 	int32 GridIndex = 0;
-	//int32 ElementSize = ActionKeyMap.Num();
 
-	for (int32 i = 1; i <= (int32)EInputActionType::EIAT_Menu; ++i)
+	for (int32 i = (int32)EInputActionType::EIAT_None + 1; i < (int32)EInputActionType::EIAT_Max; ++i)
 	{
 		USLKeyMappingWidget* NewMappingWidget = CreateWidget<USLKeyMappingWidget>(this, KeyMappingWidgetClass);
 		EInputActionType ActionType = (EInputActionType)i;
+
+		if (!KeyTagIndexMap.Contains(ActionType) &&
+			!ActionKeyMap.Contains(ActionType))
+		{
+			continue;
+		}
 
 		NewMappingWidget->InitWidget(ActionType, KeyTagIndexMap[ActionType], ActionKeyMap[ActionType].Key.GetFName());
 		NewMappingWidget->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
 		ActionWidgetMap.Add(ActionType, NewMappingWidget);
 
-		//KeySettingGrid->AddChildToGrid(NewMappingWidget, GridIndex % / (ElementSize / 2), GridIndex / (ElementSize / 2));
 		KeySettingGrid->AddChildToGrid(NewMappingWidget, GridIndex / 2, GridIndex % 2);
 		++GridIndex;
 	}

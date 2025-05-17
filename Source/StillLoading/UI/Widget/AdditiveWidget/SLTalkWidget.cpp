@@ -10,9 +10,6 @@
 #include "Components/CanvasPanel.h"
 #include "Components/Image.h"
 
-const FName USLTalkWidget::TalkBackImgIndex = "TalkBackImg";
-const FName USLTalkWidget::NameBackImgIndex = "NameBackImg";
-
 void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_TalkWidget;
@@ -23,6 +20,8 @@ void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	ParentNamePanel = NamePanel;
 	ParentNameText = NameText;
 	ParentNextButton = NextButton;
+	ParentSkipButton = SkipButton;
+	ParentFastButton = FastButton;
 	ParentTalkText = TalkText;
 
 	Super::InitWidget(NewUISubsystem);
@@ -66,19 +65,6 @@ void USLTalkWidget::UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 Targ
 	}
 }
 
-void USLTalkWidget::ApplyImageData()
-{
-	Super::ApplyImageData();
-
-	if (ImageMap.Contains(TalkBackImgIndex) &&
-		IsValid(ImageMap[TalkBackImgIndex]))
-		TalkBack->SetBrushFromTexture(ImageMap[TalkBackImgIndex]);
-
-	if (ImageMap.Contains(NameBackImgIndex) &&
-		IsValid(ImageMap[NameBackImgIndex]))
-		NameBack->SetBrushFromTexture(ImageMap[NameBackImgIndex]);
-}
-
 void USLTalkWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
@@ -100,4 +86,29 @@ void USLTalkWidget::ApplyTextData()
 	UpdateTalkState(CurrentTalkType, CurrentTalkIndex);
 	ChangeTargetText();
 	PrintTalkText();
+}
+
+bool USLTalkWidget::ApplyTextBorderImage()
+{
+	if (!Super::ApplyTextBorderImage())
+	{
+		return false;
+	}
+
+	TalkBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_TextBorder]);
+	NameBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_TextBorder]);
+	return true;
+}
+
+bool USLTalkWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
+{
+	if (!Super::ApplyButtonImage(ButtonStyle))
+	{
+		return false;
+	}
+
+	SkipButton->SetStyle(ButtonStyle);
+	FastButton->SetStyle(ButtonStyle);
+
+	return true;
 }

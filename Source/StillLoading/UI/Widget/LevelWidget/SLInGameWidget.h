@@ -32,8 +32,11 @@ public:
 	void SetGameStateText(const FText& StateText);
 
 protected:
-	virtual void ApplyImageData() override;
+	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
+
 	virtual void ApplyFontData() override;
+	virtual bool ApplyBorderImage() override;
+	virtual bool ApplyOtherImage() override;
 
 	void SetIsSubWidgetActivate(bool bIsActived, UWidgetAnimation* ActiveAnim, UWidgetAnimation* DeactiveAnim);
 	void PlaySubWidgetAnim(UWidgetAnimation* PlayTargetAnim, UWidgetAnimation* StopTargetAnim = nullptr);
@@ -93,8 +96,6 @@ protected:
 	UPROPERTY(Meta = (BindWidgetAnim), Transient)
 	TObjectPtr<UWidgetAnimation> ActiveHitEffectAnim = nullptr;
 
-	static const FName HitEffectIndex;
-	static const FName TimerBackIndex;
-	static const FName GameStateBackIndex;
-	static const FName PlayerStateBackIndex;
+	UPROPERTY()
+	TMap<ESLInGamePrivateImageType, UTexture2D*> PrivateImageMap;
 };

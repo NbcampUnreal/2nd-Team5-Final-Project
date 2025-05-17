@@ -26,9 +26,14 @@ public:
 	virtual void DeactivateWidget() override;
 
 protected:
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
+
+	virtual bool ApplyBackgroundImage() override;
+	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
+	virtual bool ApplySliderImage(FSliderStyle& SliderStyle) override;
+	virtual bool ApplyBorderImage() override;
+	virtual bool ApplyOtherImage();
 
 	void InitOptionVariable();
 
@@ -94,7 +99,16 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> BackgroundImg = nullptr;
 
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> OptionPanelBack = nullptr;
+
 	// Language Setting
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UExpandableArea> LanguageList = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> CurrentLanguageText = nullptr;
+
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UButton> KorButton = nullptr;
 
@@ -211,6 +225,4 @@ private:
 	static const FName KeySettingButtonIndex;
 	static const FName QuitGameButtonIndex;
 	static const FName CloseButtonIndex;
-
-	static const FName BackgroundIndex;
 };
