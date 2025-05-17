@@ -6,19 +6,51 @@
 #include "UI/SLUITypes.h"
 #include "SLLevelWidgetDataRow.generated.h"
 
-
 USTRUCT(BlueprintType)
-struct STILLLOADING_API FSLLevelWidgetDataRow : public FTableRowBase
+struct STILLLOADING_API FSLMapListDataRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere)
-	ESLChapterType TargetChapter = ESLChapterType::EC_Intro;
+	FName MapName = "";
 
 	UPROPERTY(EditAnywhere)
-	FSlateFontInfo FontInfo;
+	int32 TargetRow = 0;
 
 	UPROPERTY(EditAnywhere)
-	TMap<FName, TSoftObjectPtr<UTexture2D>> ImageMap;
+	int32 TargetCol = 0;
+
+	UPROPERTY(EditAnywhere)
+	bool DefaultEnabled = true;
+};
+
+USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLMapListData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	TMap<ESLGameMapType, FSLMapListDataRow> DataMap;
+};
+
+USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLMapListImageData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	TMap<ESLGameMapType, UTexture2D*> MapImageMap;
+};
+
+USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLInGameImageData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	TMap<ESLInGamePrivateImageType, UTexture2D*> InGameImageMap;
 };

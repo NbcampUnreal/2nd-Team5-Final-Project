@@ -15,6 +15,7 @@ class UGameUserSettings;
 class URendererSettings;
 class USLUISubsystem;
 class USLTextPoolSubsystem;
+class USLSoundSubsystem;
 struct FWidgetSaveData;
 
 UCLASS()
@@ -62,6 +63,7 @@ private:
 	void CheckValidOfRendererSettings();
 	void CheckValidOfUISubsystem();
 	void CheckValidOfTextPoolSubsystem();
+	void CheckValidOfSoundSubsystem();
 	void CheckValidOfUserDataSettings();
 
 private:
@@ -79,6 +81,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<USLTextPoolSubsystem> TextPoolSubsystem = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<USLSoundSubsystem> SoundSubsystem = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<UInputMappingContext> PlayerIMC = nullptr;

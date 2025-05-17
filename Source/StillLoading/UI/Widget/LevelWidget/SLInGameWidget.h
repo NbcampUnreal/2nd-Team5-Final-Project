@@ -17,7 +17,7 @@ class STILLLOADING_API USLInGameWidget : public USLLevelWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void DeactivateWidget() override;
 
 	void SetIsTimerActivate(bool bIsActived);
@@ -32,8 +32,11 @@ public:
 	void SetGameStateText(const FText& StateText);
 
 protected:
-	virtual void ApplyImageData() override;
+	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
+
 	virtual void ApplyFontData() override;
+	virtual bool ApplyBorderImage() override;
+	virtual bool ApplyOtherImage() override;
 
 	void SetIsSubWidgetActivate(bool bIsActived, UWidgetAnimation* ActiveAnim, UWidgetAnimation* DeactiveAnim);
 	void PlaySubWidgetAnim(UWidgetAnimation* PlayTargetAnim, UWidgetAnimation* StopTargetAnim = nullptr);
@@ -92,4 +95,7 @@ protected:
 
 	UPROPERTY(Meta = (BindWidgetAnim), Transient)
 	TObjectPtr<UWidgetAnimation> ActiveHitEffectAnim = nullptr;
+
+	UPROPERTY()
+	TMap<ESLInGamePrivateImageType, UTexture2D*> PrivateImageMap;
 };

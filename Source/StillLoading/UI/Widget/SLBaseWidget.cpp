@@ -4,9 +4,12 @@
 #include "UI/Widget/SLBaseWidget.h"
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
+#include "SubSystem/SLSoundSubsystem.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "Animation/WidgetAnimation.h"
+#include "UI/Widget/SLWidgetImageDataAsset.h"
 
-void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	UISubsystem = NewUISubsystem;
 
@@ -22,18 +25,16 @@ void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 		BindToAnimationFinished(CloseAnim, EndCloseAnimDelegate);
 	}
 
-	ApplyOnChangedChapter(ChapterType);
-	
 	CheckValidOfTextPoolSubsystem();
 	TextPoolSubsystem->LanguageDelegate.AddDynamic(this, &ThisClass::NotifyChangedLanguage);
 
 	ApplyTextData();
 }
 
-void USLBaseWidget::ApplyOnChangedChapter(ESLChapterType ChapterType)
+void USLBaseWidget::ApplyOnChangedChapter(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	CurrentChapter = ChapterType;
-	FindWidgetData();
+	CurrentChapter = WidgetActivateBuffer.CurrentChapter;
+	FindWidgetData(WidgetActivateBuffer);
 
 	ApplyImageData();
 	ApplyFontData();
@@ -54,11 +55,11 @@ bool USLBaseWidget::GetWidgetCursorMode() const
 	return bIsVisibleCursor;
 }
 
-void USLBaseWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLBaseWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	if (CurrentChapter != ChapterType)
+	if (CurrentChapter != WidgetActivateBuffer.CurrentChapter)
 	{
-		ApplyOnChangedChapter(ChapterType);
+		ApplyOnChangedChapter(WidgetActivateBuffer);
 	}
 }
 
@@ -72,10 +73,143 @@ void USLBaseWidget::NotifyChangedLanguage()
 	ApplyTextData();
 }
 
+void USLBaseWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
+{
+	const USLWidgetImageDataAsset* WidgetDataAsset = Cast<USLWidgetImageDataAsset>(WidgetActivateBuffer.WidgetPublicData);
+
+	PublicImageMap = WidgetDataAsset->GetImageDataByChapter(WidgetActivateBuffer.CurrentChapter).PublicImageMap;
+	FontInfo = WidgetDataAsset->GetFondInfoByChapter(WidgetActivateBuffer.CurrentChapter);
+}
+
+void USLBaseWidget::ApplyImageData()
+{
+	FButtonStyle ButtonStyle;
+	FSliderStyle SliderStyle;
+	FProgressBarStyle ProgressBarStyle;
+
+	ApplyBackgroundImage();
+	ApplyButtonImage(ButtonStyle);
+	ApplySliderImage(SliderStyle);
+	ApplyBorderImage();
+	ApplyProgressBarImage(ProgressBarStyle);
+	ApplyOtherImage();
+}
+
+bool USLBaseWidget::ApplyBackgroundImage()
+{
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Background) ||
+		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool USLBaseWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
+{
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Button) ||
+		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Button]))
+	{
+		return false;
+	}
+
+	FSlateBrush SlateBrush; 
+	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_Button]);
+
+	ButtonStyle.SetNormal(SlateBrush);
+	ButtonStyle.SetHovered(SlateBrush);
+	ButtonStyle.SetPressed(SlateBrush);
+	ButtonStyle.SetDisabled(SlateBrush);
+
+	return true;
+}
+
+bool USLBaseWidget::ApplySliderImage(FSliderStyle& SliderStyle)
+{
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_SliderBack) ||
+		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBack]))
+	{
+		return false;
+	}
+
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_SliderBar) ||
+		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBar]))
+	{
+		return false;
+	}
+
+	FSlateBrush SlateBrush;
+
+	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBack]);
+	SliderStyle.SetNormalThumbImage(SlateBrush);
+	SliderStyle.SetHoveredThumbImage(SlateBrush);
+	SliderStyle.SetDisabledThumbImage(SlateBrush);
+
+	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBar]);
+	SliderStyle.SetNormalBarImage(SlateBrush);
+	SliderStyle.SetHoveredBarImage(SlateBrush);
+	SliderStyle.SetDisabledBarImage(SlateBrush);
+
+	return true;
+}
+
+bool USLBaseWidget::ApplyBorderImage()
+{
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_NormalBorder) ||
+		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool USLBaseWidget::ApplyTextBorderImage()
+{
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_TextBorder) ||
+		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_TextBorder]))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool USLBaseWidget::ApplyProgressBarImage(FProgressBarStyle& ProgressBarStyle)
+{
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_ProgressBack) ||
+		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_ProgressBack]))
+	{
+		return false;
+	}
+
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_ProgressBar) ||
+		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_ProgressBar]))
+	{
+		return false;
+	}
+
+	FSlateBrush SlateBrush;
+
+	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_ProgressBack]);
+	ProgressBarStyle.SetBackgroundImage(SlateBrush);
+	
+	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_ProgressBar]);
+	ProgressBarStyle.SetFillImage(SlateBrush);
+
+	return true;
+}
+
+bool USLBaseWidget::ApplyOtherImage()
+{
+	return true;
+}
+
 void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)
 {
-	CheckValidOfUISubsystem();
-	UISubsystem->PlayUISound(SoundType);
+	CheckValidOfSoundSubsystem();
+	SoundSubsystem->PlayUISound(SoundType);
 }
 
 void USLBaseWidget::CheckValidOfUISubsystem()
@@ -99,4 +233,15 @@ void USLBaseWidget::CheckValidOfTextPoolSubsystem()
 
 	TextPoolSubsystem = GetGameInstance()->GetSubsystem<USLTextPoolSubsystem>();
 	checkf(IsValid(TextPoolSubsystem), TEXT("TextPool Subsystem is invalid"));
+}
+
+void USLBaseWidget::CheckValidOfSoundSubsystem()
+{
+	if (IsValid(SoundSubsystem))
+	{
+		return;
+	}
+
+	SoundSubsystem = GetGameInstance()->GetSubsystem<USLSoundSubsystem>();
+	checkf(IsValid(SoundSubsystem), TEXT("Sound Subsystem is invalid"));
 }

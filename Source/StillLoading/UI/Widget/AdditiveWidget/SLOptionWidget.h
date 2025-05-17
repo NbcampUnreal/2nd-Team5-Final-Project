@@ -9,6 +9,7 @@
 class UButton;
 class UTextBlock;
 class USlider;
+class UImage;
 class UExpandableArea;
 class UGameUserSettings;
 class URendererSettings;
@@ -20,14 +21,19 @@ class STILLLOADING_API USLOptionWidget : public USLAdditiveWidget
 	GENERATED_BODY()
 
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
-	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void DeactivateWidget() override;
 
 protected:
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
+
+	virtual bool ApplyBackgroundImage() override;
+	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
+	virtual bool ApplySliderImage(FSliderStyle& SliderStyle) override;
+	virtual bool ApplyBorderImage() override;
+	virtual bool ApplyOtherImage();
 
 	void InitOptionVariable();
 
@@ -90,7 +96,19 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> TitleText = nullptr;
 
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> BackgroundImg = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> OptionPanelBack = nullptr;
+
 	// Language Setting
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UExpandableArea> LanguageList = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> CurrentLanguageText = nullptr;
+
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UButton> KorButton = nullptr;
 

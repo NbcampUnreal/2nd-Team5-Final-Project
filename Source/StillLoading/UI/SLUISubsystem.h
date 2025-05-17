@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UI/SLUITypes.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "SLUISubsystem.generated.h"
 
 class USLAdditiveWidget;
@@ -17,6 +18,7 @@ class STILLLOADING_API USLUISubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintCallable)
 	void SetChapterToUI(ESLChapterType ChapterType);
 	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 
@@ -33,13 +35,8 @@ public:
 	void RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveAllAdditveWidget();
 
-	void PlayUISound(ESLUISoundType SoundType);
-	void StopUISound();
-	
 	const ESLChapterType GetCurrentChapter() const; //
-
-	const UDataTable* GetImageDataTable();
-
+	UDataAsset* GetPublicImageData();
 	//temp
 	void SetEffectVolume(float VolumeValue);
 
@@ -50,9 +47,7 @@ private:
 
 	void CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void CheckValidOfUISettings();
-
-	void CheckValidOfSoundSource(ESLUISoundType SoundType);
-	void CheckValidOfImageDataTable();
+	void CheckValidOfWidgetDataAsset();
 
 private:
 	UPROPERTY()
@@ -62,16 +57,13 @@ private:
 	TMap<ESLAdditiveWidgetType, USLAdditiveWidget*> AdditiveWidgetMap;
 
 	UPROPERTY()
-	TMap<ESLUISoundType, USoundBase*> UISoundMap;
-
-	UPROPERTY()
 	TArray<USLAdditiveWidget*> ActiveAdditiveWidgets;
 
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> AudioComp = nullptr;
 
 	UPROPERTY()
-	TObjectPtr<UDataTable> WidgetImageData = nullptr;
+	FSLWidgetActivateBuffer WidgetActivateBuffer;
 
 	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
 	ESLInputModeType CurrentLevelInputMode = ESLInputModeType::EIM_UIOnly;

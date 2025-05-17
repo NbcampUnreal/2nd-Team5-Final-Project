@@ -1,6 +1,6 @@
 #include "SLMovementHandlerComponent.h"
 
-#include "Character/SLBasePlayerCharacter.h"
+#include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/AnimNotify_SLCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
@@ -21,7 +21,7 @@ void UMovementHandlerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerCharacter = Cast<ASLCharacter>(GetOwner());
+	OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
 	
 	if (OwnerCharacter)
 	{

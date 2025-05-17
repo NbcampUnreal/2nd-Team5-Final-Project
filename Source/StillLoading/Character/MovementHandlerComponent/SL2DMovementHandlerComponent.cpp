@@ -3,7 +3,7 @@
 
 #include "Character/MovementHandlerComponent/SL2DMovementHandlerComponent.h"
 
-#include "Character/SLBasePlayerCharacter.h"
+#include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/Buffer/InputBufferComponent.h"
@@ -28,7 +28,7 @@ void USL2DMovementHandlerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerCharacter = Cast<ASLCharacter>(GetOwner());
+	OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
 	check(OwnerCharacter); // 캐릭터가 아닌 경우 에러
 
 	BindIMCComponent();

@@ -44,7 +44,6 @@ public:
 
 protected:
 	virtual void OnStartedHUD() override;
-	virtual void InitLevelWidget() override;
 
 protected:
 	UPROPERTY()

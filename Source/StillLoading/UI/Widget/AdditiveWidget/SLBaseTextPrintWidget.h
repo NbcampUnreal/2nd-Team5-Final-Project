@@ -16,12 +16,18 @@ class STILLLOADING_API USLBaseTextPrintWidget : public USLAdditiveWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
-	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 
 protected:
 	UFUNCTION()
 	void OnClickedNextButton();
+
+	UFUNCTION()
+	void OnClickedSkipButton();
+
+	UFUNCTION()
+	void OnClickedFaseButton();
 
 	void PrintTalkText();
 	void ChangeTargetText();
@@ -29,6 +35,9 @@ protected:
 public:
 	UPROPERTY(EditAnywhere)
 	float PrintTime = 0.3f;
+
+	UPROPERTY(EditAnywhere)
+	float Accelerator = 2.0f;
 
 protected:
 	UPROPERTY()
@@ -44,6 +53,12 @@ protected:
 	TObjectPtr<UCanvasPanel> ParentNamePanel = nullptr;
 
 	UPROPERTY()
+	TObjectPtr<UButton> ParentSkipButton = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UButton> ParentFastButton = nullptr;
+
+	UPROPERTY()
 	TArray<FName> NameArray;
 
 	UPROPERTY()
@@ -54,4 +69,6 @@ protected:
 
 	int32 TargetTextIndex = 0;
 	int32 CurrentTextIndex = -1;
+
+	bool bIsFasted = false;
 };

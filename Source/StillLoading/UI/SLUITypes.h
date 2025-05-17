@@ -19,20 +19,10 @@ enum class ESLAdditiveWidgetType : uint8
 };
 
 UENUM(BlueprintType)
-enum class ESLUISoundType : uint8
-{
-	EUS_None = 0,
-	EUS_Click,
-	EUS_Hover,
-	EUS_Open,
-	EUS_Close,
-	EUS_Notify
-};
-
-UENUM(BlueprintType)
 enum class ESLChapterType : uint8
 {
-	EC_Intro = 0,
+	EC_None = 0,
+	EC_Intro,
 	EC_Chapter2D,
 	EC_Chapter2_5D,
 	EC_Chapter3D,
@@ -86,6 +76,35 @@ enum class ESLStoryType : uint8
 {
 	ES_Start = 0,
 	ES_End
+};
+
+UENUM(BlueprintType)
+enum class ESLPublicWidgetImageType : uint8
+{
+	EPWI_None = 0,
+	EPWI_NormalBorder,
+	EPWI_TextBorder,
+	EPWI_Button,
+	EPWI_SliderBack,
+	EPWI_SliderBar,
+	EPWI_ProgressBack,
+	EPWI_ProgressBar,
+	EPWI_Expandable,
+	EPWI_Collapsed,
+	EPWI_Expanded,
+	EPWI_Background,
+	EPWI_Fade
+};
+
+UENUM(BlueprintType)
+enum class ESLInGamePrivateImageType : uint8
+{
+	EGPI_None = 0,
+	EGPI_HitEffect,
+	EGPI_PlayerHpBack,
+	EGPI_PlayerHpBar,
+	EGPI_BossHpBack,
+	EGPI_BossHpBar
 };
 
 UCLASS()

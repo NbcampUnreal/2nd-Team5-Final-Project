@@ -13,5 +13,4 @@ class STILLLOADING_API ASLTitleHUD : public ASLBaseHUD
 	
 protected:
 	virtual void OnStartedHUD() override;
-	virtual void InitLevelWidget() override;
 };

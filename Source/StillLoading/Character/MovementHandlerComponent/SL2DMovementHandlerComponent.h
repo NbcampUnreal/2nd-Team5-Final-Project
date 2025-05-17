@@ -7,7 +7,7 @@
 #include "SL2DMovementHandlerComponent.generated.h"
 
 
-class ASLBaseCharacter;
+class ASLPlayerCharacterBase;
 struct FInputActionValue;
 enum class EInputActionType : uint8;
 class UInputAction;
@@ -66,7 +66,7 @@ private:
 
 
 	UPROPERTY()
-	TObjectPtr<ASLBaseCharacter> OwnerCharacter;
+	TObjectPtr<ASLPlayerCharacterBase> OwnerCharacter;
 
 	UPROPERTY()
 	bool bIsMoving = false;

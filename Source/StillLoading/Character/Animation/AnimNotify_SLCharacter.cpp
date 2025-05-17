@@ -13,7 +13,7 @@ void USLAnimNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* 
 	AActor* Owner = MeshComp->GetOwner();
 	if (!Owner) return;
 
-	ASLCharacter* MyCharacter = Cast<ASLCharacter>(Owner);
+	ASLPlayerCharacter* MyCharacter = Cast<ASLPlayerCharacter>(Owner);
 	if (!MyCharacter) return;
 
 	UMovementHandlerComponent* ActionComp = MyCharacter->FindComponentByClass<UMovementHandlerComponent>();

@@ -18,8 +18,6 @@ protected:
 	UFUNCTION()
 	void CloseWidget();
 
-	virtual void FindWidgetData() override;
-
 protected:
 	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
 };

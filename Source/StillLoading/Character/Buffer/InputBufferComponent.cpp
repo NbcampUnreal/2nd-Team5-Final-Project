@@ -15,7 +15,7 @@ void UInputBufferComponent::BeginPlay()
 
 	if (!OwnerCharacter)
 	{
-		OwnerCharacter = Cast<ASLCharacter>(GetOwner());
+		OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
 	}
 }
 
