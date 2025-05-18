@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
 #include "SubSystem/SLLevelTransferTypes.h"
+#include "SubSystem/SLSoundTypes.h"
 #include "SLLevelTransferSettings.generated.h"
 
 class USLLevelDataAsset;
@@ -17,4 +18,7 @@ class STILLLOADING_API USLLevelTransferSettings : public UDeveloperSettings
 public:
 	UPROPERTY(EditAnywhere, Config, Category = "LevelTransferData")
 	TMap<ESLChapterType, TSoftObjectPtr<USLLevelDataAsset>> ChapterLevelDataMap;
+
+	UPROPERTY(EditAnywhere, Config, Category = "LevelBgmData")
+	TMap<ESLLevelNameType, ESLBgmSoundType> LevelBgmMap;
 };

@@ -6,6 +6,16 @@
 #include "SubSystem/DataAssets/SLLevelDataAsset.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/SLUISubsystem.h"
+#include "SubSystem/SLSoundSubsystem.h"
+
+void USLLevelTransferSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &ThisClass::PostOpenLevel);
+
+	// TODO : OpenLevelByNameType(ESLLevelNameType::Intro);
+}
 
 void USLLevelTransferSubsystem::OpenLevelByNameType(ESLLevelNameType LevelNameType, const FString& Option)
 {
@@ -34,6 +44,17 @@ void USLLevelTransferSubsystem::SetCurrentChapter(ESLChapterType ChapterType)
 const ESLChapterType USLLevelTransferSubsystem::GetCurrentChapter() const
 {
 	return CurrentChapter;
+}
+
+void USLLevelTransferSubsystem::PostOpenLevel(UWorld* LoadedWorld)
+{
+	CheckValidOfLevelTransferSettings();
+	CheckValidOfSoundSubsystem();
+
+	if (LevelSettings->LevelBgmMap.Contains(CurrentLevel))
+	{
+		SoundSubsystem->PlayBgmSound(LevelSettings->LevelBgmMap[CurrentLevel]);
+	}
 }
 
 void USLLevelTransferSubsystem::CheckValidOfLevelDataAsset()
@@ -71,4 +92,15 @@ void USLLevelTransferSubsystem::CheckValidOfUISubsystem()
 
 	UISubsystem = GetGameInstance()->GetSubsystem<USLUISubsystem>();
 	checkf(IsValid(UISubsystem), TEXT("UISubsystem is invalid"));
+}
+
+void USLLevelTransferSubsystem::CheckValidOfSoundSubsystem()
+{
+	if (IsValid(SoundSubsystem))
+	{
+		return;
+	}
+
+	SoundSubsystem = GetGameInstance()->GetSubsystem<USLSoundSubsystem>();
+	checkf(IsValid(SoundSubsystem), TEXT("Sound Subsystem is invalid"));
 }

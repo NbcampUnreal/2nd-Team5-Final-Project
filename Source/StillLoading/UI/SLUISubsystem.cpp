@@ -5,11 +5,6 @@
 #include "UI/SLUISettings.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
 
-void USLUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-}
-
 void USLUISubsystem::SetInputModeAndCursor()
 {
 	ESLInputModeType TargetInputMode = ESLInputModeType::EIM_UIOnly;
