@@ -38,8 +38,6 @@ public:
 	UDataAsset* GetPublicImageData();
 
 private:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-
 	void SetInputModeAndCursor();
 
 	void CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
