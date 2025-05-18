@@ -21,10 +21,7 @@ public class StillLoading : ModuleRules
 			"AnimGraphRuntime",
 			"GameplayTags",
 			"Niagara",
-            "GeometryCollectionEngine",
-            "FieldSystemEngine",       
-			"Chaos",                  
-			"ChaosSolverEngine"
+            "GeometryCollectionEngine"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

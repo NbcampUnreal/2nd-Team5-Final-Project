@@ -7,7 +7,7 @@
 #include "SLBaseReactiveObject.generated.h"
 
 class USphereComponent;
-class ASLBaseCharacter;
+class ASLPlayerCharacterBase;
 
 UENUM()
 enum class ESLReactiveTriggerType : uint8
@@ -29,14 +29,14 @@ public:
 
 	//캐릭터에서 상호작용 시 아래 함수에 접근, 상호작용 방식에 대한 값을 넣어주면 됨.
 	UFUNCTION(BlueprintCallable)
-	void TriggerReact(ASLBaseCharacter* InCharacter, const ESLReactiveTriggerType InComingType);
+	void TriggerReact(ASLPlayerCharacterBase* InCharacter, const ESLReactiveTriggerType InComingType);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
-	virtual void OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType TriggerType);
+	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType);
 
 	UFUNCTION()
 	virtual void BeginOverlapCollision(

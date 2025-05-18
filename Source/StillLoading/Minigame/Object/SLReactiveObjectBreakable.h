@@ -14,9 +14,12 @@ class STILLLOADING_API ASLReactiveObjectBreakable : public ASLBaseReactiveObject
 	GENERATED_BODY()
 	
 public:
-	virtual void OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType TriggerType);
+	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType);
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Effects")
-	TObjectPtr<UNiagaraSystem> LeafEffect;
+	TObjectPtr<UNiagaraSystem> DestroyEffect;
+
+	int8 MaxHp;
+	int8 CurrentHp;
 };

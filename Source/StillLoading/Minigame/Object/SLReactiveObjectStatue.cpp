@@ -2,7 +2,7 @@
 
 
 #include "Minigame/Object/SLReactiveObjectStatue.h"
-#include "StillLoading\Character\SLBaseCharacter.h"
+#include "StillLoading\Character\SLPlayerCharacterBase.h"
 #include "StillLoading\Minigame\System\SLMinigamePuzzleCond.h"
 #include "EngineUtils.h"
 
@@ -24,7 +24,7 @@ void ASLReactiveObjectStatue::BeginPlay()
 	}
 }
 
-void ASLReactiveObjectStatue::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLReactiveObjectStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 
 }

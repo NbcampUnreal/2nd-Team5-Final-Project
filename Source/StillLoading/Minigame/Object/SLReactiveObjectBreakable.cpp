@@ -5,13 +5,18 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 
-void ASLReactiveObjectBreakable::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLReactiveObjectBreakable::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
-    if (LeafEffect) // UNiagaraSystem* 변수
+    if (CurrentHp > 0)
+    {
+        CurrentHp--;
+        return;
+    }
+    if (DestroyEffect) // UNiagaraSystem* 변수
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(
             GetWorld(),
-            LeafEffect,                    // Niagara System
+            DestroyEffect,                    // Niagara System
             GetActorLocation(),           // 위치
             GetActorRotation(),           // 회전
             FVector(1.0f),                // 스케일

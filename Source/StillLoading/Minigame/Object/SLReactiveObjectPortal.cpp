@@ -3,12 +3,9 @@
 
 #include "Minigame/Object/SLReactiveObjectPortal.h"
 #include "Kismet\GameplayStatics.h"
-#include "Chaos/ChaosEngineInterface.h"
-#include "GeometryCollection/GeometryCollectionActor.h"
 #include "GeometryCollection\GeometryCollectionComponent.h"
 #include "Components\SphereComponent.h"
-#include "StillLoading\Character\SLBaseCharacter.h"
-#include "Field\FieldSystemObjects.h"
+#include "StillLoading\Character\SLPlayerCharacterBase.h"
 //#include "DestructibleComponent"
 
 ASLReactiveObjectPortal::ASLReactiveObjectPortal()
@@ -43,7 +40,7 @@ void ASLReactiveObjectPortal::BeginPlay()
     GeometryCollectionComp->SetSimulatePhysics(true);
 }
 
-void ASLReactiveObjectPortal::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLReactiveObjectPortal::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
     if (InTriggerType == ESLReactiveTriggerType::ERT_InteractKey)
     {

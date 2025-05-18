@@ -15,7 +15,7 @@ class STILLLOADING_API ASLReactiveObjectRock : public ASLBaseReactiveObject
 	GENERATED_BODY()
 	
 protected:
-	virtual void OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType TriggerType) override;
+	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
 
 public:
 	UPROPERTY(EditAnywhere)

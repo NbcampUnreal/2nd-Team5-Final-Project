@@ -17,7 +17,7 @@ public:
 	ASLReactiveObjectPortal();
 protected:
 	virtual void BeginPlay();
-	virtual void OnReacted(const ASLBaseCharacter*, ESLReactiveTriggerType TriggerType);
+	virtual void OnReacted(const ASLPlayerCharacterBase*, ESLReactiveTriggerType TriggerType);
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

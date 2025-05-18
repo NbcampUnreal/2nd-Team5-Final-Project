@@ -17,7 +17,7 @@ class STILLLOADING_API ASLReactiveObjectRotationStatue : public ASLReactiveObjec
 public:
 	ASLReactiveObjectRotationStatue();
 protected:
-	virtual void OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType TriggerType) override;
+	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
 	virtual void Tick(float DeltaTime) override;
 private:
 	// 회전 관련 변수

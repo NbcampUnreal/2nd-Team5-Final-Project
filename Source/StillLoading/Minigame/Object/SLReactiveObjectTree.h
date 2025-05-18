@@ -14,7 +14,7 @@ public:
 	ASLReactiveObjectTree();
 
 protected:
-	virtual void OnReacted(const ASLBaseCharacter* InCharacter);
+	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType);
 
 	virtual void Tick(float DeltaTime);
 	

@@ -4,14 +4,14 @@
 #include "Minigame/Object/SLReactiveObjectTree.h"
 #include "SLReactiveObjectTree.h"
 #include "Kismet\GameplayStatics.h"
-#include "StillLoading\Character\SLBaseCharacter.h"
+#include "StillLoading\Character\SLPlayerCharacterBase.h"
 
 ASLReactiveObjectTree::ASLReactiveObjectTree()
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void ASLReactiveObjectTree::OnReacted(const ASLBaseCharacter* InCharacter)
+void ASLReactiveObjectTree::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	return;
 }
@@ -25,7 +25,7 @@ void ASLReactiveObjectTree::BeginOverlapCollision(UPrimitiveComponent* Overlappe
 {
 	if (OtherActor && OtherActor->ActorHasTag("Character"))
 	{
-		if (ASLBaseCharacter* Character = Cast<ASLBaseCharacter>(OtherActor))
+		if (ASLPlayerCharacterBase* Character = Cast<ASLPlayerCharacterBase>(OtherActor))
 		{
 			//5분의 1씩 깎아서 5대 맞으면 죽게 설계해야함
 			//Character->TakeDamage()

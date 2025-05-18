@@ -3,7 +3,7 @@
 
 #include "Minigame/Object/SLBaseReactiveObject.h"
 #include "Components\SphereComponent.h"
-#include "StillLoading\Character\SLBaseCharacter.h"
+#include "StillLoading\Character\SLPlayerCharacterBase.h"
 
 // Sets default values
 ASLBaseReactiveObject::ASLBaseReactiveObject()
@@ -18,7 +18,7 @@ ASLBaseReactiveObject::ASLBaseReactiveObject()
 	CollisionComp->OnComponentEndOverlap.AddDynamic(this, &ASLBaseReactiveObject::EndOverlapCollision);
 }
 
-void ASLBaseReactiveObject::TriggerReact(ASLBaseCharacter* InCharacter, const ESLReactiveTriggerType InComingType)
+void ASLBaseReactiveObject::TriggerReact(ASLPlayerCharacterBase* InCharacter, const ESLReactiveTriggerType InComingType)
 {
 	if (!IsValid(InCharacter))
 	{
@@ -44,7 +44,7 @@ void ASLBaseReactiveObject::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ASLBaseReactiveObject::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLBaseReactiveObject::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 
 }
@@ -53,7 +53,7 @@ void ASLBaseReactiveObject::BeginOverlapCollision(UPrimitiveComponent* Overlappe
 {
 	if (OtherActor && OtherActor->ActorHasTag("Character"))
 	{
-		TObjectPtr<ASLBaseCharacter> Character = Cast<ASLBaseCharacter>(OtherActor);
+		TObjectPtr<ASLPlayerCharacterBase> Character = Cast<ASLPlayerCharacterBase>(OtherActor);
 		if (IsValid(Character))
 		{
 			Character->ReactiveObject = this;
@@ -65,7 +65,7 @@ void ASLBaseReactiveObject::EndOverlapCollision(UPrimitiveComponent* OverlappedC
 {
 	if (OtherActor && OtherActor->ActorHasTag("Character"))
 	{
-		TObjectPtr<ASLBaseCharacter> Character = Cast<ASLBaseCharacter>(OtherActor);
+		TObjectPtr<ASLPlayerCharacterBase> Character = Cast<ASLPlayerCharacterBase>(OtherActor);
 		if (IsValid(Character) && Character->ReactiveObject == this)
 		{
 			Character->ReactiveObject = nullptr;

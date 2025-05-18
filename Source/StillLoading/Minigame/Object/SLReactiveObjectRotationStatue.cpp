@@ -2,7 +2,7 @@
 
 
 #include "Minigame/Object/SLReactiveObjectRotationStatue.h"
-#include "StillLoading\Character\SLBaseCharacter.h"
+#include "StillLoading\Character\SLPlayerCharacterBase.h"
 
 ASLReactiveObjectRotationStatue::ASLReactiveObjectRotationStatue()
 {
@@ -10,7 +10,7 @@ ASLReactiveObjectRotationStatue::ASLReactiveObjectRotationStatue()
 	RotationStates = {};
 }
 
-void ASLReactiveObjectRotationStatue::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLReactiveObjectRotationStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	if (RotationStates.Num() == 0) return;
 	

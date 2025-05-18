@@ -22,14 +22,12 @@ class STILLLOADING_API ASLReactiveObjectStatue : public ASLBaseReactiveObject
 	
 public:
 	ASLReactiveObjectStatue();
-	virtual void OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType TriggerType) override;
+	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
 	UFUNCTION()
 	void DeactivateStatue();
 protected:
 	virtual void BeginPlay();
 
-	//UFUNCTION()
-	//void LuminousStatue(const ASLBaseCharacter* InCharacter);
 private:
 	//각 석상별 고유번호
 	UPROPERTY(EditAnywhere)
