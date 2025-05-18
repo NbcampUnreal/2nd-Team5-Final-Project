@@ -7,6 +7,7 @@
 #include "UI/SLUITypes.h"
 #include "SubSystem/SLSoundTypes.h"
 #include "SubSystem/SLTextPoolTypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLBaseWidget.generated.h"
 
 class USLUISubsystem;
@@ -57,6 +58,7 @@ protected:
 	virtual bool ApplyOtherImage();
 	
 	void PlayUISound(ESLUISoundType SoundType);
+	void MoveToLevelByType(ESLLevelNameType LevelType);
 
 	void CheckValidOfUISubsystem();
 	void CheckValidOfTextPoolSubsystem();

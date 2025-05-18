@@ -6,6 +6,4 @@
 USLSaveGame::USLSaveGame()
 {
 	CurrentMiniGameLevel = 0;
-	CurrentChapter = 0;
-
 }

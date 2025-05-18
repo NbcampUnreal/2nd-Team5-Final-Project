@@ -86,14 +86,14 @@ void USLKeySettingWidget::ApplyTextData()
 		}
 	}
 
-	for (const TPair<EInputActionType, USLKeyMappingWidget*> ActionPair : ActionWidgetMap)
+	for (USLKeyMappingWidget* MappingWidget : MappingWidgets)
 	{
-		FName Index = ActionPair.Value->GetTagIndex();
+		FName Index = MappingWidget->GetTagIndex();
 
 		if (KeySettingTextMap.Contains(Index) &&
 			KeySettingTextMap[Index].ChapterTextMap.Contains(ESLChapterType::EC_Intro))
 		{
-			ActionPair.Value->UpdateTagText(KeySettingTextMap[Index].ChapterTextMap[ESLChapterType::EC_Intro]);
+			MappingWidget->UpdateTagText(KeySettingTextMap[Index].ChapterTextMap[ESLChapterType::EC_Intro]);
 		}
 	}
 }
@@ -135,9 +135,13 @@ void USLKeySettingWidget::UpdateKeyMapping(const FKey& InputKey)
 
 	if (UserDataSubsystem->UpdateMappingKey(TargetActionType, InputKey))
 	{
-		if (ActionWidgetMap.Contains(TargetActionType))
+		for (USLKeyMappingWidget* MappingWidget : MappingWidgets)
 		{
-			ActionWidgetMap[TargetActionType]->UpdateKeyText(InputKey.GetFName());
+			if (MappingWidget->GetActionType() == TargetActionType)
+			{
+				MappingWidget->UpdateKeyText(InputKey.GetFName());
+				break;
+			}
 		}
 	}
 
@@ -147,15 +151,15 @@ void USLKeySettingWidget::UpdateKeyMapping(const FKey& InputKey)
 
 void USLKeySettingWidget::SetFocusToTargetButton(EInputActionType TargetAction, bool bIsFocus)
 {
-	for (const TPair<EInputActionType, USLKeyMappingWidget*> KeyDataPair : ActionWidgetMap)
+	for (USLKeyMappingWidget* MappingWidget : MappingWidgets)
 	{
-		if (KeyDataPair.Key == TargetAction)
+		if (MappingWidget->GetActionType() == TargetAction)
 		{
-			KeyDataPair.Value->SetVisibilityButton(!bIsFocus);
+			MappingWidget->SetVisibilityButton(!bIsFocus);
 			continue;
 		}
 
-		KeyDataPair.Value->SetVisibilityButton(true);
+		MappingWidget->SetVisibilityButton(true);
 	}
 }
 
@@ -220,7 +224,8 @@ void USLKeySettingWidget::InitElementWidget()
 
 		NewMappingWidget->InitWidget(ActionType, KeyTagIndexMap[ActionType], ActionKeyMap[ActionType].Key.GetFName());
 		NewMappingWidget->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-		ActionWidgetMap.Add(ActionType, NewMappingWidget);
+		MappingWidgets.Add(NewMappingWidget);
+		//ActionWidgetMap.Add(ActionType, NewMappingWidget);
 
 		KeySettingGrid->AddChildToGrid(NewMappingWidget, GridIndex / 2, GridIndex % 2);
 		++GridIndex;
