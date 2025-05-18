@@ -3,9 +3,7 @@
 
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUISettings.h"
-#include "Kismet/GameplayStatics.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
-#include "Components/AudioComponent.h"
 
 void USLUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -74,7 +72,7 @@ void USLUISubsystem::ActivateFade(bool bIsFadeIn)
 {
 	WidgetActivateBuffer.bIsFade = bIsFadeIn;
 
-	AddAdditveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
+	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
 }
 
 void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType)
@@ -82,7 +80,7 @@ void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiTy
 	WidgetActivateBuffer.TargetMap = MapType;
 	WidgetActivateBuffer.TargetNotify = NotiType;
 
-	AddAdditveWidget(ESLAdditiveWidgetType::EAW_NotifyWidget);
+	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_NotifyWidget);
 }
 
 void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, int32 TargetIndex)
@@ -90,7 +88,7 @@ void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, int32 TargetInd
 	WidgetActivateBuffer.TargetStory = TargetStoryType;
 	WidgetActivateBuffer.TargetIndex = TargetIndex;
 
-	AddAdditveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
+	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
 }
 
 void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex)
@@ -98,10 +96,10 @@ void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, int32 Target
 	WidgetActivateBuffer.TargetTalk = TalkTargetType;
 	WidgetActivateBuffer.TargetIndex = TargetIndex;
 
-	AddAdditveWidget(ESLAdditiveWidgetType::EAW_TalkWidget);
+	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_TalkWidget);
 }
 
-void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
+void USLUISubsystem::AddAdditiveWidget(ESLAdditiveWidgetType WidgetType)
 {
 	CheckValidOfAdditiveWidget(WidgetType);
 
@@ -148,25 +146,10 @@ void USLUISubsystem::RemoveAllAdditveWidget()
 	SetInputModeAndCursor();
 }
 
-const ESLChapterType USLUISubsystem::GetCurrentChapter() const
-{
-	return WidgetActivateBuffer.CurrentChapter;
-}
-
 UDataAsset* USLUISubsystem::GetPublicImageData()
 {
 	CheckValidOfWidgetDataAsset();
 	return WidgetActivateBuffer.WidgetPublicData;
-}
-
-void USLUISubsystem::SetEffectVolume(float VolumeValue)
-{
-	EffectVolume = FMath::Clamp(VolumeValue, 0.0f, 1.0f);
-
-	if (IsValid(AudioComp))
-	{
-		AudioComp->SetVolumeMultiplier(EffectVolume);
-	}
 }
 
 void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType)

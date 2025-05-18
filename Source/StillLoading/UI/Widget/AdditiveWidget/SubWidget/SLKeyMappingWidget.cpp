@@ -59,6 +59,11 @@ const FName& USLKeyMappingWidget::GetTagIndex() const
 	return TagIndex;
 }
 
+const EInputActionType USLKeyMappingWidget::GetActionType() const
+{
+	return ActionType;
+}
+
 void USLKeyMappingWidget::OnClickedChangeKey()
 {
 	KeyDelegate.Broadcast(ActionType);

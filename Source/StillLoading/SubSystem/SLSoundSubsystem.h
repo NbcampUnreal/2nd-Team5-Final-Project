@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "SubSystem/SLSoundTypes.h"
-#include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLSoundSubsystem.generated.h"
 
 class USLSoundSettings;
@@ -27,7 +27,6 @@ public:
 	void SetEffectVolume(float VolumeValue);
 
 private:
-	void CheckValidOfSoundSource(ESLUISoundType SoundType);
 	void CheckValidOfSoundDataAsset();
 	void CheckValidOfSoundSettings();
 

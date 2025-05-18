@@ -28,6 +28,7 @@ public:
 	void SetIsEnabledButton(bool bIsEnable);
 
 	const FName& GetTagIndex() const;
+	const EInputActionType GetActionType() const;
 
 private:
 	UFUNCTION()

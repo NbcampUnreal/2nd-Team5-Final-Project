@@ -113,13 +113,8 @@ bool USLTitleWidget::ApplyBorderImage()
 
 void USLTitleWidget::OnClickedStartButton()
 {
-	// TODO : Request Move To MapList Level
-	// Test Code : Add Map List Widget To Viewport
-	//CheckValidOfUISubsystem();
-	//UISubsystem->ActivateFade(false);
-
 	PlayUISound(ESLUISoundType::EUS_Click);
-	UGameplayStatics::OpenLevel(GetWorld(), "TestMapListLevel");
+	MoveToLevelByType(ESLLevelNameType::ELN_MapList);
 }
 
 void USLTitleWidget::OnClickedOptionButton()

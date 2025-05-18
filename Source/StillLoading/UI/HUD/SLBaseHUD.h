@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "UI/Struct/SLLevelWidgetDataRow.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "SLBaseHUD.generated.h"
 
 class USLLevelWidget;
@@ -17,6 +19,9 @@ class STILLLOADING_API ASLBaseHUD : public AHUD
 	GENERATED_BODY()
 
 protected:
+	UFUNCTION()
+	void OnChangedCurrentChapter(ESLChapterType ChapterType);
+
 	virtual void BeginPlay() override;
 	virtual void OnStartedHUD();
 	virtual void InitLevelWidget() {};
@@ -39,5 +44,6 @@ protected:
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
 
-	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
+	UPROPERTY()
+	FSLWidgetActivateBuffer ActivateBuffer;
 };

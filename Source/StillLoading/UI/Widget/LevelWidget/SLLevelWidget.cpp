@@ -22,5 +22,5 @@ void USLLevelWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivat
 void USLLevelWidget::RequestAddedWidgetToUISubsystem(ESLAdditiveWidgetType TargetWidgetType)
 {
 	CheckValidOfUISubsystem();
-	UISubsystem->AddAdditveWidget(TargetWidgetType);
+	UISubsystem->AddAdditiveWidget(TargetWidgetType);
 }
