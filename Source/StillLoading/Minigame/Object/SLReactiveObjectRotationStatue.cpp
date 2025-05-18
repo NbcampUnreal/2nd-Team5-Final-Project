@@ -2,7 +2,9 @@
 
 
 #include "Minigame/Object/SLReactiveObjectRotationStatue.h"
-#include "StillLoading\Character\SLBaseCharacter.h"
+#include "StillLoading\Character\SLPlayerCharacter.h"
+#include "Minigame/System/SLMinigamePuzzleCond.h"
+#include "Minigame/System/SLMiniGameUtility.h"
 
 ASLReactiveObjectRotationStatue::ASLReactiveObjectRotationStatue()
 {
@@ -10,7 +12,7 @@ ASLReactiveObjectRotationStatue::ASLReactiveObjectRotationStatue()
 	RotationStates = {};
 }
 
-void ASLReactiveObjectRotationStatue::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLReactiveObjectRotationStatue::OnReacted(const ASLPlayerCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	if (RotationStates.Num() == 0) return;
 	
@@ -28,10 +30,24 @@ void ASLReactiveObjectRotationStatue::OnReacted(const ASLBaseCharacter* InCharac
 			if (FMath::IsNearlyEqual(MyRot.Yaw, NextRotation.Yaw, KINDA_SMALL_NUMBER))
 			{
 				GetWorld()->GetTimerManager().ClearTimer(RotationHandle);
+				PuzzleManager->UpdateStatueState(StatueIndex, CurrentRotationIndex);
 			}
 		},
 		0.1f,
 		true);
+}
+
+void ASLReactiveObjectRotationStatue::BeginPlay()
+{
+	Super::BeginPlay();
+
+	ASLMinigamePuzzleCond* PuzzleCond = FindActorInWorld<ASLMinigamePuzzleCond>(GetWorld());
+
+	if (PuzzleCond)
+	{
+		PuzzleManager = PuzzleCond;
+		UE_LOG(LogTemp, Warning, TEXT("Find PuzzleCond Succeed"));
+	}
 }
 
 void ASLReactiveObjectRotationStatue::Tick(float DeltaTime)
