@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/Interface/SLBattleInterface.h"
+#include "Character/DataAsset/AttackDataAsset.h"
 #include "Components/ActorComponent.h"
 #include "BattleComponent.generated.h"
 
@@ -19,7 +20,7 @@ public:
 	virtual void ReceiveHitResult_Implementation(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult, EAttackAnimType AnimType) override;
 
 	UFUNCTION()
-	void DoAttackSweep();
+	void DoAttackSweep(EAttackAnimType AttackType);
 	UFUNCTION()
 	void ClearHitTargets();
 
@@ -32,7 +33,12 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DataAsset")
+	TObjectPtr<UAttackDataAsset> AttackData;
 private:
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	float GetDamageByType(EAttackAnimType InType) const;
+	
 	UPROPERTY()
 	TSet<TWeakObjectPtr<AActor>> AlreadyHitActors;
 };
