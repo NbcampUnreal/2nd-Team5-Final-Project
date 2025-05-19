@@ -19,7 +19,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
+	virtual void OnReacted(const ASLPlayerCharacter* InCharacter, ESLReactiveTriggerType TriggerType) override;
 	UFUNCTION()
 	void SetLightActive();
 private:
@@ -28,5 +28,12 @@ private:
 	TObjectPtr<UPointLightComponent> PointLightComp = nullptr;
 
 	float DeltaTime = 0;
+
+	UPROPERTY(EditAnywhere)
+	float Intensity = 50;
+
+	UPROPERTY(EditAnywhere)
+	float LightChangeSpeed = 1.0f;
+
 	FTimerHandle LightControlHandler;
 };

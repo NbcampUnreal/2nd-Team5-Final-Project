@@ -40,7 +40,8 @@ private:
 	//디버그룸(2)에서 작동 예시: CurrentStates[1] = 4 = 1번 석상이 4번째로 활성화됨.
 	UPROPERTY(EditAnywhere)
 	TArray<int> CurrentStates;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 	TArray<int> AnswerStates;
+
 	TArray<TObjectPtr<ASLReactiveObjectStatue>> Statues;
 };
