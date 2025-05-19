@@ -40,7 +40,7 @@ void ASLReactiveObjectLuminousStatue::BeginPlay()
 	PointLightComp->SetIntensity(0.0f);
 }
 
-void ASLReactiveObjectLuminousStatue::OnReacted(const ASLPlayerCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLReactiveObjectLuminousStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	SetLightActive();
 	FTimerHandle handle;

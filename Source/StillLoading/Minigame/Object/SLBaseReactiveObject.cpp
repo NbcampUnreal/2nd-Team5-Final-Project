@@ -51,26 +51,26 @@ void ASLBaseReactiveObject::OnReacted(const ASLPlayerCharacterBase* InCharacter,
 
 void ASLBaseReactiveObject::BeginOverlapCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor->ActorHasTag("Character"))
-	{
-		TObjectPtr<ASLPlayerCharacterBase> Character = Cast<ASLPlayerCharacterBase>(OtherActor);
-		if (IsValid(Character))
-		{
-			Character->ReactiveObject = this;
-		}
-	}
+	//if (OtherActor && OtherActor->ActorHasTag("Character"))
+	//{
+	//	TObjectPtr<ASLPlayerCharacterBase> Character = Cast<ASLPlayerCharacterBase>(OtherActor);
+	//	if (IsValid(Character))
+	//	{
+	//		Character->ReactiveObject = this;
+	//	}
+	//}
 }
 
 void ASLBaseReactiveObject::EndOverlapCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor && OtherActor->ActorHasTag("Character"))
-	{
-		TObjectPtr<ASLPlayerCharacterBase> Character = Cast<ASLPlayerCharacterBase>(OtherActor);
-		if (IsValid(Character) && Character->ReactiveObject == this)
-		{
-			Character->ReactiveObject = nullptr;
-		}
-	}
+	//if (OtherActor && OtherActor->ActorHasTag("Character"))
+	//{
+	//	TObjectPtr<ASLPlayerCharacterBase> Character = Cast<ASLPlayerCharacterBase>(OtherActor);
+	//	if (IsValid(Character) && Character->ReactiveObject == this)
+	//	{
+	//		Character->ReactiveObject = nullptr;
+	//	}
+	//}
 }
 
 bool ASLBaseReactiveObject::IsTriggerTypeAllowed(ESLReactiveTriggerType InComingType)

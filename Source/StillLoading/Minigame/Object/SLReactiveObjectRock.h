@@ -25,7 +25,7 @@ class STILLLOADING_API ASLReactiveObjectRock : public ASLBaseReactiveObject
 	virtual void Tick(float DeltaTime) override;
 
 protected:
-	virtual void OnReacted(const ASLPlayerCharacter* InCharacter, ESLReactiveTriggerType TriggerType) override;
+	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
 
 
 

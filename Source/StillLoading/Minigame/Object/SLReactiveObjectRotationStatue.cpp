@@ -12,7 +12,7 @@ ASLReactiveObjectRotationStatue::ASLReactiveObjectRotationStatue()
 	RotationStates = {};
 }
 
-void ASLReactiveObjectRotationStatue::OnReacted(const ASLPlayerCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLReactiveObjectRotationStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	if (RotationStates.Num() == 0) return;
 	
