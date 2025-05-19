@@ -34,16 +34,6 @@ void USLTitleWidget::DeactivateWidget()
 	OnEndedCloseAnim();
 }
 
-void USLTitleWidget::ApplyFontData()
-{
-	Super::ApplyFontData();
-
-	/*TitleText->SetFont(FontInfo);
-	StartText->SetFont(FontInfo);
-	OptionText->SetFont(FontInfo);
-	QuitText->SetFont(FontInfo);*/
-}
-
 void USLTitleWidget::ApplyTextData()
 {
 	Super::ApplyTextData();

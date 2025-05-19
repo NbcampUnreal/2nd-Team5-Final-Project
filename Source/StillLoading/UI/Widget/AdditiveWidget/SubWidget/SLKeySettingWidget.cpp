@@ -59,10 +59,10 @@ void USLKeySettingWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
 
-	/*for (const TPair<EInputActionType, USLKeyMappingWidget*>& KeyElement : ActionWidgetMap)
+	for (USLKeyMappingWidget* MappingWidget : MappingWidgets)
 	{
-		KeyElement.Value->UpdateTextFont(FontInfo);
-	}*/
+		MappingWidget->UpdateTextFont(FontInfo);
+	}
 }
 
 void USLKeySettingWidget::ApplyTextData()

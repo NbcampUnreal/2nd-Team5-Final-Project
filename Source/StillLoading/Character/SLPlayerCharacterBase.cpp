@@ -1,6 +1,5 @@
 #include "SLPlayerCharacterBase.h"
 
-#include "BattleComponent/BattleComponent.h"
 #include "Buffer/InputBufferComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "DynamicIMCComponent/SLDynamicIMCComponent.h"
@@ -11,9 +10,9 @@ ASLPlayerCharacterBase::ASLPlayerCharacterBase()
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
-	GetMesh()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+	
+	// BattleComponent 에서 사용 하기위한 캡슐 셋팅
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 
 	if (UInputBufferComponent* BufferComp = FindComponentByClass<UInputBufferComponent>())
 	{

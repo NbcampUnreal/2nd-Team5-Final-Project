@@ -62,13 +62,6 @@ void USLNotifyWidget::OnEndedCloseAnim()
 	CloseWidget();
 }
 
-void USLNotifyWidget::ApplyFontData()
-{
-	Super::ApplyFontData();
-
-	//NotifyText->SetFont(FontInfo);
-}
-
 bool USLNotifyWidget::ApplyBackgroundImage()
 {
 	if (!Super::ApplyBackgroundImage())

@@ -35,6 +35,7 @@ enum class ESLGameMapType : uint8
 	EGM_Mini3,
 	EGM_Mini4,
 	EGM_Mini5,
+	EGM_Mini6,
 	EGM_DebugRoom,
 	EGM_Boss,
 	EGM_Max

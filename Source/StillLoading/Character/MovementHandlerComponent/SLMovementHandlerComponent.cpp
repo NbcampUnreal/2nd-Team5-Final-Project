@@ -3,7 +3,6 @@
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/SLAnimNotify.h"
-#include "Character/BattleComponent/BattleComponent.h"
 #include "Character/Buffer/InputBufferComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
@@ -184,9 +183,12 @@ void UMovementHandlerComponent::Jump()
 		return;
 	}
 	
-	if (OwnerCharacter) OwnerCharacter->Jump();
+	if (OwnerCharacter)
+	{
+		OwnerCharacter->Jump();
+	}
+	
 	CachedCombatComponent->ResetCombo();
-
 	OwnerCharacter->AddSecondaryState(TAG_Character_Movement_Jump);
 }
 
