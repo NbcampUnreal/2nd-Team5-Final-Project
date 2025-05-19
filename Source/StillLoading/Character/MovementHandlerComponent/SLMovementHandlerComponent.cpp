@@ -27,7 +27,6 @@ void UMovementHandlerComponent::BeginPlay()
 	if (OwnerCharacter)
 	{
 		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
-		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
 		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
 
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
@@ -288,12 +287,6 @@ void UMovementHandlerComponent::Attack()
 		CachedMontageComponent->PlayMontage(Montage, SectionName);
 	}
 	CachedCombatComponent->AdvanceCombo();
-	
-	if (CachedBattleComponent)
-	{
-		//TODO:: Data전달용으로 AI와 협의 필요
-		CachedBattleComponent->PerformAttack();
-	}
 
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
 }

@@ -86,8 +86,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
 	UPROPERTY()
-	TObjectPtr<UBattleComponent> CachedBattleComponent;
-	UPROPERTY()
 	TObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
 
 	int32 CurrentIndex = 0; // Test용

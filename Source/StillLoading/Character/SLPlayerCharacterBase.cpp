@@ -35,16 +35,3 @@ void ASLPlayerCharacterBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-float ASLPlayerCharacterBase::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-	class AController* EventInstigator, AActor* DamageCauser)
-{
-	const float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-	if (UBattleComponent* BattleComp = FindComponentByClass<UBattleComponent>())
-	{
-		ISLBattleInterface::Execute_ReceiveBattleDamage(BattleComp, ActualDamage);
-	}
-
-	return ActualDamage;
-}
-
