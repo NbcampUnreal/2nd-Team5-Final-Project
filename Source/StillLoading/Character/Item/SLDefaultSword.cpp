@@ -37,5 +37,5 @@ void ASLDefaultSword::BeginPlay()
 {
 	Super::BeginPlay();
 
-	BindOverlap(BoxComponent);
+	//BindOverlap(BoxComponent);
 }
