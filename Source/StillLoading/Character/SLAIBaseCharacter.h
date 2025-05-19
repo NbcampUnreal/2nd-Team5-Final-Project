@@ -97,9 +97,25 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetCombatPhase(ECombatPhase NewCombatPhase);
-
+	
 	UFUNCTION(BlueprintCallable)
 	ECombatPhase GetCombatPhase();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleCollision(EToggleDamageType DamageType, bool bEnableCollision);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleLeftHandCollision(bool bEnableCollision);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleRightHandCollision(bool bEnableCollision);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	void EquipWeapon(AActor* WeaponActor);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	void UnequipWeapon();
+	
 protected:
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -147,4 +163,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	ECombatPhase CombatPhase;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon")
+	TObjectPtr<UPrimitiveComponent> CurrentWeaponCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AActor> EquippedWeapon;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
+	FName WeaponSocketName;
 };

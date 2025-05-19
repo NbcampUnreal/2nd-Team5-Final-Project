@@ -39,13 +39,15 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat")
 	TObjectPtr<AActor> ActorToThrow;
+
+	FTimerHandle JumpTimerHandle;
+
+	// 원래 충돌 설정 저장
+	TEnumAsByte<ECollisionEnabled::Type> OriginalCollisionType;
 private:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	EBossAttackPattern BossAttackPattern;
 
-	FTimerHandle JumpTimerHandle;
-	
-	// 원래 충돌 설정 저장
-	TEnumAsByte<ECollisionEnabled::Type> OriginalCollisionType;
+
 };

@@ -140,9 +140,15 @@ float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (TObjectPtr<APawn> HitPawn = Cast<APawn>(OtherActor))
+	
+	if (OtherActor != this && Cast<ACharacter>(OtherActor))
 	{
-		// 오버랩 되면 데미지 입힐거임
+		UE_LOG(LogTemp, Warning, TEXT("캐릭터와 오버랩됨: %s"), *OtherActor->GetName());
+        
+		if (TObjectPtr<APawn> HitPawn = Cast<APawn>(OtherActor))
+		{
+			// 오버랩 되면 데미지 입힐거임
+		}
 	}
 }
 
@@ -169,4 +175,87 @@ void ASLAIBaseCharacter::SetCombatPhase(ECombatPhase NewCombatPhase)
 ECombatPhase ASLAIBaseCharacter::GetCombatPhase()
 {
 	return CombatPhase;
+}   
+
+void ASLAIBaseCharacter::ToggleCollision(EToggleDamageType DamageType, bool bEnableCollision)
+{
+	switch (DamageType)
+	{
+	case EToggleDamageType::ETDT_LeftHand:
+		ToggleLeftHandCollision(bEnableCollision);
+		break;
+	case EToggleDamageType::ETDT_RightHand:
+		ToggleRightHandCollision(bEnableCollision);
+		break;
+	case EToggleDamageType::ETDT_CurrentEquippedWeapon:
+		if (CurrentWeaponCollision)
+		{
+			CurrentWeaponCollision->SetCollisionEnabled(bEnableCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+void ASLAIBaseCharacter::ToggleLeftHandCollision(bool bEnableCollision)
+{
+	if (LeftHandCollisionBox)
+	{
+		LeftHandCollisionBox->SetCollisionEnabled(bEnableCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+	}
+}
+
+void ASLAIBaseCharacter::ToggleRightHandCollision(bool bEnableCollision)
+{
+	if (RightHandCollisionBox)
+	{
+		RightHandCollisionBox->SetCollisionEnabled(bEnableCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+	}
+}
+
+void ASLAIBaseCharacter::EquipWeapon(AActor* WeaponActor)
+{
+	if (!WeaponActor)
+		return;
+    
+	// 현재 장착된 무기가 있다면 해제
+	UnequipWeapon();
+    
+	EquippedWeapon = WeaponActor;
+    
+	// 무기를 캐릭터 메시에 부착
+	FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, true);
+	WeaponActor->AttachToComponent(GetMesh(), AttachRules, WeaponSocketName);
+    
+	// 무기 충돌 컴포넌트 찾기 - 무기에 "WeaponCollision"로 태그된 컴포넌트가 있어야함 [콜리전 컴포넌트를 반환하는걸로 함수 만들면 될듯]
+	TArray<UPrimitiveComponent*> Components;
+	WeaponActor->GetComponents<UPrimitiveComponent>(Components);
+    
+	for (UPrimitiveComponent* Component : Components)
+	{
+		if (Component->ComponentHasTag(FName("WeaponCollision")))
+		{
+			CurrentWeaponCollision = Component;
+			Component->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 초기에는 비활성화
+			Component->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+			break;
+		}
+	}
+}
+
+void ASLAIBaseCharacter::UnequipWeapon()
+{
+	if (EquippedWeapon)
+	{
+		if (CurrentWeaponCollision)
+		{
+			CurrentWeaponCollision->OnComponentBeginOverlap.RemoveDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+			CurrentWeaponCollision = nullptr;
+		}
+        
+		// 캐릭터에서 무기 분리
+		EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		EquippedWeapon = nullptr;
+	}
 }

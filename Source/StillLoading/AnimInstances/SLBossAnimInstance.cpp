@@ -78,7 +78,7 @@ AActor* USLBossAnimInstance::SpawnActorToThrow(TSubclassOf<AActor> ActorClass, F
     return SpawnedActor;
 }
 
-AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float ArcParam, FName SocketName)
+AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float TimeToTarget, FName SocketName)
 {
     if (!ActorToThrow || !TargetCharacter || !OwningCharacter)
     {
@@ -86,64 +86,110 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float ArcPara
         return nullptr;
     }
     
-    // 액터 디태치 - 발사 전에 손에서 분리
+    // 소켓 존재 여부 확인
+    if (!OwningCharacter->GetMesh()->DoesSocketExist(SocketName))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on character mesh"), *SocketName.ToString());
+        return nullptr;
+    }
+    
+    // 소켓 위치 가져오기
+    FVector StartLocation = OwningCharacter->GetMesh()->GetSocketLocation(SocketName);
+    
+    // 액터 디태치 및 위치 설정
     USceneComponent* RootComp = ActorToThrow->GetRootComponent();
-    if (RootComp)
+    if (RootComp && RootComp->GetAttachParent() != nullptr)
     {
         RootComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
     }
-    
-    // 던질 액터의 현재 위치
-    FVector StartLocation = OwningCharacter->GetMesh()->GetSocketLocation(SocketName);
-    
-    // 액터가 분리됐으므로 시작 위치 설정 
     ActorToThrow->SetActorLocation(StartLocation);
     
-    // 타겟 위치
+    // 타겟 위치 계산 (머리 위치 기준)
     FVector TargetLocation = TargetCharacter->GetActorLocation();
     
-    // 프로젝타일 무브먼트 컴포넌트 추가
-    UProjectileMovementComponent* ProjectileMovement = ActorToThrow->FindComponentByClass<UProjectileMovementComponent>();
-    
-    if (!ProjectileMovement)
+    // 타겟 높이 조정
+    if (UCapsuleComponent* CapsuleComp = TargetCharacter->FindComponentByClass<UCapsuleComponent>())
     {
-        ProjectileMovement = NewObject<UProjectileMovementComponent>(ActorToThrow, UProjectileMovementComponent::StaticClass());
-        ProjectileMovement->RegisterComponent();
+        float HalfHeight = CapsuleComp->GetScaledCapsuleHalfHeight();
+        TargetLocation.Z += HalfHeight * 0.7f; // 머리 높이 타겟팅
+    }
+    else
+    {
+        TargetLocation.Z += 100.0f; // 캡슐이 없는 경우 임의 높이 추가
     }
     
-    // 프로젝타일 무브먼트 설정
-    ProjectileMovement->bRotationFollowsVelocity = true;
-    ProjectileMovement->bShouldBounce = false;
-    ProjectileMovement->ProjectileGravityScale = 1.0f;
-    ProjectileMovement->Velocity = FVector::ZeroVector;
-    ProjectileMovement->InitialSpeed = LaunchSpeed;
-    ProjectileMovement->MaxSpeed = LaunchSpeed;
+    // 타겟 이동 예측
+    FVector TargetVelocity = TargetCharacter->GetVelocity();
+    if (!TargetVelocity.IsNearlyZero())
+    {
+        TargetLocation += TargetVelocity * TimeToTarget;
+    }
     
-    // 물리 활성화
+    // 시간 확인 (최소값 보장)
+    TimeToTarget = FMath::Max(TimeToTarget, 0.5f);
+    
+    // 프로젝타일 컴포넌트 설정
+    UProjectileMovementComponent* ProjectileMovement = ActorToThrow->FindComponentByClass<UProjectileMovementComponent>();
+    if (ProjectileMovement)
+    {
+        ProjectileMovement->DestroyComponent();
+    }
+    
+    ProjectileMovement = NewObject<UProjectileMovementComponent>(ActorToThrow, UProjectileMovementComponent::StaticClass());
+    if (!ProjectileMovement)
+    {
+        return nullptr;
+    }
+    ProjectileMovement->RegisterComponent();
+    
+    // 물리 설정
     UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(ActorToThrow->GetRootComponent());
     if (PrimComp)
     {
         PrimComp->SetSimulatePhysics(true);
         PrimComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        PrimComp->IgnoreActorWhenMoving(OwningCharacter, true);
     }
     
-    // 발사 방향 및 속도 계산
-    FVector ToTarget = TargetLocation - StartLocation;
-    FVector DirectionXY = FVector(ToTarget.X, ToTarget.Y, 0.0f).GetSafeNormal();
+    // 중력 값
+    float GravityZ = FMath::Abs(GetWorld()->GetGravityZ());
+    if (GravityZ < KINDA_SMALL_NUMBER)
+    {
+        GravityZ = 980.0f;
+    }
     
-    // 포물선 궤적을 위한 Z 성분 조정
-    float DistanceXY = FVector::Dist2D(StartLocation, TargetLocation);
-    float LaunchAngle = FMath::DegreesToRadians(45.0f * ArcParam); // ArcParam으로 궤적 높이 조절
+    // ======== 도달 시간 기반 속도 계산 ========
+    FVector PositionDelta = TargetLocation - StartLocation;
     
-    // 수직 속도 계산
-    float Vz = LaunchSpeed * FMath::Sin(LaunchAngle);
+    // 수평 속도: 거리/시간
+    FVector HorizontalVelocity = FVector(PositionDelta.X, PositionDelta.Y, 0.0f) / TimeToTarget;
+    
+    // 수직 속도: 중력 보정 포함
+    float VerticalVelocity = PositionDelta.Z / TimeToTarget + 0.5f * GravityZ * TimeToTarget;
     
     // 최종 발사 속도
-    FVector LaunchVelocity = DirectionXY * LaunchSpeed * FMath::Cos(LaunchAngle);
-    LaunchVelocity.Z = Vz;
+    FVector LaunchVelocity = HorizontalVelocity;
+    LaunchVelocity.Z = VerticalVelocity;
     
-    // 발사
+    // 최대 속도 제한
+    float CalculatedSpeed = LaunchVelocity.Size();
+    if (CalculatedSpeed > LaunchSpeed)
+    {
+        LaunchVelocity = LaunchVelocity * (LaunchSpeed / CalculatedSpeed);
+        UE_LOG(LogTemp, Display, TEXT("Velocity scaled down to stay within limit. Consider increasing TimeToTarget."));
+    }
+    
+    // 프로젝타일 설정 적용
+    ProjectileMovement->bRotationFollowsVelocity = true;
+    ProjectileMovement->bShouldBounce = false;
+    ProjectileMovement->ProjectileGravityScale = 1.0f;
     ProjectileMovement->Velocity = LaunchVelocity;
+    ProjectileMovement->InitialSpeed = LaunchVelocity.Size();
+    ProjectileMovement->MaxSpeed = LaunchVelocity.Size() * 1.1f;
+    
+    // 디버그 정보
+    UE_LOG(LogTemp, Display, TEXT("Throw: Distance=%.1f, Time=%.2fs, Velocity=(%.1f,%.1f,%.1f)"),
+        PositionDelta.Size(), TimeToTarget, LaunchVelocity.X, LaunchVelocity.Y, LaunchVelocity.Z);
     
     // 액터 던진 후 참조 해제
     AActor* ThrownActor = ActorToThrow;
