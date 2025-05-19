@@ -35,6 +35,16 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	RightHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RightHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
 
+	LeftFootCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftFootCollisionBox");
+	LeftFootCollisionBox->SetupAttachment(GetMesh());
+	LeftFootCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeftFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+
+	RightFootCollisionBox = CreateDefaultSubobject<UBoxComponent>("RightFootCollisionBox");
+	RightFootCollisionBox->SetupAttachment(GetMesh());
+	RightFootCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RightFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+	
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
 	
 }
@@ -211,6 +221,22 @@ void ASLAIBaseCharacter::ToggleRightHandCollision(bool bEnableCollision)
 	if (RightHandCollisionBox)
 	{
 		RightHandCollisionBox->SetCollisionEnabled(bEnableCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+	}
+}
+
+void ASLAIBaseCharacter::ToggleLeftFootCollision(bool bEnableCollision)
+{
+	if (LeftFootCollisionBox)
+	{
+		LeftFootCollisionBox->SetCollisionEnabled(bEnableCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+	}
+}
+
+void ASLAIBaseCharacter::ToggleRightFootCollision(bool bEnableCollision)
+{
+	if (RightFootCollisionBox)
+	{
+		RightFootCollisionBox->SetCollisionEnabled(bEnableCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
 	}
 }
 

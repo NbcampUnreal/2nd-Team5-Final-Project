@@ -53,7 +53,9 @@ enum class EToggleDamageType : uint8
 {
 	ETDT_CurrentEquippedWeapon,
 	ETDT_LeftHand,
-	ETDT_RightHand
+	ETDT_RightHand,
+	ETDT_LeftFoot,
+	ETDT_RightFoot
 };
 
 UCLASS()
@@ -110,6 +112,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void ToggleRightHandCollision(bool bEnableCollision);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleLeftFootCollision(bool bEnableCollision);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleRightFootCollision(bool bEnableCollision);
+	
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void EquipWeapon(AActor* WeaponActor);
 
@@ -158,6 +166,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	FName RightHandCollisionBoxAttachBoneName;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBoxComponent> LeftFootCollisionBox;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
+	FName LeftFootCollisionBoxAttachBoneName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBoxComponent> RightFootCollisionBox;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
+	FName RightFootCollisionBoxAttachBoneName;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
 
