@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
-#include "AnimNotify_SLCharacter.generated.h"
+#include "SLAnimNotify.generated.h"
 
 UENUM(BlueprintType)
 enum class ECharacterMontageState : uint8
@@ -46,6 +46,13 @@ enum class ECharacterMontageState : uint8
 	// 차징 모션
 	ECS_Charge_Basic UMETA(DisplayName = "Basic Charge"),
 	ECS_Charge_Special UMETA(DisplayName = "Special Charge"),
+};
+
+UENUM(BlueprintType)
+enum class EItemType : uint8
+{
+	IT_Sword     UMETA(DisplayName = "Sword"),
+	IT_Shield    UMETA(DisplayName = "Shield")
 };
 
 UCLASS()

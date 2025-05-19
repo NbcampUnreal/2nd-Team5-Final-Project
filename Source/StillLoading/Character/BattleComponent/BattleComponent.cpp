@@ -2,7 +2,7 @@
 
 UBattleComponent::UBattleComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UBattleComponent::BeginPlay()
@@ -10,75 +10,27 @@ void UBattleComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-void UBattleComponent::PerformAttack()
+void UBattleComponent::SendHitResult_Implementation(AActor* HitTarget, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
 {
-	bool bIsMultiplayer = bForceMultiplayerMode || (GetOwner()->GetNetMode() != NM_Standalone);
-
-	if (bIsMultiplayer && !GetOwner()->HasAuthority())
+	if (AActor* OwnerActor = GetOwner())
 	{
-		ServerPerformAttack();
-		return;
-	}
-
-	DoAttack();
-}
-
-void UBattleComponent::ServerPerformAttack_Implementation()
-{
-	DoAttack();
-}
-
-bool UBattleComponent::ServerPerformAttack_Validate()
-{
-	return true;
-}
-
-void UBattleComponent::DoAttack()
-{
-	const AActor* Owner = GetOwner();
-	if (!Owner) return;
-
-	const FVector Start = Owner->GetActorLocation() + FVector(0, 0, 50);
-	const FVector End = Start + Owner->GetActorForwardVector() * AttackRange;
-
-	TArray<FHitResult> HitResults;
-	const FCollisionShape Sphere = FCollisionShape::MakeSphere(AttackRadius);
-
-	bool bHit = GetWorld()->SweepMultiByChannel(
-		HitResults,
-		Start,
-		End,
-		FQuat::Identity,
-		EnemyChannel,
-		Sphere
-	);
-
-	if (bShowDebugLine)
-	{
-		//DrawDebugSphere(GetWorld(), Start, AttackRadius, 12, FColor::Blue, false, 1.f);
-		//DrawDebugSphere(GetWorld(), End, AttackRadius, 12, FColor::Red, false, 1.f);
-		//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 2.f);
-	}
-	
-	if (bHit)
-	{
-		for (const FHitResult& Hit : HitResults)
+		if (HitTarget && HitTarget->GetClass()->ImplementsInterface(USLBattleInterface::StaticClass()))
 		{
-			AActor* HitActor = Hit.GetActor();
+			UE_LOG(LogTemp, Warning, TEXT("Send Hit Result: %s -> %s | Damage: %.1f | AnimType: %s"),
+				*OwnerActor->GetName(),
+				*HitTarget->GetName(),
+				DamageAmount,
+				*UEnum::GetValueAsString(AnimType));
 			
-			if (HitActor && HitActor != Owner &&
-				HitActor->GetClass()->ImplementsInterface(USLBattleInterface::StaticClass()))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Hit Actor[%s]"), *HitActor->GetName());
-			}
-			
-			/*
-			if (HitActor && HitActor != Owner &&
-				HitActor->GetClass()->ImplementsInterface(USLBattleInterface::StaticClass()))
-			{
-				ISLBattleInterface::Execute_ReceiveBattleDamage(HitActor, 10.0f);
-			}
-			*/
+			ISLBattleInterface::Execute_ReceiveHitResult(HitTarget, DamageAmount, OwnerActor, HitResult, AnimType);
 		}
+	}
+}
+
+void UBattleComponent::ReceiveHitResult_Implementation(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult, EAttackAnimType AnimType)
+{
+	if (const AActor* OwnerActor = GetOwner())
+	{
+		OnCharacterHited.Broadcast(DamageCauser, DamageAmount, HitResult, AnimType);
 	}
 }

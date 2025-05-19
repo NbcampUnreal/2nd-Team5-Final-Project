@@ -1,4 +1,4 @@
-#include "AnimNotify_SLCharacter.h"
+#include "SLAnimNotify.h"
 
 #include "Character/SLPlayerCharacter.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
