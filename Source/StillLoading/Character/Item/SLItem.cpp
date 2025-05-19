@@ -19,7 +19,8 @@ void ASLItem::BeginPlay()
 void ASLItem::BindOverlap(UPrimitiveComponent* OverlapComponent)
 {
 	if (OverlapComponent) {
-		OverlapComponent->OnComponentBeginOverlap.AddDynamic(this, &ASLItem::HandleOverlap);
+		// 오버랩 연결시에 사용, 지금은 스윕으로 사용
+		//OverlapComponent->OnComponentBeginOverlap.AddDynamic(this, &ASLItem::HandleOverlap);
 	}
 }
 
