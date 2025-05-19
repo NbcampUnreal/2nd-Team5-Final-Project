@@ -36,6 +36,6 @@ void ASLDefaultShield::BeginPlay()
 {
 	Super::BeginPlay();
 
-	BindOverlap(BoxComponent);
+	//BindOverlap(BoxComponent);
 }
 
