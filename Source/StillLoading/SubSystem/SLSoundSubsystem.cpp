@@ -3,7 +3,7 @@
 
 #include "SubSystem/SLSoundSubsystem.h"
 #include "SubSystem/SLSoundSettings.h"
-#include "UI/SLUISubsystem.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "SubSystem/DataAssets/SLSoundDataAsset.h"
@@ -112,31 +112,12 @@ void USLSoundSubsystem::SetEffectVolume(float VolumeValue)
 	}
 }
 
-void USLSoundSubsystem::CheckValidOfSoundSource(ESLUISoundType SoundType)
-{
-	/*if (UISoundMap.Contains(SoundType))
-	{
-		if (IsValid(UISoundMap[SoundType]))
-		{
-			return;
-		}
-	}
-
-	CheckValidOfSoundSettings();
-	checkf(UISettings->WidgetSoundMap.Contains(SoundType), TEXT("Widget Sound Map is not contains soundtype"));
-
-	USoundBase* SoundSource = UISettings->WidgetSoundMap[SoundType].LoadSynchronous();
-	checkf(IsValid(SoundSource), TEXT("SoundSource is invalid"));
-
-	UISoundMap.Add(SoundType, SoundSource);*/
-}
-
 void USLSoundSubsystem::CheckValidOfSoundDataAsset()
 {
-	USLUISubsystem* UISubsystem = GetGameInstance()->GetSubsystem<USLUISubsystem>();
-	checkf(IsValid(UISubsystem), TEXT("UI Subsystem is invalid"));
+	USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
 
-	ESLChapterType CurrentChapter = UISubsystem->GetCurrentChapter();
+	ESLChapterType CurrentChapter = LevelSubsystem->GetCurrentChapter();
 
 	if (PossessChapter == CurrentChapter &&
 		IsValid(SoundDataAsset))

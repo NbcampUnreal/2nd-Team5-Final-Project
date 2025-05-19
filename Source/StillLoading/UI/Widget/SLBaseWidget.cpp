@@ -8,6 +8,7 @@
 #include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "Animation/WidgetAnimation.h"
 #include "UI/Widget/SLWidgetImageDataAsset.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
 
 void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -77,8 +78,8 @@ void USLBaseWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivate
 {
 	const USLWidgetImageDataAsset* WidgetDataAsset = Cast<USLWidgetImageDataAsset>(WidgetActivateBuffer.WidgetPublicData);
 
-	PublicImageMap = WidgetDataAsset->GetImageDataByChapter(WidgetActivateBuffer.CurrentChapter).PublicImageMap;
-	FontInfo = WidgetDataAsset->GetFondInfoByChapter(WidgetActivateBuffer.CurrentChapter);
+	PublicImageMap = WidgetDataAsset->GetImageDataMap();
+	FontInfo = WidgetDataAsset->GetFondInfo();
 }
 
 void USLBaseWidget::ApplyImageData()
@@ -210,6 +211,14 @@ void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)
 {
 	CheckValidOfSoundSubsystem();
 	SoundSubsystem->PlayUISound(SoundType);
+}
+
+void USLBaseWidget::MoveToLevelByType(ESLLevelNameType LevelType)
+{
+	USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelSubsystem),TEXT("Level Subsystem is invalid"));
+
+	LevelSubsystem->OpenLevelByNameType(LevelType);
 }
 
 void USLBaseWidget::CheckValidOfUISubsystem()

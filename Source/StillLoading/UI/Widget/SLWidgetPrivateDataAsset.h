@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "UI/Struct/SLLevelWidgetDataRow.h"
 #include "SLWidgetPrivateDataAsset.generated.h"
 

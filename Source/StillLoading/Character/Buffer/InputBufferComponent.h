@@ -1,9 +1,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
+#include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Components/ActorComponent.h"
 #include "InputBufferComponent.generated.h"
+
+class ASLPlayerCharacter;
+class UMovementHandlerComponent;
+
+UENUM(BlueprintType)
+enum class ESkillType : uint8
+{
+	ST_Attack UMETA(DisplayName = "Attack"),
+	ST_Block UMETA(DisplayName = "Block"),
+	ST_PointMove UMETA(DisplayName = "PointMove"),
+};
 
 USTRUCT(BlueprintType)
 struct FBufferedInput
@@ -11,7 +22,7 @@ struct FBufferedInput
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EInputActionType Action;
+	ESkillType Action;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float Timestamp;
@@ -26,7 +37,7 @@ public:
 	UInputBufferComponent();
 
 	UFUNCTION()
-	void AddBufferedInput(EInputActionType Action);
+	void AddBufferedInput(ESkillType Action);
 	UFUNCTION()
 	void ProcessBufferedInputs();
 	UFUNCTION()
@@ -46,12 +57,14 @@ protected:
 
 private:
 	UFUNCTION()
-	void ExecuteInput(EInputActionType Action);
+	void ExecuteInput(ESkillType Action);
 	UFUNCTION()
-	bool CanConsumeInput(EInputActionType NextInput) const;
+	bool CanConsumeInput(ESkillType NextInput) const;
 
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
+	UPROPERTY()
+	TObjectPtr<UMovementHandlerComponent> CachedMovementHandlerComponent;
 	UPROPERTY()
 	TArray<FBufferedInput> InputBuffer;
 	UPROPERTY()

@@ -2,7 +2,6 @@
 
 
 #include "UI/Widget/LevelWidget/SLIntroWidget.h"
-#include "Kismet/GameplayStatics.h"
 
 void USLIntroWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -32,5 +31,5 @@ void USLIntroWidget::OnEndedOpenAnim()
 
 void USLIntroWidget::OnEndedCloseAnim()
 {
-	UGameplayStatics::OpenLevel(GetWorld(), "TestTitleLevel");
+	MoveToLevelByType(ESLLevelNameType::ELN_Title);
 }

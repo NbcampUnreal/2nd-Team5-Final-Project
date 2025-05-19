@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
-#include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLSoundSettings.generated.h"
 
 class USLSoundDataAsset;
@@ -16,7 +16,7 @@ class STILLLOADING_API USLSoundSettings : public UDeveloperSettings
 	
 public:
 	UPROPERTY(EditAnywhere, Config, Category = "SoundSourceData")
-	TMap < ESLChapterType, TSoftObjectPtr<USLSoundDataAsset>> ChapterSoundMap;
+	TMap <ESLChapterType, TSoftObjectPtr<USLSoundDataAsset>> ChapterSoundMap;
 
 	/*UPROPERTY(EditAnywhere, Config, Category = "SoundSourceData")
 	TSoftObjectPtr<USLSoundDataAsset> Chapter0SoundData = nullptr;

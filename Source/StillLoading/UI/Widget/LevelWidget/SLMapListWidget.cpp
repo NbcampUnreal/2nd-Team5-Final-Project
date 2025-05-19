@@ -3,7 +3,6 @@
 
 #include "UI/Widget/LevelWidget/SLMapListWidget.h"
 #include "UI/Widget/LevelWidget/SubWidget/SLMapElementWidget.h"
-#include "Kismet/GameplayStatics.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/UniformGridPanel.h"
@@ -31,7 +30,7 @@ void USLMapListWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiv
 		{
 			USLMapElementWidget* NewElement = CreateWidget<USLMapElementWidget>(this, MapElementWidgetClass);
 
-			NewElement->InitMapElement(MapData.Key);
+			NewElement->InitMapElement(MapData.Value.MapName);
 			NewElement->OnClickedMapElement.AddDynamic(this, &ThisClass::OnClickedElement);
 			//NewElement->SetIsEnabledButton(MapData.Value.DefaultEnabled);
 			NewElement->SetIsEnabled(MapData.Value.DefaultEnabled);
@@ -56,15 +55,9 @@ void USLMapListWidget::DeactivateWidget()
 	OnEndedCloseAnim();
 }
 
-void USLMapListWidget::OnClickedElement(ESLGameMapType TargetMapType)
+void USLMapListWidget::OnClickedElement(ESLLevelNameType TargetMapType)
 {
-	//checkf(ElementMap.Contains(TargetMapType), TEXT("Target Map not contains TargetMapType"));
-	//USLMapElementWidget* TargetElement = ElementMap[TargetMapType];
-
-	checkf(ElementMap.Contains(TargetMapType), TEXT("Element Data not contains TargetMapType"));
-	UE_LOG(LogTemp, Warning, TEXT("On Clicked %s"), *ElementMap[TargetMapType]->GetName());
-
-	UGameplayStatics::OpenLevel(GetWorld(), "TestInGameLevel");
+	MoveToLevelByType(TargetMapType);
 }
 
 void USLMapListWidget::ApplyFontData()

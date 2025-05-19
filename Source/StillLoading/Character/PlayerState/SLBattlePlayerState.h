@@ -42,4 +42,6 @@ protected:
 	float WalkingSpeed = 250.f;
 	UPROPERTY()
 	float MaxSpeed = 500.f;
+	UPROPERTY()
+	float JumpZVelocity = 1000.f;
 };

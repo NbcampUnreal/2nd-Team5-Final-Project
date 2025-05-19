@@ -5,7 +5,7 @@
 #include "Components/Button.h"
 #include "Components/Image.h"
 
-void USLMapElementWidget::InitMapElement(ESLGameMapType NewType)
+void USLMapElementWidget::InitMapElement(ESLLevelNameType NewType)
 {
 	ElementType = NewType;
 	ElementButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedMapElementButton);
