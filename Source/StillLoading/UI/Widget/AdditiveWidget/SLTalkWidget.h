@@ -19,7 +19,6 @@ public:
 	virtual void DeactivateWidget() override;
 
 protected:
-	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
 	virtual bool ApplyTextBorderImage() override;
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);

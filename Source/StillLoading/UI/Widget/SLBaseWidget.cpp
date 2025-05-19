@@ -9,6 +9,8 @@
 #include "Animation/WidgetAnimation.h"
 #include "UI/Widget/SLWidgetImageDataAsset.h"
 #include "SubSystem/SLLevelTransferSubsystem.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/TextBlock.h"
 
 void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -94,6 +96,26 @@ void USLBaseWidget::ApplyImageData()
 	ApplyBorderImage();
 	ApplyProgressBarImage(ProgressBarStyle);
 	ApplyOtherImage();
+}
+
+void USLBaseWidget::ApplyFontData()
+{
+	TArray<UWidget*> FoundWidgets;
+	WidgetTree->GetAllWidgets(FoundWidgets);
+
+	for (UWidget* Widget : FoundWidgets)
+	{
+		if (IsValid(Widget))
+		{
+			UTextBlock* TextBlock = Cast<UTextBlock>(Widget);
+
+			if (IsValid(TextBlock))
+			{
+				FontInfo.Size = TextBlock->GetFont().Size;
+				TextBlock->SetFont(FontInfo);
+			}
+		}
+	}
 }
 
 bool USLBaseWidget::ApplyBackgroundImage()

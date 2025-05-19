@@ -65,14 +65,6 @@ void USLStoryWidget::UpdateStoryState(ESLChapterType ChapterType, ESLStoryType T
 	}
 }
 
-void USLStoryWidget::ApplyFontData()
-{
-	Super::ApplyFontData();
-
-	/*StoryText->SetFont(FontInfo);
-	NameText->SetFont(FontInfo);*/
-}
-
 void USLStoryWidget::ApplyTextData()
 {
 	Super::ApplyTextData();

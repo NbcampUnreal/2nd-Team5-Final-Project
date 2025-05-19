@@ -95,12 +95,6 @@ void USLOptionWidget::DeactivateWidget()
 	PlayUISound(ESLUISoundType::EUS_Close);
 }
 
-void USLOptionWidget::ApplyFontData()
-{
-	Super::ApplyFontData();
-
-}
-
 void USLOptionWidget::ApplyTextData()
 {
 	Super::ApplyTextData();
