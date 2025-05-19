@@ -23,8 +23,15 @@ void USLKeyMappingWidget::UpdateTextIndex(const FName& NewTagIndex)
 
 void USLKeyMappingWidget::UpdateTextFont(const FSlateFontInfo& FontInfo)
 {
-	/*TagText->SetFont(FontInfo);
-	KeyTextBox->SetFont(FontInfo);*/
+	FSlateFontInfo NewFontInfo;
+
+	NewFontInfo = FontInfo;
+
+	NewFontInfo.Size = TagText->GetFont().Size;
+	TagText->SetFont(NewFontInfo);
+
+	NewFontInfo.Size = KeyTextBox->GetFont().Size;
+	KeyTextBox->SetFont(NewFontInfo);
 }
 
 void USLKeyMappingWidget::UpdateTagText(const FText& NewTagText)

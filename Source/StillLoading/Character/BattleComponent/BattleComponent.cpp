@@ -10,24 +10,27 @@ void UBattleComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-void UBattleComponent::SendHitResult_Implementation(AActor* HitTarget, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+void UBattleComponent::SendHitResult(AActor* HitTarget, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
 {
 	if (AActor* OwnerActor = GetOwner())
 	{
-		if (HitTarget && HitTarget->GetClass()->ImplementsInterface(USLBattleInterface::StaticClass()))
+		if (HitTarget)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Send Hit Result: %s -> %s | Damage: %.1f | AnimType: %s"),
-				*OwnerActor->GetName(),
-				*HitTarget->GetName(),
-				DamageAmount,
-				*UEnum::GetValueAsString(AnimType));
-			
-			ISLBattleInterface::Execute_ReceiveHitResult(HitTarget, DamageAmount, OwnerActor, HitResult, AnimType);
+			if (UBattleComponent* TargetBattleComp = HitTarget->FindComponentByClass<UBattleComponent>())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Send Hit Result: %s -> %s | Damage: %.1f | AnimType: %s"),
+					*OwnerActor->GetName(),
+					*HitTarget->GetName(),
+					DamageAmount,
+					*UEnum::GetValueAsString(AnimType));
+
+				TargetBattleComp->ReceiveHitResult(DamageAmount, OwnerActor, HitResult, AnimType);
+			}
 		}
 	}
 }
 
-void UBattleComponent::ReceiveHitResult_Implementation(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult, EAttackAnimType AnimType)
+void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult, EAttackAnimType AnimType)
 {
 	if (const AActor* OwnerActor = GetOwner())
 	{
@@ -52,7 +55,7 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 			Start,
 			End,
 			FQuat::Identity,
-			ECC_Pawn,
+			ECC_GameTraceChannel1,
 			SweepShape,
 			Params
 		);
@@ -61,19 +64,19 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 		{
 			DrawDebugCapsule(GetWorld(), End, SweepShape.GetCapsuleHalfHeight(), SweepShape.GetCapsuleRadius(), FQuat::Identity, FColor::Green, false, 1.0f);
 		}
-		
+
 		for (const FHitResult& Hit : HitResults)
 		{
 			AActor* HitActor = Hit.GetActor();
 
 			if (HitActor && HitActor != OwnerActor && !AlreadyHitActors.Contains(HitActor))
 			{
-				if (HitActor->GetClass()->ImplementsInterface(USLBattleInterface::StaticClass()))
+				if (UBattleComponent* TargetBattleComp = HitActor->FindComponentByClass<UBattleComponent>())
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
 					AlreadyHitActors.Add(HitActor);
-					
-					ISLBattleInterface::Execute_SendHitResult(OwnerActor, HitActor, GetDamageByType(AttackType), Hit, AttackType);
+
+					SendHitResult(HitActor, GetDamageByType(AttackType), Hit, AttackType);
 				}
 			}
 		}

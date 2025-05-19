@@ -43,7 +43,7 @@ protected:
 
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
 	virtual void ApplyImageData();
-	virtual void ApplyFontData() {};
+	virtual void ApplyFontData();
 	virtual void ApplyTextData() {};
 
 	virtual bool ApplyBackgroundImage();

@@ -101,9 +101,6 @@ void USLInGameWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActiva
 void USLInGameWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
-
-	//TimerText->SetFont(FontInfo);
-	//GameStateText->SetFont(FontInfo);
 }
 
 bool USLInGameWidget::ApplyBorderImage()

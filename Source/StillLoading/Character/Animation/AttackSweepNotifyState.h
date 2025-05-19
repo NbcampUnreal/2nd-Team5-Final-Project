@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
-#include "Character/Interface/SLBattleInterface.h"
+#include "Character/DataAsset/AttackDataAsset.h"
 #include "AttackSweepNotifyState.generated.h"
 
 UCLASS()
