@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLLevelWidgetDataRow.generated.h"
 
 USTRUCT(BlueprintType)
@@ -13,7 +14,7 @@ struct STILLLOADING_API FSLMapListDataRow : public FTableRowBase
 
 public:
 	UPROPERTY(EditAnywhere)
-	FName MapName = "";
+	ESLLevelNameType MapName = ESLLevelNameType::ELN_None;
 
 	UPROPERTY(EditAnywhere)
 	int32 TargetRow = 0;

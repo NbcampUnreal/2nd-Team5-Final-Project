@@ -5,6 +5,7 @@
 #include "Components/ActorComponent.h"
 #include "CombatHandlerComponent.generated.h"
 
+class ASLPlayerCharacter;
 class AChargingWidgetActor;
 
 UENUM(BlueprintType)
@@ -48,10 +49,6 @@ public:
     UFUNCTION()
     void AdvanceCombo();
 
-    /** 현재 활성 콤보 데이터 조회 */
-    UFUNCTION()
-    void GetActiveComboDataAsset(UAttackComboDataAsset*& DataAsset) const;
-
     /** 콤보 상태 초기화 */
     UFUNCTION()
     FORCEINLINE void ResetCombo() { CurrentComboIndex = 0; }
@@ -65,7 +62,7 @@ public:
 
     /** Empowered 상태 설정 */
     UFUNCTION()
-    FORCEINLINE void SetEmpowered(const ECharacterComboState Mode) { CurrentMode = Mode; }
+    FORCEINLINE void SetCombatMode(const ECharacterComboState Mode) { CurrentMode = Mode; }
 
     /** 현재 Empowered 상태인지 반환 */
     UFUNCTION()
@@ -86,6 +83,10 @@ private:
     /** ChargingWidgetActor 생성 */
     UFUNCTION()
     void GenerateChargingWidget();
+
+    /** 현재 활성 콤보 데이터 조회 */
+    UFUNCTION()
+    void GetActiveComboDataAsset(UAttackComboDataAsset*& DataAsset);
 
     /** -------------------- 콤보 -------------------- */
 
@@ -109,7 +110,10 @@ private:
     FTimerHandle ChargingFinishTimerHandle;
     FTimerHandle ChargingUpdateTimerHandle;
 
-    /** -------------------- Settings -------------------- */
+    /** -------------------- Character -------------------- */
+
+    UPROPERTY()
+    TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
 
 public:
     /** 일반 콤보 데이터 */
@@ -119,6 +123,10 @@ public:
     /** Empowered 콤보 데이터 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combo")
     TObjectPtr<UAttackComboDataAsset> EmpoweredComboDataAsset;
+
+    /** Air Attack 콤보 데이터 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combo")
+    TObjectPtr<UAttackComboDataAsset> AirComboDataAsset;
 
     /** 충전 유지 시간 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Charging", meta = (ClampMin = "0.1", ClampMax = "5.0"))

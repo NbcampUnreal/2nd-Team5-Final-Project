@@ -1,40 +1,41 @@
 #include "SLDefaultSword.h"
-#include "Character/BattleComponent/BattleComponent.h"
+
 #include "Components/BoxComponent.h"
 
 ASLDefaultSword::ASLDefaultSword()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionSphere"));
 	BoxComponent->SetupAttachment(ItemMesh);
-	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ASLDefaultSword::OnBoxOverlap);
 
-	BoxComponent->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+	BoxComponent->SetCollisionObjectType(ECC_GameTraceChannel1);
+
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	BoxComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	BoxComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	BoxComponent->SetGenerateOverlapEvents(false);
+
 	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void ASLDefaultSword::EnableOverlap()
+{
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	BoxComponent->SetGenerateOverlapEvents(true);
+	HitActors.Empty();
+}
+
+void ASLDefaultSword::DisableOverlap()
+{
+	BoxComponent->SetGenerateOverlapEvents(false);
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HitActors.Empty();
 }
 
 void ASLDefaultSword::BeginPlay()
 {
 	Super::BeginPlay();
-	
-}
 
-void ASLDefaultSword::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-void ASLDefaultSword::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (OtherActor && OtherActor != this)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Sword Overlapped with: %s"), *OtherActor->GetName());
-
-		if (UBattleComponent* BattleComponent = FindComponentByClass<UBattleComponent>())
-		{
-			
-		}
-	}
+	BindOverlap(BoxComponent);
 }

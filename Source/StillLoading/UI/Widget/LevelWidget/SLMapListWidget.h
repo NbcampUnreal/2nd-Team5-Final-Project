@@ -23,7 +23,7 @@ public:
 
 protected:
 	UFUNCTION()
-	void OnClickedElement(ESLGameMapType TargetMapType);
+	void OnClickedElement(ESLLevelNameType TargetMapType);
 
 	virtual void ApplyFontData() override;
 	virtual bool ApplyBackgroundImage() override;

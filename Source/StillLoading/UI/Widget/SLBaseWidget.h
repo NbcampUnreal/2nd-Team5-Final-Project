@@ -5,11 +5,14 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLSoundTypes.h"
 #include "SubSystem/SLTextPoolTypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLBaseWidget.generated.h"
 
 class USLUISubsystem;
 class USLTextPoolSubsystem;
+class USLSoundSubsystem;
 struct FSLWidgetActivateBuffer;
 
 UCLASS()
@@ -18,10 +21,7 @@ class STILLLOADING_API USLBaseWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable)
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem);
-
-	UFUNCTION(BlueprintCallable)
 	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
 	virtual void DeactivateWidget() {};
 
@@ -55,9 +55,11 @@ protected:
 	virtual bool ApplyOtherImage();
 	
 	void PlayUISound(ESLUISoundType SoundType);
+	void MoveToLevelByType(ESLLevelNameType LevelType);
 
 	void CheckValidOfUISubsystem();
 	void CheckValidOfTextPoolSubsystem();
+	void CheckValidOfSoundSubsystem();
 
 protected:
 	UPROPERTY()
@@ -65,6 +67,9 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<USLTextPoolSubsystem> TextPoolSubsystem = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<USLSoundSubsystem> SoundSubsystem = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<UWidgetAnimation> OpenAnim = nullptr;

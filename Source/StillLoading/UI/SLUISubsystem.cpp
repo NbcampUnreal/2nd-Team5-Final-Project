@@ -3,14 +3,7 @@
 
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUISettings.h"
-#include "Kismet/GameplayStatics.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
-#include "Components/AudioComponent.h"
-
-void USLUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-}
 
 void USLUISubsystem::SetInputModeAndCursor()
 {
@@ -74,7 +67,7 @@ void USLUISubsystem::ActivateFade(bool bIsFadeIn)
 {
 	WidgetActivateBuffer.bIsFade = bIsFadeIn;
 
-	AddAdditveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
+	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
 }
 
 void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType)
@@ -82,7 +75,7 @@ void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiTy
 	WidgetActivateBuffer.TargetMap = MapType;
 	WidgetActivateBuffer.TargetNotify = NotiType;
 
-	AddAdditveWidget(ESLAdditiveWidgetType::EAW_NotifyWidget);
+	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_NotifyWidget);
 }
 
 void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, int32 TargetIndex)
@@ -90,7 +83,7 @@ void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, int32 TargetInd
 	WidgetActivateBuffer.TargetStory = TargetStoryType;
 	WidgetActivateBuffer.TargetIndex = TargetIndex;
 
-	AddAdditveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
+	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
 }
 
 void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex)
@@ -98,10 +91,10 @@ void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, int32 Target
 	WidgetActivateBuffer.TargetTalk = TalkTargetType;
 	WidgetActivateBuffer.TargetIndex = TargetIndex;
 
-	AddAdditveWidget(ESLAdditiveWidgetType::EAW_TalkWidget);
+	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_TalkWidget);
 }
 
-void USLUISubsystem::AddAdditveWidget(ESLAdditiveWidgetType WidgetType)
+void USLUISubsystem::AddAdditiveWidget(ESLAdditiveWidgetType WidgetType)
 {
 	CheckValidOfAdditiveWidget(WidgetType);
 
@@ -148,49 +141,10 @@ void USLUISubsystem::RemoveAllAdditveWidget()
 	SetInputModeAndCursor();
 }
 
-void USLUISubsystem::PlayUISound(ESLUISoundType SoundType)
-{
-	CheckValidOfSoundSource(SoundType);
-
-	if (!IsValid(AudioComp))
-	{
-		AudioComp = UGameplayStatics::CreateSound2D(GetGameInstance(), UISoundMap[SoundType], EffectVolume);
-		AudioComp->bAutoDestroy = false;
-	}
-
-	StopUISound();
-
-	AudioComp->SetSound(UISoundMap[SoundType]);
-	AudioComp->Play();
-}
-
-void USLUISubsystem::StopUISound()
-{
-	if (IsValid(AudioComp) && AudioComp->IsPlaying())
-	{
-		AudioComp->Stop();
-	}
-}
-
-const ESLChapterType USLUISubsystem::GetCurrentChapter() const
-{
-	return WidgetActivateBuffer.CurrentChapter;
-}
-
 UDataAsset* USLUISubsystem::GetPublicImageData()
 {
 	CheckValidOfWidgetDataAsset();
 	return WidgetActivateBuffer.WidgetPublicData;
-}
-
-void USLUISubsystem::SetEffectVolume(float VolumeValue)
-{
-	EffectVolume = FMath::Clamp(VolumeValue, 0.0f, 1.0f);
-
-	if (IsValid(AudioComp))
-	{
-		AudioComp->SetVolumeMultiplier(EffectVolume);
-	}
 }
 
 void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType)
@@ -229,33 +183,19 @@ void USLUISubsystem::CheckValidOfUISettings()
 	checkf(IsValid(UISettings), TEXT("UI Settings is invalid"));
 }
 
-void USLUISubsystem::CheckValidOfSoundSource(ESLUISoundType SoundType)
-{
-	if (UISoundMap.Contains(SoundType))
-	{
-		if (IsValid(UISoundMap[SoundType]))
-		{
-			return;
-		}
-	}
-
-	CheckValidOfUISettings();
-	checkf(UISettings->WidgetSoundMap.Contains(SoundType), TEXT("Widget Sound Map is not contains soundtype"));
-
-	USoundBase* SoundSource = UISettings->WidgetSoundMap[SoundType].LoadSynchronous();
-	checkf(IsValid(SoundSource), TEXT("SoundSource is invalid"));
-
-	UISoundMap.Add(SoundType, SoundSource);
-}
-
 void USLUISubsystem::CheckValidOfWidgetDataAsset()
 {
-	if (IsValid(WidgetActivateBuffer.WidgetPublicData))
+	if (IsValid(WidgetActivateBuffer.WidgetPublicData) &&
+		WidgetActivateBuffer.CurrentChapter == CurrentDataChapter)
 	{
 		return;
 	}
 
+	CurrentDataChapter = WidgetActivateBuffer.CurrentChapter;
+
 	CheckValidOfUISettings();
-	WidgetActivateBuffer.WidgetPublicData = UISettings->WidgetPublicDataAsset.LoadSynchronous();
+
+	checkf(UISettings->ChapterWidgetPublicDataMap.Contains(CurrentDataChapter), TEXT("Widget Public Data Map is not contains"));
+	WidgetActivateBuffer.WidgetPublicData = UISettings->ChapterWidgetPublicDataMap[CurrentDataChapter].LoadSynchronous();
 	checkf(IsValid(WidgetActivateBuffer.WidgetPublicData), TEXT("Widget ImageData is invalid"));
 }

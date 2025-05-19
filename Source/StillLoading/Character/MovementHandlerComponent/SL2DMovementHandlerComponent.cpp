@@ -64,7 +64,7 @@ void USL2DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 	case EInputActionType::EIAT_Attack:
 		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
 		{
-			BufferComp->AddBufferedInput(ActionType);
+			BufferComp->AddBufferedInput(ESkillType::ST_Attack);
 		}
 		//Attack();
 		break;
@@ -230,7 +230,7 @@ void USL2DMovementHandlerComponent::Attack()
 	// TODO: 무기/애니메이션 처리 연결
 	if (auto* BC = GetOwner()->FindComponentByClass<UBattleComponent>())
 	{
-		BC->PerformAttack();
+		//BC->PerformAttack();
 	}
 	else
 	{

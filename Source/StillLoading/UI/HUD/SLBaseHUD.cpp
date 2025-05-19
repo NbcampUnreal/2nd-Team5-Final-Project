@@ -3,9 +3,20 @@
 
 #include "UI/HUD/SLBaseHUD.h"
 #include "UI/Widget/LevelWidget/SLLevelWidget.h"
-#include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "UI/SLUISubsystem.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
 
+
+void ASLBaseHUD::OnChangedCurrentChapter(ESLChapterType ChapterType)
+{
+	if (!IsValid(LevelWidgetObj))
+	{
+		return;
+	}
+
+	ActivateBuffer.CurrentChapter = ChapterType;
+	LevelWidgetObj->ActivateWidget(ActivateBuffer);
+}
 
 void ASLBaseHUD::BeginPlay()
 {
@@ -17,16 +28,19 @@ void ASLBaseHUD::BeginPlay()
 void ASLBaseHUD::OnStartedHUD()
 {
 	CheckValidOfUISubsystem();
-	CurrentChapter = UISubsystem->GetCurrentChapter();
-
 	CheckValidOfLevelWidget();
+
 	LevelWidgetObj->InitWidget(UISubsystem);
 	ApplyLevelWidgetInputMode();
 
-	FSLWidgetActivateBuffer ActivateBuffer;
-	ActivateBuffer.CurrentChapter = CurrentChapter;
+	USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
 
-	if (!IsValid(ActivateBuffer.WidgetPrivateData))
+	LevelSubsystem->ChapterDelegate.AddDynamic(this, &ThisClass::OnChangedCurrentChapter);
+	ActivateBuffer.CurrentChapter = LevelSubsystem->GetCurrentChapter();
+
+	if (!IsValid(ActivateBuffer.WidgetPrivateData) &&
+		!PrivateDataAsset.IsNull())
 	{
 		ActivateBuffer.WidgetPrivateData = PrivateDataAsset.LoadSynchronous();
 	}

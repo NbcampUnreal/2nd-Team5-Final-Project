@@ -19,28 +19,6 @@ enum class ESLAdditiveWidgetType : uint8
 };
 
 UENUM(BlueprintType)
-enum class ESLUISoundType : uint8
-{
-	EUS_None = 0,
-	EUS_Click,
-	EUS_Hover,
-	EUS_Open,
-	EUS_Close,
-	EUS_Notify
-};
-
-UENUM(BlueprintType)
-enum class ESLChapterType : uint8
-{
-	EC_None = 0,
-	EC_Intro,
-	EC_Chapter2D,
-	EC_Chapter2_5D,
-	EC_Chapter3D,
-	EC_ChapterHighQuality
-};
-
-UENUM(BlueprintType)
 enum class ESLInputModeType : uint8
 {
 	EIM_UIOnly = 0,
@@ -57,6 +35,7 @@ enum class ESLGameMapType : uint8
 	EGM_Mini3,
 	EGM_Mini4,
 	EGM_Mini5,
+	EGM_Mini6,
 	EGM_DebugRoom,
 	EGM_Boss,
 	EGM_Max

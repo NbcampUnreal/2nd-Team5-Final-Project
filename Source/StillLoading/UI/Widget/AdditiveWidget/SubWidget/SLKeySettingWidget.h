@@ -56,7 +56,10 @@ private:
 	TObjectPtr<USLUserDataSubsystem> UserDataSubsystem = nullptr;
 
 	UPROPERTY()
-	TMap<EInputActionType, USLKeyMappingWidget*> ActionWidgetMap;
+	TArray<USLKeyMappingWidget*> MappingWidgets;
+
+	UPROPERTY()
+	TArray<USLKeyMappingWidget*> MappingWidgetArray;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UButton> CloseButton = nullptr;
@@ -67,7 +70,6 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> BackgroundImg = nullptr;
 
-	
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UGridPanel> KeySettingGrid = nullptr;
 

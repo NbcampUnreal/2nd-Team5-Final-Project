@@ -17,6 +17,9 @@ public:
 	TObjectPtr<UAnimMontage> SpecialAttackMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
+	TObjectPtr<UAnimMontage> AirAttackMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> DodgeMontage;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")

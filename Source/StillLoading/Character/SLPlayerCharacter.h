@@ -32,6 +32,16 @@ class STILLLOADING_API ASLPlayerCharacter : public ASLPlayerCharacterBase
 public:
 	ASLPlayerCharacter();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<AActor> SwordClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<AActor> ShieldClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<AActor> Sword;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<AActor> Shield;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -44,12 +54,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character|Movement")
 	float LastLandTime = 0.0f;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	TSubclassOf<AActor> SwordClass;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	TSubclassOf<AActor> ShieldClass;
 
 private:
 	UFUNCTION()
@@ -58,11 +62,6 @@ private:
 	// Debug용 함수
 	UFUNCTION(BlueprintCallable, Category = "Debug")
 	void PrintPrimaryStateTags() const;
-	
-	UPROPERTY()
-	TObjectPtr<AActor> Sword;
-	UPROPERTY()
-	TObjectPtr<AActor> Shield;
 	
 public:
 	// 상태 태그 추가/제거 함수
