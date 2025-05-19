@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLWidgetImageDataRow.generated.h"
 
 
@@ -24,14 +25,4 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TMap<FName, TSoftObjectPtr<UTexture2D>> ImageMap;
-};
-
-USTRUCT(BlueprintType)
-struct STILLLOADING_API FSLPublicWidgetImageData
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	TMap<ESLPublicWidgetImageType, UTexture2D*> PublicImageMap;
 };

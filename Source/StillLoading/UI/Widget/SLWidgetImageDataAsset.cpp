@@ -3,14 +3,12 @@
 
 #include "UI/Widget/SLWidgetImageDataAsset.h"
 
-const FSLPublicWidgetImageData& USLWidgetImageDataAsset::GetImageDataByChapter(ESLChapterType ChapterType) const
+const TMap<ESLPublicWidgetImageType, UTexture2D*>& USLWidgetImageDataAsset::GetImageDataMap() const
 {
-	checkf(ChapterPublicImageMap.Contains(ChapterType), TEXT("Chapter Type not contains"));
-	return ChapterPublicImageMap[ChapterType];
+	return PublicImageMap;
 }
 
-const FSlateFontInfo& USLWidgetImageDataAsset::GetFondInfoByChapter(ESLChapterType ChapterType) const
+const FSlateFontInfo& USLWidgetImageDataAsset::GetFondInfo() const
 {
-	checkf(ChapterFontMap.Contains(ChapterType), TEXT("Chapter Type not contains"));
-	return ChapterFontMap[ChapterType];
+	return FontInfo;
 }

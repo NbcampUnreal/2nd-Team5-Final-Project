@@ -44,6 +44,12 @@ private:
     UFUNCTION()
     void SendWidgetData();
 
+    UFUNCTION()
+    void SaveChapterData();
+
+    UFUNCTION()
+    void SendChapterData();
+
 
     UPROPERTY()
     USLSaveGame* CurrentSaveGame;

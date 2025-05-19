@@ -4,23 +4,38 @@
 
 ASLDefaultShield::ASLDefaultShield()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionSphere"));
 	BoxComponent->SetupAttachment(ItemMesh);
 
-	BoxComponent->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+	BoxComponent->SetCollisionObjectType(ECC_GameTraceChannel1);
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	BoxComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	BoxComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	BoxComponent->SetGenerateOverlapEvents(false);
+
 	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void ASLDefaultShield::EnableOverlap()
+{
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	BoxComponent->SetGenerateOverlapEvents(true);
+	HitActors.Empty();
+}
+
+void ASLDefaultShield::DisableOverlap()
+{
+	BoxComponent->SetGenerateOverlapEvents(false);
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HitActors.Empty();
 }
 
 void ASLDefaultShield::BeginPlay()
 {
 	Super::BeginPlay();
-	
-}
 
-void ASLDefaultShield::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+	BindOverlap(BoxComponent);
 }
 

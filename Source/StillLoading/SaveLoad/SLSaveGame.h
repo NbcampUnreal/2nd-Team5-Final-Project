@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
 #include "SLSaveDataStructs.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLSaveGame.generated.h"
 
 
@@ -24,8 +25,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) //테스트용 임시 변수
 	int CurrentMiniGameLevel;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) //테스트용 임시 변수
-	int CurrentChapter;
+	UPROPERTY()
+	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
 
 	UPROPERTY()
 	FWidgetSaveData WidgetSaveData;
