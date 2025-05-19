@@ -39,7 +39,8 @@ void ASLBaseHUD::OnStartedHUD()
 	LevelSubsystem->ChapterDelegate.AddDynamic(this, &ThisClass::OnChangedCurrentChapter);
 	ActivateBuffer.CurrentChapter = LevelSubsystem->GetCurrentChapter();
 
-	if (!IsValid(ActivateBuffer.WidgetPrivateData))
+	if (!IsValid(ActivateBuffer.WidgetPrivateData) &&
+		!PrivateDataAsset.IsNull())
 	{
 		ActivateBuffer.WidgetPrivateData = PrivateDataAsset.LoadSynchronous();
 	}

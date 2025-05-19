@@ -21,10 +21,7 @@ class STILLLOADING_API USLBaseWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable)
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem);
-
-	UFUNCTION(BlueprintCallable)
 	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
 	virtual void DeactivateWidget() {};
 

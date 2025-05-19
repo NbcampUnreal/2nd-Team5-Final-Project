@@ -21,9 +21,12 @@ void USLLevelTransferSubsystem::OpenLevelByNameType(ESLLevelNameType LevelNameTy
 {
 	CheckValidOfLevelDataAsset();
 
-	CurrentLevel = LevelNameType;
-	FString LevelURL = LevelDataAsset->GetLevelRef(LevelNameType).GetAssetName();
-	UGameplayStatics::OpenLevel(GetWorld(), (FName)LevelURL, true, Option);
+	if (!LevelDataAsset->GetLevelRef(LevelNameType).IsNull())
+	{
+		CurrentLevel = LevelNameType;
+		FString LevelURL = LevelDataAsset->GetLevelRef(LevelNameType).GetAssetName();
+		UGameplayStatics::OpenLevel(GetWorld(), (FName)LevelURL, true, Option);
+	}
 }
 
 const ESLLevelNameType USLLevelTransferSubsystem::GetCurrentLevelType() const

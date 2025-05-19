@@ -78,8 +78,8 @@ void USLBaseWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivate
 {
 	const USLWidgetImageDataAsset* WidgetDataAsset = Cast<USLWidgetImageDataAsset>(WidgetActivateBuffer.WidgetPublicData);
 
-	PublicImageMap = WidgetDataAsset->GetImageDataByChapter(WidgetActivateBuffer.CurrentChapter).PublicImageMap;
-	FontInfo = WidgetDataAsset->GetFondInfoByChapter(WidgetActivateBuffer.CurrentChapter);
+	PublicImageMap = WidgetDataAsset->GetImageDataMap();
+	FontInfo = WidgetDataAsset->GetFondInfo();
 }
 
 void USLBaseWidget::ApplyImageData()

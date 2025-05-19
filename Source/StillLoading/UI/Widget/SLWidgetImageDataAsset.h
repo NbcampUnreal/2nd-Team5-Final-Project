@@ -15,13 +15,13 @@ class STILLLOADING_API USLWidgetImageDataAsset : public UDataAsset
 	GENERATED_BODY()
 	
 public:
-	const FSLPublicWidgetImageData& GetImageDataByChapter(ESLChapterType ChapterType) const;
-	const FSlateFontInfo& GetFondInfoByChapter(ESLChapterType ChapterType) const;
+	const TMap<ESLPublicWidgetImageType, UTexture2D*>& GetImageDataMap() const;
+	const FSlateFontInfo& GetFondInfo() const;
 
 private:
 	UPROPERTY(EditAnywhere)
-	TMap<ESLChapterType, FSLPublicWidgetImageData> ChapterPublicImageMap;
+	TMap<ESLPublicWidgetImageType, UTexture2D*> PublicImageMap;
 
 	UPROPERTY(EditAnywhere)
-	TMap<ESLChapterType, FSlateFontInfo> ChapterFontMap;
+	FSlateFontInfo FontInfo;
 };

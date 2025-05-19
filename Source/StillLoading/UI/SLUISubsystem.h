@@ -57,6 +57,7 @@ private:
 	UPROPERTY()
 	FSLWidgetActivateBuffer WidgetActivateBuffer;
 
+	ESLChapterType CurrentDataChapter = ESLChapterType::EC_None;
 	ESLInputModeType CurrentLevelInputMode = ESLInputModeType::EIM_UIOnly;
 	bool bIsVisibleLevelCursor = true;
 };
