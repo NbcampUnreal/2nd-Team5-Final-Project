@@ -18,6 +18,7 @@ enum class ESLLevelNameType : uint8
 	ELN_Mini3,
 	ELN_Mini4,
 	ELN_Mini5,
+	ELN_Mini6,
 	ELN_DebugRoom,
 	ELN_BossStage,
 	ELN_Ending
