@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLUISettings.generated.h"
 
 class USLAdditiveWidget;
@@ -19,5 +20,5 @@ public:
 	TMap<ESLAdditiveWidgetType, TSoftClassPtr<USLAdditiveWidget>> WidgetClassMap;
 
 	UPROPERTY(EditAnywhere, Config, Category = "WidgetData")
-	TSoftObjectPtr<UDataAsset> WidgetPublicDataAsset = nullptr;
+	TMap<ESLChapterType, TSoftObjectPtr<UDataAsset>> ChapterWidgetPublicDataMap;
 };

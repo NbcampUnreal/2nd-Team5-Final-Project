@@ -185,12 +185,17 @@ void USLUISubsystem::CheckValidOfUISettings()
 
 void USLUISubsystem::CheckValidOfWidgetDataAsset()
 {
-	if (IsValid(WidgetActivateBuffer.WidgetPublicData))
+	if (IsValid(WidgetActivateBuffer.WidgetPublicData) &&
+		WidgetActivateBuffer.CurrentChapter == CurrentDataChapter)
 	{
 		return;
 	}
 
+	CurrentDataChapter = WidgetActivateBuffer.CurrentChapter;
+
 	CheckValidOfUISettings();
-	WidgetActivateBuffer.WidgetPublicData = UISettings->WidgetPublicDataAsset.LoadSynchronous();
+
+	checkf(UISettings->ChapterWidgetPublicDataMap.Contains(CurrentDataChapter), TEXT("Widget Public Data Map is not contains"));
+	WidgetActivateBuffer.WidgetPublicData = UISettings->ChapterWidgetPublicDataMap[CurrentDataChapter].LoadSynchronous();
 	checkf(IsValid(WidgetActivateBuffer.WidgetPublicData), TEXT("Widget ImageData is invalid"));
 }
