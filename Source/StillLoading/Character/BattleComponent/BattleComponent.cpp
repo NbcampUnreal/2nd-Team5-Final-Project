@@ -35,7 +35,7 @@ void UBattleComponent::ReceiveHitResult_Implementation(float DamageAmount, AActo
 	}
 }
 
-void UBattleComponent::DoAttackSweep()
+void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 {
 	if (AActor* OwnerActor = GetOwner())
 	{
@@ -72,7 +72,8 @@ void UBattleComponent::DoAttackSweep()
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
 					AlreadyHitActors.Add(HitActor);
-					ISLBattleInterface::Execute_SendHitResult(OwnerActor, HitActor, 10.0f, Hit, EAttackAnimType::AAT_NormalAttack);
+					
+					ISLBattleInterface::Execute_SendHitResult(OwnerActor, HitActor, GetDamageByType(AttackType), Hit, AttackType);
 				}
 			}
 		}
@@ -82,4 +83,16 @@ void UBattleComponent::DoAttackSweep()
 void UBattleComponent::ClearHitTargets()
 {
 	AlreadyHitActors.Empty();
+}
+
+float UBattleComponent::GetDamageByType(EAttackAnimType InType) const
+{
+	for (const auto& [AttackType, DamageAmount] : AttackData->AttackDataList)
+	{
+		if (AttackType == InType)
+		{
+			return DamageAmount;
+		}
+	}
+	return 0.0f;
 }
