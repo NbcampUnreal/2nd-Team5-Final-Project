@@ -18,9 +18,21 @@ public:
 	virtual void SendHitResult_Implementation(AActor* HitTarget, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType) override;
 	virtual void ReceiveHitResult_Implementation(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult, EAttackAnimType AnimType) override;
 
+	UFUNCTION()
+	void DoAttackSweep();
+	UFUNCTION()
+	void ClearHitTargets();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	bool bShowDebugLine = false;
+	
 	UPROPERTY(BlueprintAssignable, Category = "Delegate | Battle")
 	FOnCharacterHited OnCharacterHited;
 	
 protected:
 	virtual void BeginPlay() override;
+
+private:
+	UPROPERTY()
+	TSet<TWeakObjectPtr<AActor>> AlreadyHitActors;
 };

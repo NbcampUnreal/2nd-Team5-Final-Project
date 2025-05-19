@@ -8,6 +8,10 @@ UENUM(BlueprintType)
 enum class EAttackAnimType : uint8 // 애니메이션 기준
 {
 	AAT_NormalAttack UMETA(DisplayName = "Normal Attack"),
+
+
+	// Object
+	AAT_Activate UMETA(DisplayName = "Activate"),
 };
 
 UINTERFACE(MinimalAPI, Blueprintable)

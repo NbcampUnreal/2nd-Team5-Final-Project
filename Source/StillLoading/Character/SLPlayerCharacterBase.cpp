@@ -1,6 +1,5 @@
 #include "SLPlayerCharacterBase.h"
 
-#include "BattleComponent/BattleComponent.h"
 #include "Buffer/InputBufferComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "DynamicIMCComponent/SLDynamicIMCComponent.h"

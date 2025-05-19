@@ -2,7 +2,6 @@
 
 #include "Character/DataAsset/MontageDataAsset.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 UAnimationMontageComponent::UAnimationMontageComponent()
 {
