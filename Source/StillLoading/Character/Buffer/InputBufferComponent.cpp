@@ -2,6 +2,7 @@
 
 #include "Character/SLPlayerCharacter.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
+#include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 
 UInputBufferComponent::UInputBufferComponent()
@@ -17,6 +18,11 @@ void UInputBufferComponent::BeginPlay()
 	{
 		OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
 	}
+
+	if (!CachedMovementHandlerComponent)
+	{
+		CachedMovementHandlerComponent = GetOwner()->FindComponentByClass<UMovementHandlerComponent>();
+	}
 }
 
 void UInputBufferComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -27,7 +33,7 @@ void UInputBufferComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	ProcessBufferedInputs();
 }
 
-void UInputBufferComponent::AddBufferedInput(EInputActionType Action)
+void UInputBufferComponent::AddBufferedInput(ESkillType Action)
 {
 	if (InputBuffer.Num() > MaxInputBufferCount)
 	{
@@ -70,7 +76,7 @@ void UInputBufferComponent::ProcessBufferedInputs()
 
 	if (!InputBuffer.IsEmpty())
 	{
-		const EInputActionType NextInput = InputBuffer[0].Action;
+		const ESkillType NextInput = InputBuffer[0].Action;
 
 		if (CanConsumeInput(NextInput))
 		{
@@ -88,10 +94,22 @@ void UInputBufferComponent::ClearBuffer()
 
 void UInputBufferComponent::OnIMCActionStarted(EInputActionType ActionType)
 {
-	AddBufferedInput(ActionType);
+	switch (ActionType) {
+	case EInputActionType::EIAT_Attack:
+		AddBufferedInput(ESkillType::ST_Attack);
+		break;
+	case EInputActionType::EIAT_Block:
+		AddBufferedInput(ESkillType::ST_Block);
+		break;
+	case EInputActionType::EIAT_PointMove:
+		AddBufferedInput(ESkillType::ST_PointMove);
+		break;
+
+	default: break;
+	}
 }
 
-bool UInputBufferComponent::CanConsumeInput(EInputActionType NextInput) const
+bool UInputBufferComponent::CanConsumeInput(ESkillType NextInput) const
 {
 	//TODO::동작 조건 정의 필요
 	// 공격 연속 3회 -> 공격1 공격2 공격3
@@ -106,15 +124,17 @@ bool UInputBufferComponent::CanConsumeInput(EInputActionType NextInput) const
 	return true;
 }
 
-void UInputBufferComponent::ExecuteInput(EInputActionType Action)
+void UInputBufferComponent::ExecuteInput(ESkillType Action)
 {
 	AActor* Owner = GetOwner();
 	if (Owner)
 	{
-		if (UMovementHandlerComponent* MovementComp = GetOwner()->FindComponentByClass<UMovementHandlerComponent>())
+		if (!CachedMovementHandlerComponent)
 		{
-			MovementComp->HandleBufferedInput(Action);
+			CachedMovementHandlerComponent = GetOwner()->FindComponentByClass<UMovementHandlerComponent>();
 		}
+
+		CachedMovementHandlerComponent->HandleBufferedInput(Action);
 	}
 }
 

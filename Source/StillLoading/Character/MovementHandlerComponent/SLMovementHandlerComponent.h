@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/CameraManagerComponent/CameraManagerComponent.h"
+#include "Character/Buffer/InputBufferComponent.h"
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
@@ -44,7 +44,7 @@ public:
 	void OnAttackStageFinished(ECharacterMontageState AttackStage);
 	// 버퍼 출력 처리용
 	UFUNCTION()
-	void HandleBufferedInput(EInputActionType Action);
+	void HandleBufferedInput(ESkillType Action);
 	void OnLanded(const FHitResult& Hit);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
@@ -76,8 +76,8 @@ private:
 	void ToggleWalk(const bool bNewWalking);
 	void ToggleMenu();
 	void Block(const bool bIsBlocking);
-
-
+	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
+	
 	//UPROPERTY()
 	float InputBufferDuration = 0.3f;
 

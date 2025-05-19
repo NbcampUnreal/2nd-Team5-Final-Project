@@ -64,7 +64,7 @@ void USL2DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 	case EInputActionType::EIAT_Attack:
 		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
 		{
-			BufferComp->AddBufferedInput(ActionType);
+			BufferComp->AddBufferedInput(ESkillType::ST_Attack);
 		}
 		//Attack();
 		break;
