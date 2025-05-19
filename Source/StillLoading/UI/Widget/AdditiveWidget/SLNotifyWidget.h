@@ -22,7 +22,6 @@ protected:
 	virtual void OnEndedOpenAnim() override;
 	virtual void OnEndedCloseAnim() override;
 
-	virtual void ApplyFontData() override;
 	virtual bool ApplyBackgroundImage() override;
 
 private:
