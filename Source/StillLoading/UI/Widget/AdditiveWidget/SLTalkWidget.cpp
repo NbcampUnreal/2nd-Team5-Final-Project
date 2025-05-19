@@ -65,14 +65,6 @@ void USLTalkWidget::UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 Targ
 	}
 }
 
-void USLTalkWidget::ApplyFontData()
-{
-	Super::ApplyFontData();
-
-	/*NameText->SetFont(FontInfo);
-	TalkText->SetFont(FontInfo);*/
-}
-
 void USLTalkWidget::ApplyTextData()
 {
 	Super::ApplyTextData();
