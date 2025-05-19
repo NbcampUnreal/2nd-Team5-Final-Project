@@ -20,7 +20,7 @@ void UAttackSweepNotifyState::NotifyTick(USkeletalMeshComponent* MeshComp, UAnim
 	{
 		if (UBattleComponent* BattleComp = Owner->FindComponentByClass<UBattleComponent>())
 		{
-			BattleComp->DoAttackSweep();
+			BattleComp->DoAttackSweep(AttackType);
 		}
 	}
 }
