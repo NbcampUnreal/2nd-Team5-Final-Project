@@ -20,10 +20,10 @@ void ASLReactiveObjectLuminousStatue::TurnOffLight()
 		GetWorldTimerManager().SetTimer(LightControlHandler,
 			[this]
 			{
-				DeltaTime += GetWorld()->GetDeltaSeconds() * 10;
-				float Intensity = FMath::Lerp(PointLightComp->Intensity, 0, DeltaTime);
-				PointLightComp->SetIntensity(Intensity);
-				if (FMath::IsNearlyEqual(Intensity, 0, KINDA_SMALL_NUMBER))
+				DeltaTime += GetWorld()->GetDeltaSeconds();
+				float SetIntensity = FMath::Lerp(PointLightComp->Intensity, 0, DeltaTime * LightChangeSpeed);
+				PointLightComp->SetIntensity(SetIntensity);
+				if (PointLightComp->Intensity<=0)
 				{
 					UE_LOG(LogTemp, Warning, TEXT("End Timer"));
 					DeltaTime = 0;
@@ -37,9 +37,10 @@ void ASLReactiveObjectLuminousStatue::TurnOffLight()
 void ASLReactiveObjectLuminousStatue::BeginPlay()
 {
 	Super::BeginPlay();
+	PointLightComp->SetIntensity(0.0f);
 }
 
-void ASLReactiveObjectLuminousStatue::OnReacted(const ASLBaseCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLReactiveObjectLuminousStatue::OnReacted(const ASLPlayerCharacter* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	SetLightActive();
 	FTimerHandle handle;
@@ -59,10 +60,10 @@ void ASLReactiveObjectLuminousStatue::SetLightActive()
 		GetWorldTimerManager().SetTimer(LightControlHandler,
 			[this]
 			{
-				DeltaTime += GetWorld()->GetDeltaSeconds() * 10;
-				float Intensity = FMath::Lerp(0, 10000, DeltaTime);
+				DeltaTime += GetWorld()->GetDeltaSeconds();
+				float Intensity = FMath::Lerp(0, 50, DeltaTime* LightChangeSpeed);
 				PointLightComp->SetIntensity(Intensity);
-				if (FMath::IsNearlyEqual(Intensity, 0, KINDA_SMALL_NUMBER))
+				if (FMath::IsNearlyEqual(Intensity, 50.0f, KINDA_SMALL_NUMBER))
 				{
 					UE_LOG(LogTemp, Warning, TEXT("End Timer"));
 					DeltaTime = 0;

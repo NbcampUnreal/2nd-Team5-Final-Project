@@ -64,7 +64,7 @@ void ASLMinigamePuzzleCond::DeactivateAllStatue()
 {
 	for (int i = 0; i < CurrentStates.Num(); i++)
 	{
-		CurrentStates[i] = -1;
+		CurrentStates[i] = 0;
 		Statues[i];
 	}
 }
