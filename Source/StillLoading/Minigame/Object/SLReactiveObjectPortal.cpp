@@ -3,22 +3,23 @@
 
 #include "Minigame/Object/SLReactiveObjectPortal.h"
 #include "Kismet\GameplayStatics.h"
-#include "GeometryCollection\GeometryCollectionComponent.h"
 #include "Components\SphereComponent.h"
+#include "Minigame/Object/SLObjectDestroyer.h"
+#include "Components\ArrowComponent.h"
 #include "StillLoading\Character\SLPlayerCharacterBase.h"
-//#include "DestructibleComponent"
 
 ASLReactiveObjectPortal::ASLReactiveObjectPortal()
 {
     // GeometryCollectionComponent 생성
     GeometryCollectionComp = CreateDefaultSubobject<UGeometryCollectionComponent>(TEXT("GeometryCollectionComp"));
-
+    ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
     RootComponent = GeometryCollectionComp;
     
     CollisionComp->SetupAttachment(GeometryCollectionComp);
     StaticMeshComp->SetupAttachment(GeometryCollectionComp);
     StaticMeshComp->SetHiddenInGame(true);
     StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
     // 시뮬레이션 설정
     GeometryCollectionComp->SetSimulatePhysics(true);
     GeometryCollectionComp->SetNotifyRigidBodyCollision(true);
@@ -29,15 +30,18 @@ ASLReactiveObjectPortal::ASLReactiveObjectPortal()
     CollisionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     CollisionComp->SetCollisionObjectType(ECC_PhysicsBody);
 
-    GeometryCollectionComp->SetSimulatePhysics(false);
-    GeometryCollectionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+  
 
+    ObjectHp = 3;
 }
 
 void ASLReactiveObjectPortal::BeginPlay()
 {
-
-    GeometryCollectionComp->SetSimulatePhysics(true);
+    Super::BeginPlay();
+    SpawnLocation = ArrowComponent->GetComponentLocation();
+    SpawnRotation = ArrowComponent->GetComponentRotation();
+    
+    
 }
 
 void ASLReactiveObjectPortal::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
@@ -58,15 +62,25 @@ void ASLReactiveObjectPortal::OnReacted(const ASLPlayerCharacterBase* InCharacte
         }
         else
         {
-            StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-            FTimerHandle CollisionOffTimer;
-            GetWorld()->GetTimerManager().SetTimer(CollisionOffTimer,
-                [this]
-                {
-                    StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-                },
-                0.5f,
-                false);
+            BrokenDoor();
         }
     }
+}
+
+void ASLReactiveObjectPortal::BrokenDoor()
+{
+    ASLObjectDestroyer* BrokenActors = GetWorld()->SpawnActor<ASLObjectDestroyer>(DestroyerActor, SpawnLocation, SpawnRotation);
+    if (BrokenActors)
+    {
+        BrokenActors->OnHitDoor.AddDynamic(this, &ASLReactiveObjectPortal::OnBroken);
+    }
+    
+
+}
+
+void ASLReactiveObjectPortal::OnBroken()
+{
+
+    GeometryCollectionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    UE_LOG(LogTemp, Warning, TEXT("OnBroken"));
 }

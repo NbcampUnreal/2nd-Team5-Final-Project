@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/World.h"
+#include "GeometryCollection/GeometryCollectionComponent.h"
 #include "EngineUtils.h"
 
 // MiniGameManager 탐색 유틸리티

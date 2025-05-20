@@ -6,7 +6,7 @@
 #include "StillLoading\Minigame\System\SLBaseMinigameCond.h"
 #include "SLMinigamePuzzleCond.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMinigameObjectResetRequested);
+
 
 
 UENUM(BlueprintType)
@@ -28,6 +28,11 @@ public:
 	// Sets default values for this actor's properties
 	ASLMinigamePuzzleCond();
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMinigameObjectResetRequested);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnMinigameObjectResetRequested ObjectResetRequested;
+
 	//석상이 활성화되었을 때 해당 석상의 고유 번호를 아래 함수로 전달
 	void UpdateStatueState(int8 InStatueIndex, int8 SubmittedValue);
 
@@ -38,8 +43,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle")
 	ESLPuzzleType PuzzleType;
 
-	UPROPERTY(BlueprintAssignable)
-	FOnMinigameObjectResetRequested ObjectResetRequested;
+	
 
 	UPROPERTY(VisibleAnywhere)
 	int32 TryCount = 0;
