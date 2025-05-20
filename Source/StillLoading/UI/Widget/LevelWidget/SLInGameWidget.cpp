@@ -8,13 +8,15 @@
 #include "Components/ProgressBar.h"
 #include "Components/CanvasPanel.h"
 #include "Animation/WidgetAnimation.h"
+#include "UI/Widget/SLWidgetPrivateDataAsset.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 
-void USLInGameWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLInGameWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetInputMode = ESLInputModeType::EIM_GameOnly;
 	bIsVisibleCursor = false;
 
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 
 }
 
@@ -84,16 +86,48 @@ void USLInGameWidget::SetGameStateText(const FText& StateText)
 	GameStateText->SetText(StateText);
 }
 
-void USLInGameWidget::ApplyImageData()
+void USLInGameWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ApplyImageData();
+	Super::FindWidgetData(WidgetActivateBuffer);
 
+	if (IsValid(WidgetActivateBuffer.WidgetPrivateData))
+	{
+		USLInGamePrivateDataAsset* PrivateData = Cast<USLInGamePrivateDataAsset>(WidgetActivateBuffer.WidgetPrivateData);
+		PrivateImageMap.Empty();
+		PrivateImageMap = PrivateData->GetInGameImageByChapter(WidgetActivateBuffer.CurrentChapter).InGameImageMap;
+	}
 }
 
 void USLInGameWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
+}
 
+bool USLInGameWidget::ApplyBorderImage()
+{
+	if (!Super::ApplyBorderImage())
+	{
+		return false;
+	}
+
+	TimerBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+	PlayerStateBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+	GameStateBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+
+	return true;
+}
+
+bool USLInGameWidget::ApplyOtherImage()
+{
+	Super::ApplyOtherImage();
+
+	if (PrivateImageMap.Contains(ESLInGamePrivateImageType::EGPI_HitEffect) &&
+		IsValid(PrivateImageMap[ESLInGamePrivateImageType::EGPI_HitEffect]))
+	{
+		HitEffectImg->SetBrushFromTexture(PrivateImageMap[ESLInGamePrivateImageType::EGPI_HitEffect]);
+	}
+
+	return true;
 }
 
 void USLInGameWidget::SetIsSubWidgetActivate(bool bIsActived, UWidgetAnimation* ActiveAnim, UWidgetAnimation* DeactiveAnim)

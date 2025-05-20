@@ -13,8 +13,8 @@ class STILLLOADING_API USLIntroWidget : public USLLevelWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
-	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 
 protected:
 	virtual void OnEndedOpenAnim() override;

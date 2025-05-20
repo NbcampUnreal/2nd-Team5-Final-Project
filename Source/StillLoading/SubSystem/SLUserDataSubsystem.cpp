@@ -7,6 +7,7 @@
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/SLUserDataSettings.h"
+#include "SubSystem/SLSoundSubsystem.h"
 #include "SaveLoad/SLSaveGameSubsystem.h"
 #include "InputMappingContext.h"
 #include "SaveLoad/SLSaveDataStructs.h"
@@ -151,6 +152,7 @@ void USLUserDataSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Collection.InitializeDependency<USLUISubsystem>();
 	Collection.InitializeDependency<USLTextPoolSubsystem>();
+	Collection.InitializeDependency<USLSoundSubsystem>();
 
 	Super::Initialize(Collection);
 
@@ -166,13 +168,16 @@ void USLUserDataSubsystem::ApplyLanguageMode()
 
 void USLUserDataSubsystem::ApplyBgmVolume()
 {
-	// TODO : Apply Bgm Volume To Bgm Audio Component
+	CheckValidOfSoundSubsystem();
+	SoundSubsystem->SetBgmVolume(BgmVolume);
 }
 
 void USLUserDataSubsystem::ApplyEffectVolume()
 {
-	CheckValidOfUISubsystem();
-	UISubsystem->SetEffectVolume(EffectVolume);
+	CheckValidOfSoundSubsystem();
+	SoundSubsystem->SetEffectVolume(EffectVolume);
+	/*CheckValidOfUISubsystem();
+	UISubsystem->SetEffectVolume(EffectVolume);*/
 }
 
 void USLUserDataSubsystem::ApplyResolution()
@@ -278,6 +283,10 @@ void USLUserDataSubsystem::AddMappingDataToKeyMap(const FEnhancedActionKeyMappin
 	{
 		ActionType = EInputActionType::EIAT_Look;
 	}
+	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("Block")))
+	{
+		ActionType = EInputActionType::EIAT_Block;
+	}
 
 	KeySet.Add(ActionKeyMapping.Key);
 	ActionKeyMap.Add(ActionType, ActionKeyMapping);
@@ -325,6 +334,17 @@ void USLUserDataSubsystem::CheckValidOfTextPoolSubsystem()
 
 	TextPoolSubsystem = GetGameInstance()->GetSubsystem<USLTextPoolSubsystem>();
 	checkf(IsValid(TextPoolSubsystem), TEXT("TextPool Subsystem is invalid"));
+}
+
+void USLUserDataSubsystem::CheckValidOfSoundSubsystem()
+{
+	if (IsValid(SoundSubsystem))
+	{
+		return;
+	}
+
+	SoundSubsystem = GetGameInstance()->GetSubsystem<USLSoundSubsystem>();
+	checkf(IsValid(SoundSubsystem), TEXT("Sound Subsystem is invalid"));
 }
 
 void USLUserDataSubsystem::CheckValidOfUserDataSettings()

@@ -12,14 +12,3 @@ void ASLTitleHUD::OnStartedHUD()
 	CheckValidOfUISubsystem();
 	UISubsystem->ActivateFade(true);
 }
-
-void ASLTitleHUD::InitLevelWidget()
-{
-	Super::InitLevelWidget();
-
-	checkf(ChapterWidgetDataMap.Contains(CurrentChapter), TEXT("Widget Data Map is not contains ChapterType"));
-	LevelWidgetObj->SetLevelWidgetData(ChapterWidgetDataMap[CurrentChapter]);
-
-	CheckValidOfUISubsystem();
-	LevelWidgetObj->InitWidget(UISubsystem, CurrentChapter);
-}

@@ -2,9 +2,8 @@
 
 
 #include "UI/Widget/LevelWidget/SLIntroWidget.h"
-#include "Kismet/GameplayStatics.h"
 
-void USLIntroWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLIntroWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	bIsVisibleCursor = false;
@@ -12,12 +11,12 @@ void USLIntroWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType C
 	OpenAnim = IntroOpenAnim;
 	CloseAnim = IntroCloseAnim;
 
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 }
 
-void USLIntroWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLIntroWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
+	Super::ActivateWidget(WidgetActivateBuffer);
 
 	PlayAnimation(OpenAnim);
 	// Play Intro Sound?
@@ -32,5 +31,5 @@ void USLIntroWidget::OnEndedOpenAnim()
 
 void USLIntroWidget::OnEndedCloseAnim()
 {
-	UGameplayStatics::OpenLevel(GetWorld(), "TestTitleLevel");
+	MoveToLevelByType(ESLLevelNameType::ELN_Title, false);
 }

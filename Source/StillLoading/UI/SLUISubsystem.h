@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "SLUISubsystem.generated.h"
 
 class USLAdditiveWidget;
@@ -20,7 +22,7 @@ public:
 	void SetChapterToUI(ESLChapterType ChapterType);
 	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 
-	void ActivateFade(bool bIsFadeIn);
+	void ActivateFade(bool bIsFadeIn, bool bIsMoveLevel = false);
 	UFUNCTION(BlueprintCallable)
 	void ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType);
 	UFUNCTION(BlueprintCallable)
@@ -29,30 +31,18 @@ public:
 	void ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex);
 
 	UFUNCTION(BlueprintCallable)
-	void AddAdditveWidget(ESLAdditiveWidgetType WidgetType);
+	void AddAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveAllAdditveWidget();
 
-	void PlayUISound(ESLUISoundType SoundType);
-	void StopUISound();
-	
-	const ESLChapterType GetCurrentChapter() const; //
-
-	const UDataTable* GetImageDataTable();
-
-	//temp
-	void SetEffectVolume(float VolumeValue);
+	UDataAsset* GetPublicImageData();
 
 private:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-
 	void SetInputModeAndCursor();
 
 	void CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void CheckValidOfUISettings();
-
-	void CheckValidOfSoundSource(ESLUISoundType SoundType);
-	void CheckValidOfImageDataTable();
+	void CheckValidOfWidgetDataAsset();
 
 private:
 	UPROPERTY()
@@ -62,20 +52,12 @@ private:
 	TMap<ESLAdditiveWidgetType, USLAdditiveWidget*> AdditiveWidgetMap;
 
 	UPROPERTY()
-	TMap<ESLUISoundType, USoundBase*> UISoundMap;
-
-	UPROPERTY()
 	TArray<USLAdditiveWidget*> ActiveAdditiveWidgets;
 
 	UPROPERTY()
-	TObjectPtr<UAudioComponent> AudioComp = nullptr;
+	FSLWidgetActivateBuffer WidgetActivateBuffer;
 
-	UPROPERTY()
-	TObjectPtr<UDataTable> WidgetImageData = nullptr;
-
-	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
+	ESLChapterType CurrentDataChapter = ESLChapterType::EC_None;
 	ESLInputModeType CurrentLevelInputMode = ESLInputModeType::EIM_UIOnly;
-
 	bool bIsVisibleLevelCursor = true;
-	float EffectVolume = 1.0f;
 };

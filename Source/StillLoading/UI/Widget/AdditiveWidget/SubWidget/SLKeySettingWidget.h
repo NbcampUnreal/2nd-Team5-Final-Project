@@ -5,12 +5,12 @@
 #include "CoreMinimal.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
 #include "Character//DynamicIMCComponent/SLDynamicIMCComponent.h"
-//#include "EnhancedActionKeyMapping.h"
 #include "SLKeySettingWidget.generated.h"
 
 class USLUserDataSubsystem;
 class USLKeyMappingWidget;
 class UTextBlock;
+class UGridPanel;
 class UButton;
 class UImage;
 
@@ -20,13 +20,17 @@ class STILLLOADING_API USLKeySettingWidget : public USLAdditiveWidget
 	GENERATED_BODY()
 	
 public:
-	virtual void InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType) override;
-	virtual void ActivateWidget(ESLChapterType ChapterType) override;
+	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void DeactivateWidget() override;
 
 protected:
-	virtual void ApplyImageData() override;
 	virtual void ApplyFontData() override;
+	virtual void ApplyTextData() override;
+
+	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
+	virtual bool ApplyBorderImage() override;
+
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InPointerEvent) override;
 
@@ -40,12 +44,22 @@ private:
 
 	void CheckValidOfUserDateSubsystem();
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
+	TSubclassOf<USLKeyMappingWidget> KeyMappingWidgetClass = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
+	TMap<EInputActionType, FName> KeyTagIndexMap;
+
 private:
 	UPROPERTY()
 	TObjectPtr<USLUserDataSubsystem> UserDataSubsystem = nullptr;
 
 	UPROPERTY()
-	TMap<EInputActionType, USLKeyMappingWidget*> ActionWidgetMap;
+	TArray<USLKeyMappingWidget*> MappingWidgets;
+
+	UPROPERTY()
+	TArray<USLKeyMappingWidget*> MappingWidgetArray;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UButton> CloseButton = nullptr;
@@ -56,51 +70,8 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> BackgroundImg = nullptr;
 
-	
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> MoveUp = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> MoveDown = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> MoveLeft = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> MoveRight = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> Walk = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> Jump = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> Attack = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> Interaction = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> Look = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> PointMove = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLKeyMappingWidget> Menu = nullptr;
-
-	static const FName MoveUpTagIndex;
-	static const FName MoveDownTagIndex;
-	static const FName MoveLeftTagIndex;
-	static const FName MoveRightTagIndex;
-	static const FName WalkTagIndex;
-	static const FName JumpTagIndex;
-	static const FName AttackTagIndex;
-	static const FName InteractionTagIndex;
-	static const FName PointMoveTagIndex;
-	static const FName LookTagIndex;
-	static const FName MenuTagIndex;
+	TObjectPtr<UGridPanel> KeySettingGrid = nullptr;
 
 	EInputActionType TargetActionType = EInputActionType::EIAT_None;
 	bool bOnClickedChange = false;

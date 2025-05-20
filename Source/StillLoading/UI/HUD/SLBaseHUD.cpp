@@ -4,20 +4,18 @@
 #include "UI/HUD/SLBaseHUD.h"
 #include "UI/Widget/LevelWidget/SLLevelWidget.h"
 #include "UI/SLUISubsystem.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
 
-void ASLBaseHUD::SetChapterToLevelWidget(ESLChapterType ChapterType)
+
+void ASLBaseHUD::OnChangedCurrentChapter(ESLChapterType ChapterType)
 {
-	CheckValidOfUISubsystem();
-	UISubsystem->SetChapterToUI(ChapterType);
+	if (!IsValid(LevelWidgetObj))
+	{
+		return;
+	}
 
-	CheckValidOfLevelWidget();
-	checkf(ChapterWidgetDataMap.Contains(ChapterType), TEXT("Widget Data Map is not contains ChapterType"));
-
-	LevelWidgetObj->SetLevelWidgetData(ChapterWidgetDataMap[ChapterType]);
-	LevelWidgetObj->ActivateWidget(ChapterType);
-	LevelWidgetObj->AddToViewport(0);
-
-	ApplyLevelWidgetInputMode();
+	ActivateBuffer.CurrentChapter = ChapterType;
+	LevelWidgetObj->ActivateWidget(ActivateBuffer);
 }
 
 void ASLBaseHUD::BeginPlay()
@@ -27,12 +25,39 @@ void ASLBaseHUD::BeginPlay()
 	OnStartedHUD();
 }
 
+void ASLBaseHUD::OnStartedHUD()
+{
+	CheckValidOfUISubsystem();
+	CheckValidOfLevelWidget();
+
+	LevelWidgetObj->InitWidget(UISubsystem);
+	ApplyLevelWidgetInputMode();
+
+	USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
+
+	LevelSubsystem->ChapterDelegate.AddDynamic(this, &ThisClass::OnChangedCurrentChapter);
+	ActivateBuffer.CurrentChapter = LevelSubsystem->GetCurrentChapter();
+
+	if (!IsValid(ActivateBuffer.WidgetPrivateData) &&
+		!PrivateDataAsset.IsNull())
+	{
+		ActivateBuffer.WidgetPrivateData = PrivateDataAsset.LoadSynchronous();
+	}
+	
+	if (!IsValid(ActivateBuffer.WidgetPublicData))
+	{
+		ActivateBuffer.WidgetPublicData = UISubsystem->GetPublicImageData();
+	}
+
+	LevelWidgetObj->ActivateWidget(ActivateBuffer);
+	LevelWidgetObj->AddToViewport(0);
+}
+
 void ASLBaseHUD::ApplyLevelWidgetInputMode()
 {
 	APlayerController* OwningPC = GetOwningPlayerController();
 	checkf(IsValid(OwningPC), TEXT("PlayerController is invalid"));
-
-	CheckValidOfLevelWidget();
 
 	ESLInputModeType InputMode = LevelWidgetObj->GetWidgetInputMode();
 
@@ -49,6 +74,9 @@ void ASLBaseHUD::ApplyLevelWidgetInputMode()
 	case ESLInputModeType::EIM_GameAndUI:
 		OwningPC->SetInputMode(FInputModeGameAndUI());
 		break;
+
+	default:
+		checkNoEntry();
 	}
 
 	OwningPC->SetShowMouseCursor(LevelWidgetObj->GetWidgetCursorMode());
@@ -64,8 +92,6 @@ void ASLBaseHUD::CheckValidOfLevelWidget()
 	checkf(IsValid(LevelWidgetClass), TEXT("LevelWidgetClass is invalid"));
 	LevelWidgetObj = CreateWidget<USLLevelWidget>(GetOwningPlayerController(), LevelWidgetClass);
 	checkf(IsValid(LevelWidgetObj), TEXT("LevelWidgetObj is invalid"));
-
-	InitLevelWidget();
 }
 
 void ASLBaseHUD::CheckValidOfUISubsystem()

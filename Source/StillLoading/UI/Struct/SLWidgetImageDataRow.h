@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLWidgetImageDataRow.generated.h"
 
 

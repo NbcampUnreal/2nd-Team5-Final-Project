@@ -10,22 +10,17 @@
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
 
-const FName USLTitleWidget::BackgroundImgIndex = "BackgroundImg";
-const FName USLTitleWidget::TitleTextImgIndex = "TitleTextImg";
-const FName USLTitleWidget::ButtonsBackgroundImgIndex = "ButtonsBackground";
-const FName USLTitleWidget::ButtonImgIndex = "ButtonImg";
-
 const FName USLTitleWidget::TitleTextIndex = "TitleText";
 const FName USLTitleWidget::StartButtonIndex = "StartButton";
 const FName USLTitleWidget::OptionButtonIndex = "OptionButton";
 const FName USLTitleWidget::QuitButtonIndex = "QuitButton";
 
-void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	bIsVisibleCursor = true;
 	
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 
 	StartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedStartButton);
 	OptionButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedOptionButton);
@@ -37,51 +32,6 @@ void USLTitleWidget::DeactivateWidget()
 	Super::DeactivateWidget();
 
 	OnEndedCloseAnim();
-}
-
-void USLTitleWidget::ApplyImageData()
-{
-	Super::ApplyImageData();
-
-	if (ImageMap.Contains(BackgroundImgIndex) && IsValid(ImageMap[BackgroundImgIndex]))
-	{
-		BackgroundImg->SetBrushFromTexture(ImageMap[BackgroundImgIndex]);
-	}
-	
-	if (ImageMap.Contains(TitleTextImgIndex) && IsValid(ImageMap[TitleTextImgIndex]))
-	{
-		TitleTextImg->SetBrushFromTexture(ImageMap[TitleTextImgIndex]);
-	}
-	
-	if (ImageMap.Contains(ButtonsBackgroundImgIndex) && IsValid(ImageMap[ButtonsBackgroundImgIndex]))
-	{
-		ButtonsBackground->SetBrushFromTexture(ImageMap[ButtonsBackgroundImgIndex]);
-	}
-	
-	if (ImageMap.Contains(ButtonImgIndex) && IsValid(ImageMap[ButtonImgIndex]))
-	{
-		StartButton->WidgetStyle.Normal.SetResourceObject(ImageMap[ButtonImgIndex]);
-		StartButton->WidgetStyle.Hovered.SetResourceObject(ImageMap[ButtonImgIndex]);
-		StartButton->WidgetStyle.Pressed.SetResourceObject(ImageMap[ButtonImgIndex]);
-
-		OptionButton->WidgetStyle.Normal.SetResourceObject(ImageMap[ButtonImgIndex]);
-		OptionButton->WidgetStyle.Hovered.SetResourceObject(ImageMap[ButtonImgIndex]);
-		OptionButton->WidgetStyle.Pressed.SetResourceObject(ImageMap[ButtonImgIndex]);
-
-		QuitButton->WidgetStyle.Normal.SetResourceObject(ImageMap[ButtonImgIndex]);
-		QuitButton->WidgetStyle.Hovered.SetResourceObject(ImageMap[ButtonImgIndex]);
-		QuitButton->WidgetStyle.Pressed.SetResourceObject(ImageMap[ButtonImgIndex]);
-	}
-}
-
-void USLTitleWidget::ApplyFontData()
-{
-	Super::ApplyFontData();
-
-	/*TitleText->SetFont(FontInfo);
-	StartText->SetFont(FontInfo);
-	OptionText->SetFont(FontInfo);
-	QuitText->SetFont(FontInfo);*/
 }
 
 void USLTitleWidget::ApplyTextData()
@@ -111,15 +61,50 @@ void USLTitleWidget::ApplyTextData()
 	QuitText->SetText(OptionTextMap[QuitButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 }
 
+bool USLTitleWidget::ApplyBackgroundImage()
+{
+	if (!Super::ApplyBackgroundImage())
+	{
+		return false;
+	}
+	
+	//BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
+	
+	return true;
+}
+
+bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
+{
+	if (!Super::ApplyButtonImage(ButtonStyle))
+	{
+		return false;
+	}
+
+	StartButton->SetStyle(ButtonStyle);
+	OptionButton->SetStyle(ButtonStyle);
+	QuitButton->SetStyle(ButtonStyle);
+
+	return true;
+}
+
+bool USLTitleWidget::ApplyBorderImage()
+{
+	if (!Super::ApplyBorderImage())
+	{
+		return false;
+	}
+
+	TitleTextImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+	ButtonsBackground->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+
+	return true;
+}
+
 void USLTitleWidget::OnClickedStartButton()
 {
-	// TODO : Request Move To MapList Level
-	// Test Code : Add Map List Widget To Viewport
-	//CheckValidOfUISubsystem();
-	//UISubsystem->ActivateFade(false);
-
 	PlayUISound(ESLUISoundType::EUS_Click);
-	UGameplayStatics::OpenLevel(GetWorld(), "TestMapListLevel");
+	MoveToLevelByType(ESLLevelNameType::ELN_MapList);
 }
 
 void USLTitleWidget::OnClickedOptionButton()

@@ -2,8 +2,10 @@
 
 #include "ChargingWidget.h"
 #include "ChargingWidgetActor.h"
+#include "Character/SLPlayerCharacter.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UCombatHandlerComponent::UCombatHandlerComponent()
 {
@@ -15,13 +17,13 @@ void UCombatHandlerComponent::BeginPlay()
 	Super::BeginPlay();
 
 	GenerateChargingWidget();
+
+	OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
 }
 
 void UCombatHandlerComponent::GenerateChargingWidget()
 {
 	if (!ChargingWidgetActorClass) return;
-
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 	if (!OwnerCharacter) return;
 
 	ChargingWidgetActor = GetWorld()->SpawnActor<AChargingWidgetActor>(ChargingWidgetActorClass);
@@ -51,9 +53,11 @@ void UCombatHandlerComponent::StartCharging()
 	ChargingWidgetActor->GetWidgetComponent()->SetVisibility(true);
 
 	// 충전 완료 Timer
-	GetWorld()->GetTimerManager().SetTimer(ChargingFinishTimerHandle, this, &UCombatHandlerComponent::FinishCharging, ChargingDuration, false);
+	GetWorld()->GetTimerManager().SetTimer(ChargingFinishTimerHandle, this, &UCombatHandlerComponent::FinishCharging,
+	                                       ChargingDuration, false);
 	// Progress 업데이트 Timer (0.05초마다 호출)
-	GetWorld()->GetTimerManager().SetTimer(ChargingUpdateTimerHandle, this, &UCombatHandlerComponent::UpdateChargingProgress, 0.05f, true);
+	GetWorld()->GetTimerManager().SetTimer(ChargingUpdateTimerHandle, this,
+	                                       &UCombatHandlerComponent::UpdateChargingProgress, 0.05f, true);
 }
 
 void UCombatHandlerComponent::UpdateChargingProgress()
@@ -123,7 +127,7 @@ bool UCombatHandlerComponent::GetNextComboInfo(UAnimMontage*& OutMontage, FName&
 	const FAttackComboData& ComboData = ComboDataAsset->ComboChain[NextIndex];
 	OutMontage = ComboData.Montage;
 	OutSectionName = ComboData.SectionName;
-	
+
 	return OutMontage != nullptr;
 }
 
@@ -138,14 +142,22 @@ void UCombatHandlerComponent::AdvanceCombo()
 	}
 }
 
-void UCombatHandlerComponent::GetActiveComboDataAsset(UAttackComboDataAsset*& DataAsset) const
+void UCombatHandlerComponent::GetActiveComboDataAsset(UAttackComboDataAsset*& DataAsset)
 {
-	if (IsEmpowered() && EmpoweredComboDataAsset)
+	if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 	{
-		DataAsset = EmpoweredComboDataAsset;
+		DataAsset = AirComboDataAsset;
 	}
 	else
 	{
-		DataAsset = ComboDataAsset;
+		switch (CurrentMode)
+		{
+		case ECharacterComboState::CCS_Normal:
+			DataAsset = ComboDataAsset;
+			break;
+		case ECharacterComboState::CCS_Empowered:
+			DataAsset = EmpoweredComboDataAsset;
+			break;
+		}
 	}
 }

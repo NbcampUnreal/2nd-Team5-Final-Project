@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "UI/Struct/SLLevelWidgetDataRow.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "SLBaseHUD.generated.h"
 
 class USLLevelWidget;
@@ -15,14 +17,13 @@ UCLASS()
 class STILLLOADING_API ASLBaseHUD : public AHUD
 {
 	GENERATED_BODY()
-	
-public:
-	UFUNCTION(BlueprintCallable)
-	void SetChapterToLevelWidget(ESLChapterType ChapterType);
 
 protected:
+	UFUNCTION()
+	void OnChangedCurrentChapter(ESLChapterType ChapterType);
+
 	virtual void BeginPlay() override;
-	virtual void OnStartedHUD() {};
+	virtual void OnStartedHUD();
 	virtual void InitLevelWidget() {};
 
 	void ApplyLevelWidgetInputMode();
@@ -34,7 +35,7 @@ public:
 	TSubclassOf<USLLevelWidget> LevelWidgetClass = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
-	TMap<ESLChapterType, FSLLevelWidgetDataRow> ChapterWidgetDataMap;
+	TSoftObjectPtr<UDataAsset> PrivateDataAsset = nullptr;
 
 protected:
 	UPROPERTY()
@@ -43,5 +44,6 @@ protected:
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
 
-	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
+	UPROPERTY()
+	FSLWidgetActivateBuffer ActivateBuffer;
 };

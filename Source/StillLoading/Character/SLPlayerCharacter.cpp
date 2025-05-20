@@ -1,5 +1,6 @@
 #include "SLPlayerCharacter.h"
 
+#include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GamePlayTag/GamePlayTag.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
@@ -20,6 +21,10 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 	//CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 3.f;
 
+	// Spring Arm Collision
+	CameraBoom->bDoCollisionTest = true;
+	CameraBoom->ProbeChannel = ECC_Camera;
+	
 	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
 	ThirdPersonCamera->SetupAttachment(CameraBoom);
 }
@@ -32,12 +37,14 @@ void ASLPlayerCharacter::BeginPlay()
 	{
 		Sword = GetWorld()->SpawnActor<AActor>(SwordClass, GetActorLocation(), GetActorRotation());
 		AttachItemToHand(Sword, TEXT("r_weapon_socket"));
+		Sword->SetOwner(this);
 	}
 
 	if (ShieldClass)
 	{
 		Shield = GetWorld()->SpawnActor<AActor>(ShieldClass, GetActorLocation(), GetActorRotation());
 		AttachItemToHand(Shield, TEXT("l_weapon_socket"));
+		Shield->SetOwner(this);
 	}
 
 	SetPrimaryState(TAG_Character_Movement_Dash);

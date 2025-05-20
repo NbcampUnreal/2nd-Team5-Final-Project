@@ -4,16 +4,15 @@
 #include "SaveLoad/SLSaveGameSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "SubSystem/SLUserDataSubsystem.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
 #include "SaveLoad/SLSaveGame.h"
-
-
 
 void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Collection.InitializeDependency<USLUserDataSubsystem>();
+    Collection.InitializeDependency<USLLevelTransferSubsystem>();
     Super::Initialize(Collection);
     LoadGame();
-
 }
 
 void USLSaveGameSubsystem::Deinitialize()
@@ -22,14 +21,13 @@ void USLSaveGameSubsystem::Deinitialize()
     SaveGame();
 }
 
-
-
 void USLSaveGameSubsystem::SaveGame()
 {
-
     check(CurrentSaveGame);
 
     SaveWidgetData();
+    SaveChapterData();
+    
     UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
 
     UE_LOG(LogTemp, Warning, TEXT("Save Data"));
@@ -44,6 +42,7 @@ void USLSaveGameSubsystem::LoadGame()
         UE_LOG(LogTemp, Warning, TEXT("Data Load Succeed"));
         
         SendWidgetData();
+        SendChapterData();
     }
     else
     {
@@ -51,8 +50,6 @@ void USLSaveGameSubsystem::LoadGame()
         CurrentSaveGame = NewObject<USLSaveGame>();
         UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
     }
-    
-
 }
 
 void USLSaveGameSubsystem::NewGame()
@@ -68,8 +65,6 @@ const FWidgetSaveData& USLSaveGameSubsystem::GetCurrentWidgetDataByRef() const
     check(CurrentSaveGame);
     return CurrentSaveGame->WidgetSaveData;
 }
-
-
 
 void USLSaveGameSubsystem::SaveWidgetData()
 { 
@@ -109,6 +104,19 @@ void USLSaveGameSubsystem::SendWidgetData()
     UserDataSubsystem->ApplyLoadedUserData(CurrentSaveGame->WidgetSaveData);
 }
 
+void USLSaveGameSubsystem::SaveChapterData()
+{
+    USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+    checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
 
+    CurrentSaveGame->CurrentChapter = LevelSubsystem->GetCurrentChapter();
+}
 
+void USLSaveGameSubsystem::SendChapterData()
+{
+    USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+    checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
 
+    checkf(IsValid(CurrentSaveGame), TEXT("Current Save Game is invalid"));
+    LevelSubsystem->SetCurrentChapter(CurrentSaveGame->CurrentChapter);
+}

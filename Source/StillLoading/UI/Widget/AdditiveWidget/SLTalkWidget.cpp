@@ -4,11 +4,13 @@
 #include "UI/Widget/AdditiveWidget/SLTalkWidget.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
+#include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanel.h"
+#include "Components/Image.h"
 
-void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_TalkWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
@@ -18,16 +20,17 @@ void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType Ch
 	ParentNamePanel = NamePanel;
 	ParentNameText = NameText;
 	ParentNextButton = NextButton;
+	ParentSkipButton = SkipButton;
+	ParentFastButton = FastButton;
 	ParentTalkText = TalkText;
 
-	Super::InitWidget(NewUISubsystem, ChapterType);
+	Super::InitWidget(NewUISubsystem);
 }
 
-void USLTalkWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLTalkWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
-
-	
+	UpdateTalkState(WidgetActivateBuffer.TargetTalk, WidgetActivateBuffer.TargetIndex);
+	Super::ActivateWidget(WidgetActivateBuffer);	
 }
 
 void USLTalkWidget::DeactivateWidget()
@@ -62,16 +65,6 @@ void USLTalkWidget::UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 Targ
 	}
 }
 
-void USLTalkWidget::ApplyImageData()
-{
-	Super::ApplyImageData();
-}
-
-void USLTalkWidget::ApplyFontData()
-{
-	Super::ApplyFontData();
-}
-
 void USLTalkWidget::ApplyTextData()
 {
 	Super::ApplyTextData();
@@ -85,4 +78,29 @@ void USLTalkWidget::ApplyTextData()
 	UpdateTalkState(CurrentTalkType, CurrentTalkIndex);
 	ChangeTargetText();
 	PrintTalkText();
+}
+
+bool USLTalkWidget::ApplyTextBorderImage()
+{
+	if (!Super::ApplyTextBorderImage())
+	{
+		return false;
+	}
+
+	TalkBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_TextBorder]);
+	NameBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_TextBorder]);
+	return true;
+}
+
+bool USLTalkWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
+{
+	if (!Super::ApplyButtonImage(ButtonStyle))
+	{
+		return false;
+	}
+
+	SkipButton->SetStyle(ButtonStyle);
+	FastButton->SetStyle(ButtonStyle);
+
+	return true;
 }

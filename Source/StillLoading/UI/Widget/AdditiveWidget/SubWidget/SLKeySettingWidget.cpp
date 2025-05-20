@@ -4,38 +4,30 @@
 #include "UI/Widget/AdditiveWidget/SubWidget/SLKeySettingWidget.h"
 #include "UI/Widget/AdditiveWidget/SubWidget/SLKeyMappingWidget.h"
 #include "SubSystem/SLUserDataSubsystem.h"
+#include "SubSystem/SLTextPoolSubsystem.h"
 #include "Animation/WidgetAnimation.h"
 #include "Components/Button.h"
+#include "Components/GridPanel.h"
+#include "Components/Image.h"
+#include "SubSystem/Struct/SLTextPoolDataRows.h"
 
-const FName USLKeySettingWidget::MoveUpTagIndex = "MoveUp";
-const FName USLKeySettingWidget::MoveDownTagIndex = "MoveDown";
-const FName USLKeySettingWidget::MoveLeftTagIndex = "MoveLeft";
-const FName USLKeySettingWidget::MoveRightTagIndex = "MoveRight";
-const FName USLKeySettingWidget::WalkTagIndex = "Walk";
-const FName USLKeySettingWidget::JumpTagIndex = "Jump";
-const FName USLKeySettingWidget::AttackTagIndex = "Attack";
-const FName USLKeySettingWidget::InteractionTagIndex = "Interaction";
-const FName USLKeySettingWidget::PointMoveTagIndex = "PointMove";
-const FName USLKeySettingWidget::LookTagIndex = "Look";
-const FName USLKeySettingWidget::MenuTagIndex = "Menu";
-
-void USLKeySettingWidget::InitWidget(USLUISubsystem* NewUISubsystem, ESLChapterType ChapterType)
+void USLKeySettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_KeySettingWidget;
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	WidgetOrder = 17;
 	bIsVisibleCursor = true;
-	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
-	Super::InitWidget(NewUISubsystem, ChapterType);
-
-	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
 
 	InitElementWidget();
+	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
+	Super::InitWidget(NewUISubsystem);
+
+	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
 }
 
-void USLKeySettingWidget::ActivateWidget(ESLChapterType ChapterType)
+void USLKeySettingWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	Super::ActivateWidget(ChapterType);
+	Super::ActivateWidget(WidgetActivateBuffer);
 
 	if (IsValid(OpenAnim))
 	{
@@ -63,14 +55,71 @@ void USLKeySettingWidget::DeactivateWidget()
 	PlayUISound(ESLUISoundType::EUS_Close);
 }
 
-void USLKeySettingWidget::ApplyImageData()
-{
-
-}
-
 void USLKeySettingWidget::ApplyFontData()
 {
+	Super::ApplyFontData();
 
+	for (USLKeyMappingWidget* MappingWidget : MappingWidgets)
+	{
+		MappingWidget->UpdateTextFont(FontInfo);
+	}
+}
+
+void USLKeySettingWidget::ApplyTextData()
+{
+	Super::ApplyTextData();
+
+	CheckValidOfTextPoolSubsystem();
+	const UDataTable* TextPool = TextPoolSubsystem->GetUITextPool();
+
+	TArray<FSLUITextPoolDataRow*> TempArray;
+	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
+
+	TMap<FName, FSLUITextData> KeySettingTextMap;
+
+	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
+	{
+		if (UITextPool->TargetWidget == ESLTargetWidgetType::ETW_KeySetting)
+		{
+			KeySettingTextMap = UITextPool->TextMap;
+			break;
+		}
+	}
+
+	for (USLKeyMappingWidget* MappingWidget : MappingWidgets)
+	{
+		FName Index = MappingWidget->GetTagIndex();
+
+		if (KeySettingTextMap.Contains(Index) &&
+			KeySettingTextMap[Index].ChapterTextMap.Contains(ESLChapterType::EC_Intro))
+		{
+			MappingWidget->UpdateTagText(KeySettingTextMap[Index].ChapterTextMap[ESLChapterType::EC_Intro]);
+		}
+	}
+}
+
+bool USLKeySettingWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
+{
+	if (!Super::ApplyButtonImage(ButtonStyle))
+	{
+		return false;
+	}
+
+	CloseButton->SetStyle(ButtonStyle);
+
+	return true;
+}
+
+bool USLKeySettingWidget::ApplyBorderImage()
+{
+	if (!Super::ApplyBorderImage())
+	{
+		return false;
+	}
+
+	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+
+	return true;
 }
 
 void USLKeySettingWidget::OnClickedKeyDataButton(EInputActionType TargetAction)
@@ -86,9 +135,13 @@ void USLKeySettingWidget::UpdateKeyMapping(const FKey& InputKey)
 
 	if (UserDataSubsystem->UpdateMappingKey(TargetActionType, InputKey))
 	{
-		if (ActionWidgetMap.Contains(TargetActionType))
+		for (USLKeyMappingWidget* MappingWidget : MappingWidgets)
 		{
-			ActionWidgetMap[TargetActionType]->UpdateKeyText(InputKey.GetFName());
+			if (MappingWidget->GetActionType() == TargetActionType)
+			{
+				MappingWidget->UpdateKeyText(InputKey.GetFName());
+				break;
+			}
 		}
 	}
 
@@ -98,15 +151,15 @@ void USLKeySettingWidget::UpdateKeyMapping(const FKey& InputKey)
 
 void USLKeySettingWidget::SetFocusToTargetButton(EInputActionType TargetAction, bool bIsFocus)
 {
-	for (const TPair<EInputActionType, USLKeyMappingWidget*> KeyDataPair : ActionWidgetMap)
+	for (USLKeyMappingWidget* MappingWidget : MappingWidgets)
 	{
-		if (KeyDataPair.Key == TargetAction)
+		if (MappingWidget->GetActionType() == TargetAction)
 		{
-			KeyDataPair.Value->SetVisibilityButton(!bIsFocus);
+			MappingWidget->SetVisibilityButton(!bIsFocus);
 			continue;
 		}
 
-		KeyDataPair.Value->SetVisibilityButton(true);
+		MappingWidget->SetVisibilityButton(true);
 	}
 }
 
@@ -128,8 +181,6 @@ FReply USLKeySettingWidget::NativeOnKeyDown(const FGeometry& InGeometry, const F
 		return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Input Key is %s"), *InKeyEvent.GetKey().ToString());
-
 	bOnClickedChange = false;
 
 	UpdateKeyMapping(InKeyEvent.GetKey());
@@ -144,8 +195,6 @@ FReply USLKeySettingWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry,
 		return Super::NativeOnMouseButtonDown(InGeometry, InPointerEvent);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Mouse Button Down. Key Name : %s"), *InPointerEvent.GetEffectingButton().ToString());
-	
 	bOnClickedChange = false;
 
 	UpdateKeyMapping(InPointerEvent.GetEffectingButton());
@@ -157,73 +206,28 @@ void USLKeySettingWidget::InitElementWidget()
 {
 	CheckValidOfUserDateSubsystem();
 	const TMap<EInputActionType, FEnhancedActionKeyMapping> ActionKeyMap = UserDataSubsystem->GetActionKeyMap();
-	EInputActionType TargetType = EInputActionType::EIAT_None;
+	
+	checkf(IsValid(KeyMappingWidgetClass), TEXT("Key Mapping Widget Class is invalid"));
 
-	// TODO : Apply TextPool To Init Widget Tag Text
+	int32 GridIndex = 0;
 
-	TargetType = EInputActionType::EIAT_MoveUp;
-	MoveUp->InitWidget(MoveUpTagIndex, TargetType);
-	MoveUp->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	MoveUp->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, MoveUp);
+	for (int32 i = (int32)EInputActionType::EIAT_None + 1; i < (int32)EInputActionType::EIAT_Max; ++i)
+	{
+		USLKeyMappingWidget* NewMappingWidget = CreateWidget<USLKeyMappingWidget>(this, KeyMappingWidgetClass);
+		EInputActionType ActionType = (EInputActionType)i;
 
-	TargetType = EInputActionType::EIAT_MoveDown;
-	MoveDown->InitWidget(MoveDownTagIndex, TargetType);
-	MoveDown->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	MoveDown->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, MoveDown);
+		if (!KeyTagIndexMap.Contains(ActionType) &&
+			!ActionKeyMap.Contains(ActionType))
+		{
+			continue;
+		}
 
-	TargetType = EInputActionType::EIAT_MoveLeft;
-	MoveLeft->InitWidget(MoveLeftTagIndex, TargetType);
-	MoveLeft->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	MoveLeft->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, MoveLeft);
+		NewMappingWidget->InitWidget(ActionType, KeyTagIndexMap[ActionType], ActionKeyMap[ActionType].Key.GetFName());
+		NewMappingWidget->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
+		MappingWidgets.Add(NewMappingWidget);
+		//ActionWidgetMap.Add(ActionType, NewMappingWidget);
 
-	TargetType = EInputActionType::EIAT_MoveRight;
-	MoveRight->InitWidget(MoveRightTagIndex, TargetType);
-	MoveRight->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	MoveRight->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, MoveRight);
-
-	TargetType = EInputActionType::EIAT_Walk;
-	Walk->InitWidget(WalkTagIndex, TargetType);
-	Walk->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	Walk->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, Walk);
-
-	TargetType = EInputActionType::EIAT_Jump;
-	Jump->InitWidget(JumpTagIndex, TargetType);
-	Jump->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	Jump->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, Jump);
-
-	TargetType = EInputActionType::EIAT_Attack;
-	Attack->InitWidget(AttackTagIndex, TargetType);
-	Attack->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	Attack->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, Attack);
-
-	TargetType = EInputActionType::EIAT_Interaction;
-	Interaction->InitWidget(InteractionTagIndex, TargetType);
-	Interaction->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	Interaction->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, Interaction);
-
-	TargetType = EInputActionType::EIAT_PointMove;
-	PointMove->InitWidget(PointMoveTagIndex, TargetType);
-	PointMove->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	PointMove->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, PointMove);
-
-	TargetType = EInputActionType::EIAT_Look;
-	Look->InitWidget(LookTagIndex, TargetType);
-	Look->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	Look->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, Look);
-
-	TargetType = EInputActionType::EIAT_Menu;
-	Menu->InitWidget(MenuTagIndex, TargetType);
-	Menu->UpdateKeyText(ActionKeyMap[TargetType].Key.GetFName());
-	Menu->KeyDelegate.AddDynamic(this, &ThisClass::OnClickedKeyDataButton);
-	ActionWidgetMap.Add(TargetType, Menu);
+		KeySettingGrid->AddChildToGrid(NewMappingWidget, GridIndex / 2, GridIndex % 2);
+		++GridIndex;
+	}
 }
