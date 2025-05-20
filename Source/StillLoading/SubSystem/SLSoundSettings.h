@@ -17,19 +17,4 @@ class STILLLOADING_API USLSoundSettings : public UDeveloperSettings
 public:
 	UPROPERTY(EditAnywhere, Config, Category = "SoundSourceData")
 	TMap <ESLChapterType, TSoftObjectPtr<USLSoundDataAsset>> ChapterSoundMap;
-
-	/*UPROPERTY(EditAnywhere, Config, Category = "SoundSourceData")
-	TSoftObjectPtr<USLSoundDataAsset> Chapter0SoundData = nullptr;
-
-	UPROPERTY(EditAnywhere, Config, Category = "SoundSourceData")
-	TSoftObjectPtr<USLSoundDataAsset> Chapter1SoundData = nullptr;
-
-	UPROPERTY(EditAnywhere, Config, Category = "SoundSourceData")
-	TSoftObjectPtr<USLSoundDataAsset> Chapter2SoundData = nullptr;
-
-	UPROPERTY(EditAnywhere, Config, Category = "SoundSourceData")
-	TSoftObjectPtr<USLSoundDataAsset> Chapter3SoundData = nullptr;
-
-	UPROPERTY(EditAnywhere, Config, Category = "SoundSourceData")
-	TSoftObjectPtr<USLSoundDataAsset> Chapter4SoundData = nullptr;*/
 };
