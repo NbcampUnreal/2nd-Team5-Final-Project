@@ -4,8 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Minigame/Object/SLBaseReactiveObject.h"
+#include "GeometryCollection\GeometryCollectionComponent.h"
+
 #include "SLReactiveObjectPortal.generated.h"
 
+class ASLObjectDestroyer;
+class UArrowComponent;
 /**
  * 
  */
@@ -15,14 +19,30 @@ class STILLLOADING_API ASLReactiveObjectPortal : public ASLBaseReactiveObject
 	GENERATED_BODY()
 public:
 	ASLReactiveObjectPortal();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UArrowComponent> ArrowComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ASLObjectDestroyer> DestroyerActor;
+
+	
+
 protected:
-	virtual void BeginPlay();
+	virtual void BeginPlay() override;
 	virtual void OnReacted(const ASLPlayerCharacterBase*, ESLReactiveTriggerType TriggerType);
+
+	
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UGeometryCollectionComponent> GeometryCollectionComp;
 private:
+	UFUNCTION()
+	void BrokenDoor();
+
+	UFUNCTION()
+	void OnBroken();
 
 	UPROPERTY(EditAnywhere)
 	FName DestinationLevelName;
@@ -36,4 +56,10 @@ private:
 	int8 Location;// 위치
 	UPROPERTY(EditAnywhere)
 	int32 Radius;// Radius
+
+	UPROPERTY()
+	FVector SpawnLocation;
+
+	UPROPERTY()
+	FRotator SpawnRotation;
 };
