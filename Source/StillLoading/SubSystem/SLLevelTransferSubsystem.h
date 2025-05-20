@@ -25,7 +25,8 @@ public:
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-	void OpenLevelByNameType(ESLLevelNameType LevelNameType, const FString& Option = ((FString)(L"")));
+	void OpenLevelByNameType(ESLLevelNameType LevelNameType, bool bIsFadeOut = true, const FString& Option = ((FString)(L"")));
+	void PostFadeOut();
 
 	const ESLLevelNameType GetCurrentLevelType() const;
 	const ESLChapterType GetCurrentChapter() const;
@@ -59,6 +60,8 @@ private:
 
 	UPROPERTY()
 	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
+
+	FString OptionString = "";
 
 	ESLChapterType DataChapter = ESLChapterType::EC_None;
 };

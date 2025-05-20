@@ -33,4 +33,6 @@ private:
 
 	UPROPERTY(Meta = (BindWidgetAnim), Transient)
 	TObjectPtr<UWidgetAnimation> FadeOutAnim = nullptr;
+
+	bool bIsMoveLevel = false;
 };
