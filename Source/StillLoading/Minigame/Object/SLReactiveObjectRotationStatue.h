@@ -20,15 +20,42 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 private:
+
+	UFUNCTION()
+	void SetRotate(FRotator TargetRotator);
+
+	UFUNCTION()
+	void ResetCondition();
+
+	UFUNCTION()
+	void RotateActor(float DeltaTime);
+
+	bool bRotateTrigger = false;
+
+	bool ResetTrigger = false;
+
 	// 회전 관련 변수
 	UPROPERTY(EditAnywhere)
 	TArray<FRotator> RotationStates;
+
+	UPROPERTY()
+	FRotator InitialRotation;
+
+	FRotator StartRotation;
+
+	FRotator TargetRotation;
 
 	UPROPERTY(VisibleAnywhere)
 	int32 CurrentRotationIndex = 0;
 
 	UPROPERTY(EditAnywhere)
-	int32 LerpSpeed = 20;
+	int32 LerpSpeed = 5.0f;
+
+	UPROPERTY(EditAnywhere)
+	float RotationDuration = 1.0f; //회전 시간
+
+	UPROPERTY()
+	float RotationElapsed = 0.0f;
 
 
 	TSoftObjectPtr<ASLMinigamePuzzleCond> PuzzleManager;

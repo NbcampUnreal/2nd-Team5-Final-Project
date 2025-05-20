@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Minigame/Object/SLReactiveObjectStatue.h"
+
 #include "SLReactiveObjectLuminousStatue.generated.h"
 
 class UPointLightComponent;
+class ASLMinigamePuzzleCond;
 
 UCLASS()
 class STILLLOADING_API ASLReactiveObjectLuminousStatue : public ASLReactiveObjectStatue
@@ -23,17 +25,19 @@ protected:
 	UFUNCTION()
 	void SetLightActive();
 private:
+	UFUNCTION()
+	void ResetCondition();
+
+	UPROPERTY(VisibleAnywhere)
+	bool bLightOn;
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UPointLightComponent> PointLightComp = nullptr;
 
-	float DeltaTime = 0;
 
-	UPROPERTY(EditAnywhere)
-	float Intensity = 50;
-
-	UPROPERTY(EditAnywhere)
-	float LightChangeSpeed = 1.0f;
 
 	FTimerHandle LightControlHandler;
+
+	UPROPERTY(EditAnywhere)
+	TSoftObjectPtr<ASLMinigamePuzzleCond> PuzzleManager;
 };

@@ -6,7 +6,18 @@
 #include "StillLoading\Minigame\System\SLBaseMinigameCond.h"
 #include "SLMinigamePuzzleCond.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMinigameObjectResetRequested);
+
+
+UENUM(BlueprintType)
+enum class ESLPuzzleType : uint8
+{
+	RotatePuzzle,
+	LightPuzzle
+};
+
 class ASLReactiveObjectStatue;
+
 
 UCLASS()
 class STILLLOADING_API ASLMinigamePuzzleCond : public ASLBaseMinigameCond
@@ -23,6 +34,15 @@ public:
 	void SubmittedAnswer();
 
 	void RegisterStatue(ASLReactiveObjectStatue* InStatue);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle")
+	ESLPuzzleType PuzzleType;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnMinigameObjectResetRequested ObjectResetRequested;
+
+	UPROPERTY(VisibleAnywhere)
+	int32 TryCount = 0;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -31,6 +51,9 @@ private:
 	UFUNCTION()
 	void DeactivateAllStatue();
 
+	UFUNCTION()
+	void ResetCondition();
+
 	virtual void InitCondition();
 
 	virtual void SendCondition(ESLMinigameResult InResult);
@@ -38,10 +61,18 @@ private:
 	//배열의 인덱스는 각 석상을 가르킴. 값은 석상의 상태를 의미
 	//디버그룸(1)에서 작동 예시: CurrentStates[4] = 2 = 4번 석상이 2번째 방향을 가르키는 중
 	//디버그룸(2)에서 작동 예시: CurrentStates[1] = 4 = 1번 석상이 4번째로 활성화됨.
-	UPROPERTY(EditAnywhere)
+	//, meta = (EditCondition = "PuzzleType == ESLPuzzleType::RotatePuzzle", EditConditionHides)
+	UPROPERTY(EditAnywhere, Category = "Puzzle")
 	TArray<int> CurrentStates;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Puzzle")
 	TArray<int> AnswerStates;
+
+	UPROPERTY(EditAnywhere)
+	bool GameSucceedFlag = false;
+
+
+	
+
 
 	TArray<TObjectPtr<ASLReactiveObjectStatue>> Statues;
 };
