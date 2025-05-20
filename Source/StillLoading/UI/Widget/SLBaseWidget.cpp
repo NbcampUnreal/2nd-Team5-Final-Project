@@ -235,12 +235,12 @@ void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)
 	SoundSubsystem->PlayUISound(SoundType);
 }
 
-void USLBaseWidget::MoveToLevelByType(ESLLevelNameType LevelType)
+void USLBaseWidget::MoveToLevelByType(ESLLevelNameType LevelType, bool bIsFade)
 {
 	USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
 	checkf(IsValid(LevelSubsystem),TEXT("Level Subsystem is invalid"));
 
-	LevelSubsystem->OpenLevelByNameType(LevelType);
+	LevelSubsystem->OpenLevelByNameType(LevelType, bIsFade);
 }
 
 void USLBaseWidget::CheckValidOfUISubsystem()

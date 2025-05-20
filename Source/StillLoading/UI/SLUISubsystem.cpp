@@ -61,11 +61,14 @@ void USLUISubsystem::SetLevelInputMode(ESLInputModeType InputModeType, bool bIsV
 {
 	CurrentLevelInputMode = InputModeType;
 	bIsVisibleLevelCursor = bIsVisibleMouseCursor;
+
+	RemoveAllAdditveWidget();
 }
 
-void USLUISubsystem::ActivateFade(bool bIsFadeIn)
+void USLUISubsystem::ActivateFade(bool bIsFadeIn, bool bIsMoveLevel)
 {
 	WidgetActivateBuffer.bIsFade = bIsFadeIn;
+	WidgetActivateBuffer.bIsMoveLevel = bIsMoveLevel;
 
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
 }
