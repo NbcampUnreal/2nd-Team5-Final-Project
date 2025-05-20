@@ -15,7 +15,11 @@ class STILLLOADING_API ASLMonster : public ASLAIBaseCharacter
 public:
 	ASLMonster();
 
+	virtual void Tick(float DeltaTime) override;
+
 	void Attack();
+
+	void SetPatrolPoints(const TArray<FVector>& Points);
 
     UPROPERTY()
     TObjectPtr<AActor> TargetActor;
@@ -42,4 +46,17 @@ protected:
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+private:
+	bool IsCloseToTargetPoint(float AcceptableDistance = 200.f);
+
+	void MoveToNextPatrolPoint();
+
+	FVector CurrentTargetLocation;
+
+	TArray<FVector> PatrolPoints;
+
+	int32 CurrentPatrolIndex = 0;
+
+	TObjectPtr<UBlackboardComponent> BlackboardComp;
 };

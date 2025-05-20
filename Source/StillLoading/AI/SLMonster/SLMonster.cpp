@@ -12,7 +12,7 @@
 
 ASLMonster::ASLMonster()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
     AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
     /*UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
@@ -29,7 +29,33 @@ void ASLMonster::BeginPlay()
 {
     Super::BeginPlay();
     LastAttackTime = 0.0f;
-    GetCharacterMovement()->MaxWalkSpeed = 350.0f;
+    GetCharacterMovement()->MaxWalkSpeed = 200.0f;
+
+    ASLEnemyAIController* EnemyController = Cast<ASLEnemyAIController>(GetController());
+    if (EnemyController)
+    {
+        BlackboardComp = EnemyController->GetBlackboardComponent();
+    }
+    
+}
+
+void ASLMonster::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+    
+    ASLEnemyAIController* EnemyController = Cast<ASLEnemyAIController>(GetController());
+    if (EnemyController->bPatrolPointsReady)
+    {
+        CurrentTargetLocation = BlackboardComp->GetValueAsVector("PatrolLocation");
+        PatrolPoints = EnemyController->PatrolPoints;
+        EnemyController->bPatrolPointsReady = false;
+        
+    }
+
+    if (PatrolPoints.Num() > 0 && IsCloseToTargetPoint())
+    {
+        MoveToNextPatrolPoint();
+    }
 }
 
 void ASLMonster::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -45,6 +71,38 @@ void ASLMonster::Attack()
         TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
         AnimInstance->SetIsAttacking(true);
         LastAttackTime = CurrentTime;
+    }
+}
+
+void ASLMonster::SetPatrolPoints(const TArray<FVector>& Points)
+{
+    PatrolPoints = Points;
+
+    if (PatrolPoints.Num() > 0)
+    {
+        if (BlackboardComp)
+        {
+            BlackboardComp->SetValueAsVector("PatrolLocation", CurrentTargetLocation);
+        }
+    }
+}
+
+bool ASLMonster::IsCloseToTargetPoint(float AcceptableDistance)
+{
+    float Distance = FVector::Dist(GetActorLocation(), CurrentTargetLocation);
+    return Distance <= AcceptableDistance;
+}
+
+void ASLMonster::MoveToNextPatrolPoint()
+{
+    if (PatrolPoints.Num() == 0) return;
+    
+    CurrentPatrolIndex = (CurrentPatrolIndex + 1) % PatrolPoints.Num();
+    CurrentTargetLocation = PatrolPoints[CurrentPatrolIndex];
+
+    if (BlackboardComp)
+    {
+        BlackboardComp->SetValueAsVector("PatrolLocation", CurrentTargetLocation);
     }
 }
 
