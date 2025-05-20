@@ -10,15 +10,15 @@
 UCombatHandlerComponent::UCombatHandlerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	ChargingWidgetActor = nullptr;
 }
 
 void UCombatHandlerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GenerateChargingWidget();
-
 	OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
+	GenerateChargingWidget();
 }
 
 void UCombatHandlerComponent::GenerateChargingWidget()
