@@ -25,16 +25,18 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USceneComponent> SceneComp;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<UWidgetComponent> ProgressBar;
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> SkeletalMeshComp;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<USceneCaptureComponent2D> SceneCaptureCamera;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	float ProgressSpeed;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	float CurrentProgress;
 };
