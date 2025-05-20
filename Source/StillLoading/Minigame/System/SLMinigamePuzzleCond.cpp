@@ -14,14 +14,39 @@ ASLMinigamePuzzleCond::ASLMinigamePuzzleCond()
 
 void ASLMinigamePuzzleCond::UpdateStatueState(int8 InStatueIndex, int8 SubmittedValue)
 {
-	if (CurrentStates.IsValidIndex(InStatueIndex))
+	
+
+	switch (PuzzleType)
 	{
-		CurrentStates[InStatueIndex] = SubmittedValue;
-	}
-	if (!CurrentStates.Contains(-1))
-	{
+	case ESLPuzzleType::RotatePuzzle:
+		if (CurrentStates.IsValidIndex(InStatueIndex))
+		{
+			CurrentStates[InStatueIndex] = SubmittedValue;
+			TryCount++;
+		}
 		SubmittedAnswer();
+		break;
+	case ESLPuzzleType::LightPuzzle:
+		if (CurrentStates.IsValidIndex(InStatueIndex))
+		{
+			CurrentStates[TryCount] = SubmittedValue;
+			TryCount++;
+			for (int32 i = 0; i < CurrentStates.Num(); i++)
+			{
+				if (CurrentStates[i] < 1)
+				{
+					return;
+				}
+			}
+			
+			SubmittedAnswer();
+		}
+		
+		break;
+	default:
+		break;
 	}
+	
 }
 
 void ASLMinigamePuzzleCond::SubmittedAnswer()
@@ -30,11 +55,26 @@ void ASLMinigamePuzzleCond::SubmittedAnswer()
 	{
 		if (CurrentStates[i] != AnswerStates[i])
 		{
-			DeactivateAllStatue();
-			return;
+			GameSucceedFlag = false;
+			break;
 		}
+		
+		GameSucceedFlag = true;
 	}
-	SendCondition(ESLMinigameResult::EMR_Success);
+
+	if (GameSucceedFlag)
+	{
+		SendCondition(ESLMinigameResult::EMR_Success);
+	}
+	else if (TryCount > 5) // 임시
+	{
+		DeactivateAllStatue();
+	}
+	else
+	{
+		DeactivateAllStatue();
+	}
+	
 }
 
 void ASLMinigamePuzzleCond::RegisterStatue(ASLReactiveObjectStatue* InStatue)
@@ -58,6 +98,7 @@ void ASLMinigamePuzzleCond::InitCondition()
 void ASLMinigamePuzzleCond::SendCondition(ESLMinigameResult InResult)
 {
 	Super::SendConditionToMinigameSubsystem(InResult);
+	
 }
 
 void ASLMinigamePuzzleCond::DeactivateAllStatue()
@@ -65,7 +106,14 @@ void ASLMinigamePuzzleCond::DeactivateAllStatue()
 	for (int i = 0; i < CurrentStates.Num(); i++)
 	{
 		CurrentStates[i] = 0;
-		Statues[i];
 	}
+	ResetCondition();
+
+}
+
+void ASLMinigamePuzzleCond::ResetCondition()
+{
+	ObjectResetRequested.Broadcast();
+	TryCount = 0;
 }
 
