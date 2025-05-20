@@ -17,7 +17,7 @@ const FName USLTitleWidget::QuitButtonIndex = "QuitButton";
 
 void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
-	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	WidgetInputMode = ESLInputModeType::EIM_GameAndUI;
 	bIsVisibleCursor = true;
 	
 	Super::InitWidget(NewUISubsystem);
@@ -32,16 +32,6 @@ void USLTitleWidget::DeactivateWidget()
 	Super::DeactivateWidget();
 
 	OnEndedCloseAnim();
-}
-
-void USLTitleWidget::ApplyFontData()
-{
-	Super::ApplyFontData();
-
-	/*TitleText->SetFont(FontInfo);
-	StartText->SetFont(FontInfo);
-	OptionText->SetFont(FontInfo);
-	QuitText->SetFont(FontInfo);*/
 }
 
 void USLTitleWidget::ApplyTextData()

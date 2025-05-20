@@ -56,7 +56,6 @@ void USLCreditWidget::ApplyFontData()
 {
 	Super::ApplyFontData();
 
-	//TitleText->SetFont(FontInfo);
 }
 
 void USLCreditWidget::ApplyTextData()

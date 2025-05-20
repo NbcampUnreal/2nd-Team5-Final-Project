@@ -43,7 +43,7 @@ protected:
 
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
 	virtual void ApplyImageData();
-	virtual void ApplyFontData() {};
+	virtual void ApplyFontData();
 	virtual void ApplyTextData() {};
 
 	virtual bool ApplyBackgroundImage();
@@ -55,7 +55,7 @@ protected:
 	virtual bool ApplyOtherImage();
 	
 	void PlayUISound(ESLUISoundType SoundType);
-	void MoveToLevelByType(ESLLevelNameType LevelType);
+	void MoveToLevelByType(ESLLevelNameType LevelType, bool bIsFade = true);
 
 	void CheckValidOfUISubsystem();
 	void CheckValidOfTextPoolSubsystem();

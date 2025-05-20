@@ -9,6 +9,8 @@
 #include "Animation/WidgetAnimation.h"
 #include "UI/Widget/SLWidgetImageDataAsset.h"
 #include "SubSystem/SLLevelTransferSubsystem.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/TextBlock.h"
 
 void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -94,6 +96,26 @@ void USLBaseWidget::ApplyImageData()
 	ApplyBorderImage();
 	ApplyProgressBarImage(ProgressBarStyle);
 	ApplyOtherImage();
+}
+
+void USLBaseWidget::ApplyFontData()
+{
+	TArray<UWidget*> FoundWidgets;
+	WidgetTree->GetAllWidgets(FoundWidgets);
+
+	for (UWidget* Widget : FoundWidgets)
+	{
+		if (IsValid(Widget))
+		{
+			UTextBlock* TextBlock = Cast<UTextBlock>(Widget);
+
+			if (IsValid(TextBlock))
+			{
+				FontInfo.Size = TextBlock->GetFont().Size;
+				TextBlock->SetFont(FontInfo);
+			}
+		}
+	}
 }
 
 bool USLBaseWidget::ApplyBackgroundImage()
@@ -213,12 +235,12 @@ void USLBaseWidget::PlayUISound(ESLUISoundType SoundType)
 	SoundSubsystem->PlayUISound(SoundType);
 }
 
-void USLBaseWidget::MoveToLevelByType(ESLLevelNameType LevelType)
+void USLBaseWidget::MoveToLevelByType(ESLLevelNameType LevelType, bool bIsFade)
 {
 	USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
 	checkf(IsValid(LevelSubsystem),TEXT("Level Subsystem is invalid"));
 
-	LevelSubsystem->OpenLevelByNameType(LevelType);
+	LevelSubsystem->OpenLevelByNameType(LevelType, bIsFade);
 }
 
 void USLBaseWidget::CheckValidOfUISubsystem()

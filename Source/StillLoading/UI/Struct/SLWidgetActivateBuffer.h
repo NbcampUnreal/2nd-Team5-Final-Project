@@ -35,6 +35,9 @@ public:
 	bool bIsFade = true;
 
 	UPROPERTY()
+	bool bIsMoveLevel = false;
+
+	UPROPERTY()
 	TObjectPtr<UDataAsset> WidgetPublicData = nullptr;
 
 	UPROPERTY()
