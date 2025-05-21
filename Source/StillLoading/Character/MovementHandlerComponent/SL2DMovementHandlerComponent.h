@@ -6,31 +6,27 @@
 #include "Components/ActorComponent.h"
 #include "SL2DMovementHandlerComponent.generated.h"
 
-
-class ASLPlayerCharacterBase;
-struct FInputActionValue;
+class ASLPlayerCharacter;
+class UCombatHandlerComponent;
+class UBattleComponent;
+class UAnimationMontageComponent;
 enum class EInputActionType : uint8;
-class UInputAction;
-class UDynamicIMCComponent;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API USL2DMovementHandlerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
+public:
 	USL2DMovementHandlerComponent();
 
-	UFUNCTION()
-	void Attack();
-
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
+private:
+	UFUNCTION()
+	void BindIMCComponent();
 	UFUNCTION()
 	void OnActionTriggered(EInputActionType ActionType, FInputActionValue Value);
 	UFUNCTION()
@@ -38,62 +34,25 @@ protected:
 	UFUNCTION()
 	void OnActionCompleted(EInputActionType ActionType);
 	UFUNCTION()
-	void BindIMCComponent();
-
-
-private:
-
-	UFUNCTION()
-	void Look(const FVector2D& Value);
-
-	UFUNCTION()
 	void Move(const float AxisValue, const EInputActionType ActionType);
+
+	void MoveByPixelUnit(const FVector& Direction, float AxisValue);
+	void StartPixelMovement(const FVector& Direction);
 	
-	UFUNCTION()
-	void MoveGrid(FVector InputDir);
-
-	UFUNCTION()
-	void RotateToDirection(FVector Direction);
-
-	UFUNCTION()
-	void Interact();
-
-	UFUNCTION()
-	void ToggleMenu();
-
-	UFUNCTION()
-	void SetTopDownView();
-
-
 	UPROPERTY()
-	TObjectPtr<ASLPlayerCharacterBase> OwnerCharacter;
-
+	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
 	UPROPERTY()
+	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
+	UPROPERTY()
+	TObjectPtr<UBattleComponent> CachedBattleComponent;
+	UPROPERTY()
+	TObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterialParameterCollection> PixelizationMPC;
+	
+	// 픽셀 이동 관련 변수
 	bool bIsMoving = false;
-
-	UPROPERTY()
-	FVector StartLocation;
-
-	UPROPERTY()
-	FVector TargetLocation;
-
-	UPROPERTY()
-	float MoveDuration = 0.15f; // 이동에 걸리는 시간
-
-	UPROPERTY()
-	float MoveElapsed = 0.0f;
-
-	UPROPERTY()
-	float StepDistance = 100.0f;
-	               
-	UPROPERTY()
-	FVector NextMove;
-
-	UPROPERTY()
-	float InputBufferDuration = 0.3f;
-
-	int32 CurrentIndex = 0; // Test용
-
-
-	
+	FVector CurrentTargetLocation = FVector::ZeroVector;
+	FVector MoveDirection = FVector::ZeroVector;
+	float PixelSize = 0.0f;
 };
