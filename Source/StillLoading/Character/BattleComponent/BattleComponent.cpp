@@ -44,7 +44,7 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 	{
 		const FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 50);
 		const FVector End = Start + OwnerActor->GetActorForwardVector() * 100;
-		const FCollisionShape SweepShape = FCollisionShape::MakeCapsule(40.f, 80.f);
+		const FCollisionShape SweepShape = FCollisionShape::MakeCapsule(30.f, 70.f);
 
 		TArray<FHitResult> HitResults;
 		FCollisionQueryParams Params;

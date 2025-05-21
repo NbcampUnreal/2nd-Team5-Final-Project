@@ -4,6 +4,7 @@
 #include "UI/Widget/AdditiveWidget/SLFadeWidget.h"
 #include "Components/Image.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
 
 void USLFadeWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -22,12 +23,15 @@ void USLFadeWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivate
 {
 	Super::ActivateWidget(WidgetActivateBuffer);
 
+	bIsMoveLevel = WidgetActivateBuffer.bIsMoveLevel;
+
 	if (WidgetActivateBuffer.bIsFade)
 	{
 		if (IsPlayingAnimation())
 		{
 			StopAllAnimations();
 		}
+
 		PlayAnimation(OpenAnim);
 	}
 	else
@@ -36,6 +40,7 @@ void USLFadeWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivate
 		{
 			StopAllAnimations();
 		}
+
 		PlayAnimation(CloseAnim);
 	}
 }
@@ -44,14 +49,18 @@ void USLFadeWidget::OnEndedOpenAnim()
 {
 	Super::OnEndedOpenAnim();
 
-	OnEndedCloseAnim();
+	CloseWidget();
+	this->RemoveFromViewport();
 }
 
 void USLFadeWidget::OnEndedCloseAnim()
 {
-	Super::OnEndedCloseAnim();
-
-	CloseWidget();
+	if (bIsMoveLevel)
+	{
+		USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+		checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
+		LevelSubsystem->PostFadeOut();
+	}
 }
 
 bool USLFadeWidget::ApplyOtherImage()

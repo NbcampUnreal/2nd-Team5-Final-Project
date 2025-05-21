@@ -17,7 +17,7 @@ const FName USLTitleWidget::QuitButtonIndex = "QuitButton";
 
 void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
-	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
+	WidgetInputMode = ESLInputModeType::EIM_GameAndUI;
 	bIsVisibleCursor = true;
 	
 	Super::InitWidget(NewUISubsystem);
