@@ -2,29 +2,84 @@
 
 
 #include "Minigame/System/SLMinigamePuzzleCond.h"
+#include "Minigame/Object/SLReactiveObjectStatue.h"
 
 // Sets default values
 ASLMinigamePuzzleCond::ASLMinigamePuzzleCond()
 {
-	CurrentPermutation = {};
-	AnswerPermutation = {};
+	CurrentStates = {};
+	AnswerStates = {};
+	Statues = {};
 }
 
-void ASLMinigamePuzzleCond::AddNumber(int32 InNumber)
+void ASLMinigamePuzzleCond::UpdateStatueState(int8 InStatueIndex, int8 SubmittedValue)
 {
-	CurrentPermutation.Add(InNumber);
-	if (CurrentPermutation.Num() == AnswerPermutation.Num())
+	
+
+	switch (PuzzleType)
 	{
-		for (int i = 0; i < CurrentPermutation.Num(); i++)
+	case ESLPuzzleType::RotatePuzzle:
+		if (CurrentStates.IsValidIndex(InStatueIndex))
 		{
-			if (CurrentPermutation[i] != AnswerPermutation[i])
-			{
-				DeactivateAllStatue();
-				return;
-			}
+			CurrentStates[InStatueIndex] = SubmittedValue;
+			TryCount++;
 		}
+		SubmittedAnswer();
+		break;
+	case ESLPuzzleType::LightPuzzle:
+		if (CurrentStates.IsValidIndex(InStatueIndex))
+		{
+			CurrentStates[TryCount] = SubmittedValue;
+			TryCount++;
+			for (int32 i = 0; i < CurrentStates.Num(); i++)
+			{
+				if (CurrentStates[i] < 1)
+				{
+					return;
+				}
+			}
+			
+			SubmittedAnswer();
+		}
+		
+		break;
+	default:
+		break;
+	}
+	
+}
+
+void ASLMinigamePuzzleCond::SubmittedAnswer()
+{
+	for (int i = 0; i < CurrentStates.Num(); i++)
+	{
+		if (CurrentStates[i] != AnswerStates[i])
+		{
+			GameSucceedFlag = false;
+			break;
+		}
+		
+		GameSucceedFlag = true;
+	}
+
+	if (GameSucceedFlag)
+	{
 		SendCondition(ESLMinigameResult::EMR_Success);
 	}
+	else if (TryCount > 5) // 임시
+	{
+		DeactivateAllStatue();
+	}
+	else
+	{
+		DeactivateAllStatue();
+	}
+	
+}
+
+void ASLMinigamePuzzleCond::RegisterStatue(ASLReactiveObjectStatue* InStatue)
+{
+	Statues.Add(InStatue);
 }
 
 // Called when the game starts or when spawned
@@ -37,16 +92,28 @@ void ASLMinigamePuzzleCond::BeginPlay()
 void ASLMinigamePuzzleCond::InitCondition()
 {
 	Super::InitCondition();
-	CurrentPermutation.Empty();
+	CurrentStates.Empty();
 }
 
 void ASLMinigamePuzzleCond::SendCondition(ESLMinigameResult InResult)
 {
 	Super::SendConditionToMinigameSubsystem(InResult);
+	
 }
 
 void ASLMinigamePuzzleCond::DeactivateAllStatue()
 {
+	for (int i = 0; i < CurrentStates.Num(); i++)
+	{
+		CurrentStates[i] = 0;
+	}
+	ResetCondition();
 
+}
+
+void ASLMinigamePuzzleCond::ResetCondition()
+{
+	ObjectResetRequested.Broadcast();
+	TryCount = 0;
 }
 
