@@ -100,9 +100,9 @@ public:
 	TMap<EQueryType, FTagQueryAssetPair> ConditionQueryMap;
 
 	// Spring Arm & Camera
-	UPROPERTY(VisibleAnywhere) 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera") 
 	TObjectPtr<USpringArmComponent> CameraBoom;
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	TObjectPtr<UCameraComponent> ThirdPersonCamera;
 };
