@@ -41,7 +41,7 @@ protected:
 	UPROPERTY()
 	float WalkingSpeed = 250.f;
 	UPROPERTY()
-	float MaxSpeed = 500.f;
+	float MaxSpeed = 600.f;
 	UPROPERTY()
 	float JumpZVelocity = 1000.f;
 };

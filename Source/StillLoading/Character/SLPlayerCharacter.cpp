@@ -1,6 +1,7 @@
 #include "SLPlayerCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GamePlayTag/GamePlayTag.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
@@ -9,9 +10,11 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	bUseControllerRotationYaw = true;
+	//bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
-	//GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
+
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
 	//GetCharacterMovement()->RotationRate = FRotator(0.f, 80.f, 0.f);
 	
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -46,13 +49,8 @@ void ASLPlayerCharacter::BeginPlay()
 		AttachItemToHand(Shield, TEXT("l_weapon_socket"));
 		Shield->SetOwner(this);
 	}
-
-	SetPrimaryState(TAG_Character_Movement_Dash);
-
-	if (PrimaryStateTags.HasTag(TAG_Character_Movement_Run))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Run"));
-	}
+	
+	SetPrimaryState(TAG_Character_Movement_Idle);
 
 	PrintPrimaryStateTags();
 }
@@ -125,16 +123,6 @@ bool ASLPlayerCharacter::HasSecondaryState(FGameplayTag StateToCheck) const
 void ASLPlayerCharacter::RemovePrimaryState(FGameplayTag StateToRemove)
 {
 	PrimaryStateTags.RemoveTag(StateToRemove);
-}
-
-void ASLPlayerCharacter::ClearAllPrimaryStates()
-{
-	PrimaryStateTags.Reset();
-}
-
-void ASLPlayerCharacter::ClearAllSecondaryStates()
-{
-	SecondaryStateTags.Reset();
 }
 
 bool ASLPlayerCharacter::IsConditionBlocked(EQueryType QueryType) const
