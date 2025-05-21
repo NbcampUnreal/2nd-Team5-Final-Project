@@ -34,8 +34,19 @@ public:
 	ASLBossCharacter();
 	void SetBossAttackPattern(EBossAttackPattern NewPattern);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void FindTargetPoint();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetTargetPointToBlackboard();
+protected:
+	virtual void BeginPlay() override;
+
 private:
 	// --- Combat Data ---
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	EBossAttackPattern BossAttackPattern;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AActor> TargetPoint;
 };
