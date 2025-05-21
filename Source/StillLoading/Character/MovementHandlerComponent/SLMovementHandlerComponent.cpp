@@ -356,8 +356,6 @@ void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool 
 
 void UMovementHandlerComponent::PointMove()
 {
-	UE_LOG(LogTemp, Log, TEXT("PointMove triggered"));
-
 	APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController());
 	if (!PC) return;
 
@@ -386,6 +384,48 @@ void UMovementHandlerComponent::ToggleMenu()
 	
 }
 
+void UMovementHandlerComponent::Dodge()
+{
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AirBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
+		return;
+	}
+	CachedMontageComponent->PlaySkillMontage(FName("Dodge"));
+	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
+}
+
+void UMovementHandlerComponent::Airborne()
+{
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AirBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
+		return;
+	}
+	CachedMontageComponent->PlaySkillMontage(FName("Airborne"));
+	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Airborne);
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
+}
+
+void UMovementHandlerComponent::AirUp()
+{
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AirBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
+		return;
+	}
+	CachedMontageComponent->PlaySkillMontage(FName("AirUp"));
+	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Airup);
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
+}
+
+void UMovementHandlerComponent::AirDown()
+{
+	CachedMontageComponent->PlaySkillMontage(FName("AirDown"));
+	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Airdown);
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
+}
+
 void UMovementHandlerComponent::Block(const bool bIsBlocking)
 {
 	if (bIsBlocking)
@@ -410,6 +450,7 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 	case ECharacterMontageState::ECS_Falling:
 		break;
 	case ECharacterMontageState::ECS_Dodging:
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Movement_Dodge);
 		break;
 	case ECharacterMontageState::ECS_Dead:
 		break;
@@ -490,9 +531,18 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Air3);
 		break;
-	case ECharacterMontageState::ECS_Attack_Airborn1:
-	case ECharacterMontageState::ECS_Attack_Finisher1:
-	case ECharacterMontageState::ECS_Attack_Finisher2:
+	case ECharacterMontageState::ECS_Attack_Airborne:
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Airborne);
+		break;
+	case ECharacterMontageState::ECS_Attack_Airup:
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Airup);
+		break;
+	case ECharacterMontageState::ECS_Attack_Airdown:
+		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Airdown);
+		break;
 		break;
 	case ECharacterMontageState::ECS_Defense_Block:
 		break;
@@ -523,6 +573,21 @@ void UMovementHandlerComponent::HandleBufferedInput(ESkillType Action)
 		break;
 	case ESkillType::ST_Block:
 		Block(true);
+		break;
+	case ESkillType::ST_Dodge:
+		Dodge();
+		break;
+	case ESkillType::ST_Airborne:
+		Airborne();
+		break;
+	case ESkillType::ST_AirUp:
+		AirUp();
+		break;
+	case ESkillType::ST_Airdown:
+		AirDown();
+		break;
+	case ESkillType::ST_PointMove:
+		PointMove();
 		break;
 	default:
 		break;

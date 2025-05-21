@@ -1,32 +1,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Character/DataAsset/InputComboRow.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Components/ActorComponent.h"
 #include "InputBufferComponent.generated.h"
 
 class ASLPlayerCharacter;
 class UMovementHandlerComponent;
-
-UENUM(BlueprintType)
-enum class ESkillType : uint8
-{
-	ST_Attack UMETA(DisplayName = "Attack"),
-	ST_Block UMETA(DisplayName = "Block"),
-	ST_PointMove UMETA(DisplayName = "PointMove"),
-};
-
-USTRUCT(BlueprintType)
-struct FBufferedInput
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	ESkillType Action;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float Timestamp;
-};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UInputBufferComponent : public UActorComponent
@@ -60,13 +41,24 @@ private:
 	void ExecuteInput(ESkillType Action);
 	UFUNCTION()
 	bool CanConsumeInput(ESkillType NextInput) const;
+	bool TryConsumeComboInput();
 
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UDataTable> ComboDataTable;
+	
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
 	UPROPERTY()
 	TObjectPtr<UMovementHandlerComponent> CachedMovementHandlerComponent;
 	UPROPERTY()
 	TArray<FBufferedInput> InputBuffer;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input Buffer")
+	float PointMoveExpireTime = 0.4f;
 	UPROPERTY()
 	float LastInputTime = -1.0f;
+	UPROPERTY(EditDefaultsOnly, Category = "Input Buffer")
+	float DoubleInputThreshold = 0.3f;
+	UPROPERTY(EditDefaultsOnly)
+	float ComboInputThreshold = 0.3f;
 };
