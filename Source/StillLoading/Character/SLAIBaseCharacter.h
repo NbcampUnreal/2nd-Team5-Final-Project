@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "SLPlayerCharacterBase.h"
+#include "DataAsset/AttackDataAsset.h"
 #include "SLAIBaseCharacter.generated.h"
 
+class UBattleComponent;
 class UMotionWarpingComponent;
 class UBoxComponent;
 class UBlackboardComponent;
@@ -123,7 +125,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void UnequipWeapon();
-	
+
+	UFUNCTION(BlueprintCallable)
+	UBattleComponent* GetBattleComponent();
+
+	UFUNCTION(BlueprintCallable)
+	void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentAttackType(EAttackAnimType NewCurrentAttackType);
+
+	UFUNCTION(BlueprintCallable)
+	EAttackAnimType GetCurrentAttackType();
 protected:
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -132,7 +145,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UAnimInstance> AnimInstancePtr;
 	
-	// --- Attributes ---    // 이거 베이스 캐릭터로 옮길지도?
+	// --- Attributes ---    
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
 	float MaxHealth; // 최대 체력
 
@@ -192,4 +205,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
 	FName WeaponSocketName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<UBattleComponent> BattleComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "combat")
+	EAttackAnimType CurrentAttackType;
 };

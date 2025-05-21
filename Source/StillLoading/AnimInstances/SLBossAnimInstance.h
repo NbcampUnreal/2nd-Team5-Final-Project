@@ -20,7 +20,7 @@ public:
 	AActor* SpawnActorToThrow(TSubclassOf<AActor> ActorClass = nullptr, FName SocketName = NAME_None);
     
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-	AActor* ThrowActorAtTarget(float LaunchSpeed = 1000.f, float ArcParam = 0.5f, FName SocketName = NAME_None);
+	AActor* ThrowActorAtTarget(float LaunchSpeed = 1000.f, float TimeToTarget = 0.5f, FName SocketName = NAME_None);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	bool JumpToTarget(bool bUpdateRotation = true, float RemainingAnimTime = 0.0f);
@@ -33,10 +33,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void FinishCharge();
-	
+
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	EBossAttackPattern GetBossAttackPattern();
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool CleanupThrowActor();
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat")
 	TObjectPtr<AActor> ActorToThrow;
 
@@ -45,7 +48,7 @@ public:
 	// 원래 충돌 설정 저장
 	TEnumAsByte<ECollisionEnabled::Type> OriginalCollisionType;
 private:
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	EBossAttackPattern BossAttackPattern;
 

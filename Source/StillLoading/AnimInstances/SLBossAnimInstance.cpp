@@ -18,6 +18,32 @@ EBossAttackPattern USLBossAnimInstance::GetBossAttackPattern()
 	return BossAttackPattern;
 }
 
+bool USLBossAnimInstance::CleanupThrowActor()
+{
+    if (!ActorToThrow)
+    {
+        // 제거할 액터가 없음
+        return false;
+    }
+    
+    // 액터가 어태치되어 있는지 확인
+    USceneComponent* RootComp = ActorToThrow->GetRootComponent();
+    if (RootComp && RootComp->GetAttachParent() != nullptr)
+    {
+        // 디태치
+        RootComp->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    }
+    
+    // 액터 제거
+    ActorToThrow->Destroy();
+    
+    // 참조 초기화
+    ActorToThrow = nullptr;
+    
+    UE_LOG(LogTemp, Display, TEXT("Throw actor cleaned up successfully"));
+    return true;
+}
+
 AActor* USLBossAnimInstance::SpawnActorToThrow(TSubclassOf<AActor> ActorClass, FName SocketName)
 {
     if (!ActorClass || !OwningCharacter || !GetWorld())
@@ -93,21 +119,39 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float TimeToT
         return nullptr;
     }
     
-    // 소켓 위치 가져오기
     FVector StartLocation = OwningCharacter->GetMesh()->GetSocketLocation(SocketName);
-    
+
     // 액터 디태치 및 위치 설정
     USceneComponent* RootComp = ActorToThrow->GetRootComponent();
     if (RootComp && RootComp->GetAttachParent() != nullptr)
     {
-        RootComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-    }
-    ActorToThrow->SetActorLocation(StartLocation);
+        // 물리 시뮬레이션 일시 중지
+        UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(RootComp);
+        if (PrimComp)
+        {
+            PrimComp->SetSimulatePhysics(false);
+            PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        }
     
-    // 타겟 위치 계산 (머리 위치 기준)
+        // 디태치
+        RootComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+    
+        ActorToThrow->SetActorLocation(StartLocation);
+    
+        // 물리 시뮬레이션 활성화
+        if (PrimComp)
+        {
+            PrimComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+            PrimComp->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+        
+            PrimComp->SetSimulatePhysics(true);
+            PrimComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+            PrimComp->IgnoreActorWhenMoving(OwningCharacter, true);
+        }
+    }
+    
     FVector TargetLocation = TargetCharacter->GetActorLocation();
     
-    // 타겟 높이 조정
     if (UCapsuleComponent* CapsuleComp = TargetCharacter->FindComponentByClass<UCapsuleComponent>())
     {
         float HalfHeight = CapsuleComp->GetScaledCapsuleHalfHeight();
@@ -116,13 +160,6 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float TimeToT
     else
     {
         TargetLocation.Z += 100.0f; // 캡슐이 없는 경우 임의 높이 추가
-    }
-    
-    // 타겟 이동 예측
-    FVector TargetVelocity = TargetCharacter->GetVelocity();
-    if (!TargetVelocity.IsNearlyZero())
-    {
-        TargetLocation += TargetVelocity * TimeToTarget;
     }
     
     // 시간 확인 (최소값 보장)

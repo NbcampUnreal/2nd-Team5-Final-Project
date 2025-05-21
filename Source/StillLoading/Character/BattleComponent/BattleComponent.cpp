@@ -10,7 +10,7 @@ void UBattleComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-void UBattleComponent::SendHitResult(AActor* HitTarget, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitResult, EAttackAnimType AnimType)
 {
 	if (AActor* OwnerActor = GetOwner())
 	{
@@ -21,10 +21,10 @@ void UBattleComponent::SendHitResult(AActor* HitTarget, float DamageAmount, cons
 				UE_LOG(LogTemp, Warning, TEXT("Send Hit Result: %s -> %s | Damage: %.1f | AnimType: %s"),
 					*OwnerActor->GetName(),
 					*HitTarget->GetName(),
-					DamageAmount,
+					GetDamageByType(AnimType),
 					*UEnum::GetValueAsString(AnimType));
 
-				TargetBattleComp->ReceiveHitResult(DamageAmount, OwnerActor, HitResult, AnimType);
+				TargetBattleComp->ReceiveHitResult(GetDamageByType(AnimType), OwnerActor, HitResult, AnimType);
 			}
 		}
 	}
@@ -76,7 +76,7 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 					UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
 					AlreadyHitActors.Add(HitActor);
 
-					SendHitResult(HitActor, GetDamageByType(AttackType), Hit, AttackType);
+					SendHitResult(HitActor, Hit, AttackType);
 				}
 			}
 		}

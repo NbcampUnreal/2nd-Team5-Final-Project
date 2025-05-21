@@ -41,6 +41,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
 	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
 	bool IsTargetBehindCharacter(float AngleThreshold) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")

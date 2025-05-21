@@ -3,6 +3,7 @@
 #include "BrainComponent.h"
 #include "MotionWarpingComponent.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
+#include "BattleComponent/BattleComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -46,7 +47,8 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	RightFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
 	
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
-
+	BattleComponent = CreateDefaultSubobject<UBattleComponent>("BattleComponent");
+	BattleComponent->OnCharacterHited.AddDynamic(this, &ThisClass::CharacterHit);
 	// 카메라 채널 무시
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -72,100 +74,57 @@ void ASLAIBaseCharacter::BeginPlay()
 
 float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-    float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-    if (ActualDamage > 0.0f)
-    {
-        CurrentHealth = FMath::Clamp(CurrentHealth - ActualDamage, 0.0f, MaxHealth);
-
-        if (CurrentHealth <= 0.0f)
-        {
-            if (!IsDead)
-            {
-                IsDead = true;
-            	
-                GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-                GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
-
-            	GetCharacterMovement()->StopMovementImmediately();
-            	GetCharacterMovement()->DisableMovement();
-            	
-            	if (AIController)
-            	{
-            		AIController->GetBrainComponent()->StopLogic("Character Died"); 
-            	}
-            	
-            	if (AnimInstancePtr)
-            	{
-            		if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
-            		{
-            			SLAIAnimInstance->SetIsDead(IsDead);
-            			SLAIAnimInstance->SetIsHit(false);  
-            			SLAIAnimInstance->SetIsDown(false);
-            			SLAIAnimInstance->SetIsStun(false);
-            			SLAIAnimInstance->SetIsAttacking(false);
-            			SLAIAnimInstance->SetShouldLookAtPlayer(false);
-            		}
-                	
-            		if (DeathMontages.Num() > 0)
-            		{
-            			const int32 MontageIndex = FMath::RandRange(0, DeathMontages.Num() - 1);
-            			UAnimMontage* MontageToPlay = DeathMontages[MontageIndex];
-            			if (MontageToPlay)
-            			{
-            				AnimInstancePtr->Montage_Play(MontageToPlay);
-            			}
-            		}
-            	}
-
-            	
-            	
-            }
-        }
-        else if (DamageCauser && IsHitReaction && AnimInstancePtr)
-        {
-            if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
-            {
-                 FVector AttackerLocation = DamageCauser->GetActorLocation();
-                 FVector DirectionVector = AttackerLocation - GetActorLocation(); // 캐릭터 -> 공격자
-                 DirectionVector.Normalize();
-                
-                 FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
-
-                 EHitDirection HitDir;
-                 float AbsX = FMath::Abs(LocalHitDirection.X);
-                 float AbsY = FMath::Abs(LocalHitDirection.Y);
-
-                 if (AbsY > AbsX)
-                 {
-                     HitDir = (LocalHitDirection.Y > 0) ? EHitDirection::EHD_Right : EHitDirection::EHD_Left;
-                 }
-                 else 
-                 {
-                     HitDir = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
-                 }
-                 
-                 SLAIAnimInstance->SetHitDirection(HitDir);
-                 SLAIAnimInstance->SetIsHit(true);
-            }
-        }
-    }
-    return ActualDamage;
+	if (ActualDamage > 0.0f && BattleComponent)
+	{
+		
+		FHitResult HitResult;
+		
+		BattleComponent->ReceiveHitResult(ActualDamage, DamageCauser, HitResult, CurrentAttackType);
+	}
+    
+	return ActualDamage;
 }
 
 void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	
-	if (OtherActor != this && Cast<ACharacter>(OtherActor))
+	// 자기 자신과 충돌 무시
+	if (!OtherActor || OtherActor == this)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("캐릭터와 오버랩됨: %s"), *OtherActor->GetName());
-        
-		if (TObjectPtr<APawn> HitPawn = Cast<APawn>(OtherActor))
-		{
-			// 오버랩 되면 데미지 입힐거임
-		}
+		return;
 	}
+    
+	// 캐릭터인지 확인
+	ACharacter* HitCharacter = Cast<ACharacter>(OtherActor);
+	if (!HitCharacter)
+	{
+		return;
+	}
+     
+	// 타겟 액터에 BattleComponent가 있는지 확인
+	UBattleComponent* TargetBattleComp = OtherActor->FindComponentByClass<UBattleComponent>();
+	if (!TargetBattleComp)
+	{
+		// BattleComponent가 없는 액터는 데미지를 받을 수 없음
+		UE_LOG(LogTemp, Warning, TEXT("%s에 BattleComponent가 없어 데미지를 처리할 수 없습니다"), *OtherActor->GetName());
+		return;
+	}
+    
+	// 자신의 BattleComponent 확인
+	if (!BattleComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("공격자(%s)에 BattleComponent가 없습니다"), *GetName());
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("%s에게 공격자(%s)가  데미지를 주었습니다."), *OtherActor->GetName(), *GetName());
+	// BattleComponent를 통해 데미지 전달
+	BattleComponent->SendHitResult(OtherActor, SweepResult, CurrentAttackType);
+    
+	//히트 이펙트 재생
 }
 
 void ASLAIBaseCharacter::SetCurrentHealth(float NewHealth)
@@ -290,4 +249,108 @@ void ASLAIBaseCharacter::UnequipWeapon()
 		EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		EquippedWeapon = nullptr;
 	}
+}
+
+UBattleComponent* ASLAIBaseCharacter::GetBattleComponent()
+{
+	return BattleComponent;
+}
+
+void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+{
+	// 데미지 적용
+    CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+
+    if (CurrentHealth <= 0.0f)
+    {
+        if (!IsDead)
+        {
+            IsDead = true;
+        	
+            // 충돌 비활성화
+            GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
+
+            // 이동 중지
+            GetCharacterMovement()->StopMovementImmediately();
+            GetCharacterMovement()->DisableMovement();
+            
+            // AI 컨트롤러 중지
+            if (AIController)
+            {
+                //AIController->GetBrainComponent()->StopLogic("Character Died");
+
+            	if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+            	{
+            		BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
+            	}
+            }
+            
+            // 애니메이션 설정
+            if (AnimInstancePtr)
+            {
+                if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+                {
+                    SLAIAnimInstance->SetIsDead(IsDead);
+                    SLAIAnimInstance->SetIsHit(false);  
+                    SLAIAnimInstance->SetIsDown(false);
+                    SLAIAnimInstance->SetIsStun(false);
+                    SLAIAnimInstance->SetIsAttacking(false);
+                    SLAIAnimInstance->SetShouldLookAtPlayer(false);
+                }
+                
+                // 랜덤 사망 몽타주 재생
+                /*if (DeathMontages.Num() > 0)
+                {
+                    const int32 MontageIndex = FMath::RandRange(0, DeathMontages.Num() - 1);
+                    UAnimMontage* MontageToPlay = DeathMontages[MontageIndex];
+                    if (MontageToPlay)
+                    { 
+                        AnimInstancePtr->Montage_Play(MontageToPlay);
+                    }
+                }*/
+            }
+        }
+    }
+    else if (DamageCauser && IsHitReaction && AnimInstancePtr)
+    {
+        // 히트 반응 애니메이션 설정
+        if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+        {
+            // 히트 방향 계산
+            FVector AttackerLocation = DamageCauser->GetActorLocation();
+            FVector DirectionVector = AttackerLocation - GetActorLocation(); // 캐릭터 -> 공격자
+            DirectionVector.Normalize();
+            
+            FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
+
+            // 히트 방향 결정
+            EHitDirection HitDir;
+            float AbsX = FMath::Abs(LocalHitDirection.X);
+            float AbsY = FMath::Abs(LocalHitDirection.Y);
+
+            if (AbsY > AbsX)
+            {
+                HitDir = (LocalHitDirection.Y > 0) ? EHitDirection::EHD_Right : EHitDirection::EHD_Left;
+            }
+            else 
+            {
+                HitDir = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
+            }
+            
+            // 애니메이션 인스턴스에 히트 정보 설정
+            SLAIAnimInstance->SetHitDirection(HitDir);
+            SLAIAnimInstance->SetIsHit(true);
+        }
+    }
+}
+
+void ASLAIBaseCharacter::SetCurrentAttackType(EAttackAnimType NewCurrentAttackType)
+{
+	CurrentAttackType = NewCurrentAttackType;
+}
+
+EAttackAnimType ASLAIBaseCharacter::GetCurrentAttackType()
+{
+	return CurrentAttackType;
 }
