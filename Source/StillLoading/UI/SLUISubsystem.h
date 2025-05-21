@@ -22,7 +22,7 @@ public:
 	void SetChapterToUI(ESLChapterType ChapterType);
 	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 
-	void ActivateFade(bool bIsFadeIn);
+	void ActivateFade(bool bIsFadeIn, bool bIsMoveLevel = false);
 	UFUNCTION(BlueprintCallable)
 	void ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType);
 	UFUNCTION(BlueprintCallable)

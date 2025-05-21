@@ -55,7 +55,7 @@ protected:
 	virtual bool ApplyOtherImage();
 	
 	void PlayUISound(ESLUISoundType SoundType);
-	void MoveToLevelByType(ESLLevelNameType LevelType);
+	void MoveToLevelByType(ESLLevelNameType LevelType, bool bIsFade = true);
 
 	void CheckValidOfUISubsystem();
 	void CheckValidOfTextPoolSubsystem();

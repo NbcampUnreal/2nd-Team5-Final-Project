@@ -26,7 +26,7 @@ void USLUISubsystem::SetInputModeAndCursor()
 	APlayerController* CurrentPC = GetWorld()->GetPlayerControllerIterator()->Get();
 	checkf(IsValid(CurrentPC), TEXT("Player Controller is invalid"));
 
-	switch (CurrentLevelInputMode)
+	switch (TargetInputMode)
 	{
 	case ESLInputModeType::EIM_UIOnly:
 		CurrentPC->SetInputMode(FInputModeUIOnly());
@@ -61,11 +61,14 @@ void USLUISubsystem::SetLevelInputMode(ESLInputModeType InputModeType, bool bIsV
 {
 	CurrentLevelInputMode = InputModeType;
 	bIsVisibleLevelCursor = bIsVisibleMouseCursor;
+
+	RemoveAllAdditveWidget();
 }
 
-void USLUISubsystem::ActivateFade(bool bIsFadeIn)
+void USLUISubsystem::ActivateFade(bool bIsFadeIn, bool bIsMoveLevel)
 {
 	WidgetActivateBuffer.bIsFade = bIsFadeIn;
+	WidgetActivateBuffer.bIsMoveLevel = bIsMoveLevel;
 
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
 }
@@ -131,7 +134,7 @@ void USLUISubsystem::RemoveAllAdditveWidget()
 {
 	for (USLAdditiveWidget* ActiveWidget : ActiveAdditiveWidgets)
 	{
-		if (IsValid(ActiveWidget))
+		if (IsValid(ActiveWidget) && ActiveWidget->IsInViewport())
 		{
 			ActiveWidget->DeactivateWidget();
 		}

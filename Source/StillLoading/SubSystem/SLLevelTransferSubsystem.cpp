@@ -17,15 +17,29 @@ void USLLevelTransferSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	// TODO : OpenLevelByNameType(ESLLevelNameType::Intro);
 }
 
-void USLLevelTransferSubsystem::OpenLevelByNameType(ESLLevelNameType LevelNameType, const FString& Option)
+void USLLevelTransferSubsystem::OpenLevelByNameType(ESLLevelNameType LevelNameType, bool bIsFadeOut, const FString& Option)
+{
+	CurrentLevel = LevelNameType;
+	OptionString = Option;
+
+	if (!bIsFadeOut)
+	{
+		PostFadeOut();
+		return;
+	}
+	
+	CheckValidOfUISubsystem();
+	UISubsystem->ActivateFade(false, true);
+}
+
+void USLLevelTransferSubsystem::PostFadeOut()
 {
 	CheckValidOfLevelDataAsset();
 
-	if (!LevelDataAsset->GetLevelRef(LevelNameType).IsNull())
+	if (!LevelDataAsset->GetLevelRef(CurrentLevel).IsNull())
 	{
-		CurrentLevel = LevelNameType;
-		FString LevelURL = LevelDataAsset->GetLevelRef(LevelNameType).GetAssetName();
-		UGameplayStatics::OpenLevel(GetWorld(), (FName)LevelURL, true, Option);
+		FString LevelURL = LevelDataAsset->GetLevelRef(CurrentLevel).GetAssetName();
+		UGameplayStatics::OpenLevel(GetWorld(), (FName)LevelURL, true, OptionString);
 	}
 }
 
