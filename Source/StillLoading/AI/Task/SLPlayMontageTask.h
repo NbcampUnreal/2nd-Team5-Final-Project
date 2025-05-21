@@ -31,7 +31,7 @@ public:
 
     /** 재생할 몽타주 */
     UPROPERTY(EditAnywhere, Category = "Montage")
-    UAnimMontage* MontageToPlay;
+    TObjectPtr<UAnimMontage> MontageToPlay;
 
     /** 몽타주 재생 속도 (1.0 = 일반 속도) */
     UPROPERTY(EditAnywhere, Category = "Montage", meta = (ClampMin = "0.1", ClampMax = "5.0"))
@@ -52,13 +52,13 @@ private:
 
     /** 현재 재생 중인 몽타주 참조 */
     UPROPERTY()
-    UAnimMontage* CurrentMontage;
+    TObjectPtr<UAnimMontage> CurrentMontage;
 
     /** 비헤이비어 트리 컴포넌트 참조 */
     UPROPERTY()
-    UBehaviorTreeComponent* BTComp;
+    TObjectPtr<UBehaviorTreeComponent> BTComp;
 
     /** 애님 인스턴스 참조 */
     UPROPERTY()
-    UAnimInstance* AnimInstance;
+    TObjectPtr<UAnimInstance> AnimInstance;
 };
