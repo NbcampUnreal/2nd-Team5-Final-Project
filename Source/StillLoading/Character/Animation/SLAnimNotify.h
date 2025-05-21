@@ -35,9 +35,9 @@ enum class ECharacterMontageState : uint8
 	ECS_Attack_Air1 UMETA(DisplayName = "Attack Air 1"),
 	ECS_Attack_Air2 UMETA(DisplayName = "Attack Air 2"),
 	ECS_Attack_Air3 UMETA(DisplayName = "Attack Air 3"),
-	ECS_Attack_Airborn1 UMETA(DisplayName = "Attack Airborn 1"),
-	ECS_Attack_Finisher1 UMETA(DisplayName = "Attack Finisher 1"),
-	ECS_Attack_Finisher2 UMETA(DisplayName = "Attack Finisher 2 - Air"),
+	ECS_Attack_Airborne UMETA(DisplayName = "Attack Airborne"),
+	ECS_Attack_Airup UMETA(DisplayName = "Attack Airup"),
+	ECS_Attack_Airdown UMETA(DisplayName = "Attack Airdown"),
 
 	// 방어 모션
 	ECS_Defense_Block UMETA(DisplayName = "Defense Block"),

@@ -36,7 +36,7 @@ void UAnimationMontageComponent::OnMontageBlendingOut(UAnimMontage* Montage, boo
 	{
 		UE_LOG(LogTemp, Log, TEXT("Attack Montage Ended"));
 	}
-	else if (Montage == (MontageData ? MontageData->DodgeMontage : nullptr))
+	else if (Montage == (MontageData ? MontageData->SkillMontage : nullptr))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Dodge Montage Ended"));
 	}
@@ -69,22 +69,10 @@ void UAnimationMontageComponent::PlayAttackMontage(FName Section)
 		PlayMontage(MontageData->AttackMontage, Section);
 }
 
-void UAnimationMontageComponent::PlayDodgeMontage(FName Section)
+void UAnimationMontageComponent::PlaySkillMontage(FName Section)
 {
 	if (MontageData)
-		PlayMontage(MontageData->DodgeMontage, Section);
-}
-
-void UAnimationMontageComponent::PlayHitReactMontage()
-{
-	if (MontageData)
-		PlayMontage(MontageData->HitReactMontage, NAME_None);
-}
-
-void UAnimationMontageComponent::PlayDeathMontage()
-{
-	if (MontageData)
-		PlayMontage(MontageData->DeathMontage, NAME_None);
+		PlayMontage(MontageData->SkillMontage, Section);
 }
 
 void UAnimationMontageComponent::StopAttackMontage()
