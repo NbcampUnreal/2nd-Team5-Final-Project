@@ -74,17 +74,12 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 		Interact();
 		break;
 	case EInputActionType::EIAT_Attack:
-		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
-		{
-			BufferComp->AddBufferedInput(ESkillType::ST_Attack);
-		}
-		break;
 	case EInputActionType::EIAT_PointMove:
+	case EInputActionType::EIAT_Block:
 		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
 		{
-			BufferComp->AddBufferedInput(ESkillType::ST_PointMove);
+			BufferComp->OnIMCActionStarted(ActionType);
 		}
-		PointMove();
 		break;
 	case EInputActionType::EIAT_Walk:
 		ToggleWalk(true);
@@ -92,11 +87,7 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 	case EInputActionType::EIAT_Menu:
 		ToggleMenu();
 		break;
-	case EInputActionType::EIAT_Block:
-		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
-		{
-			BufferComp->AddBufferedInput(ESkillType::ST_Block);
-		}
+	
 		//Block(true);
 		break;
 
