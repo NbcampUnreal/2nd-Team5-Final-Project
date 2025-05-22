@@ -35,18 +35,25 @@ void UInputBufferComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UInputBufferComponent::AddBufferedInput(ESkillType Action)
 {
-	if (InputBuffer.Num() > MaxInputBufferCount)
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+
+	if (InputBuffer.Num() >= MaxInputBufferCount)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("InputBufferComponent: Input buffer full."));
 		return;
 	}
 
-	const float CurrentTime = GetWorld()->GetTimeSeconds();
-	LastInputTime = GetWorld()->GetTimeSeconds();
+	if (Action == ESkillType::ST_PointMove)
+	{
+		bWaitingForComboWindow = true;
+		PointMoveStartTime = CurrentTime;
+	}
+
+	LastInputTime = CurrentTime;
 	InputBuffer.Add({Action, CurrentTime});
 
 	UE_LOG(LogTemp, Warning, TEXT("InputBufferComponent: Input [%s] array [%d]."), *UEnum::GetValueAsString(Action),
-	       InputBuffer.Num());
+		   InputBuffer.Num());
 }
 
 void UInputBufferComponent::ProcessBufferedInputs()
@@ -67,39 +74,27 @@ void UInputBufferComponent::ProcessBufferedInputs()
 		LastInputTime = -1.0f;
 	}
 
-	// 입력 시간 유효성 필터링
-	InputBuffer = InputBuffer.FilterByPredicate([&](const FBufferedInput& Input)
+	// PointMove 콤보 대기 중일 경우
+	if (bWaitingForComboWindow)
 	{
-		return (CurrentTime - Input.Timestamp) <= BufferDuration;
-	});
-
-	// 콤보 트리거가 PointMove로 시작할 경우
-	if (InputBuffer.Num() > 1 && InputBuffer[0].Action == ESkillType::ST_PointMove)
-	{
-		if (TryConsumeComboInput())
-			return;
-
-		// 콤보가 아닌데 뒤 입력도 무효면 PointMove 폐기
-		if (!CanConsumeInput(InputBuffer[1].Action))
+		if ((CurrentTime - PointMoveStartTime) >= PointMoveExpireTime)
 		{
-			InputBuffer.RemoveAt(0);
-			return;
-		}
-	}
-
-	// 단독 PointMove 처리 방지 및 자동 소모 처리
-	if (InputBuffer.Num() == 1 && InputBuffer[0].Action == ESkillType::ST_PointMove)
-	{
-		const float Age = CurrentTime - InputBuffer[0].Timestamp;
-		if (Age > PointMoveExpireTime)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ST_PointMove expired (%.2f초), 버퍼에서 제거"), Age);
-			InputBuffer.RemoveAt(0);
+			if (!TryConsumeComboInput())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("PointMove 콤보 실패 → 전체 입력 폐기"));
+				InputBuffer.Empty();
+			}
+			bWaitingForComboWindow = false;
+			PointMoveStartTime = -1.f;
 		}
 		return;
 	}
 
-	// 일반 입력 처리
+	// 일반 콤보 처리
+	if (TryConsumeComboInput())
+		return;
+
+	// 일반 단일 입력 처리 (PointMove 대기 아님)
 	if (!InputBuffer.IsEmpty())
 	{
 		const ESkillType NextInput = InputBuffer[0].Action;
@@ -128,8 +123,6 @@ bool UInputBufferComponent::TryConsumeComboInput()
 {
 	if (!ComboDataTable || InputBuffer.IsEmpty()) return false;
 
-	const float CurrentTime = GetWorld()->GetTimeSeconds();
-
 	for (const auto& RowName : ComboDataTable->GetRowNames())
 	{
 		const FInputComboRow* ComboRow = ComboDataTable->FindRow<FInputComboRow>(RowName, TEXT("ComboCheck"));
@@ -152,9 +145,8 @@ bool UInputBufferComponent::TryConsumeComboInput()
 		// 시간 조건
 		if (bMatch)
 		{
-			const bool bTagValid = ComboRow->RequiredTag.IsValid();
-
-			if (bTagValid)
+			// 테그 확인
+			if (const bool bTagValid = ComboRow->RequiredTag.IsValid())
 			{
 				if (!OwnerCharacter->IsInPrimaryState(ComboRow->RequiredTag)) continue;
 			}
@@ -243,8 +235,7 @@ bool UInputBufferComponent::CanConsumeInput(ESkillType NextInput) const
 
 void UInputBufferComponent::ExecuteInput(ESkillType Action)
 {
-	AActor* Owner = GetOwner();
-	if (Owner)
+	if (AActor* Owner = GetOwner())
 	{
 		if (!CachedMovementHandlerComponent)
 		{
