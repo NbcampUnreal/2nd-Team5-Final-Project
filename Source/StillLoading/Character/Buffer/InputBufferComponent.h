@@ -45,7 +45,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UDataTable> ComboDataTable;
-	
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
 	UPROPERTY()
@@ -53,6 +52,8 @@ private:
 	UPROPERTY()
 	TArray<FBufferedInput> InputBuffer;
 
+	UPROPERTY()
+	ESkillType LastExecutedSkill = ESkillType::ST_None;
 	UPROPERTY(EditDefaultsOnly, Category = "Input Buffer")
 	float PointMoveExpireTime = 0.4f;
 	UPROPERTY()
