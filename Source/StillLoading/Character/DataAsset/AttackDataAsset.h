@@ -22,18 +22,19 @@ enum class EAttackAnimType : uint8 // 애니메이션 기준
 	AAT_Skill2 UMETA(DisplayName = "Skill2"),
 
 	// AI
-	AAT_Attack_01 UMETA(DisplayName = "Attack 01"),
-	AAT_Attack_02 UMETA(DisplayName = "Attack 02"),
-	AAT_Attack_03 UMETA(DisplayName = "Attack 03"),
-	AAT_Attack_04 UMETA(DisplayName = "Attack 04"),
-	AAT_DashAttack UMETA(DisplayName = "Dash Attack"),
-	AAT_FootAttack_Left UMETA(DisplayName = "Foot Attack - Left"),
-	AAT_FootAttack_Right UMETA(DisplayName = "Foot Attack - Right"),
-	AAT_GroundSlam_01 UMETA(DisplayName = "Ground Slam 01"),
-	AAT_GroundSlam_02 UMETA(DisplayName = "Ground Slam 02"),
-	AAT_JumpAttack UMETA(DisplayName = "Jump Attack"),
-	AAT_ThrowStone UMETA(DisplayName = "Throw Stone"),
-	AAT_Whirlwind UMETA(DisplayName = "Whirlwind Attack"),
+	// 모션: 날라가는거, 약한거, 중간거 (한발짝), 기절 
+	AAT_Attack_01 UMETA(DisplayName = "Attack 01"), // 날라가는거
+	AAT_Attack_02 UMETA(DisplayName = "Attack 02"), // 날라가는거
+	AAT_Attack_03 UMETA(DisplayName = "Attack 03"), // 기절
+	AAT_Attack_04 UMETA(DisplayName = "Attack 04"), // 날라가는거
+	AAT_DashAttack UMETA(DisplayName = "Dash Attack"), // 날라가는거
+	AAT_FootAttack_Left UMETA(DisplayName = "Foot Attack - Left"), // 중간거
+	AAT_FootAttack_Right UMETA(DisplayName = "Foot Attack - Right"), // 중간거
+	AAT_GroundSlam_01 UMETA(DisplayName = "Ground Slam 01"), // 중간거
+	AAT_GroundSlam_02 UMETA(DisplayName = "Ground Slam 02"), // 중간거
+	AAT_JumpAttack UMETA(DisplayName = "Jump Attack"), // 중간거
+	AAT_ThrowStone UMETA(DisplayName = "Throw Stone"), // 날라가는거
+	AAT_Whirlwind UMETA(DisplayName = "Whirlwind Attack"), // 중간거
 
 	// Object
 	AAT_Activate UMETA(DisplayName = "Activate"),

@@ -3,6 +3,7 @@
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/SLAnimNotify.h"
+#include "Character/BattleComponent/BattleComponent.h"
 #include "Character/Buffer/InputBufferComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
@@ -27,6 +28,7 @@ void UMovementHandlerComponent::BeginPlay()
 	{
 		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
 		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
+		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
 
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 600.f;
 		BindIMCComponent();
@@ -138,6 +140,116 @@ void UMovementHandlerComponent::BindIMCComponent()
 		IMC->OnActionTriggered.AddDynamic(this, &UMovementHandlerComponent::OnActionTriggered);
 		IMC->OnActionStarted.AddDynamic(this, &UMovementHandlerComponent::OnActionStarted);
 		IMC->OnActionCompleted.AddDynamic(this, &UMovementHandlerComponent::OnActionCompleted);
+	}
+
+	CachedBattleComponent->OnCharacterHited.AddDynamic(this, &UMovementHandlerComponent::OnHitReceived);
+}
+
+void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType)
+{
+	CachedMontageComponent->StopAllMontages(0.2f);
+
+	float RemoveDelay = 1.0f;
+
+	switch (AnimType) {
+	case EAttackAnimType::AAT_Attack_01:
+	case EAttackAnimType::AAT_Attack_02:
+	case EAttackAnimType::AAT_Attack_04:
+	case EAttackAnimType::AAT_DashAttack:
+	case EAttackAnimType::AAT_ThrowStone: // 날라가는거
+		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Knockback);
+		RemoveDelay = 2.0f; // 몽타주에서 받을꺼라 필요없음
+		//CachedMontageComponent->PlayHitMontage(FName("HitReact"));
+		break;
+	case EAttackAnimType::AAT_Attack_03: // 기절
+		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Groggy);
+		RemoveDelay = 3.0f; // 몽타주 ,,
+		//CachedMontageComponent->PlayHitMontage(FName("HitReact"));
+		break;
+	case EAttackAnimType::AAT_FootAttack_Left:
+	case EAttackAnimType::AAT_FootAttack_Right:
+	case EAttackAnimType::AAT_GroundSlam_01:
+	case EAttackAnimType::AAT_GroundSlam_02:
+	case EAttackAnimType::AAT_JumpAttack: // 중간거
+		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
+		RemoveDelay = 1.5f;
+		break;
+	case EAttackAnimType::AAT_Whirlwind: // 약한거
+		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
+		RemoveDelay = 1.0f;
+		break;
+	default: break;
+	}
+
+	//RotateToHitCauser(Causer); // 캐릭터 방향 돌리기
+	HitDirection(Causer);
+
+	GetWorld()->GetTimerManager().SetTimer(
+		ReactionResetTimerHandle,
+		FTimerDelegate::CreateWeakLambda(this, [this]() {
+			if (OwnerCharacter)
+			{
+				OwnerCharacter->RemovePrimaryState(TAG_Character_HitReaction_Knockback);
+				OwnerCharacter->RemovePrimaryState(TAG_Character_HitReaction_Groggy);
+				OwnerCharacter->RemovePrimaryState(TAG_Character_HitReaction_Medium);
+				OwnerCharacter->RemovePrimaryState(TAG_Character_HitReaction_Weak);
+			}
+		}),
+		RemoveDelay, false
+	);
+}
+
+void UMovementHandlerComponent::HitDirection(AActor* Causer)
+{
+	if (!OwnerCharacter || !Causer) return;
+
+	const FVector OwnerLocation = OwnerCharacter->GetActorLocation();
+	const FVector CauserLocation = Causer->GetActorLocation();
+
+	const FVector ToCauser = (CauserLocation - OwnerLocation).GetSafeNormal2D();
+	const FVector Forward = OwnerCharacter->GetActorForwardVector().GetSafeNormal2D();
+	const FVector Right = OwnerCharacter->GetActorRightVector().GetSafeNormal2D();
+
+	ForwardDot = FVector::DotProduct(Forward, ToCauser);
+	RightDot = FVector::DotProduct(Right, ToCauser);
+
+	FString Direction;
+
+	if (ForwardDot > 0.7f)
+		Direction = TEXT("Front");
+	else if (ForwardDot < -0.7f)
+		Direction = TEXT("Back");
+	else if (RightDot > 0.0f)
+		Direction = TEXT("Right");
+	else
+		Direction = TEXT("Left");
+
+	UE_LOG(LogTemp, Warning, TEXT("HitDirection: %s (ForwardDot: %.2f, RightDot: %.2f)"), *Direction, ForwardDot, RightDot);
+}
+
+void UMovementHandlerComponent::RotateToHitCauser(const AActor* Causer)
+{
+	if (!OwnerCharacter || !Causer) return;
+
+	const FVector OwnerLocation = OwnerCharacter->GetActorLocation();
+	const FVector CauserLocation = Causer->GetActorLocation();
+
+	const FVector ToCauser = (CauserLocation - OwnerLocation).GetSafeNormal2D();
+	const FVector Forward = OwnerCharacter->GetActorForwardVector().GetSafeNormal2D();
+
+	const float Dot = FVector::DotProduct(Forward, ToCauser);
+
+	if (Dot >= -0.7f) // 뒤쪽이 아니면 회전
+	{
+		FRotator TargetRotation = ToCauser.Rotation();
+		TargetRotation.Pitch = 0.f;
+		TargetRotation.Roll = 0.f;
+
+		OwnerCharacter->SetActorRotation(TargetRotation);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::RotateToHitCauser: From Back!!!"));
 	}
 }
 
@@ -474,50 +586,26 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 	case ECharacterMontageState::ECS_Hit_Knockback:
 		break;
 	case ECharacterMontageState::ECS_Attack_Basic1:
-		if (CachedMontageComponent)
-		{
-			CachedMontageComponent->StopAttackMontage();
-		}
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Basic1);
 		break;
 	case ECharacterMontageState::ECS_Attack_Basic2:
-		if (CachedMontageComponent)
-		{
-			CachedMontageComponent->StopAttackMontage();
-		}
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Basic2);
 		break;
 	case ECharacterMontageState::ECS_Attack_Basic3:
-		if (CachedMontageComponent)
-		{
-			CachedMontageComponent->StopAttackMontage();
-		}
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Basic3);
 		break;
 	case ECharacterMontageState::ECS_Attack_Special1:
-		if (CachedMontageComponent)
-		{
-			CachedMontageComponent->StopAttackMontage();
-		}
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Special1);
 		break;
 	case ECharacterMontageState::ECS_Attack_Special2:
-		if (CachedMontageComponent)
-		{
-			CachedMontageComponent->StopAttackMontage();
-		}
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Special2);
 		break;
 	case ECharacterMontageState::ECS_Attack_Special3:
-		if (CachedMontageComponent)
-		{
-			CachedMontageComponent->StopAttackMontage();
-		}
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Attack);
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Special3);
 		break;

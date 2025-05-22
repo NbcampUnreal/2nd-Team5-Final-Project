@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Character/Animation/SLAnimNotify.h"
 #include "Character/Buffer/InputBufferComponent.h"
+#include "Character/DataAsset/AttackDataAsset.h"
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
@@ -55,6 +56,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	float MouseSensitivity = 0.5f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
+	float ForwardDot = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
+	float RightDot = 0.0f;
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -66,6 +72,10 @@ protected:
 	void OnActionCompleted(EInputActionType ActionType);
 	UFUNCTION()
 	void BindIMCComponent();
+	UFUNCTION()
+	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
+	UFUNCTION()
+	void HitDirection(AActor* Causer);
 
 	UPROPERTY()
 	FVector2D MovementInputAxis = FVector2D::ZeroVector;
@@ -84,6 +94,7 @@ private:
 	void AirUp();
 	void AirDown();
 	void Block(const bool bIsBlocking);
+	void RotateToHitCauser(const AActor* Causer);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
 
 	UPROPERTY()
@@ -92,6 +103,10 @@ private:
 	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
 	UPROPERTY()
 	TObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
+	UPROPERTY()
+	TObjectPtr<UBattleComponent> CachedBattleComponent;
+	UPROPERTY()
+	FTimerHandle ReactionResetTimerHandle;
 
 	int32 CurrentIndex = 0; // Test용
 };
