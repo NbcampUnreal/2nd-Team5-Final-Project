@@ -117,7 +117,6 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 		break;
 	case EInputActionType::EIAT_Interaction:
 	case EInputActionType::EIAT_Attack:
-		
 		break;
 	case EInputActionType::EIAT_PointMove:
 	case EInputActionType::EIAT_Menu:
@@ -403,6 +402,8 @@ void UMovementHandlerComponent::Airborne()
 		return;
 	}
 	CachedMontageComponent->PlaySkillMontage(FName("Airborne"));
+
+	Block(false);
 	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Airborne);
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
 }
@@ -415,6 +416,8 @@ void UMovementHandlerComponent::AirUp()
 		return;
 	}
 	CachedMontageComponent->PlaySkillMontage(FName("AirUp"));
+
+	Block(false);
 	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Airup);
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
 }
@@ -422,6 +425,8 @@ void UMovementHandlerComponent::AirUp()
 void UMovementHandlerComponent::AirDown()
 {
 	CachedMontageComponent->PlaySkillMontage(FName("AirDown"));
+
+	Block(false);
 	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Airdown);
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
 }

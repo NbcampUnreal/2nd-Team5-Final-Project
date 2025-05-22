@@ -56,9 +56,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input Buffer")
 	float PointMoveExpireTime = 0.4f;
 	UPROPERTY()
+	bool bWaitingForComboWindow = false;
+	UPROPERTY()
+	float PointMoveStartTime = -1.f;
+	UPROPERTY()
 	float LastInputTime = -1.0f;
-	UPROPERTY(EditDefaultsOnly, Category = "Input Buffer")
-	float DoubleInputThreshold = 0.3f;
-	UPROPERTY(EditDefaultsOnly)
-	float ComboInputThreshold = 0.3f;
 };
