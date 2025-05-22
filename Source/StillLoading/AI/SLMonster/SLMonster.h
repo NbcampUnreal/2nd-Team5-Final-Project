@@ -15,6 +15,15 @@ class STILLLOADING_API ASLMonster : public ASLAIBaseCharacter
 public:
 	ASLMonster();
 
+	UFUNCTION(BlueprintCallable, Category = "RVO")
+	void SetRVOAvoidanceEnabled(bool bEnable);
+	UFUNCTION(BlueprintCallable)
+	bool GetIsInCombat() const;
+	UFUNCTION()
+	void SetIsInCombat(bool bInCombat);
+
+	bool IsTargetInSight() const;
+
 	virtual void Tick(float DeltaTime) override;
 
 	void Attack();
@@ -23,26 +32,31 @@ public:
 
     UPROPERTY()
     TObjectPtr<AActor> TargetActor;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category ="AI")
+	float AttackAngle = 75.f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category ="AI")
+	class USphereComponent* AttackSphere;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	class USphereComponent* AttackCheckSphere;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	bool bIsCombat = false;
 
 protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, Category = "AI")
-	float AttackRange = 200.0f;
+	float AttackRange = 180.0f;
 	UPROPERTY(EditAnywhere, Category = "AI")
 
 	float AttackCooldown = 0.7f;
 
 	float LastAttackTime;
 
-	/*UFUNCTION(BlueprintCallable, Category = "RVO")
-	void SetRVOAvoidanceEnabled(bool bEnable);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RVO")
+	float AvoidanceRadius = 500.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RVO")
-	float AvoidanceRadius = 350.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RVO")
-	float AvoidanceWeight = 0.5f;*/
+	float AvoidanceWeight = 0.5f;
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

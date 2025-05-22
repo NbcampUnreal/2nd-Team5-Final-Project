@@ -8,21 +8,32 @@
 #include "EngineUtils.h"
 #include "GenericTeamAgentInterface.h"
 #include "Controller/SLEnemyAIController.h"
-
+#include "Components/SphereComponent.h"
 
 ASLMonster::ASLMonster()
 {
     PrimaryActorTick.bCanEverTick = true;
     AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
-    /*UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+    UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
     if (MovementComponent)
     {
         MovementComponent->bUseRVOAvoidance = true;
         MovementComponent->AvoidanceConsiderationRadius = AvoidanceRadius;
         MovementComponent->AvoidanceWeight = 0.5f;
-    }*/
+    }
 
+    AttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AttackSphere"));
+    AttackSphere->SetupAttachment(RootComponent);
+    AttackSphere->SetSphereRadius(550.f);
+    AttackSphere->SetCollisionProfileName(TEXT("OverlapAll"));
+    AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    AttackCheckSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AttackCheckSphere"));
+    AttackCheckSphere->SetupAttachment(RootComponent);
+    AttackCheckSphere->SetSphereRadius(550.f);
+    AttackCheckSphere->SetCollisionProfileName(TEXT("OverlapAll"));
+    AttackCheckSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
 void ASLMonster::BeginPlay()
@@ -65,12 +76,28 @@ void ASLMonster::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 
 void ASLMonster::Attack()
 {
-    float CurrentTime = GetWorld()->GetTimeSeconds();
-    if (CurrentTime - LastAttackTime > AttackCooldown)
+    AActor* Target = Cast<AActor>(BlackboardComp->GetValueAsObject(FName("TargetActor")));
+    if (!Target) return;
+    float Distance = FVector::Dist(GetActorLocation(), Target->GetActorLocation());
+
+    if (Distance > AttackRange) return;
+    /*{
+        FVector RetreatDirection = (GetActorLocation() - Target->GetActorLocation()).GetSafeNormal();
+        FVector RetreatLocation = GetActorLocation() + RetreatDirection * 350.f;
+
+        AAIController* EnemyCon = Cast<AAIController>(GetController());
+        EnemyCon->MoveToLocation(RetreatLocation);
+    }*/
+    if (IsTargetInSight())
     {
-        TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
-        AnimInstance->SetIsAttacking(true);
-        LastAttackTime = CurrentTime;
+        AttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        float CurrentTime = GetWorld()->GetTimeSeconds();
+        if (CurrentTime - LastAttackTime > AttackCooldown)
+        {
+            TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
+            AnimInstance->SetIsAttacking(true);
+            LastAttackTime = CurrentTime;
+        }
     }
 }
 
@@ -106,14 +133,39 @@ void ASLMonster::MoveToNextPatrolPoint()
     }
 }
 
-//void ASLMonster::SetRVOAvoidanceEnabled(bool Enable)
-//{
-//    UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
-//    if (MovementComponent)
-//    {
-//        MovementComponent->bUseRVOAvoidance = true;
-//    }
-//}
+void ASLMonster::SetRVOAvoidanceEnabled(bool Enable)
+{
+    UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+    if (MovementComponent)
+    {
+        MovementComponent->bUseRVOAvoidance = Enable;
+    }
+}
+
+bool ASLMonster::IsTargetInSight() const
+{
+    AActor* Target = Cast<AActor>(BlackboardComp->GetValueAsObject(FName("TargetActor")));
+    if (!Target) return false;
+
+    FVector ToTarget = Target->GetActorLocation() - GetActorLocation();
+    ToTarget.Normalize();
+
+    FVector Forward = GetActorForwardVector();
+    float Dot = FVector::DotProduct(Forward, ToTarget);
+
+    float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(AttackAngle * 0.5f));
+    return Dot >= CosHalfFOV;
+}
+
+void ASLMonster::SetIsInCombat(bool bInCombat)
+{
+    bIsCombat = bInCombat;
+}
+
+bool ASLMonster::GetIsInCombat() const
+{
+    return bIsCombat;
+}
 
 
 

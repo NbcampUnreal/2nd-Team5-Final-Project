@@ -60,26 +60,6 @@ void ASLEnemyAIController::BeginPlay()
 	BlackboardComp->SetValueAsBool("IsPatrolState", IsPatrolState);
 }
 
-void ASLEnemyAIController::StopChasing()
-{
-	bIsChasing = false;
-	StopMovement();
-	CurrentState = EAIState::EAIS_Idle;
-}
-
-void ASLEnemyAIController::StartChasing(AActor* Target)
-{
-	TargetActor = Target;
-	bIsChasing = true;
-	BlackboardComp = GetBlackboardComponent();
-	BlackboardComp->SetValueAsBool("IsChasing", bIsChasing);
-	if (Target)
-	{
-		LastKnownLocation = Target->GetActorLocation();
-	}
-	CurrentState = EAIState::EAIS_Chasing;
-}
-
 void ASLEnemyAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (bHasFixedTarget) return;
@@ -93,17 +73,11 @@ void ASLEnemyAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 				BlackboardComponent->SetValueAsBool("IsPatrolState", IsPatrolState);
 				TargetActor = Actor;
 				BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
-				StartChasing(Actor);
 			}
 		}
 		else
 		{
 			GetBlackboardComponent()->ClearValue(FName("TargetActor"));
-			if (CurrentState == EAIState::EAIS_Chasing)
-			{
-				/*MoveToLocation(LastKnownLocation, 100.f);*/
-				CurrentState = EAIState::EAIS_Suspicious;
-			}
 		}
 	}
 }
@@ -162,4 +136,13 @@ void ASLEnemyAIController::OnPossess(APawn* InPawn)
 
 	FTimerHandle TimerHandle;
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &ASLEnemyAIController::InitializePatrolPoints, 0.5f, false);
+}
+
+void ASLEnemyAIController::SetPeripheralVisionAngle(float NewAngle)
+{
+	if (AISenseConfig_Sight)
+	{
+		AISenseConfig_Sight->PeripheralVisionAngleDegrees = NewAngle;
+		GetPerceptionComponent()->RequestStimuliListenerUpdate();
+	}
 }

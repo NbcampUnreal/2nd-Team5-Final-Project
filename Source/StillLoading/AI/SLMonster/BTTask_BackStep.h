@@ -17,5 +17,5 @@ class STILLLOADING_API UBTTask_BackStep : public UBTTask_BlackboardBase
 private:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
-	float Distance = 100.f;
+	float Distance = 200.f;
 };

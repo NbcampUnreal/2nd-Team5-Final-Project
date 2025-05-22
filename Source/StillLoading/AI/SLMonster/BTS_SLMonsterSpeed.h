@@ -13,4 +13,17 @@ UCLASS()
 class STILLLOADING_API UBTS_SLMonsterSpeed : public UBTService_BlackboardBase
 {
 	GENERATED_BODY()
+
+public:
+	UBTS_SLMonsterSpeed();
+
+protected:
+	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DelatSeconds) override;
+
+	UPROPERTY(EditAnywhere, Category ="AI")
+	float AttackRange = 150.f;
+	UPROPERTY(EditAnywhere, Category ="AI")
+	float AttackAngle = 60.f;
+	UPROPERTY(EditAnywhere, Category = "AI")
+	float CheckRadius = 400.f;
 };

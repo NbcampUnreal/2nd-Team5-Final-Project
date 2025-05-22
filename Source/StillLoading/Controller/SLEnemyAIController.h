@@ -22,12 +22,10 @@ public:
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 	//End of ~IGenericTeamAgentInterface inteface
 	
-	UFUNCTION(BlueprintCallable, Category = "AI")
-	void StartChasing(AActor* Target);
-	UFUNCTION(BlueprintCallable, Category = "AI")
-	void StopChasing();
 	UFUNCTION(BlueprintPure, Category = "AI")
 	EAIState GetCurrentState() const { return CurrentState; }
+
+	void SetPeripheralVisionAngle(float NewAngle);
 
 	UPROPERTY(BlueprintReadWrite, Category = "AI")
 	TObjectPtr<UBehaviorTreeComponent> BehaviorTreeComp;
@@ -44,6 +42,8 @@ public:
 	
 	bool bPatrolPointsReady = false;
 
+	bool bHasFixedTarget = false;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -59,8 +59,6 @@ protected:
 
 	FTimerHandle DelayHandle;
 	
-	bool bHasFixedTarget = false;
-
 	bool IsPatrolState = true;
 
 private:
@@ -69,8 +67,6 @@ private:
 	FVector CurrentTargetLocation;
 	
 	FVector LastKnownLocation;
-
-	bool bIsChasing = false;
 
 	EAIState CurrentState = EAIState::EAIS_Idle;
 };

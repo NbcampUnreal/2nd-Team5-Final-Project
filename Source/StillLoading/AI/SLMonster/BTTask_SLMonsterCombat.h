@@ -14,4 +14,8 @@ class STILLLOADING_API UBTTask_SLMonsterCombat : public UBTTask_BlackboardBase
 {
 	GENERATED_BODY()
 	
+public:
+	UBTTask_SLMonsterCombat();
+
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };
