@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "SubSystem/SLTextPoolTypes.h"
 #include "UI/SLUITypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLTextPoolDataRows.generated.h"
 
 USTRUCT(BlueprintType)

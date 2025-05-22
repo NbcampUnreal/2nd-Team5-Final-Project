@@ -1,240 +1,218 @@
+
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Character/MovementHandlerComponent/SL2DMovementHandlerComponent.h"
 
-#include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
-#include "Character/Buffer/InputBufferComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
+#include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
-#include "Character/PlayerState/SLBattlePlayerState.h"
+#include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PawnMovementComponent.h"
+#include "Materials/MaterialParameterCollection.h"
 
-// Sets default values for this component's properties
-USL2DMovementHandlerComponent::USL2DMovementHandlerComponent() : OwnerCharacter(nullptr)
+USL2DMovementHandlerComponent::USL2DMovementHandlerComponent(): OwnerCharacter(nullptr)
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-
-// Called when the game starts
 void USL2DMovementHandlerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
-	check(OwnerCharacter); // 캐릭터가 아닌 경우 에러
 
-	BindIMCComponent();
-	SetTopDownView();
-
-
-}
-
-void USL2DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
-{
-	switch (ActionType)
+	if (OwnerCharacter)
 	{
-	case EInputActionType::EIAT_MoveUp:
-	case EInputActionType::EIAT_MoveDown:
-	case EInputActionType::EIAT_MoveLeft:
-	case EInputActionType::EIAT_MoveRight:
-		Move(Value.Get<float>(), ActionType);
-		//Move(Value.Get<float>(), ActionType);
-		break;
+		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
+		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
+		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
+		BindIMCComponent();
+	}
 
-	default:
-		break;
+	if (auto* CMC = GetOwner()->FindComponentByClass<UCameraManagerComponent>())
+	{
+		constexpr EGameCameraType NextType = EGameCameraType::EGCT_TopDown;
+		CMC->SwitchCamera(NextType);
+	}
+
+	PrimaryComponentTick.bStartWithTickEnabled = true;
+	
+	// 픽셀 크기 초기화
+	if (IsValid(PixelizationMPC))
+	{
+		PixelSize = FMath::FloorToFloat(1980.0f / PixelizationMPC->GetScalarParameterByName("PixelSize")->DefaultValue);
 	}
 }
 
-void USL2DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
+void USL2DMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	switch (ActionType)
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// 이동 중인 경우 목표 위치로 캐릭터 이동
+	if (bIsMoving && OwnerCharacter)
 	{
-	case EInputActionType::EIAT_Interaction:
-		Interact();
-		break;
-	case EInputActionType::EIAT_Attack:
-		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
+		FVector CurrentLocation = OwnerCharacter->GetActorLocation();
+		FVector DirectionToTarget = CurrentTargetLocation - CurrentLocation;
+		DirectionToTarget.Z = 0.0f;
+
+		// 목표 위치에 도달했거나 거의 도달한 경우
+		if (DirectionToTarget.SizeSquared() < 1.0f)
 		{
-			BufferComp->AddBufferedInput(ESkillType::ST_Attack);
+			// 정확한 위치로 설정
+			OwnerCharacter->SetActorLocation(CurrentTargetLocation, true);
+			bIsMoving = false;
 		}
-		//Attack();
-		break;
-	case EInputActionType::EIAT_Menu:
-		ToggleMenu();
-		break;
-
-	default:
-		break;
+		else
+		{
+			// 목표 위치를 향해 이동
+			float MoveSpeed = PixelSize / 0.1f; // 0.1초 동안 한 픽셀 이동
+			float MaxDistanceThisFrame = MoveSpeed * DeltaTime;
+			
+			if (DirectionToTarget.Size() <= MaxDistanceThisFrame)
+			{
+				// 이번 프레임에 도착 가능하면 바로 도착
+				OwnerCharacter->SetActorLocation(CurrentTargetLocation, true);
+				bIsMoving = false;
+			}
+			else
+			{
+				// 아직 도착하지 못했으면 해당 방향으로 이동
+				DirectionToTarget.Normalize();
+				FVector NewLocation = CurrentLocation + DirectionToTarget * MaxDistanceThisFrame;
+				OwnerCharacter->SetActorLocation(NewLocation, true);
+			}
+		}
 	}
-}
-
-void USL2DMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
-{
 }
 
 void USL2DMovementHandlerComponent::BindIMCComponent()
 {
 	if (auto* IMC = GetOwner()->FindComponentByClass<UDynamicIMCComponent>())
 	{
-		IMC->OnActionTriggered.AddDynamic(this, &USL2DMovementHandlerComponent::OnActionTriggered);
-		IMC->OnActionStarted.AddDynamic(this, &USL2DMovementHandlerComponent::OnActionStarted);
+		IMC->OnActionTriggered.AddDynamic(this, &ThisClass::OnActionTriggered);
+		IMC->OnActionStarted.AddDynamic(this, &ThisClass::OnActionStarted);
+		IMC->OnActionCompleted.AddDynamic(this, &ThisClass::OnActionCompleted);
 	}
 }
 
-
-// Called every frame
-void USL2DMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void USL2DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (bIsMoving)
+	switch (ActionType)
 	{
-		MoveElapsed += DeltaTime;
-		float Alpha = FMath::Clamp(MoveElapsed / MoveDuration, 0.0f, 1.0f);
+	case EInputActionType::EIAT_Look: break;
+	case EInputActionType::EIAT_MoveUp:
+	case EInputActionType::EIAT_MoveDown:
+	case EInputActionType::EIAT_MoveLeft:
+	case EInputActionType::EIAT_MoveRight:
+		Move(Value.Get<float>(), ActionType);
+		break;
 
-		FVector NewLocation = FMath::Lerp(StartLocation, TargetLocation, Alpha);
-		FVector::Distance(StartLocation, TargetLocation);
-		OwnerCharacter->SetActorLocation(NewLocation);
-
-		if (Alpha >= 1.0f)
-		{
-			bIsMoving = false;
-
-			// 다음 이동 처리
-			if (NextMove != FVector::ZeroVector)
-			{
-				FVector NextDir = NextMove;
-				NextMove = FVector::ZeroVector;
-				MoveGrid(NextDir);
-			}
-		}
+	default:
+		checkNoEntry();
+		break;
 	}
 }
 
-void USL2DMovementHandlerComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+void USL2DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 {
-	Super::OnComponentDestroyed(bDestroyingHierarchy);
-
-	UE_LOG(LogTemp, Warning, TEXT("2DMovementHandlerComponent destroyed!"));
-
 }
 
-
-
-
-void USL2DMovementHandlerComponent::Look(const FVector2D& Value)
+void USL2DMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 {
 }
 
 void USL2DMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)
 {
-	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue))
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_MovementBlock))
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Movement Blocked"));
 		return;
 	}
+	
+	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
+
+	AController* Controller = OwnerCharacter->GetController();
+	if (!Controller) return;
+
+	FRotator ControlRotation = Controller->GetControlRotation();
+	FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
+
+	FVector ForwardDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	FVector RightDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+	ForwardDir.Z = 0.f;
+	RightDir.Z = 0.f;
+	ForwardDir.Normalize();
+	RightDir.Normalize();
 
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_MoveUp:
-		MoveGrid(FVector::ForwardVector);
+		OwnerCharacter->AddMovementInput(ForwardDir, AxisValue);
 		break;
-
 	case EInputActionType::EIAT_MoveDown:
-		MoveGrid(-FVector::ForwardVector);
+		OwnerCharacter->AddMovementInput(-ForwardDir, AxisValue);
 		break;
-
 	case EInputActionType::EIAT_MoveLeft:
-		MoveGrid(-FVector::RightVector);
+		OwnerCharacter->AddMovementInput(-RightDir, AxisValue);
 		break;
-
 	case EInputActionType::EIAT_MoveRight:
-		MoveGrid(FVector::RightVector);
+		OwnerCharacter->AddMovementInput(RightDir, AxisValue);
 		break;
-
 	default:
 		break;
 	}
 }
 
-void USL2DMovementHandlerComponent::MoveGrid(FVector InputDir)
+void USL2DMovementHandlerComponent::StartPixelMovement(const FVector& Direction)
 {
-	if (bIsMoving)
+	if (!IsValid(PixelizationMPC) || !OwnerCharacter)
 	{
-		NextMove = InputDir;
 		return;
 	}
-	RotateToDirection(InputDir);
 
-	StartLocation = OwnerCharacter->GetActorLocation();
+	// 현재 위치에서 픽셀 단위로 이동할 위치 계산
+	FVector CurrentLocation = OwnerCharacter->GetActorLocation();
+	FVector Offset = Direction * PixelSize;
+	FVector TargetLocation = CurrentLocation + Offset;
 
-	TargetLocation = StartLocation + InputDir.GetSafeNormal() * StepDistance;
+	// 픽셀 그리드에 맞추기
+	TargetLocation.X = FMath::GridSnap(TargetLocation.X, PixelSize);
+	TargetLocation.Y = FMath::GridSnap(TargetLocation.Y, PixelSize);
 
-	MoveElapsed = 0.0f;
+	float DeltaTime = GetWorld()->GetDeltaSeconds();
+	FVector Velocity = (TargetLocation - CurrentLocation) / DeltaTime;
+	OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
 
+	UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Start Pixel Movement %f %f %f"), TargetLocation.X, TargetLocation.Y, Velocity.Size());
 	
-	 
+	// 이동 상태 설정
+	CurrentTargetLocation = TargetLocation;
+	MoveDirection = Direction;
 	bIsMoving = true;
-
 }
 
-
-
-
-void USL2DMovementHandlerComponent::RotateToDirection(FVector Direction)
+void USL2DMovementHandlerComponent::MoveByPixelUnit(const FVector& Direction, float AxisValue)
 {
-	if (Direction.IsNearlyZero()) return;
+	check(IsValid(PixelizationMPC));
 
-	FRotator TargetRotation = Direction.Rotation(); // 방향을 회전 값으로 변환
-	TargetRotation.Pitch = 0.f; // 기울임 제거
-	TargetRotation.Roll = 0.f;
+	PixelSize = FMath::FloorToFloat(1980.0f / PixelizationMPC->GetScalarParameterByName("PixelSize")->DefaultValue);
+	const FVector Offset = Direction * PixelSize;
 
-	OwnerCharacter->SetActorRotation(TargetRotation); // 즉시 회전
+	FVector CurrentLocation = OwnerCharacter->GetActorLocation();
+	FVector TargetLocation = CurrentLocation + Offset;
+
+	TargetLocation.X = FMath::GridSnap(TargetLocation.X, PixelSize);
+	TargetLocation.Y = FMath::GridSnap(TargetLocation.Y, PixelSize);
+
+	float DeltaTime = GetWorld()->GetDeltaSeconds();
+	FVector Velocity = (TargetLocation - CurrentLocation) / DeltaTime;
+
+	OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
+	OwnerCharacter->SetActorLocation(TargetLocation, true);
 }
-
-
-void USL2DMovementHandlerComponent::Interact()
-{
-	// TODO: 인터랙션 대상 탐색 및 처리
-
-}
-
-void USL2DMovementHandlerComponent::ToggleMenu()
-{
-	UE_LOG(LogTemp, Log, TEXT("Menu opened or closed"));
-	// TODO: UI 호출 / Input 모드 변경 등 처리
-
-}
-
-void USL2DMovementHandlerComponent::SetTopDownView()
-{
-	if (auto* CMC = GetOwner()->FindComponentByClass<UCameraManagerComponent>())
-	{
-		const EGameCameraType NextType = EGameCameraType::EGCT_TopDown;
-		CMC->SwitchCamera(NextType);
-	}
-}
-
-void USL2DMovementHandlerComponent::Attack()
-{
-	UE_LOG(LogTemp, Log, TEXT("Attack triggered"));
-
-	// TODO: 무기/애니메이션 처리 연결
-	if (auto* BC = GetOwner()->FindComponentByClass<UBattleComponent>())
-	{
-		//BC->PerformAttack();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("BattleComponent not found on %s"), *GetOwner()->GetName());
-	}
-}
-

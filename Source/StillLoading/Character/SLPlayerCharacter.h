@@ -66,13 +66,13 @@ private:
 public:
 	// 상태 태그 추가/제거 함수
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
-	void SetPrimaryState(FGameplayTag NewState);
+	void SetPrimaryState(FGameplayTag NewState); // Update
 
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void AddSecondaryState(FGameplayTag NewState);
 
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
-	void RemoveSecondaryState(FGameplayTag StateToRemove);
+	void RemoveSecondaryState(FGameplayTag StateToRemove); // Clear
 
 	// 상태 검사 함수
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
@@ -88,12 +88,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void RemovePrimaryState(FGameplayTag StateToRemove);
 
-	UFUNCTION(BlueprintCallable, Category = "State Tags")
-	void ClearAllPrimaryStates();
-
-	UFUNCTION(BlueprintCallable, Category = "State Tags")
-	void ClearAllSecondaryStates();
-
 	// 상태 태그 컨테이너
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer PrimaryStateTags;
@@ -106,9 +100,9 @@ public:
 	TMap<EQueryType, FTagQueryAssetPair> ConditionQueryMap;
 
 	// Spring Arm & Camera
-	UPROPERTY(VisibleAnywhere) 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera") 
 	TObjectPtr<USpringArmComponent> CameraBoom;
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	TObjectPtr<UCameraComponent> ThirdPersonCamera;
 };

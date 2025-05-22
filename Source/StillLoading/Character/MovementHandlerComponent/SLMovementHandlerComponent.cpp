@@ -28,7 +28,7 @@ void UMovementHandlerComponent::BeginPlay()
 		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
 		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
 
-		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
+		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 600.f;
 		BindIMCComponent();
 	}
 }
@@ -189,12 +189,12 @@ void UMovementHandlerComponent::Jump()
 	}
 	
 	CachedCombatComponent->ResetCombo();
-	OwnerCharacter->AddSecondaryState(TAG_Character_Movement_Jump);
+	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Jump);
 }
 
 void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
 {
-	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_Jump);
+	OwnerCharacter->RemovePrimaryState(TAG_Character_Movement_Jump);
 	CachedCombatComponent->ResetCombo();
 }
 
@@ -211,30 +211,43 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 	AController* Controller = OwnerCharacter->GetController();
 	if (!Controller) return;
 
-	FRotator ControlRotation = Controller->GetControlRotation();
-	FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
-
-	FVector ForwardDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	FVector RightDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-	ForwardDir.Z = 0.f;
-	RightDir.Z = 0.f;
-	ForwardDir.Normalize();
-	RightDir.Normalize();
-
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_MoveUp:
-		OwnerCharacter->AddMovementInput(ForwardDir, AxisValue);
+		if (Controller && AxisValue != 0.0f)
+		{
+			const FRotator YawRotation(0, Controller->GetControlRotation().Yaw, 0);
+			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+			OwnerCharacter->AddMovementInput(Direction, AxisValue);
+		}
 		break;
 	case EInputActionType::EIAT_MoveDown:
-		OwnerCharacter->AddMovementInput(-ForwardDir, AxisValue);
+		if (Controller && AxisValue != 0.0f)
+		{
+			const FRotator YawRotation(0, Controller->GetControlRotation().Yaw, 0);
+			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+			OwnerCharacter->AddMovementInput(-Direction, AxisValue);
+		}
 		break;
 	case EInputActionType::EIAT_MoveLeft:
-		OwnerCharacter->AddMovementInput(-RightDir, AxisValue);
+		if (Controller && AxisValue != 0.0f)
+		{
+			const FRotator YawRotation(0, Controller->GetControlRotation().Yaw, 0);
+			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+			OwnerCharacter->AddMovementInput(-Direction, AxisValue);
+		}
 		break;
 	case EInputActionType::EIAT_MoveRight:
-		OwnerCharacter->AddMovementInput(RightDir, AxisValue);
+		if (Controller && AxisValue != 0.0f)
+		{
+			const FRotator YawRotation(0, Controller->GetControlRotation().Yaw, 0);
+			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+			OwnerCharacter->AddMovementInput(Direction, AxisValue);
+		}
 		break;
 	default:
 		break;
@@ -393,8 +406,6 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Defense_Block);
 	}
 }
-
-
 
 // 애니매이션 노티용
 void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState AttackStage)

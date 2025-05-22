@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "SLPlayerCharacterBase.h"
+#include "DataAsset/AttackDataAsset.h"
 #include "SLAIBaseCharacter.generated.h"
 
+class UBattleComponent;
 class UMotionWarpingComponent;
 class UBoxComponent;
 class UBlackboardComponent;
@@ -53,7 +55,9 @@ enum class EToggleDamageType : uint8
 {
 	ETDT_CurrentEquippedWeapon,
 	ETDT_LeftHand,
-	ETDT_RightHand
+	ETDT_RightHand,
+	ETDT_LeftFoot,
+	ETDT_RightFoot
 };
 
 UCLASS()
@@ -97,9 +101,42 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetCombatPhase(ECombatPhase NewCombatPhase);
-
+	
 	UFUNCTION(BlueprintCallable)
 	ECombatPhase GetCombatPhase();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleCollision(EToggleDamageType DamageType, bool bEnableCollision);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleLeftHandCollision(bool bEnableCollision);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleRightHandCollision(bool bEnableCollision);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleLeftFootCollision(bool bEnableCollision);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleRightFootCollision(bool bEnableCollision);
+	
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	void EquipWeapon(AActor* WeaponActor);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	void UnequipWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	UBattleComponent* GetBattleComponent();
+
+	UFUNCTION(BlueprintCallable)
+	void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentAttackType(EAttackAnimType NewCurrentAttackType);
+
+	UFUNCTION(BlueprintCallable)
+	EAttackAnimType GetCurrentAttackType();
 protected:
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -108,7 +145,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UAnimInstance> AnimInstancePtr;
 	
-	// --- Attributes ---    // 이거 베이스 캐릭터로 옮길지도?
+	// --- Attributes ---    
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
 	float MaxHealth; // 최대 체력
 
@@ -142,9 +179,36 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	FName RightHandCollisionBoxAttachBoneName;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBoxComponent> LeftFootCollisionBox;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
+	FName LeftFootCollisionBoxAttachBoneName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBoxComponent> RightFootCollisionBox;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
+	FName RightFootCollisionBoxAttachBoneName;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	ECombatPhase CombatPhase;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon")
+	TObjectPtr<UPrimitiveComponent> CurrentWeaponCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AActor> EquippedWeapon;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
+	FName WeaponSocketName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<UBattleComponent> BattleComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "combat")
+	EAttackAnimType CurrentAttackType;
 };

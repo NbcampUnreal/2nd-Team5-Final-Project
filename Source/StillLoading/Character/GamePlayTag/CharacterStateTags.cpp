@@ -24,7 +24,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Special3, "Character.Attack.Special3
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Air1, "Character.Attack.Air1");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Air2, "Character.Attack.Air2");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Air3, "Character.Attack.Air3");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airborn1, "Character.Attack.Airborn1");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airborne1, "Character.Attack.Airborne1");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Finisher1, "Character.Attack.Finisher1");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Finisher2, "Character.Attack.Finisher2");
 
@@ -40,6 +40,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Defense_Parry, "Character.Defense.Parry");
 
 // Movement
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement, "Character.Movement");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Idle, "Character.Movement.Idle");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Forward, "Character.Movement.Forward");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Backward, "Character.Movement.Backward");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Dash, "Character.Movement.Dash");

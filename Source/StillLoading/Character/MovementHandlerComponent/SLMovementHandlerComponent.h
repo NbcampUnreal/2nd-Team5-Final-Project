@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Character/Animation/SLAnimNotify.h"
 #include "Character/Buffer/InputBufferComponent.h"
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
@@ -56,7 +57,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
+	
 	UFUNCTION()
 	void OnActionTriggered(EInputActionType ActionType, FInputActionValue Value);
 	UFUNCTION()
@@ -65,6 +66,9 @@ protected:
 	void OnActionCompleted(EInputActionType ActionType);
 	UFUNCTION()
 	void BindIMCComponent();
+
+	UPROPERTY()
+	FVector2D MovementInputAxis = FVector2D::ZeroVector;
 
 private:
 	void Attack();
@@ -77,9 +81,6 @@ private:
 	void ToggleMenu();
 	void Block(const bool bIsBlocking);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
-	
-	//UPROPERTY()
-	float InputBufferDuration = 0.3f;
 
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;

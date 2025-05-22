@@ -139,5 +139,5 @@ public:
 private:
     /** 현재 생성된 Charging Widget Actor */
     UPROPERTY()
-    AChargingWidgetActor* ChargingWidgetActor = nullptr;
+    AChargingWidgetActor* ChargingWidgetActor;
 };

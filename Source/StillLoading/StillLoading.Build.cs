@@ -19,7 +19,9 @@ public class StillLoading : ModuleRules
 			"AIModule",
 			"MotionWarping",
 			"AnimGraphRuntime",
-			"GameplayTags"
+			"GameplayTags",
+			"Niagara",
+            "GeometryCollectionEngine"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

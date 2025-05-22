@@ -106,6 +106,26 @@ void USLAICharacterAnimInstance::SetShouldLookAtPlayer(bool bNewShouldLookAtPlay
 	ShouldLookAtPlayer = bNewShouldLookAtPlayer;
 }
 
+bool USLAICharacterAnimInstance::IsTargetBehindCharacter(float AngleThreshold) const
+{
+	if (!OwningCharacter || !TargetCharacter)
+	{
+		return false;
+	}
+    
+	FVector CharacterForward = OwningCharacter->GetActorForwardVector();
+    
+	FVector DirectionToTarget = (TargetCharacter->GetActorLocation() - OwningCharacter->GetActorLocation()).GetSafeNormal();
+    
+	float DotProduct = FVector::DotProduct(CharacterForward, DirectionToTarget);
+    
+	// 각도 임계값을 내적 임계값으로 변환
+	float DotThreshold = FMath::Cos(FMath::DegreesToRadians(AngleThreshold * 0.5f));
+    
+	// 내적이 음수이면 타겟이 캐릭터 뒤에 있음
+	return DotProduct < -DotThreshold;
+}
+
 bool USLAICharacterAnimInstance::DoesOwnerHaveTag(FName TagToCheck) const
 {
 	return TryGetPawnOwner()->ActorHasTag(TagToCheck);
