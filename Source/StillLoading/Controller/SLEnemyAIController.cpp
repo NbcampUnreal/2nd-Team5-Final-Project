@@ -21,7 +21,7 @@ void ASLEnemyAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UpdateAIState();
+	//UpdateAIState();
 
 	if (CurrentState == EAIState::EAIS_Waiting)
 	{

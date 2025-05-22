@@ -208,7 +208,9 @@ void ASLAIBaseCharacter::ToggleRightFootCollision(bool bEnableCollision)
 void ASLAIBaseCharacter::EquipWeapon(AActor* WeaponActor)
 {
 	if (!WeaponActor)
+	{
 		return;
+	}
     
 	// 현재 장착된 무기가 있다면 해제
 	UnequipWeapon();
