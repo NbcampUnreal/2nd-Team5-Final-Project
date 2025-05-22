@@ -2,6 +2,7 @@
 
 #include "BrainComponent.h"
 #include "MotionWarpingComponent.h"
+#include "AI/SLAIProjectile.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "BattleComponent/BattleComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -10,6 +11,8 @@
 #include "Components/WidgetComponent.h"
 #include "Controller/SLBaseAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 ASLAIBaseCharacter::ASLAIBaseCharacter()
@@ -55,6 +58,8 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 
 	// BattleComponent 에서 사용 하기위한 캡슐 셋팅
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+
+	AIChapter = EChapter::EC_None;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -355,4 +360,59 @@ void ASLAIBaseCharacter::SetCurrentAttackType(EAttackAnimType NewCurrentAttackTy
 EAttackAnimType ASLAIBaseCharacter::GetCurrentAttackType()
 {
 	return CurrentAttackType;
+}
+
+EChapter ASLAIBaseCharacter::GetChapter() const
+{
+	return AIChapter;
+}
+
+ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass,
+	FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType)
+{
+	
+	if (!ProjectileClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No projectile class specified"));
+		return nullptr;
+	}
+
+	// 스폰 위치 계산
+	FVector SpawnLocation = GetMesh()->GetSocketLocation(SocketName);
+	FRotator SpawnRotation = CalculateProjectileRotation(SpawnLocation, TargetLocation);
+	
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	ASLAIProjectile* SpawnedProjectile = GetWorld()->SpawnActor<ASLAIProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+	if (SpawnedProjectile)
+	{
+		// 프로젝타일 설정
+		SpawnedProjectile->SetupSpawnedProjectile(AnimType, ProjectileSpeed);
+
+		// 프로젝타일 속도 설정
+		if (SpawnedProjectile->GetProjectileMovement())
+		{
+			// 타겟 방향으로 발사
+			FVector LaunchDirection = (TargetLocation - SpawnLocation).GetSafeNormal();
+			SpawnedProjectile->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
+		}
+
+		UE_LOG(LogTemp, Display, TEXT("Projectile spawned successfully: %s"), *SpawnedProjectile->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
+	}
+
+	return SpawnedProjectile;
+}
+
+FRotator ASLAIBaseCharacter::CalculateProjectileRotation(const FVector& StartLocation, const FVector& TargetLocation) const
+{
+	FVector Direction = (TargetLocation - StartLocation).GetSafeNormal();
+	return UKismetMathLibrary::MakeRotFromX(Direction);
 }

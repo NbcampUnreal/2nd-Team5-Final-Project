@@ -13,7 +13,7 @@
 
 void USLAICharacterAnimInstance::NativeInitializeAnimation()
 {
-	OwningCharacter = Cast<ASLPlayerCharacterBase>(TryGetPawnOwner());
+	OwningCharacter = Cast<ASLAIBaseCharacter>(TryGetPawnOwner());
 
 	if (OwningCharacter)
 	{
