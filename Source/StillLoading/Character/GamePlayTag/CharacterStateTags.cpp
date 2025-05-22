@@ -24,9 +24,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Special3, "Character.Attack.Special3
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Air1, "Character.Attack.Air1");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Air2, "Character.Attack.Air2");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Air3, "Character.Attack.Air3");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airborne1, "Character.Attack.Airborne1");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Finisher1, "Character.Attack.Finisher1");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Finisher2, "Character.Attack.Finisher2");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airborne, "Character.Attack.Airborne");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airup, "Character.Attack.Airup");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airdown, "Character.Attack.Airdown");
 
 // Charge
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Charge, "Character.Charge");
