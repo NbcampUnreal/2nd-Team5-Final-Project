@@ -385,7 +385,7 @@ void UMovementHandlerComponent::ToggleMenu()
 
 void UMovementHandlerComponent::Dodge()
 {
-	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AirBlock))
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AirBlock) || OwnerCharacter->GetMovementComponent()->IsFalling())
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
 		return;
