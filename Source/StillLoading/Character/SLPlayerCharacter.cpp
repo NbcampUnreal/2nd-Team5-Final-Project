@@ -97,15 +97,8 @@ bool ASLPlayerCharacter::IsBlocking() const
 // 상태 관리
 void ASLPlayerCharacter::SetPrimaryState(FGameplayTag NewState)
 {
-	if (PrimaryStateTags.IsEmpty())
-	{
-		PrimaryStateTags.AddTag(NewState);
-	}
-	else
-	{
-		PrimaryStateTags.Reset();
-		PrimaryStateTags.AddTag(NewState);
-	}
+	PrimaryStateTags.Reset();
+	PrimaryStateTags.AddTag(NewState);
 }
 
 void ASLPlayerCharacter::AddSecondaryState(FGameplayTag NewState)

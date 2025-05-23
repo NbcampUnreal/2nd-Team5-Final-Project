@@ -51,6 +51,7 @@ public:
 	UFUNCTION()
 	void StartKnockback(float Speed, float Duration);
 
+	// Mouse 제어용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
 	float MinPitch = -80.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
@@ -58,10 +59,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	float MouseSensitivity = 0.5f;
 
+	// 피격시 BlendSpace 용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	float ForwardDot = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	float RightDot = 0.0f;
+
+	// 패링용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Parry")
+	float ParryDuration = 0.5f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -111,6 +117,7 @@ private:
 	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;
 
+	// 넉백용
 	UPROPERTY()
 	bool bDoKnockback = false;
 	UPROPERTY()
@@ -120,6 +127,9 @@ private:
 	UPROPERTY()
 	float KnockbackTime = 0.3f;
 
+	// Block 용
 	UPROPERTY()
 	int BlockCount = 0;
+	UPROPERTY()
+	float LastBlockTime = 0.f;
 };

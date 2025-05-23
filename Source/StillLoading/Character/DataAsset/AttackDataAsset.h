@@ -41,6 +41,7 @@ enum class EAttackAnimType : uint8 // 애니메이션 기준
 
 	// 막타모션
 	AAT_FinalAttack UMETA(DisplayName = "FinalAttack"), // 막타모션
+	AAT_ParryAttack UMETA(DisplayName = "ParryAttack"), // 패링
 };
 
 USTRUCT(BlueprintType)
