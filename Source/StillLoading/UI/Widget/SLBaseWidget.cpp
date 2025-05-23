@@ -138,11 +138,19 @@ bool USLBaseWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 	}
 
 	FSlateBrush SlateBrush; 
+
 	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_Button]);
 
+	SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 1.0f));
 	ButtonStyle.SetNormal(SlateBrush);
+
+	SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
 	ButtonStyle.SetHovered(SlateBrush);
+
+	SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
 	ButtonStyle.SetPressed(SlateBrush);
+
+	SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
 	ButtonStyle.SetDisabled(SlateBrush);
 
 	return true;
@@ -164,12 +172,12 @@ bool USLBaseWidget::ApplySliderImage(FSliderStyle& SliderStyle)
 
 	FSlateBrush SlateBrush;
 
-	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBack]);
+	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBar]);
 	SliderStyle.SetNormalThumbImage(SlateBrush);
 	SliderStyle.SetHoveredThumbImage(SlateBrush);
 	SliderStyle.SetDisabledThumbImage(SlateBrush);
 
-	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBar]);
+	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBack]);
 	SliderStyle.SetNormalBarImage(SlateBrush);
 	SliderStyle.SetHoveredBarImage(SlateBrush);
 	SliderStyle.SetDisabledBarImage(SlateBrush);

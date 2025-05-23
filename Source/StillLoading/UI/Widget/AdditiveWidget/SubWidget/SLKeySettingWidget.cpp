@@ -98,6 +98,18 @@ void USLKeySettingWidget::ApplyTextData()
 	}
 }
 
+bool USLKeySettingWidget::ApplyBackgroundImage()
+{
+	if (!Super::ApplyBackgroundImage())
+	{
+		return false;
+	}
+
+	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
+
+	return true;
+}
+
 bool USLKeySettingWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 {
 	if (!Super::ApplyButtonImage(ButtonStyle))
@@ -112,12 +124,32 @@ bool USLKeySettingWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 
 bool USLKeySettingWidget::ApplyBorderImage()
 {
+	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_NormalBorder) ||
+		(PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_NormalBorder) &&
+			!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder])))
+	{
+		BackgroundBorder->SetVisibility(ESlateVisibility::Collapsed);
+	}
+
 	if (!Super::ApplyBorderImage())
 	{
 		return false;
 	}
 
-	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+	if (BackgroundBorder->GetVisibility() == ESlateVisibility::Visible)
+	{
+		BackgroundBorder->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+		BackgroundImg->SetRenderScale(FVector2D(0.95f, 0.95f));
+
+		FLinearColor BackColor;
+
+		BackColor.R = 0.0f;
+		BackColor.G = 0.0f;
+		BackColor.B = 0.0f;
+		BackColor.A = 1.0f;
+
+		BackgroundImg->SetColorAndOpacity(BackColor);
+	}
 
 	return true;
 }

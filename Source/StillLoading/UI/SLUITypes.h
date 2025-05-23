@@ -80,8 +80,7 @@ enum class ESLPublicWidgetImageType : uint8
 	EPWI_ProgressBack,
 	EPWI_ProgressBar,
 	EPWI_Expandable,
-	EPWI_Collapsed,
-	EPWI_Expanded,
+	EPWI_ExpandedButton,
 	EPWI_Background,
 	EPWI_Fade
 };

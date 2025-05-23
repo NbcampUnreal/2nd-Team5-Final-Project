@@ -67,6 +67,9 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> ButtonsBackground = nullptr;
 
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> BackgroundBorder = nullptr;
+
 	static const FName TitleTextIndex;
 	static const FName StartButtonIndex;
 	static const FName OptionButtonIndex;
