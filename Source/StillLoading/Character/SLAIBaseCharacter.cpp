@@ -167,6 +167,12 @@ void ASLAIBaseCharacter::ToggleCollision(EToggleDamageType DamageType, bool bEna
 	case EToggleDamageType::ETDT_RightHand:
 		ToggleRightHandCollision(bEnableCollision);
 		break;
+	case EToggleDamageType::ETDT_LeftFoot:
+		ToggleLeftFootCollision(bEnableCollision);
+		break;
+	case EToggleDamageType::ETDT_RightFoot:
+		ToggleRightFootCollision(bEnableCollision);
+		break;
 	case EToggleDamageType::ETDT_CurrentEquippedWeapon:
 		if (CurrentWeaponCollision)
 		{
