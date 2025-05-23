@@ -195,7 +195,6 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float TimeToT
         GravityZ = 980.0f;
     }
     
-    // ======== 도달 시간 기반 속도 계산 ========
     FVector PositionDelta = TargetLocation - StartLocation;
     
     // 수평 속도: 거리/시간
@@ -311,7 +310,7 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
     }
     
     // 충돌 설정 (점프 중 캐릭터 간 충돌 방지)
-    SetupJumpCollision();
+    //SetupJumpCollision();
     
     // 점프 실행
     OwningCharacter->LaunchCharacter(JumpVelocity, true, true);
