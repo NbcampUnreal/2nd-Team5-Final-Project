@@ -3,6 +3,7 @@
 #include "Character/SLPlayerCharacter.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 
 UInputBufferComponent::UInputBufferComponent()
@@ -49,6 +50,15 @@ void UInputBufferComponent::AddBufferedInput(ESkillType Action)
 		PointMoveStartTime = CurrentTime;
 	}
 
+	if (Action == ESkillType::ST_Block &&
+		(LastExecutedSkill == ESkillType::ST_Airborne ||
+			LastExecutedSkill == ESkillType::ST_AirUp ||
+			LastExecutedSkill == ESkillType::ST_Airdown ||
+			LastExecutedSkill == ESkillType::ST_Dodge))
+	{
+		return;
+	}
+
 	LastInputTime = CurrentTime;
 	InputBuffer.Add({Action, CurrentTime});
 
@@ -58,6 +68,12 @@ void UInputBufferComponent::AddBufferedInput(ESkillType Action)
 
 void UInputBufferComponent::ProcessBufferedInputs()
 {
+	if (OwnerCharacter->IsInPrimaryState(TAG_Character_HitReaction))
+	{
+		InputBuffer.Empty();
+		return;
+	}
+	
 	const UWorld* World = GetWorld();
 	if (!World) return;
 
@@ -191,6 +207,7 @@ void UInputBufferComponent::ClearBuffer()
 {
 	InputBuffer.Empty();
 	SetComponentTickEnabled(false);
+	LastExecutedSkill = ESkillType::ST_None;
 }
 
 void UInputBufferComponent::OnIMCActionStarted(EInputActionType ActionType)
@@ -235,6 +252,10 @@ bool UInputBufferComponent::CanConsumeInput(ESkillType NextInput) const
 
 void UInputBufferComponent::ExecuteInput(ESkillType Action)
 {
+	LastExecutedSkill = Action;
+
+	//if (LastExecutedSkill == ESkillType::ST_AirUp && Action == ESkillType::ST_AirUp) return;
+	
 	if (AActor* Owner = GetOwner())
 	{
 		if (!CachedMovementHandlerComponent)

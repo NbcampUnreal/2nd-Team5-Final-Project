@@ -8,6 +8,10 @@
 #include "NavigationSystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/TargetPoint.h"
+
+const FName ASLNPCAIController::PatrolLocationKey = "PatrolLocation";
 
 ASLNPCAIController::ASLNPCAIController()
 {
@@ -60,6 +64,9 @@ ETeamAttitude::Type ASLNPCAIController::GetTeamAttitudeTowards(const AActor& Oth
 void ASLNPCAIController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	BlackboardComp = GetBlackboardComponent();
+	BlackboardComp->SetValueAsBool("IsPatrolState", IsPatrolState);
 }
 
 void ASLNPCAIController::UpdateAIState()
@@ -88,6 +95,9 @@ void ASLNPCAIController::UpdateAIState()
 		}
 		break;
 	case EAIState::EAIS_Chasing:
+
+		IsPatrolState = false;
+		BlackboardComp->SetValueAsBool("IsPatrolState", IsPatrolState);
 
 		MoveToActor(TargetActor, 250.f);
 
@@ -203,6 +213,16 @@ void ASLNPCAIController::StartChasing(AActor* Target)
 	TargetActor = Target;
 	bIsChasing = true;
 
+	ASLNPC* NPC = Cast<ASLNPC>(GetPawn());
+	if (NPC)
+	{
+		UCharacterMovementComponent* MovementComp = NPC->GetCharacterMovement();
+		if (MovementComp)
+		{
+			MovementComp->MaxWalkSpeed = 650.f;
+		}
+	}
+
 	if (Target)
 	{
 		LastKnownLocation = Target->GetActorLocation();
@@ -249,5 +269,59 @@ void ASLNPCAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 			}
 		}
 	}
+}
+
+void ASLNPCAIController::InitializePatrolPoints()
+{
+	PatrolPoints.Empty();
+	if (!GetPawn()) return;
+
+	FVector Origin = GetPawn()->GetActorLocation();
+	float Radius = 2500.f;
+	int32 NumPoints = 7;
+
+	for (int32 i = 0; i < NumPoints; ++i)
+	{
+		FVector RandomDirection = FMath::VRand();
+		RandomDirection.Z = 0.f;
+
+		FVector RandomOffset = RandomDirection * FMath::FRandRange(200.f, Radius);
+		FVector TestPoint = Origin + RandomOffset;
+
+		FHitResult HitResult;
+		FVector TraceStart = TestPoint + FVector(0.f, 0.f, 1000.f);
+		FVector TraceEnd = TestPoint - FVector(0.f, 0.f, 1000.f);
+
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(GetPawn());
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			TraceStart,
+			TraceEnd,
+			ECC_WorldStatic,
+			QueryParams
+		);
+
+		if (bHit && HitResult.bBlockingHit)
+		{
+			FVector GroundPoint = HitResult.ImpactPoint;
+			PatrolPoints.Add(GroundPoint);
+		}
+	}
+	if (PatrolPoints.Num() > 0)
+	{
+		Blackboard->SetValueAsVector("PatrolLocation", PatrolPoints[0]);
+		Blackboard->SetValueAsInt("PatrolLocation", 0);
+	}
+	bPatrolPointsReady = true;
+}
+
+void ASLNPCAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &ASLNPCAIController::InitializePatrolPoints, 0.5f, false);
 }
 

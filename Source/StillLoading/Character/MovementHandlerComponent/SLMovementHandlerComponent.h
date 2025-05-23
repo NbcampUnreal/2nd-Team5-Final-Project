@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Character/Animation/SLAnimNotify.h"
 #include "Character/Buffer/InputBufferComponent.h"
+#include "Character/DataAsset/AttackDataAsset.h"
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
@@ -47,6 +48,8 @@ public:
 	UFUNCTION()
 	void HandleBufferedInput(ESkillType Action);
 	void OnLanded(const FHitResult& Hit);
+	UFUNCTION()
+	void StartKnockback(float Speed, float Duration);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
 	float MinPitch = -80.f;
@@ -55,8 +58,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	float MouseSensitivity = 0.5f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
+	float ForwardDot = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
+	float RightDot = 0.0f;
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UFUNCTION()
 	void OnActionTriggered(EInputActionType ActionType, FInputActionValue Value);
@@ -66,6 +75,10 @@ protected:
 	void OnActionCompleted(EInputActionType ActionType);
 	UFUNCTION()
 	void BindIMCComponent();
+	UFUNCTION()
+	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
+	UFUNCTION()
+	void HitDirection(AActor* Causer);
 
 	UPROPERTY()
 	FVector2D MovementInputAxis = FVector2D::ZeroVector;
@@ -84,6 +97,7 @@ private:
 	void AirUp();
 	void AirDown();
 	void Block(const bool bIsBlocking);
+	void RotateToHitCauser(const AActor* Causer, FRotator &TargetRotation, bool &bIsHitFromBack);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
 
 	UPROPERTY()
@@ -92,6 +106,20 @@ private:
 	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
 	UPROPERTY()
 	TObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
+	UPROPERTY()
+	TObjectPtr<UBattleComponent> CachedBattleComponent;
+	UPROPERTY()
+	FTimerHandle ReactionResetTimerHandle;
 
-	int32 CurrentIndex = 0; // Test용
+	UPROPERTY()
+	bool bDoKnockback = false;
+	UPROPERTY()
+	float KnockbackTimer = 0.0f;
+	UPROPERTY()
+	float KnockbackSpeed = 1200.f;
+	UPROPERTY()
+	float KnockbackTime = 0.3f;
+
+	UPROPERTY()
+	int BlockCount = 0;
 };

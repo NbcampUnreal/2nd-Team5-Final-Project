@@ -7,7 +7,8 @@
 UENUM(BlueprintType)
 enum class ECharacterMovementAction : uint8
 {
-	CMA_Launch		UMETA(DisplayName = "Launch"),
+	CMA_LaunchUp		UMETA(DisplayName = "Launch Up"),
+	CMA_LaunchBack		UMETA(DisplayName = "Launch Back"),
 };
 
 UCLASS()
@@ -20,7 +21,13 @@ public:
 	ECharacterMovementAction MovementAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
-	FVector LaunchVector = FVector(0.f, 0.f, 800.f);
+	float LaunchPower = 800.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
+	float KnockBackDuration = 0.2f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
+	float KnockBackSpeed = 300.f;
 
 	virtual void Notify(
 		USkeletalMeshComponent* MeshComp,

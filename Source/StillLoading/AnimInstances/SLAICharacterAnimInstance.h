@@ -54,13 +54,13 @@ protected:
 
 	// --- Anim Data | References ---
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
-	TObjectPtr<ASLPlayerCharacterBase> OwningCharacter;
+	TObjectPtr<ASLAIBaseCharacter> OwningCharacter;
 
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
 	TObjectPtr<UCharacterMovementComponent> OwningMovementComponent; 
 
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
-	TObjectPtr<ASLPlayerCharacterBase> TargetCharacter;
+	TObjectPtr<ACharacter> TargetCharacter;
 
 	// --- Anim Data | Movement ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")

@@ -8,29 +8,24 @@
 #include "NavigationSystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/TargetPoint.h"
+
+class SLMonster;
+
+const FName ASLEnemyAIController::PatrolLocationKey = "PatrolLocation";
 
 ASLEnemyAIController::ASLEnemyAIController()
 {
 	AAIController::SetGenericTeamId(FGenericTeamId(2));
 	AISenseConfig_Sight->SightRadius = DetectionRadius;
-	AISenseConfig_Sight->PeripheralVisionAngleDegrees = 50.f;
+	AISenseConfig_Sight->PeripheralVisionAngleDegrees = 80.f;
 	AISenseConfig_Sight->LoseSightRadius = LoseInterestRadius;
 }
 
 void ASLEnemyAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	UpdateAIState();
-
-	if (CurrentState == EAIState::EAIS_Waiting)
-	{
-		WaitTime -= DeltaTime;
-		if (WaitTime <= 0.f)
-		{
-			CurrentState = EAIState::EAIS_Combat;
-		}
-	}
 }
 
 ETeamAttitude::Type ASLEnemyAIController::GetTeamAttitudeTowards(const AActor& Other) const
@@ -60,157 +55,17 @@ ETeamAttitude::Type ASLEnemyAIController::GetTeamAttitudeTowards(const AActor& O
 void ASLEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	BlackboardComp = GetBlackboardComponent();
+	BlackboardComp->SetValueAsBool("IsPatrolState", IsPatrolState);
 }
 
-void ASLEnemyAIController::UpdateAIState()
+void ASLEnemyAIController::OnTargetPerceptionForgotten(AActor* Actor)
 {
-	if (!TargetActor) return;
-	APawn* ControlledPawn = GetPawn();
-	if (!ControlledPawn) return;
-	float DistanceToTarget = FVector::Dist(ControlledPawn->GetActorLocation(), TargetActor->GetActorLocation());
-
-	switch (CurrentState)
+	if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
 	{
-	case EAIState::EAIS_Idle:
-		if (DistanceToTarget <= DetectionRadius)
-		{
-			CurrentState = EAIState::EAIS_Suspicious;
-		}
-		break;
-	case EAIState::EAIS_Suspicious:
-		if (DistanceToTarget <= ChaseRadius)
-		{
-			StartChasing(TargetActor);
-		}
-		else if (DistanceToTarget > DetectionRadius)
-		{
-			CurrentState = EAIState::EAIS_Idle;
-		}
-		break;
-	case EAIState::EAIS_Chasing:
-
-		MoveToActor(TargetActor, 250.f);
-
-		if (DistanceToTarget <= CombatRadius)
-		{
-			bHasFixedTarget = true;
-			/*StopMovement();
-			FVector RightVector = ControlledPawn->GetActorRightVector();
-			FVector FrontVector = ControlledPawn->GetActorForwardVector();
-			FVector CurrentLocation = ControlledPawn->GetActorLocation();
-
-			float StepDistance = 600.f;
-			float ForwardDistance = 400.f;
-			FVector NewLocation = CurrentLocation + RightVector * StepDistance + FrontVector* ForwardDistance;
-			FAIMoveRequest MoveRequest;
-
-			ASLNPC* NPC = Cast<ASLNPC>(GetPawn());
-			if (NPC)
-			{
-				UCharacterMovementComponent* MovementComp = NPC->GetCharacterMovement();
-				if (MovementComp)
-				{
-					MovementComp->MaxWalkSpeed = 110.f;
-					MovementComp->bOrientRotationToMovement = false;
-				}
-			}
-
-			MoveToLocation(NewLocation, 10.f);
-
-			CurrentState = EAIState::Waiting;*/
-
-			CurrentState = EAIState::EAIS_Combat;
-
-		}
-		else if (DistanceToTarget > LoseInterestRadius)
-		{
-			StopChasing();
-		}
-		break;
-	case EAIState::EAIS_Waiting:
-
-
-		break;
-
-	case EAIState::EAIS_Combat:
-
-		ASLMonster* Monster = Cast<ASLMonster>(GetPawn());
-		if (Monster)
-		{
-			UCharacterMovementComponent* MovementComp = Monster->GetCharacterMovement();
-			if (MovementComp)
-			{
-				MovementComp->MaxWalkSpeed = 600.f;
-				MovementComp->bOrientRotationToMovement = true;
-			}
-		}
-
-		bIsChasing = false;
-		AISenseConfig_Sight->PeripheralVisionAngleDegrees = 180.f;
-
-		USLAICharacterAnimInstance* AnimInstance = Cast<USLAICharacterAnimInstance>(Monster->GetMesh()->GetAnimInstance());
-
-		FVector CurrentLocation = ControlledPawn->GetActorLocation();
-		FVector ToTarget = TargetActor->GetActorLocation() - CurrentLocation;
-		ToTarget.Normalize();
-		float Dot = FVector::DotProduct(ControlledPawn->GetActorForwardVector(), ToTarget);
-
-
-		if (DistanceToTarget <= AttackRange)
-		{
-			if (Dot >= 0.85f)
-			{
-				StopMovement();
-				Monster->Attack();
-			}
-			else
-			{
-				Monster->bUseControllerRotationYaw = true;
-				SetFocus(TargetActor);
-				if (DistanceToTarget < CombatRadius && AnimInstance->GetIsAttacking() == false)
-				{
-					FVector Forward = ControlledPawn->GetActorForwardVector();
-					FVector TargetLocation = CurrentLocation - Forward * 300.f;
-					MoveToLocation(TargetLocation);
-				}
-			}
-		}
-		else if (DistanceToTarget < CombatRadius && AnimInstance->GetIsAttacking() == true)
-		{
-			/*NPC->bUseControllerRotationYaw = false;
-			ClearFocus(EAIFocusPriority::Gameplay);*/
-			StopMovement();
-		}
-		else
-		{
-			MoveToActor(TargetActor, 110.f);
-			AnimInstance->SetIsAttacking(false);
-
-		}
-
-
-		break;
+		BlackboardComponent->SetValueAsBool(FName("HasLineOfSight"), false);
 	}
-}
-
-void ASLEnemyAIController::StopChasing()
-{
-	bIsChasing = false;
-	StopMovement();
-	CurrentState = EAIState::EAIS_Idle;
-}
-
-void ASLEnemyAIController::StartChasing(AActor* Target)
-{
-	TargetActor = Target;
-	bIsChasing = true;
-
-	if (Target)
-	{
-		LastKnownLocation = Target->GetActorLocation();
-	}
-	CurrentState = EAIState::EAIS_Chasing;
-
 }
 
 void ASLEnemyAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -222,35 +77,74 @@ void ASLEnemyAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 		{
 			if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile)
 			{
+				IsPatrolState = false;
+				BlackboardComponent->SetValueAsBool("IsPatrolState", IsPatrolState);
 				TargetActor = Actor;
-				APawn* ControlledPawn = GetPawn();
-				if (ControlledPawn)
-				{
-					float Distance = FVector::Dist(ControlledPawn->GetActorLocation(), Actor->GetActorLocation());
-
-					if (Distance <= ChaseRadius)
-					{
-						StartChasing(Actor);
-					}
-					else if (Distance <= DetectionRadius)
-					{
-						CurrentState = EAIState::EAIS_Suspicious;
-					}
-				}
-
 				BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
+				BlackboardComponent->SetValueAsBool(FName("HasLineOfSight"), true);
 			}
 		}
 		else
 		{
-
 			GetBlackboardComponent()->ClearValue(FName("TargetActor"));
-			if (CurrentState == EAIState::EAIS_Chasing)
-			{
-				MoveToLocation(LastKnownLocation, 100.f);
-				CurrentState = EAIState::EAIS_Suspicious;
-			}
 		}
 	}
 }
 
+void ASLEnemyAIController::InitializePatrolPoints()
+{
+	PatrolPoints.Empty();
+	if (!GetPawn()) return;
+	FVector Origin = GetPawn()->GetActorLocation();
+	for (int32 i = 0; i < PatrolNum; ++i)
+	{
+		FVector RandomDirection = FMath::VRand();
+		RandomDirection.Z = 0.f;
+
+		FVector RandomOffset = RandomDirection * FMath::FRandRange(200.f, PatrolRadius);
+		FVector TestPoint = Origin + RandomOffset;
+
+		FHitResult HitResult;
+		FVector TraceStart = TestPoint + FVector(0.f, 0.f, 1000.f);
+		FVector TraceEnd = TestPoint - FVector(0.f, 0.f, 1000.f);
+
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(GetPawn());
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			TraceStart,
+			TraceEnd,
+			ECC_WorldStatic,
+			QueryParams
+		);
+		if (bHit && HitResult.bBlockingHit)
+		{
+			FVector GroundPoint = HitResult.ImpactPoint;
+			PatrolPoints.Add(GroundPoint);
+		}
+	}
+	if (PatrolPoints.Num() > 0)
+	{
+		Blackboard->SetValueAsVector("PatrolLocation", PatrolPoints[0]);
+		Blackboard->SetValueAsInt("PatrolLocation", 0);
+	}
+	bPatrolPointsReady = true;
+}
+
+void ASLEnemyAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess (InPawn);
+
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &ASLEnemyAIController::InitializePatrolPoints, 0.5f, false);
+}
+
+void ASLEnemyAIController::SetPeripheralVisionAngle(float NewAngle)
+{
+	if (AISenseConfig_Sight)
+	{
+		AISenseConfig_Sight->PeripheralVisionAngleDegrees = NewAngle;
+		GetPerceptionComponent()->RequestStimuliListenerUpdate();
+	}
+}

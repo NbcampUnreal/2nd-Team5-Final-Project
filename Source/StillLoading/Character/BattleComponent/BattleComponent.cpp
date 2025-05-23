@@ -1,5 +1,7 @@
 #include "BattleComponent.h"
 
+DEFINE_LOG_CATEGORY(LogBattleComponent);
+
 UBattleComponent::UBattleComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -18,7 +20,7 @@ void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitRes
 		{
 			if (UBattleComponent* TargetBattleComp = HitTarget->FindComponentByClass<UBattleComponent>())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Send Hit Result: %s -> %s | Damage: %.1f | AnimType: %s"),
+				UE_LOG(LogBattleComponent, Log, TEXT("Send Hit Result: %s -> %s | Damage: %.1f | AnimType: %s"),
 					*OwnerActor->GetName(),
 					*HitTarget->GetName(),
 					GetDamageByType(AnimType),
@@ -34,6 +36,16 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 {
 	if (const AActor* OwnerActor = GetOwner())
 	{
+		UE_LOG(LogBattleComponent, Warning,
+			   TEXT("피격 발생! 소유자: %s, 데미지: %.2f, 공격자: %s, 위치: %s, 뼈: %s, AnimType: %s"),
+			   *OwnerActor->GetName(),
+			   DamageAmount,
+			   DamageCauser ? *DamageCauser->GetName() : TEXT("None"),
+			   *HitResult.ImpactPoint.ToString(),
+			   *HitResult.BoneName.ToString(),
+			   *UEnum::GetValueAsString(AnimType)
+		);
+		
 		OnCharacterHited.Broadcast(DamageCauser, DamageAmount, HitResult, AnimType);
 	}
 }
@@ -73,7 +85,7 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 			{
 				if (UBattleComponent* TargetBattleComp = HitActor->FindComponentByClass<UBattleComponent>())
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
+					UE_LOG(LogBattleComponent, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
 					AlreadyHitActors.Add(HitActor);
 
 					SendHitResult(HitActor, Hit, AttackType);

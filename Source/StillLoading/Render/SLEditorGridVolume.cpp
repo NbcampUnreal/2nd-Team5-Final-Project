@@ -3,8 +3,6 @@
 
 #include "SLEditorGridVolume.h"
 
-
-// Sets default values
 ASLEditorGridVolume::ASLEditorGridVolume()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -31,45 +29,34 @@ void ASLEditorGridVolume::Tick(float DeltaTime)
 #if WITH_EDITOR
 	if (!GridVisible) return;
 
-	UWorld* World = GetWorld();
+	const UWorld* World = GetWorld();
 	if (!World) return;
 
-	FVector Origin = GetActorLocation();
+	const float PitchRadians = FMath::DegreesToRadians(CameraFitch);
+	const float HeightScale = 1.f / FMath::Cos(PitchRadians);
 
-	// 절반 칸 수
-	int32 HalfCount = GridCount / 2;
+	const float CellWidth = static_cast<float>(GridHeight) * HeightScale;
+	const float CellHeight = static_cast<float>(GridWidth);
 
-	// 시작 지점을 왼쪽 아래로 오프셋
-	FVector GridOffset = FVector(-HalfCount * GridWidth + GridWidth * 0.5f,
-								 -HalfCount * GridHeight + GridHeight * 0.5f,
+	const int32 HalfCount = GridCount / 2;
+
+	const FVector GridOffset = FVector(-HalfCount * CellWidth + CellWidth * 0.5f,
+								 -HalfCount * CellHeight + CellHeight * 0.5f,
 								 0.f);
-
-	GridOffset.X += GridOffsetX;
 	
 	for (int32 X = 0; X < GridCount; ++X)
 	{
 		for (int32 Y = 0; Y < GridCount; ++Y)
 		{
-			// X: 가로로 GridWidth 간격, Y: 세로로 GridHeight 간격
-			FVector Start = Origin + GridOffset + FVector(X * GridWidth, Y * GridHeight, 0.f);
-			FVector EndX = Start + FVector(0, GridHeight, 0); // 위쪽 선 (Y 방향)
-			FVector EndY = Start + FVector(GridWidth, 0, 0);  // 오른쪽 선 (X 방향)
+			FVector Start = GridOffset + FVector(X * CellWidth, Y * CellHeight, GroundHeight);
+			FVector EndX = Start + FVector(CellWidth, 0.f, 0.f);
+			FVector EndY = Start + FVector(0.f, CellHeight, 0.f);
 
-			// 선을 바르게 그리기 (X: 위쪽, Y: 오른쪽)
-			DrawDebugLine(World, Start, EndX, GridColor, false, -1.f, 0, LineThickness);
-			DrawDebugLine(World, Start, EndY, GridColor, false, -1.f, 0, LineThickness);
+			DrawDebugLine(World, Start, EndX, GridColor, false, -1.f, SDPG_Foreground, LineThickness);
+			DrawDebugLine(World, Start, EndY, GridColor, false, -1.f, SDPG_Foreground, LineThickness);
 		}
 	}
 
 
 #endif
-}
-
-void ASLEditorGridVolume::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-
-	FVector Location = GetActorLocation();
-	Location.Z = 100.0f;
-	SetActorLocation(Location);
 }

@@ -7,6 +7,7 @@
 #include "DataAsset/AttackDataAsset.h"
 #include "SLAIBaseCharacter.generated.h"
 
+class ASLAIProjectile;
 class UBattleComponent;
 class UMotionWarpingComponent;
 class UBoxComponent;
@@ -60,6 +61,17 @@ enum class EToggleDamageType : uint8
 	ETDT_RightFoot
 };
 
+UENUM(BlueprintType)
+enum class EChapter : uint8
+{
+	EC_None          UMETA(DisplayName = "None"),
+	EC_Tutorial      UMETA(DisplayName = "Tutorial"),
+	EC_Chapter1      UMETA(DisplayName = "Chapter 1"),
+	EC_Chapter2      UMETA(DisplayName = "Chapter 2"),
+	EC_Chapter3      UMETA(DisplayName = "Chapter 3"),
+	EC_Chapter4      UMETA(DisplayName = "Chapter 4")
+};
+
 UCLASS()
 class STILLLOADING_API ASLAIBaseCharacter : public ASLPlayerCharacterBase
 {
@@ -77,7 +89,7 @@ public:
 	// 손 콜리전 컴포넌트 접근자
 	FORCEINLINE UBoxComponent* GetLeftHandCollisionBox() const { return LeftHandCollisionBox; }
 	FORCEINLINE UBoxComponent* GetRightHandCollisionBox() const { return RightHandCollisionBox; }
-	
+
 	UFUNCTION()
 	virtual void OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -89,7 +101,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE float GetAttackPower() const { return AttackPower;}
-	
+
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentHealth(float NewHealth);
 
@@ -101,7 +113,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetCombatPhase(ECombatPhase NewCombatPhase);
-	
+
 	UFUNCTION(BlueprintCallable)
 	ECombatPhase GetCombatPhase();
 
@@ -137,14 +149,29 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	EAttackAnimType GetCurrentAttackType();
+
+	UFUNCTION(BlueprintCallable, Category = "Chapter")
+	EChapter GetChapter() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
+	ASLAIProjectile* SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName = NAME_None, float ProjectileSpeed = 2000.0f, EAttackAnimType AnimType = EAttackAnimType::AAT_Attack_01);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
+	FRotator CalculateProjectileRotation(const FVector& StartLocation, const FVector& TargetLocation) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
+	TArray<ASLAIProjectile*> SpawnProjectileFanAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName = NAME_None, int32 ProjectileCount = 5, float FanHalfAngle = 30.0f, float ProjectileSpeed = 2000.0f, EAttackAnimType AnimType = EAttackAnimType::AAT_Attack_01);
 protected:
+	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
+	TArray<FVector> GenerateHorizontalFanDirections(const FVector& BaseDirection, int32 Count, float FanHalfAngle) const;
+
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<ASLBaseAIController> AIController;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UAnimInstance> AnimInstancePtr;
-	
+
 	// --- Attributes ---    
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
 	float MaxHealth; // 최대 체력
@@ -154,13 +181,17 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
 	float AttackPower;
-	
+
 	// --- State Flags ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool IsHitReaction; // 피격 반응을 할건지 여부
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool IsDead; // 사망 상태인지 여부
+
+	// --- Chapter Info ---
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Chapter", meta = (AllowPrivateAccess = "true"))
+	EChapter AIChapter;
 
 	// --- Animation Assets ---
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Montages")
@@ -190,7 +221,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	FName RightFootCollisionBoxAttachBoneName;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
 
@@ -212,3 +243,5 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "combat")
 	EAttackAnimType CurrentAttackType;
 };
+
+
