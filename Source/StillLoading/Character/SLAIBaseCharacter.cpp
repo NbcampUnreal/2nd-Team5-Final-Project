@@ -70,6 +70,27 @@ void ASLAIBaseCharacter::BeginPlay()
 	AIController = Cast<ASLBaseAIController>(GetController());
 	AnimInstancePtr = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
 
+	if (!LeftHandCollisionBoxAttachBoneName.IsNone())
+	{
+		LeftHandCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftHandCollisionBoxAttachBoneName);
+	}
+    
+	if (!RightHandCollisionBoxAttachBoneName.IsNone())
+	{
+		RightHandCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightHandCollisionBoxAttachBoneName);
+	}
+    
+	if (!LeftFootCollisionBoxAttachBoneName.IsNone())
+	{
+		LeftFootCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftFootCollisionBoxAttachBoneName);
+	}
+    
+	if (!RightFootCollisionBoxAttachBoneName.IsNone())
+	{
+		RightFootCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightFootCollisionBoxAttachBoneName);
+	}
+
+	
 	IsHitReaction = false;
 	IsDead = false;
 	MaxHealth = 100.0f;
@@ -125,6 +146,28 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 		return;
 	}
 
+	// 히트 위치 가져오기
+	FVector HitLocation = SweepResult.bBlockingHit ? SweepResult.ImpactPoint : SweepResult.Location;
+	
+	// 히트 위치가 유효하지 않으면 오버랩된 컴포넌트의 위치 사용
+	if (HitLocation.IsZero())
+	{
+		HitLocation = OverlappedComponent->GetComponentLocation();
+	}
+
+	// 디버그 스피어 그리기 (빨간색, 반지름 10, 5초간 표시)
+	DrawDebugSphere(
+		GetWorld(),
+		HitLocation,
+		10.0f,
+		12,
+		FColor::Red,
+		false,
+		5.0f,
+		0,
+		2.0f
+	);
+	
 	UE_LOG(LogTemp, Warning, TEXT("%s에게 공격자(%s)가  데미지를 주었습니다."), *OtherActor->GetName(), *GetName());
 	// BattleComponent를 통해 데미지 전달
 	BattleComponent->SendHitResult(OtherActor, SweepResult, CurrentAttackType);
@@ -497,6 +540,32 @@ TArray<ASLAIProjectile*> ASLAIBaseCharacter::SpawnProjectileFanAtLocation(TSubcl
 
     return SpawnedProjectiles;
 }
+
+#if WITH_EDITOR
+void ASLAIBaseCharacter::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(ThisClass, LeftHandCollisionBoxAttachBoneName))
+	{
+		LeftHandCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftHandCollisionBoxAttachBoneName);
+	}
+
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(ThisClass, RightHandCollisionBoxAttachBoneName))
+	{
+		RightHandCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightHandCollisionBoxAttachBoneName);
+	}
+
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(ThisClass, LeftFootCollisionBoxAttachBoneName))
+	{
+		LeftFootCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftFootCollisionBoxAttachBoneName);
+	}
+
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(ThisClass, RightFootCollisionBoxAttachBoneName))
+	{
+		RightFootCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightFootCollisionBoxAttachBoneName);
+	}
+}
+#endif
 
 TArray<FVector> ASLAIBaseCharacter::GenerateHorizontalFanDirections(const FVector& BaseDirection, int32 Count, float FanHalfAngle) const
 {
