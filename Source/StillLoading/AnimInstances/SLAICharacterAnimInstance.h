@@ -47,11 +47,17 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
 	bool GetIsAttacking();
-	
+
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
 	bool DoesOwnerHaveTag(FName TagToCheck) const;
 
+	UFUNCTION()
+	void AnimNotify_AttackEnd();
+
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	float GetDistanceToGround() const;
+	
 	// --- Anim Data | References ---
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
 	TObjectPtr<ASLAIBaseCharacter> OwningCharacter;
@@ -72,11 +78,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
 	float LocomotionDirection;
 
+	UPROPERTY(BlueprintReadOnly, Category = "AnimData|Movement")
+	bool bIsFalling;
 
+	UPROPERTY(BlueprintReadOnly, Category = "AnimData|Movement")
+	float FallSpeed;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AnimData|Movement")
+	bool bIsJump;
 	// --- Anim Data | Aiming & Looking ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AnimData|Movement")	// 수정 예정
 	float Angle;
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AnimData|Aiming") 
 	bool ShouldLookAtPlayer;
 
@@ -95,7 +108,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State") 
 	bool IsDown;
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State") 
 	bool IsStun;
 
@@ -105,7 +118,4 @@ protected:
 	// --- Anim Data | Combat Specific ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Combat Specific")
     EHitDirection HitDirectionVector;
-
-	UFUNCTION()
-	void AnimNotify_AttackEnd();
 };
