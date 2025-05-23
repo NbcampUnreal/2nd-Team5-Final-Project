@@ -23,6 +23,12 @@ ASLMonster::ASLMonster()
         MovementComponent->AvoidanceWeight = 0.5f;
     }
 
+    GetCharacterMovement()->bUseControllerDesiredRotation = false;
+    GetCharacterMovement()->bOrientRotationToMovement = true;
+
+    WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
+    WeaponMesh->SetupAttachment(GetMesh(), "WeaponSocket");
+
     AttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AttackSphere"));
     AttackSphere->SetupAttachment(RootComponent);
     AttackSphere->SetSphereRadius(550.f);
@@ -47,7 +53,6 @@ void ASLMonster::BeginPlay()
     {
         BlackboardComp = EnemyController->GetBlackboardComponent();
     }
-    
 }
 
 void ASLMonster::Tick(float DeltaTime)
@@ -62,11 +67,13 @@ void ASLMonster::Tick(float DeltaTime)
         EnemyController->bPatrolPointsReady = false;
         
     }
-
     if (PatrolPoints.Num() > 0 && IsCloseToTargetPoint())
     {
         MoveToNextPatrolPoint();
     }
+
+    RandCoolTime = FMath::FRandRange(1.5f, 2.5f);
+    BlackboardComp->SetValueAsFloat(FName("RandCoolTime"), RandCoolTime);
 }
 
 void ASLMonster::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -88,12 +95,14 @@ void ASLMonster::Attack()
         AAIController* EnemyCon = Cast<AAIController>(GetController());
         EnemyCon->MoveToLocation(RetreatLocation);
     }*/
+    AttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    
     if (IsTargetInSight())
     {
-        AttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-        float CurrentTime = GetWorld()->GetTimeSeconds();
         if (CurrentTime - LastAttackTime > AttackCooldown)
         {
+            RandomAttackInt = FMath::RandRange(0, 1);
             TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
             AnimInstance->SetIsAttacking(true);
             LastAttackTime = CurrentTime;
@@ -148,13 +157,28 @@ bool ASLMonster::IsTargetInSight() const
     if (!Target) return false;
 
     FVector ToTarget = Target->GetActorLocation() - GetActorLocation();
+    ToTarget.Z = 0.f;
+    ToTarget.Normalize();
+
+    FVector Forward = GetActorForwardVector();
+    Forward.Z = 0.f;
+    Forward.Normalize();
+
+    float Dot = FVector::DotProduct(Forward, ToTarget);
+    float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(AttackAngle * 0.5f));
+
+    return Dot >= CosHalfFOV;
+    /*AActor* Target = Cast<AActor>(BlackboardComp->GetValueAsObject(FName("TargetActor")));
+    if (!Target) return false;
+
+    FVector ToTarget = Target->GetActorLocation() - GetActorLocation();
     ToTarget.Normalize();
 
     FVector Forward = GetActorForwardVector();
     float Dot = FVector::DotProduct(Forward, ToTarget);
 
     float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(AttackAngle * 0.5f));
-    return Dot >= CosHalfFOV;
+    return Dot >= CosHalfFOV;*/
 }
 
 void ASLMonster::SetIsInCombat(bool bInCombat)

@@ -45,6 +45,7 @@ public:
 	bool bHasFixedTarget = false;
 
 protected:
+	virtual void OnTargetPerceptionForgotten(AActor* Actor);
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);

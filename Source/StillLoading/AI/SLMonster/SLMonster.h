@@ -21,7 +21,7 @@ public:
 	bool GetIsInCombat() const;
 	UFUNCTION()
 	void SetIsInCombat(bool bInCombat);
-
+	UFUNCTION(BlueprintCallable)
 	bool IsTargetInSight() const;
 
 	virtual void Tick(float DeltaTime) override;
@@ -33,7 +33,7 @@ public:
     UPROPERTY()
     TObjectPtr<AActor> TargetActor;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category ="AI")
-	float AttackAngle = 75.f;
+	float AttackAngle = 80.f;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category ="AI")
 	class USphereComponent* AttackSphere;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -45,7 +45,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, Category = "AI")
-	float AttackRange = 180.0f;
+	float AttackRange = 100.0f;
 	UPROPERTY(EditAnywhere, Category = "AI")
 
 	float AttackCooldown = 0.7f;
@@ -54,9 +54,14 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RVO")
 	float AvoidanceRadius = 500.f;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category ="Weapon")
+	TObjectPtr<UStaticMeshComponent> WeaponMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RVO")
 	float AvoidanceWeight = 0.5f;
+	UPROPERTY(BlueprintReadOnly, Category ="Combat")
+	int32 RandomAttackInt;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float RandCoolTime;
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

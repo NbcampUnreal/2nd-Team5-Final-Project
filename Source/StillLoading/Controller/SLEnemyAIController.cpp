@@ -60,6 +60,14 @@ void ASLEnemyAIController::BeginPlay()
 	BlackboardComp->SetValueAsBool("IsPatrolState", IsPatrolState);
 }
 
+void ASLEnemyAIController::OnTargetPerceptionForgotten(AActor* Actor)
+{
+	if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
+	{
+		BlackboardComponent->SetValueAsBool(FName("HasLineOfSight"), false);
+	}
+}
+
 void ASLEnemyAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (bHasFixedTarget) return;
@@ -73,6 +81,7 @@ void ASLEnemyAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 				BlackboardComponent->SetValueAsBool("IsPatrolState", IsPatrolState);
 				TargetActor = Actor;
 				BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
+				BlackboardComponent->SetValueAsBool(FName("HasLineOfSight"), true);
 			}
 		}
 		else
