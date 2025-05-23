@@ -12,6 +12,16 @@
 #include "InputMappingContext.h"
 #include "SaveLoad/SLSaveDataStructs.h"
 
+float USLUserDataSubsystem::GetCurrentScreenWidthSize()
+{
+	return ScreenWidth;
+}
+
+float USLUserDataSubsystem::GetCurrentScreenHeightSize()
+{
+	return ScreenHeight;
+}
+
 void USLUserDataSubsystem::ApplyLoadedUserData(const FWidgetSaveData& LoadData)
 {
 	SetLanguage(LoadData.LanguageType);

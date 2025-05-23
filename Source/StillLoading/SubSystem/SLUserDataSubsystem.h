@@ -24,6 +24,11 @@ class STILLLOADING_API USLUserDataSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintCallable)
+	float GetCurrentScreenWidthSize();
+	UFUNCTION(BlueprintCallable)
+	float GetCurrentScreenHeightSize();
+
 	void ApplyLoadedUserData(const FWidgetSaveData& LoadData);
 	void ApplyDefaultUserData();
 
@@ -40,6 +45,7 @@ public:
 	float GetCurrentBrightness() const;
 	int32 GetCurrentWindowMode() const;
 	TPair<float, float> GetCurrentScreenSize();
+
 
 	bool UpdateMappingKey(EInputActionType TargetType, const FKey& KeyValue);
 	const TMap<EInputActionType, FEnhancedActionKeyMapping>& GetActionKeyMap();
