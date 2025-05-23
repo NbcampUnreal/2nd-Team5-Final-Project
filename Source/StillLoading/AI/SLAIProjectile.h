@@ -7,10 +7,12 @@
 #include "GameFramework/Actor.h"
 #include "SLAIProjectile.generated.h"
 
+class UNiagaraSystem;
+class UNiagaraComponent;
 class UProjectileMovementComponent;
 class USphereComponent;
 
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class STILLLOADING_API ASLAIProjectile : public AActor
 {
 	GENERATED_BODY()
@@ -18,26 +20,46 @@ class STILLLOADING_API ASLAIProjectile : public AActor
 public:
 	ASLAIProjectile();
 
-	// 발사체가 대상에 명중했을 때 호출
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+	FORCEINLINE UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
+	
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-	
-	// 충돌 감지를 위한 컴포넌트
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+	FORCEINLINE void SetAttackAnimType(EAttackAnimType NewAnimType) { AttackAnimType = NewAnimType; }
+
+	void SetupSpawnedProjectile(EAttackAnimType AnimType, float Speed);
+protected:
+	// --- Components ---
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USphereComponent> CollisionComp;
     
-	// 발사체 이동 컴포넌트
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
     
-	// 파티클 시스템 컴포넌트
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
-	TObjectPtr<UParticleSystemComponent> ParticleSystem;
-    
-	// 데미지 양
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
-	float Damage;
+	// 발사체 트레일
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UNiagaraComponent> NiagaraComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	// --- Effect Settings ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UNiagaraSystem> HitEffect;
+
+	// 충돌 시 재생할 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USoundBase> HitSound;
+
+	// --- Damage Settings ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage", meta = (AllowPrivateAccess = "true"))
 	EAttackAnimType AttackAnimType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug", meta = (AllowPrivateAccess = "true"))
+	bool bDebugHit;
+
+private:
+	// 내부 함수들
+	void PlayHitEffects(const FHitResult& Hit);
+	void ProcessDamage(AActor* HitActor, const FHitResult& Hit);
+	void DestroyProjectileWithDelay(float DelayTime = 0.1f);
 };

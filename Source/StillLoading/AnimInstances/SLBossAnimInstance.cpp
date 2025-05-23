@@ -244,46 +244,112 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
         return false;
     }
     
-    // 남은 애니메이션 시간 자동 계산
-    float EstimatedJumpTime = 1.0f;
-    
-    if (RemainingAnimTime <= 0.0f)
-    {
-        // 현재 재생 중인 몽타주가 있으면 해당 몽타주의 남은 시간 사용
-        if (IsAnyMontagePlaying())
-        {
-            FAnimMontageInstance* MontageInstance = GetActiveMontageInstance();
-            if (MontageInstance && MontageInstance->Montage)
-            {
-                float CurrentTime = MontageInstance->GetPosition();
-                float TotalDuration = MontageInstance->Montage->GetPlayLength();
-                EstimatedJumpTime = TotalDuration - CurrentTime;
-            }
-        }
-    }
-    else
-    {
-        EstimatedJumpTime = RemainingAnimTime;
-    }
-    
-    // 최소 시간 보장
-    if (EstimatedJumpTime < 0.2f)
-    {
-        EstimatedJumpTime = 0.2f;
-    }
-    
-    // 출발 위치
+    // 출발 위치와 타겟 위치
     FVector StartLocation = OwningCharacter->GetActorLocation();
-    
-    // 타겟 위치
     FVector TargetLocation = TargetCharacter->GetActorLocation();
     FVector TargetForward = TargetCharacter->GetActorForwardVector();
-    TargetLocation -= TargetForward * 150.0f; // 타겟 앞 150cm에 착지 (오버슈팅 방지를 위해 증가)
+    TargetLocation -= TargetForward * 150.0f; // 타겟 앞 150cm에 착지
     
     // 점프 방향 및 거리 계산
     FVector ToTarget = TargetLocation - StartLocation;
     FVector DirectionXY = FVector(ToTarget.X, ToTarget.Y, 0.0f).GetSafeNormal();
     float DistanceXY = FVector::Dist2D(StartLocation, TargetLocation);
+    float HeightDifference = TargetLocation.Z - StartLocation.Z;
+    
+    // 중력값 계산
+    float Gravity = GetWorld()->GetGravityZ() * -1.0f;
+    if (OwningMovementComponent)
+    {
+        Gravity = OwningMovementComponent->GetGravityZ() * -1.0f;
+    }
+    
+    float OptimalJumpTime;
+    if (HeightDifference >= 0) // 위로 점프하거나 같은 높이
+    {
+        // 포물선 운동으로 최적 시간 계산
+        float DiscriminantHeight = HeightDifference + (Gravity * 0.25f); // 약간의 높이 여유
+        OptimalJumpTime = FMath::Sqrt(2.0f * DiscriminantHeight / Gravity);
+        OptimalJumpTime = FMath::Max(OptimalJumpTime, 0.8f); // 최소 시간
+    }
+    else // 아래로 점프
+    {
+        // 하강 시간 기반 계산
+        OptimalJumpTime = FMath::Sqrt(2.0f * FMath::Abs(HeightDifference) / Gravity);
+        OptimalJumpTime = FMath::Max(OptimalJumpTime, 0.6f);
+    }
+    
+    // 거리에 따른 시간 조정
+    float DistanceBasedTime = DistanceXY / 800.0f; // 기본 속도 800 기준
+    OptimalJumpTime = FMath::Max(OptimalJumpTime, DistanceBasedTime);
+    OptimalJumpTime = FMath::Clamp(OptimalJumpTime, 0.8f, 3.0f); // 합리적 범위로 제한
+    
+    UE_LOG(LogTemp, Display, TEXT("Calculated optimal jump time: %f seconds"), OptimalJumpTime);
+    
+    float AnimationTime = OptimalJumpTime; // 기본적으로 물리 시간 사용
+    
+    if (RemainingAnimTime > 0.0f)
+    {
+        AnimationTime = RemainingAnimTime;
+    }
+    else if (IsAnyMontagePlaying())
+    {
+        // 현재 재생 중인 몽타주의 남은 시간 계산
+        FAnimMontageInstance* MontageInstance = GetActiveMontageInstance();
+        if (MontageInstance && MontageInstance->Montage)
+        {
+            float CurrentTime = MontageInstance->GetPosition();
+            float TotalDuration = MontageInstance->Montage->GetPlayLength();
+            AnimationTime = TotalDuration - CurrentTime;
+        }
+    }
+    
+    float FinalJumpTime;
+    bool bAdjustAnimationSpeed = false;
+    
+    float TimeDifference = FMath::Abs(OptimalJumpTime - AnimationTime);
+    
+    if (TimeDifference < 0.3f) // 시간 차이가 작으면
+    {
+        // 물리 시간 우선 (더 자연스러운 점프)
+        FinalJumpTime = OptimalJumpTime;
+        bAdjustAnimationSpeed = true;
+        UE_LOG(LogTemp, Display, TEXT("Using physics time, will adjust animation speed"));
+    }
+    else if (AnimationTime > OptimalJumpTime * 1.5f) // 애니메이션이 너무 길면
+    {
+        // 물리 시간 사용하고 애니메이션 속도 증가
+        FinalJumpTime = OptimalJumpTime;
+        bAdjustAnimationSpeed = true;
+        UE_LOG(LogTemp, Display, TEXT("Animation too long, using physics time"));
+    }
+    else if (AnimationTime < OptimalJumpTime * 0.6f) // 애니메이션이 너무 짧으면
+    {
+        // 물리 시간 사용하고 애니메이션 속도 감소
+        FinalJumpTime = OptimalJumpTime;
+        bAdjustAnimationSpeed = true;
+        UE_LOG(LogTemp, Display, TEXT("Animation too short, using physics time"));
+    }
+    else
+    {
+        // 애니메이션 시간에 맞춰 점프 조정
+        FinalJumpTime = AnimationTime;
+        UE_LOG(LogTemp, Display, TEXT("Using animation time for jump"));
+    }
+    
+    FinalJumpTime = FMath::Clamp(FinalJumpTime, 0.5f, 4.0f);
+    
+    if (bAdjustAnimationSpeed && IsAnyMontagePlaying())
+    {
+        float NewPlayRate = AnimationTime / FinalJumpTime;
+        NewPlayRate = FMath::Clamp(NewPlayRate, 0.5f, 2.0f); // 속도 제한
+        
+        FAnimMontageInstance* MontageInstance = GetActiveMontageInstance();
+        if (MontageInstance)
+        {
+            MontageInstance->SetPlayRate(NewPlayRate);
+            UE_LOG(LogTemp, Display, TEXT("Adjusted animation play rate to: %f"), NewPlayRate);
+        }
+    }
     
     // 캐릭터 회전
     if (bUpdateRotation)
@@ -292,52 +358,40 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
         OwningCharacter->SetActorRotation(NewRotation);
     }
     
-    // 물리 방정식을 사용하여 필요한 초기 속도 계산
-    float Gravity = GetWorld()->GetGravityZ() * -1.0f;
-    if (OwningMovementComponent)
-    {
-        Gravity = OwningMovementComponent->GetGravityZ() * -1.0f;
-    }
-   
-    // 75%에서 85%로 변경 (더 많은 애니메이션 시간을 이동에 사용)
-    float TimeToReachTarget = EstimatedJumpTime * 0.85f;
+    // 수평 속도 계산
+    float RequiredHorizontalSpeed = DistanceXY / FinalJumpTime;
     
-    // 감속 계수 적용 (오버슈팅 방지)
-    float SpeedReductionFactor = 0.9f; // 10% 감속
+    // 수직 속도 계산 (중력 고려)
+    float Vz = (HeightDifference / FinalJumpTime) + (0.5f * Gravity * FinalJumpTime);
     
-    // 주어진 시간과 거리로 필요한 수평 속도 계산
-    float RequiredHorizontalSpeed = (DistanceXY / TimeToReachTarget) * SpeedReductionFactor;
-
-    float HeightDifference = TargetLocation.Z - StartLocation.Z;
-    // 중력을 고려한 수직 속도 계산
-    float Vz = (HeightDifference / TimeToReachTarget) + (0.5f * Gravity * TimeToReachTarget);
-    
-    // 최종 속도 벡터 계산
+    // 최종 속도 벡터
     FVector JumpVelocity = DirectionXY * RequiredHorizontalSpeed;
     JumpVelocity.Z = Vz;
     
-    // 최소/최대 속도 제한 (필요시 조정) - 최대 속도를 낮춤
-    float MaxSpeed = 1500.0f; // 2000에서 1500으로 낮춤
-    float MinSpeed = 300.0f;
+    // 속도 제한 (안전장치)
+    float MaxSpeed = 2000.0f;
+    float MinSpeed = 200.0f;
     
     float CurrentSpeed = JumpVelocity.Size();
     if (CurrentSpeed > MaxSpeed)
     {
         JumpVelocity = JumpVelocity.GetSafeNormal() * MaxSpeed;
+        UE_LOG(LogTemp, Warning, TEXT("Jump velocity capped at max speed"));
     }
     else if (CurrentSpeed < MinSpeed)
     {
         JumpVelocity = JumpVelocity.GetSafeNormal() * MinSpeed;
+        UE_LOG(LogTemp, Warning, TEXT("Jump velocity boosted to min speed"));
     }
+    
+    UE_LOG(LogTemp, Display, TEXT("Final jump velocity: %s (speed: %f)"), *JumpVelocity.ToString(), JumpVelocity.Size());
+    UE_LOG(LogTemp, Display, TEXT("Final jump time: %f seconds"), FinalJumpTime);
     
     // 캐릭터 충돌 비활성화
     UPrimitiveComponent* CharacterMesh = OwningCharacter->GetMesh();
     if (CharacterMesh)
     {
-        // 현재 충돌 설정 저장
         OriginalCollisionType = CharacterMesh->GetCollisionEnabled();
-        
-        // 충돌 비활성화
         CharacterMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     }
     
@@ -348,45 +402,58 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
         CapsuleComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
     }
     
-    // 점프 적용
+    // 점프 실행
     OwningCharacter->LaunchCharacter(JumpVelocity, true, true);
     
-    // 타이머를 설정하여 점프 종료 시 충돌 재활성화
+    // 약간의 여유 시간 추가 (착지 후 안정화)
+    float FinishDelay = FinalJumpTime + 0.1f;
+    
     OwningCharacter->GetWorldTimerManager().SetTimer(
         JumpTimerHandle,
         this,
         &USLBossAnimInstance::FinishJump,
-        EstimatedJumpTime + 0.2f,
+        FinishDelay,
         false
     );
+    
+    UE_LOG(LogTemp, Display, TEXT("Jump initiated! Will finish in %f seconds"), FinishDelay);
     
     return true;
 }
 
 void USLBossAnimInstance::FinishJump()
 {
+    UE_LOG(LogTemp, Display, TEXT("Jump finished - restoring collision"));
+    
     // 충돌 설정 복원
     if (OwningCharacter)
     {
         UPrimitiveComponent* CharacterMesh = OwningCharacter->GetMesh();
         if (CharacterMesh)
         {
-            // 원래 충돌 설정으로 복원
             CharacterMesh->SetCollisionEnabled(OriginalCollisionType);
         }
         
-        // 캡슐 컴포넌트 충돌 복원
         UCapsuleComponent* CapsuleComp = OwningCharacter->GetCapsuleComponent();
         if (CapsuleComp)
         {
-            // 캐릭터 간 충돌 다시 활성화
             CapsuleComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
         }
         
-        // 타이머 초기화
+        // 타이머 핸들 클리어
         if (JumpTimerHandle.IsValid())
         {
             OwningCharacter->GetWorldTimerManager().ClearTimer(JumpTimerHandle);
+        }
+        
+        if (IsAnyMontagePlaying())
+        {
+            FAnimMontageInstance* MontageInstance = GetActiveMontageInstance();
+            if (MontageInstance)
+            {
+                MontageInstance->SetPlayRate(1.0f); // 원래 속도로 복원
+                UE_LOG(LogTemp, Display, TEXT("Animation play rate restored to 1.0"));
+            }
         }
     }
 }
@@ -436,7 +503,6 @@ bool USLBossAnimInstance::ChargeToTarget(float ChargeSpeed, bool bUpdateRotation
         CapsuleComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
     }
     
-    // 돌진 적용 - 방식 1: LaunchCharacter (강한 돌진, 초기 추진력만 적용)
     FVector ChargeVelocity = DirectionXY * ChargeSpeed;
     // Z 속도는 유지 (중력의 영향으로 떨어지도록)
     ChargeVelocity.Z = 0.0f;
