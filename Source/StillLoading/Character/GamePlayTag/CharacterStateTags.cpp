@@ -12,6 +12,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Area, "Character.HitReaction.Ar
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Airborne, "Character.HitReaction.Airborne");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Groggy, "Character.HitReaction.Groggy");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Knockback, "Character.HitReaction.Knockback");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Falling, "Character.HitReaction.Falling");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Block_Break, "Character.HitReaction.Block.Break");
 
 // Attacks
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack, "Character.Attack");

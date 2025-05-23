@@ -16,6 +16,7 @@ enum class ESkillType : uint8
 	ST_Dodge UMETA(DisplayName = "Dodge"),
 	ST_Block UMETA(DisplayName = "Block"),
 	ST_PointMove UMETA(DisplayName = "PointMove"),
+	ST_FinalAttack UMETA(DisplayName = "FinalAttack"),
 };
 
 USTRUCT(BlueprintType)

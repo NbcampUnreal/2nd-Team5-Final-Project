@@ -27,6 +27,8 @@ public:
 	UFUNCTION()
 	void PlayHitMontage(FName Section = NAME_None);
 	UFUNCTION()
+	void PlayBlockMontage(FName Section = NAME_None);
+	UFUNCTION()
 	void StopAllMontages(float BlendOutTime);
 	UFUNCTION()
 	void StopActiveMontages(float BlendOutTime);

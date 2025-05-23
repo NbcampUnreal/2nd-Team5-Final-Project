@@ -38,6 +38,9 @@ enum class EAttackAnimType : uint8 // 애니메이션 기준
 
 	// Object
 	AAT_Activate UMETA(DisplayName = "Activate"),
+
+	// 막타모션
+	AAT_FinalAttack UMETA(DisplayName = "FinalAttack"), // 막타모션
 };
 
 USTRUCT(BlueprintType)
