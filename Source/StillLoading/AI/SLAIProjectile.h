@@ -54,6 +54,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage", meta = (AllowPrivateAccess = "true"))
 	EAttackAnimType AttackAnimType;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug", meta = (AllowPrivateAccess = "true"))
+	bool bDebugHit;
+
 private:
 	// 내부 함수들
 	void PlayHitEffects(const FHitResult& Hit);

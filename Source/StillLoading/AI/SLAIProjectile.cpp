@@ -22,8 +22,18 @@ ASLAIProjectile::ASLAIProjectile()
 	CollisionComp->InitSphereRadius(15.0f);
 	CollisionComp->SetCollisionProfileName("Projectile");
 	CollisionComp->OnComponentHit.AddDynamic(this, &ASLAIProjectile::OnHit);
+	CollisionComp->SetCollisionObjectType(ECC_WorldDynamic);
+	CollisionComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	CollisionComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);           // 캐릭터와 충돌
+	CollisionComp->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);    // 월드와 충돌
+	CollisionComp->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);   // 동적 오브젝트와 충돌
+	CollisionComp->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
 	RootComponent = CollisionComp;
 
+	
+
+	
+	
 	// 발사체 이동 컴포넌트 설정
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileComp"));
 	ProjectileMovement->UpdatedComponent = CollisionComp;
@@ -49,6 +59,22 @@ ASLAIProjectile::ASLAIProjectile()
 
 void ASLAIProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (bDebugHit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("=== PROJECTILE HIT DEBUG ==="));
+		UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), OtherActor ? *OtherActor->GetName() : TEXT("NULL"));
+		UE_LOG(LogTemp, Warning, TEXT("Hit Component: %s"), OtherComp ? *OtherComp->GetName() : TEXT("NULL"));
+		UE_LOG(LogTemp, Warning, TEXT("Instigator: %s"), GetInstigator() ? *GetInstigator()->GetName() : TEXT("NULL"));
+		UE_LOG(LogTemp, Warning, TEXT("Owner: %s"), GetOwner() ? *GetOwner()->GetName() : TEXT("NULL"));
+	}
+    
+	// 다른 프로젝타일과 충돌했는지 확인
+	if (OtherActor && Cast<ASLAIProjectile>(OtherActor))
+	{
+		// 다른 프로젝타일과 충돌한 경우 아무 작업도 수행하지 않고 반환
+		return;
+	}
+    
 	if (OtherActor && OtherActor != this && OtherActor != GetInstigator() && OtherComp)
 	{
 		// 충돌 이펙트 재생
@@ -67,6 +93,7 @@ void ASLAIProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
 		DestroyProjectileWithDelay(0.1f);
 	}
 }
+
 
 void ASLAIProjectile::SetupSpawnedProjectile(EAttackAnimType AnimType, float Speed)
 {

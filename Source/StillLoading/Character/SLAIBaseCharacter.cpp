@@ -416,3 +416,129 @@ FRotator ASLAIBaseCharacter::CalculateProjectileRotation(const FVector& StartLoc
 	FVector Direction = (TargetLocation - StartLocation).GetSafeNormal();
 	return UKismetMathLibrary::MakeRotFromX(Direction);
 }
+
+TArray<ASLAIProjectile*> ASLAIBaseCharacter::SpawnProjectileFanAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass,FVector TargetLocation, FName SocketName, int32 ProjectileCount, float FanHalfAngle, float ProjectileSpeed,EAttackAnimType AnimType)
+{
+	TArray<ASLAIProjectile*> SpawnedProjectiles;
+
+    if (!ProjectileClass || ProjectileCount <= 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileFanAtLocation: Invalid parameters"));
+        return SpawnedProjectiles;
+    }
+
+    // 스폰 위치 계산
+    FVector SpawnLocation;
+    if (SocketName != NAME_None && GetMesh() && GetMesh()->DoesSocketExist(SocketName))
+    {
+        SpawnLocation = GetMesh()->GetSocketLocation(SocketName);
+    }
+    else
+    {
+        SpawnLocation = GetActorLocation() + GetActorForwardVector() * 50.0f;
+        SpawnLocation.Z += 80.0f;
+    }
+
+    // 타겟 방향 계산
+    FVector BaseDirection = (TargetLocation - SpawnLocation).GetSafeNormal();
+
+    // 수평 부채꼴 방향들 생성
+    TArray<FVector> FanDirections = GenerateHorizontalFanDirections(BaseDirection, ProjectileCount, FanHalfAngle);
+
+    UE_LOG(LogTemp, Display, TEXT("Spawning fan at location: %s with %d projectiles, angle: %f degrees"), 
+           *TargetLocation.ToString(), ProjectileCount, FanHalfAngle * 2.0f);
+
+    // 각 방향으로 프로젝타일 스폰
+    for (int32 i = 0; i < FanDirections.Num(); i++)
+    {
+        FVector CurrentDirection = FanDirections[i];
+        FRotator SpawnRotation = CurrentDirection.Rotation();
+
+        // 겹침 방지를 위한 작은 랜덤 오프셋
+        FVector RandomOffset = FVector(
+            FMath::RandRange(-8.0f, 8.0f),
+            FMath::RandRange(-8.0f, 8.0f),
+            FMath::RandRange(-3.0f, 3.0f)
+        );
+        
+        FVector AdjustedSpawnLocation = SpawnLocation + RandomOffset;
+
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+        SpawnParams.Owner = this;
+        SpawnParams.Instigator = this;
+        SpawnParams.bNoFail = true;
+
+        ASLAIProjectile* SpawnedProjectile = GetWorld()->SpawnActor<ASLAIProjectile>(
+            ProjectileClass, AdjustedSpawnLocation, SpawnRotation, SpawnParams);
+
+        if (SpawnedProjectile)
+        {
+            SpawnedProjectile->SetupSpawnedProjectile(AnimType, ProjectileSpeed);
+
+            if (SpawnedProjectile->GetProjectileMovement())
+            {
+                SpawnedProjectile->GetProjectileMovement()->Velocity = CurrentDirection * ProjectileSpeed;
+                SpawnedProjectile->GetProjectileMovement()->MaxSpeed = ProjectileSpeed * 1.2f;
+            }
+
+            SpawnedProjectiles.Add(SpawnedProjectile);
+            
+            UE_LOG(LogTemp, Display, TEXT("Spawned fan projectile %d with direction %s"), 
+                   i, *CurrentDirection.ToString());
+        }
+    }
+
+    return SpawnedProjectiles;
+}
+
+TArray<FVector> ASLAIBaseCharacter::GenerateHorizontalFanDirections(const FVector& BaseDirection, int32 Count, float FanHalfAngle) const
+{
+	TArray<FVector> Directions;
+    
+	if (Count <= 0)
+	{
+		return Directions;
+	}
+
+	// 기본 방향을 수평면에 투영
+	FVector HorizontalBase = FVector(BaseDirection.X, BaseDirection.Y, 0.0f);
+	HorizontalBase.Normalize();
+
+	// 기본 방향의 Yaw 각도 계산
+	float BaseYaw = FMath::Atan2(HorizontalBase.Y, HorizontalBase.X);
+
+	if (Count == 1)
+	{
+		// 1개인 경우 기본 방향으로 발사 (원래 Z값 유지)
+		Directions.Add(BaseDirection);
+		return Directions;
+	}
+
+	// 부채꼴 각도 범위에서 균등 분포
+	float TotalAngle = FanHalfAngle * 2.0f; // 전체 부채꼴 각도
+	float AngleStep = TotalAngle / (Count - 1); // 각 프로젝타일 간 각도
+
+	for (int32 i = 0; i < Count; i++)
+	{
+		// -FanHalfAngle부터 +FanHalfAngle까지 균등 분포
+		float OffsetAngle = -FanHalfAngle + (AngleStep * i);
+		float FinalYaw = BaseYaw + FMath::DegreesToRadians(OffsetAngle);
+
+		// 수평 방향 벡터 생성
+		FVector Direction = FVector(
+			FMath::Cos(FinalYaw),
+			FMath::Sin(FinalYaw),
+			BaseDirection.Z  // 원래 기본 방향의 Z값 유지
+		);
+
+		Direction.Normalize();
+		Directions.Add(Direction);
+
+		UE_LOG(LogTemp, Display, TEXT("Fan Direction %d: %s (offset: %.1f°)"), 
+			   i, *Direction.ToString(), OffsetAngle);
+	}
+
+	return Directions;
+}
+
