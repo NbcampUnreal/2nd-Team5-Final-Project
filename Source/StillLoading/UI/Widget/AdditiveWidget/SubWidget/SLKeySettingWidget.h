@@ -28,6 +28,7 @@ protected:
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
 
+	virtual bool ApplyBackgroundImage() override;
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
 	virtual bool ApplyBorderImage() override;
 
@@ -69,6 +70,9 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> BackgroundImg = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> BackgroundBorder = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UGridPanel> KeySettingGrid = nullptr;

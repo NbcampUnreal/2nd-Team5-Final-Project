@@ -151,17 +151,11 @@ bool USLOptionWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 		return false;
 	}
 
-	KorButton->SetStyle(ButtonStyle);
-	EngButton->SetStyle(ButtonStyle);
 	FullScreenButton->SetStyle(ButtonStyle);
 	WindowScreenButton->SetStyle(ButtonStyle);
 	KeySettingButton->SetStyle(ButtonStyle);
 	QuitGameButton->SetStyle(ButtonStyle);
 	CloseButton->SetStyle(ButtonStyle);
-
-	FirstResolutionButton->SetStyle(ButtonStyle);
-	SecondResolutionButton->SetStyle(ButtonStyle);
-	ThirdResolutionButton->SetStyle(ButtonStyle);
 
 	return true;
 }
@@ -206,22 +200,31 @@ bool USLOptionWidget::ApplyOtherImage()
 		LanguageList->SetBorderBrush(SlateBrush);
 	}
 
-	if (PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Expanded) &&
-		PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Collapsed) &&
-		IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Expanded]) &&
-		IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Collapsed]))
+	if (PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_ExpandedButton) &&
+		IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_ExpandedButton]))
 	{
-		FExpandableAreaStyle ExpandableAreaStyle;
+		FButtonStyle ButtonStyle;
 		FSlateBrush SlateBrush;
-		
-		SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_Collapsed]);
-		ExpandableAreaStyle.SetCollapsedImage(SlateBrush);
 
-		SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_Expanded]);
-		ExpandableAreaStyle.SetExpandedImage(SlateBrush);
+		SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_ExpandedButton]);
 
-		ResolutionList->SetStyle(ExpandableAreaStyle);
-		LanguageList->SetStyle(ExpandableAreaStyle);
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 1.0f));
+		ButtonStyle.SetNormal(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+		ButtonStyle.SetHovered(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
+		ButtonStyle.SetPressed(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
+		ButtonStyle.SetDisabled(SlateBrush);
+
+		KorButton->SetStyle(ButtonStyle);
+		EngButton->SetStyle(ButtonStyle);
+		FirstResolutionButton->SetStyle(ButtonStyle);
+		SecondResolutionButton->SetStyle(ButtonStyle);
+		ThirdResolutionButton->SetStyle(ButtonStyle);
 	}
 
 	return true;
