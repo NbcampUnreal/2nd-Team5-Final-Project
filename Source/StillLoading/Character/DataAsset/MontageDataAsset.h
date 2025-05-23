@@ -20,11 +20,5 @@ public:
 	TObjectPtr<UAnimMontage> AirAttackMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
-	TObjectPtr<UAnimMontage> DodgeMontage;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
-	TObjectPtr<UAnimMontage> HitReactMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
-	TObjectPtr<UAnimMontage> DeathMontage;
+	TObjectPtr<UAnimMontage> SkillMontage;
 };

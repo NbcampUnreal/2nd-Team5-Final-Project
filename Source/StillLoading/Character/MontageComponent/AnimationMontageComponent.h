@@ -21,9 +21,7 @@ public:
 	UFUNCTION()
 	void StopMontage(UAnimMontage* Montage, float BlendOutTime);
 	void PlayAttackMontage(FName Section = NAME_None);
-	void PlayDodgeMontage(FName Section = NAME_None);
-	void PlayHitReactMontage();
-	void PlayDeathMontage();
+	void PlaySkillMontage(FName Section = NAME_None);
 	void StopAttackMontage();
 	UFUNCTION()
 	bool IsAttackMontagePlaying() const;

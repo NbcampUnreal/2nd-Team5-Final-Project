@@ -79,6 +79,10 @@ private:
 	void PointMove();
 	void ToggleWalk(const bool bNewWalking);
 	void ToggleMenu();
+	void Dodge();
+	void Airborne();
+	void AirUp();
+	void AirDown();
 	void Block(const bool bIsBlocking);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
 
