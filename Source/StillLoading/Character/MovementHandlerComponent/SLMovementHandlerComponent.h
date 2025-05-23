@@ -48,6 +48,8 @@ public:
 	UFUNCTION()
 	void HandleBufferedInput(ESkillType Action);
 	void OnLanded(const FHitResult& Hit);
+	UFUNCTION()
+	void StartKnockback(float Speed, float Duration);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
 	float MinPitch = -80.f;
@@ -63,6 +65,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UFUNCTION()
 	void OnActionTriggered(EInputActionType ActionType, FInputActionValue Value);
@@ -94,7 +97,7 @@ private:
 	void AirUp();
 	void AirDown();
 	void Block(const bool bIsBlocking);
-	void RotateToHitCauser(const AActor* Causer);
+	void RotateToHitCauser(const AActor* Causer, FRotator &TargetRotation, bool &bIsHitFromBack);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
 
 	UPROPERTY()
@@ -108,5 +111,15 @@ private:
 	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;
 
-	int32 CurrentIndex = 0; // Test용
+	UPROPERTY()
+	bool bDoKnockback = false;
+	UPROPERTY()
+	float KnockbackTimer = 0.0f;
+	UPROPERTY()
+	float KnockbackSpeed = 1200.f;
+	UPROPERTY()
+	float KnockbackTime = 0.3f;
+
+	UPROPERTY()
+	int BlockCount = 0;
 };

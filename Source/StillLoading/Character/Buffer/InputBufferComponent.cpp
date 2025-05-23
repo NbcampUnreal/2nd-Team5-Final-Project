@@ -3,6 +3,7 @@
 #include "Character/SLPlayerCharacter.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 
 UInputBufferComponent::UInputBufferComponent()
@@ -67,6 +68,12 @@ void UInputBufferComponent::AddBufferedInput(ESkillType Action)
 
 void UInputBufferComponent::ProcessBufferedInputs()
 {
+	if (OwnerCharacter->IsInPrimaryState(TAG_Character_HitReaction))
+	{
+		InputBuffer.Empty();
+		return;
+	}
+	
 	const UWorld* World = GetWorld();
 	if (!World) return;
 
@@ -246,6 +253,8 @@ bool UInputBufferComponent::CanConsumeInput(ESkillType NextInput) const
 void UInputBufferComponent::ExecuteInput(ESkillType Action)
 {
 	LastExecutedSkill = Action;
+
+	//if (LastExecutedSkill == ESkillType::ST_AirUp && Action == ESkillType::ST_AirUp) return;
 	
 	if (AActor* Owner = GetOwner())
 	{
