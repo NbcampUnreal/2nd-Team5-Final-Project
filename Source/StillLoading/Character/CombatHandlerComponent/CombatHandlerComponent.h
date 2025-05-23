@@ -62,11 +62,16 @@ public:
 
     /** Empowered 상태 설정 */
     UFUNCTION()
+    void SetEmpoweredCombatMode(const ECharacterComboState Mode, float Duration = 7.0f);
+    UFUNCTION()
     FORCEINLINE void SetCombatMode(const ECharacterComboState Mode) { CurrentMode = Mode; }
 
     /** 현재 Empowered 상태인지 반환 */
     UFUNCTION()
     FORCEINLINE bool IsEmpowered() const { return CurrentMode == ECharacterComboState::CCS_Empowered; }
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Empowered", meta = (ClampMin = "0.1", ClampMax = "30.0"))
+    float MaxEmpoweredDuration = 30.f;
 
 protected:
     virtual void BeginPlay() override;
@@ -87,6 +92,9 @@ private:
     /** 현재 활성 콤보 데이터 조회 */
     UFUNCTION()
     void GetActiveComboDataAsset(UAttackComboDataAsset*& DataAsset);
+
+    /** 콤보 리셋 */
+    void ResetCombatMode();
 
     /** -------------------- 콤보 -------------------- */
 
@@ -109,6 +117,7 @@ private:
     /** TimerHandles */
     FTimerHandle ChargingFinishTimerHandle;
     FTimerHandle ChargingUpdateTimerHandle;
+    FTimerHandle CombatModeResetTimer;
 
     /** -------------------- Character -------------------- */
 
