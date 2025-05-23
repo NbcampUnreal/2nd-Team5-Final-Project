@@ -159,7 +159,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
 	FRotator CalculateProjectileRotation(const FVector& StartLocation, const FVector& TargetLocation) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
+	TArray<ASLAIProjectile*> SpawnProjectileFanAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName = NAME_None, int32 ProjectileCount = 5, float FanHalfAngle = 30.0f, float ProjectileSpeed = 2000.0f, EAttackAnimType AnimType = EAttackAnimType::AAT_Attack_01);
 protected:
+	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
+	TArray<FVector> GenerateHorizontalFanDirections(const FVector& BaseDirection, int32 Count, float FanHalfAngle) const;
+
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<ASLBaseAIController> AIController;
@@ -238,3 +243,5 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "combat")
 	EAttackAnimType CurrentAttackType;
 };
+
+
