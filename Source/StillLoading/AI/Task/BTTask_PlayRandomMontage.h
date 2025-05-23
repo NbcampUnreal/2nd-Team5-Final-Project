@@ -36,7 +36,6 @@ private:
 	// 몽타주 종료 알림 핸들
 	FOnMontageEnded MontageEndedDelegate;
 
-public:
 	// 재생할 몽타주 배열
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	TArray<TObjectPtr<UAnimMontage>> Montages;
@@ -44,4 +43,5 @@ public:
 	// 몽타주 재생 속도
 	UPROPERTY(EditAnywhere, Category = "Animation", meta = (ClampMin = "0.1", ClampMax = "5.0"))
 	float PlayRate = 1.0f;
+
 };

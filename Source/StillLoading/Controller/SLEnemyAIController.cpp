@@ -26,6 +26,17 @@ ASLEnemyAIController::ASLEnemyAIController()
 void ASLEnemyAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//UpdateAIState();
+
+	if (CurrentState == EAIState::EAIS_Waiting)
+	{
+		WaitTime -= DeltaTime;
+		if (WaitTime <= 0.f)
+		{
+			CurrentState = EAIState::EAIS_Combat;
+		}
+	}
 }
 
 ETeamAttitude::Type ASLEnemyAIController::GetTeamAttitudeTowards(const AActor& Other) const
