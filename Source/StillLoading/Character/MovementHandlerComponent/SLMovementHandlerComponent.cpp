@@ -35,7 +35,7 @@ void UMovementHandlerComponent::BeginPlay()
 }
 
 void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+                                              FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -94,15 +94,37 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 		Interact();
 		break;
 	case EInputActionType::EIAT_Attack:
+		// 패링 진입
+		{
+			const float CurrentTime = GetWorld()->GetTimeSeconds();
+			if (CurrentTime - LastBlockTime <= ParryDuration)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Parring!!!"));
+
+				if (!CachedCombatComponent->IsEmpowered())
+				{
+					OwnerCharacter->ClearAllStateTags();
+
+					if (RightDot > 0.0f)
+						CachedMontageComponent->PlayBlockMontage(FName("ParryR"));
+					else
+						CachedMontageComponent->PlayBlockMontage(FName("ParryL"));
+
+					OwnerCharacter->SetPrimaryState(TAG_Character_Defense_Parry);
+					BlockCount = 0;
+				}
+
+				CachedCombatComponent->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered);
+				return;
+			}
+		}
 	case EInputActionType::EIAT_PointMove:
 	case EInputActionType::EIAT_Block:
-		/*
 		if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
 		{
 			//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
 			return;
 		}
-		*/
 		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
 		{
 			BufferComp->OnIMCActionStarted(ActionType);
@@ -113,9 +135,6 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 		break;
 	case EInputActionType::EIAT_Menu:
 		ToggleMenu();
-		break;
-
-		//Block(true);
 		break;
 
 	default:
@@ -148,7 +167,6 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 	case EInputActionType::EIAT_PointMove:
 	case EInputActionType::EIAT_Menu:
 		break;
-
 	case EInputActionType::EIAT_Block:
 		Block(false);
 		break;
@@ -173,6 +191,8 @@ void UMovementHandlerComponent::BindIMCComponent()
 void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                               EAttackAnimType AnimType)
 {
+	if (OwnerCharacter->IsInPrimaryState(TAG_Character_Defense_Parry)) return;
+
 	bool bIsFromBack = false;
 	FRotator TargetRotation;
 	RotateToHitCauser(Causer, TargetRotation, bIsFromBack);
@@ -185,11 +205,17 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Block_Break);
 			CachedMontageComponent->PlayBlockMontage(FName("BlockBreak"));
 			BlockCount = 0;
+			LastBlockTime = 0;
 		}
 		else
 		{
-			++BlockCount;
+			// Parry
+			HitDirection(Causer);
+			const float CurrentTime = GetWorld()->GetTimeSeconds();
+			LastBlockTime = CurrentTime;
+
 			CachedMontageComponent->PlayBlockMontage(FName("BlockHit"));
+			++BlockCount;
 		}
 		return;
 	}
@@ -253,7 +279,7 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	case EAttackAnimType::AAT_GroundSlam_02:
 	case EAttackAnimType::AAT_JumpAttack: // 중간거
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
-		RemoveDelay = 1.5f;
+		RemoveDelay = 1.0f;
 		break;
 	case EAttackAnimType::AAT_Whirlwind: // 약한거
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
@@ -291,8 +317,6 @@ void UMovementHandlerComponent::HitDirection(AActor* Causer)
 
 	ForwardDot = FVector::DotProduct(Forward, ToCauser);
 	RightDot = FVector::DotProduct(Right, ToCauser);
-
-	FString Direction;
 }
 
 void UMovementHandlerComponent::RotateToHitCauser(const AActor* Causer, FRotator& TargetRotation, bool& bIsHitFromBack)
@@ -435,14 +459,6 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
-	if (CachedCombatComponent->IsEmpowered())
-	{
-		CachedCombatComponent->SetCombatMode(ECharacterComboState::CCS_Normal);
-	}
-	else
-	{
-		CachedCombatComponent->SetCombatMode(ECharacterComboState::CCS_Empowered);
-	}
 }
 
 void UMovementHandlerComponent::Attack()
@@ -603,9 +619,13 @@ void UMovementHandlerComponent::AirDown()
 
 void UMovementHandlerComponent::Block(const bool bIsBlocking)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Block: %s"), bIsBlocking ? TEXT("true") : TEXT("false"));
-	
-	if (bIsBlocking)
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_DefenceBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Defence Blocked"));
+		return;
+	}
+
+	if (bIsBlocking && !OwnerCharacter->GetCharacterMovement()->IsFalling())
 	{
 		OwnerCharacter->SetPrimaryState(TAG_Character_Defense_Block);
 	}

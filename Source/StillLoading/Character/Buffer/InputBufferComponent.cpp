@@ -50,15 +50,6 @@ void UInputBufferComponent::AddBufferedInput(ESkillType Action)
 		PointMoveStartTime = CurrentTime;
 	}
 
-	if (Action == ESkillType::ST_Block &&
-		(LastExecutedSkill == ESkillType::ST_Airborne ||
-			LastExecutedSkill == ESkillType::ST_AirUp ||
-			LastExecutedSkill == ESkillType::ST_Airdown ||
-			LastExecutedSkill == ESkillType::ST_Dodge))
-	{
-		return;
-	}
-
 	LastInputTime = CurrentTime;
 	InputBuffer.Add({Action, CurrentTime});
 
@@ -252,9 +243,9 @@ bool UInputBufferComponent::CanConsumeInput(ESkillType NextInput) const
 
 void UInputBufferComponent::ExecuteInput(ESkillType Action)
 {
+	if (LastExecutedSkill == ESkillType::ST_AirUp && Action == ESkillType::ST_AirUp) return;
+	
 	LastExecutedSkill = Action;
-
-	//if (LastExecutedSkill == ESkillType::ST_AirUp && Action == ESkillType::ST_AirUp) return;
 	
 	if (AActor* Owner = GetOwner())
 	{

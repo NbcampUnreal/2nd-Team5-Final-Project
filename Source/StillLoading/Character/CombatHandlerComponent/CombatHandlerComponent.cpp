@@ -21,6 +21,41 @@ void UCombatHandlerComponent::BeginPlay()
 	GenerateChargingWidget();
 }
 
+void UCombatHandlerComponent::SetEmpoweredCombatMode(ECharacterComboState Mode, float AdditionalDuration)
+{
+	CurrentMode = Mode;
+	
+	float TotalDuration = AdditionalDuration;
+	TotalDuration = FMath::Min(TotalDuration, MaxEmpoweredDuration);
+
+	if (Mode == ECharacterComboState::CCS_Empowered && GetWorld()->GetTimerManager().IsTimerActive(CombatModeResetTimer))
+	{
+		float Remaining = GetWorld()->GetTimerManager().GetTimerRemaining(CombatModeResetTimer);
+		TotalDuration += Remaining;
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(CombatModeResetTimer);
+
+	if (Mode != ECharacterComboState::CCS_Normal)
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			CombatModeResetTimer,
+			this,
+			&UCombatHandlerComponent::ResetCombatMode,
+			TotalDuration,
+			false
+		);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("CombatMode [%d] 설정됨. 유지 시간: %.1f초"), (int32)Mode, TotalDuration);
+}
+
+void UCombatHandlerComponent::ResetCombatMode()
+{
+	SetCombatMode(ECharacterComboState::CCS_Normal);
+	GetWorld()->GetTimerManager().ClearTimer(CombatModeResetTimer);
+}
+
 void UCombatHandlerComponent::GenerateChargingWidget()
 {
 	if (!ChargingWidgetActorClass) return;
