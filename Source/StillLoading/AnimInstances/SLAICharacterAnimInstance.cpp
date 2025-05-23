@@ -10,6 +10,8 @@
 #include "Character/SLPlayerCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "AI/SLMonster/SLMonster.h"
+#include "Components/SphereComponent.h"
 
 void USLAICharacterAnimInstance::NativeInitializeAnimation()
 {
@@ -131,7 +133,27 @@ bool USLAICharacterAnimInstance::DoesOwnerHaveTag(FName TagToCheck) const
 
 void USLAICharacterAnimInstance::AnimNotify_AttackEnd()
 {
-	SetIsAttacking(false);
+	APawn* Pawn = TryGetPawnOwner();
+	ASLMonster* Monster = Cast<ASLMonster>(Pawn);
+	if (Monster)
+	{
+		SetIsAttacking(false);
+		/*Monster->AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);*/
+		TWeakObjectPtr<ASLMonster> WeakMonster = Monster;
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(
+			TimerHandle,
+			[WeakMonster]()
+		{
+			if (WeakMonster.IsValid() && WeakMonster->AttackSphere)
+			{
+				WeakMonster->AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+		},
+			5.f, // 지연 시간
+			false
+		);
+	}
 }
 
 bool USLAICharacterAnimInstance::GetIsAttacking()
