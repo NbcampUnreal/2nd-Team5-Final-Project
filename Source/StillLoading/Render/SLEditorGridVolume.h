@@ -22,7 +22,6 @@ public:
 protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual bool ShouldTickIfViewportsOnly() const override {return true;}
-	virtual void OnConstruction(const FTransform& Transform) override;
 	
 public:
 	UPROPERTY(EditAnywhere, Category = "Grid")
@@ -32,16 +31,21 @@ public:
 	int32 GridCount = 10;
 
 	UPROPERTY(EditAnywhere, Category = "Grid")
-	int32 GridWidth = 1080;
-	UPROPERTY(EditAnywhere, Category = "Grid")
-	int32 GridHeight = 1920;
-
-	UPROPERTY(EditAnywhere, Category = "Grid")
-	int32 GridOffsetX = 0;
+	int32 GridHeight = 1080;
 	
 	UPROPERTY(EditAnywhere, Category = "Grid")
-	FColor GridColor = FColor::Green;
+	int32 GridWidth = 1920;
 
 	UPROPERTY(EditAnywhere, Category = "Grid")
+	int32 GroundHeight = 0;
+
+	UPROPERTY(EditAnywhere, Category = "Grid")
+	int32 CameraFitch = -40;
+	
+	UPROPERTY(EditAnywhere, Category = "Grid")
+	FColor GridColor = FColor::Red;
+	
+	UPROPERTY(EditAnywhere, Category = "Grid")
 	float LineThickness = 2.f;
+
 };
