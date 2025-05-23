@@ -56,6 +56,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float AttackRange = 185.f;
 
+	float PatrolRadius = 2500.f;
+	int32 PatrolNum = 7;
+
 	static const FName PatrolLocationKey;
 
 	FTimerHandle DelayHandle;

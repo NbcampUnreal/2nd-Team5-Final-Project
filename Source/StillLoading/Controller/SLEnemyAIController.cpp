@@ -26,17 +26,6 @@ ASLEnemyAIController::ASLEnemyAIController()
 void ASLEnemyAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	//UpdateAIState();
-
-	if (CurrentState == EAIState::EAIS_Waiting)
-	{
-		WaitTime -= DeltaTime;
-		if (WaitTime <= 0.f)
-		{
-			CurrentState = EAIState::EAIS_Combat;
-		}
-	}
 }
 
 ETeamAttitude::Type ASLEnemyAIController::GetTeamAttitudeTowards(const AActor& Other) const
@@ -105,19 +94,14 @@ void ASLEnemyAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 void ASLEnemyAIController::InitializePatrolPoints()
 {
 	PatrolPoints.Empty();
-	
 	if (!GetPawn()) return;
-
 	FVector Origin = GetPawn()->GetActorLocation();
-	float Radius = 2500.f;
-	int32 NumPoints = 7;
-
-	for (int32 i = 0; i < NumPoints; ++i)
+	for (int32 i = 0; i < PatrolNum; ++i)
 	{
 		FVector RandomDirection = FMath::VRand();
 		RandomDirection.Z = 0.f;
 
-		FVector RandomOffset = RandomDirection * FMath::FRandRange(200.f, Radius);
+		FVector RandomOffset = RandomDirection * FMath::FRandRange(200.f, PatrolRadius);
 		FVector TestPoint = Origin + RandomOffset;
 
 		FHitResult HitResult;
@@ -134,14 +118,12 @@ void ASLEnemyAIController::InitializePatrolPoints()
 			ECC_WorldStatic,
 			QueryParams
 		);
-
 		if (bHit && HitResult.bBlockingHit)
 		{
 			FVector GroundPoint = HitResult.ImpactPoint;
 			PatrolPoints.Add(GroundPoint);
 		}
 	}
-
 	if (PatrolPoints.Num() > 0)
 	{
 		Blackboard->SetValueAsVector("PatrolLocation", PatrolPoints[0]);
