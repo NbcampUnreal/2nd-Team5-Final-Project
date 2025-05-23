@@ -244,8 +244,6 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
         return false;
     }
     
-    // ★ 1단계: 물리적으로 필요한 점프 시간 계산 ★
-    
     // 출발 위치와 타겟 위치
     FVector StartLocation = OwningCharacter->GetActorLocation();
     FVector TargetLocation = TargetCharacter->GetActorLocation();
@@ -265,7 +263,6 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
         Gravity = OwningMovementComponent->GetGravityZ() * -1.0f;
     }
     
-    // ★ 물리적으로 최적의 점프 시간 계산 ★
     float OptimalJumpTime;
     if (HeightDifference >= 0) // 위로 점프하거나 같은 높이
     {
@@ -288,8 +285,6 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
     
     UE_LOG(LogTemp, Display, TEXT("Calculated optimal jump time: %f seconds"), OptimalJumpTime);
     
-    // ★ 2단계: 애니메이션 시간과 비교 및 조정 ★
-    
     float AnimationTime = OptimalJumpTime; // 기본적으로 물리 시간 사용
     
     if (RemainingAnimTime > 0.0f)
@@ -307,8 +302,6 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
             AnimationTime = TotalDuration - CurrentTime;
         }
     }
-    
-    // ★ 3단계: 애니메이션과 점프 시간 동기화 결정 ★
     
     float FinalJumpTime;
     bool bAdjustAnimationSpeed = false;
@@ -345,8 +338,6 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
     
     FinalJumpTime = FMath::Clamp(FinalJumpTime, 0.5f, 4.0f);
     
-    // ★ 4단계: 애니메이션 속도 조정 (필요한 경우) ★
-    
     if (bAdjustAnimationSpeed && IsAnyMontagePlaying())
     {
         float NewPlayRate = AnimationTime / FinalJumpTime;
@@ -359,8 +350,6 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
             UE_LOG(LogTemp, Display, TEXT("Adjusted animation play rate to: %f"), NewPlayRate);
         }
     }
-    
-    // ★ 5단계: 점프 속도 계산 (최종 시간 기준) ★
     
     // 캐릭터 회전
     if (bUpdateRotation)
@@ -398,8 +387,6 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
     UE_LOG(LogTemp, Display, TEXT("Final jump velocity: %s (speed: %f)"), *JumpVelocity.ToString(), JumpVelocity.Size());
     UE_LOG(LogTemp, Display, TEXT("Final jump time: %f seconds"), FinalJumpTime);
     
-    // ★ 6단계: 충돌 설정 및 점프 실행 ★
-    
     // 캐릭터 충돌 비활성화
     UPrimitiveComponent* CharacterMesh = OwningCharacter->GetMesh();
     if (CharacterMesh)
@@ -417,8 +404,6 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
     
     // 점프 실행
     OwningCharacter->LaunchCharacter(JumpVelocity, true, true);
-    
-    // ★ 7단계: 정확한 타이밍으로 점프 종료 설정 ★
     
     // 약간의 여유 시간 추가 (착지 후 안정화)
     float FinishDelay = FinalJumpTime + 0.1f;
@@ -461,7 +446,6 @@ void USLBossAnimInstance::FinishJump()
             OwningCharacter->GetWorldTimerManager().ClearTimer(JumpTimerHandle);
         }
         
-        // ★ 애니메이션 재생 속도 원래대로 복원 ★
         if (IsAnyMontagePlaying())
         {
             FAnimMontageInstance* MontageInstance = GetActiveMontageInstance();
@@ -519,7 +503,6 @@ bool USLBossAnimInstance::ChargeToTarget(float ChargeSpeed, bool bUpdateRotation
         CapsuleComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
     }
     
-    // 돌진 적용 - 방식 1: LaunchCharacter (강한 돌진, 초기 추진력만 적용)
     FVector ChargeVelocity = DirectionXY * ChargeSpeed;
     // Z 속도는 유지 (중력의 영향으로 떨어지도록)
     ChargeVelocity.Z = 0.0f;

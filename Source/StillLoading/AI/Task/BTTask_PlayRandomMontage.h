@@ -24,14 +24,6 @@ public:
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
-	// 재생할 몽타주 배열
-	UPROPERTY(EditAnywhere, Category = "Animation")
-	TArray<TObjectPtr<UAnimMontage>> Montages;
-
-	// 몽타주 재생 속도
-	UPROPERTY(EditAnywhere, Category = "Animation", meta = (ClampMin = "0.1", ClampMax = "5.0"))
-	float PlayRate = 1.0f;
-	
 private:
 	// 태스크를 실행 중인 행동 트리 컴포넌트 참조
 	UPROPERTY(EditDefaultsOnly, Category = "Component")
@@ -43,5 +35,13 @@ private:
 	
 	// 몽타주 종료 알림 핸들
 	FOnMontageEnded MontageEndedDelegate;
+
+	// 재생할 몽타주 배열
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	TArray<TObjectPtr<UAnimMontage>> Montages;
+
+	// 몽타주 재생 속도
+	UPROPERTY(EditAnywhere, Category = "Animation", meta = (ClampMin = "0.1", ClampMax = "5.0"))
+	float PlayRate = 1.0f;
 
 };
