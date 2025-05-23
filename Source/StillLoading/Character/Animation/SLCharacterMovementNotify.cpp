@@ -1,9 +1,9 @@
 #include "SLCharacterMovementNotify.h"
 #include "Character/SLPlayerCharacter.h"
-
+#include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 
 void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-	const FAnimNotifyEventReference& EventReference)
+                                        const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
@@ -12,11 +12,20 @@ void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 	ASLPlayerCharacter* Character = Cast<ASLPlayerCharacter>(MeshComp->GetOwner());
 	if (!Character) return;
 
+	FVector LaunchVector = FVector::ZeroVector;
+
 	switch (MovementAction)
 	{
-	case ECharacterMovementAction::CMA_Launch:
-		Character->LaunchCharacter(LaunchVector, true, true);
-		UE_LOG(LogTemp, Log, TEXT("Launch: %s"), *LaunchVector.ToString());
+	case ECharacterMovementAction::CMA_LaunchUp:
+		LaunchVector = FVector::UpVector * LaunchPower;
+		Character->LaunchCharacter(LaunchVector, true, false);
+		break;
+
+	case ECharacterMovementAction::CMA_LaunchBack:
+		if (UMovementHandlerComponent* MoveComp = Character->FindComponentByClass<UMovementHandlerComponent>())
+		{
+			MoveComp->StartKnockback(KnockBackSpeed, KnockBackDuration);
+		}
 		break;
 
 	default:

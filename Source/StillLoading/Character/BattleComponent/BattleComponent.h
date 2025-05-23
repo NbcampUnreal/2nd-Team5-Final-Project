@@ -1,5 +1,7 @@
 #pragma once
 
+DECLARE_LOG_CATEGORY_EXTERN(LogBattleComponent, Log, All);
+
 #include "CoreMinimal.h"
 #include "Character/DataAsset/AttackDataAsset.h"
 #include "Components/ActorComponent.h"
