@@ -17,6 +17,7 @@ void UAnimationMontageComponent::BeginPlay()
 	if (!OwnerCharacter) return;
 
 	GetAnimInstance();
+	
 	if (AnimInstance)
 	{
 		AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UAnimationMontageComponent::OnMontageBlendingOut);
@@ -75,10 +76,40 @@ void UAnimationMontageComponent::PlaySkillMontage(FName Section)
 		PlayMontage(MontageData->SkillMontage, Section);
 }
 
-void UAnimationMontageComponent::StopAttackMontage()
+void UAnimationMontageComponent::PlayHitMontage(FName Section)
 {
 	if (MontageData)
-		StopMontage(MontageData->AttackMontage, 0.2f);
+		PlayMontage(MontageData->HitMontage, Section);
+}
+
+void UAnimationMontageComponent::PlayBlockMontage(FName Section)
+{
+	if (MontageData)
+		PlayMontage(MontageData->BlockMontage, Section);
+}
+
+void UAnimationMontageComponent::StopAllMontages(float BlendOutTime)
+{
+	if (!AnimInstance) return;
+
+	AnimInstance->Montage_Stop(BlendOutTime);
+}
+
+void UAnimationMontageComponent::StopActiveMontages(float BlendOutTime)
+{
+	if (!AnimInstance) return;
+
+	if (IsMontagePlayingHelper(MontageData->AttackMontage))
+		StopMontage(MontageData->AttackMontage, BlendOutTime);
+
+	if (IsMontagePlayingHelper(MontageData->SkillMontage))
+		StopMontage(MontageData->SkillMontage, BlendOutTime);
+
+	if (IsMontagePlayingHelper(MontageData->AirAttackMontage))
+		StopMontage(MontageData->AirAttackMontage, BlendOutTime);
+
+	if (IsMontagePlayingHelper(MontageData->SpecialAttackMontage))
+		StopMontage(MontageData->SpecialAttackMontage, BlendOutTime);
 }
 
 void UAnimationMontageComponent::StopMontage(UAnimMontage* Montage, float BlendOutTime)

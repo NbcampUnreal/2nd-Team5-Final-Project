@@ -27,7 +27,7 @@ protected:
 	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 	
 	UFUNCTION()
-	void OnTargetPerceptionForgotten(AActor* Actor);
+	virtual void OnTargetPerceptionForgotten(AActor* Actor);
 	
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void BeginPlay() override;

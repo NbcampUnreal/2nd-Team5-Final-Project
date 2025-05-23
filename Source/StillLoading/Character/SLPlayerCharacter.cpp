@@ -97,7 +97,15 @@ bool ASLPlayerCharacter::IsBlocking() const
 // 상태 관리
 void ASLPlayerCharacter::SetPrimaryState(FGameplayTag NewState)
 {
-	PrimaryStateTags.AddTag(NewState);
+	if (PrimaryStateTags.IsEmpty())
+	{
+		PrimaryStateTags.AddTag(NewState);
+	}
+	else
+	{
+		PrimaryStateTags.Reset();
+		PrimaryStateTags.AddTag(NewState);
+	}
 }
 
 void ASLPlayerCharacter::AddSecondaryState(FGameplayTag NewState)
@@ -123,6 +131,19 @@ bool ASLPlayerCharacter::HasSecondaryState(FGameplayTag StateToCheck) const
 void ASLPlayerCharacter::RemovePrimaryState(FGameplayTag StateToRemove)
 {
 	PrimaryStateTags.RemoveTag(StateToRemove);
+}
+
+void ASLPlayerCharacter::ClearAllStateTags()
+{
+	if (!PrimaryStateTags.IsEmpty())
+	{
+		PrimaryStateTags.Reset();
+	}
+
+	if (!SecondaryStateTags.IsEmpty())
+	{
+		SecondaryStateTags.Reset();
+	}
 }
 
 bool ASLPlayerCharacter::IsConditionBlocked(EQueryType QueryType) const

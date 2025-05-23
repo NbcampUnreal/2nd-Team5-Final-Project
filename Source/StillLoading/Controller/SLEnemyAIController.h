@@ -22,14 +22,10 @@ public:
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 	//End of ~IGenericTeamAgentInterface inteface
 	
-	UFUNCTION(BlueprintCallable, Category = "AI")
-	void StartChasing(AActor* Target);
-	UFUNCTION(BlueprintCallable, Category = "AI")
-	void StopChasing();
-	UFUNCTION(BlueprintCallable, Category = "AI")
-	void UpdateAIState();
 	UFUNCTION(BlueprintPure, Category = "AI")
 	EAIState GetCurrentState() const { return CurrentState; }
+
+	void SetPeripheralVisionAngle(float NewAngle);
 
 	UPROPERTY(BlueprintReadWrite, Category = "AI")
 	TObjectPtr<UBehaviorTreeComponent> BehaviorTreeComp;
@@ -38,36 +34,43 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float ChaseRadius = 1500.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float CombatRadius = 550.f;
+	float CombatRadius = 800.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float LoseInterestRadius = 1900.f;
+	float LoseInterestRadius = 2200.f;
 
 	TArray<FVector> PatrolPoints;
+	
+	bool bPatrolPointsReady = false;
+
+	bool bHasFixedTarget = false;
 
 protected:
+	virtual void OnTargetPerceptionForgotten(AActor* Actor);
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	virtual void OnPossess(APawn* InPawn) override;
 
 	UPROPERTY(BlueprintReadWrite, Category = "AI")
 	TObjectPtr<UBlackboardComponent> BlackboardComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float AttackRange = 185.f;
 
-	static const FName PatrolLoctionKey;
+	float PatrolRadius = 2500.f;
+	int32 PatrolNum = 7;
+
+	static const FName PatrolLocationKey;
 
 	FTimerHandle DelayHandle;
 	
-	bool bHasFixedTarget = false;
-	
-	float WaitTime = 2.f;
+	bool IsPatrolState = true;
 
 private:
+	void InitializePatrolPoints();
+
 	FVector CurrentTargetLocation;
 	
 	FVector LastKnownLocation;
-
-	bool bIsChasing = false;
 
 	EAIState CurrentState = EAIState::EAIS_Idle;
 };
