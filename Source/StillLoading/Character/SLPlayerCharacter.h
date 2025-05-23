@@ -14,6 +14,8 @@ enum class EQueryType : uint8 // enum class 는 앞에 안붙이는게 더 낫�
 	EQT_JumpBlock UMETA(DisplayName = "Jump Block"),
 	EQT_LookBlock UMETA(DisplayName = "Look Block"),
 	EQT_AirBlock UMETA(DisplayName = "Air Block"),
+	EQT_InputBlock UMETA(DisplayName = "Input Block"),
+	EQT_DefenceBlock UMETA(DisplayName = "Defence Block"),
 };
 
 USTRUCT(BlueprintType)
@@ -88,6 +90,10 @@ public:
 	// 상태 태그 개별 제거 함수
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void RemovePrimaryState(FGameplayTag StateToRemove);
+
+	// 전체 제거
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	void ClearAllStateTags();
 
 	// 상태 태그 컨테이너
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")

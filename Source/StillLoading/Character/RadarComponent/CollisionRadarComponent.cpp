@@ -10,7 +10,7 @@ UCollisionRadarComponent::UCollisionRadarComponent()
     DetectionZone = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionZone"));
     DetectionZone->SetCollisionProfileName(TEXT("OverlapAll"));
     DetectionZone->SetGenerateOverlapEvents(true);
-    DetectionZone->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    DetectionZone->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void UCollisionRadarComponent::BeginPlay()

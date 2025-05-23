@@ -20,9 +20,18 @@ public:
 	void PlayMontage(UAnimMontage* Montage, FName Section);
 	UFUNCTION()
 	void StopMontage(UAnimMontage* Montage, float BlendOutTime);
+	UFUNCTION()
 	void PlayAttackMontage(FName Section = NAME_None);
+	UFUNCTION()
 	void PlaySkillMontage(FName Section = NAME_None);
-	void StopAttackMontage();
+	UFUNCTION()
+	void PlayHitMontage(FName Section = NAME_None);
+	UFUNCTION()
+	void PlayBlockMontage(FName Section = NAME_None);
+	UFUNCTION()
+	void StopAllMontages(float BlendOutTime);
+	UFUNCTION()
+	void StopActiveMontages(float BlendOutTime);
 	UFUNCTION()
 	bool IsAttackMontagePlaying() const;
 	

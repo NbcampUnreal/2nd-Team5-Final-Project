@@ -7,7 +7,7 @@
 
 ASLNPC::ASLNPC()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
     /*UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
@@ -24,7 +24,31 @@ void ASLNPC::BeginPlay()
 {
 	Super::BeginPlay();
 	LastAttackTime = 0.0f;
-	GetCharacterMovement()->MaxWalkSpeed = 650.0f;
+	GetCharacterMovement()->MaxWalkSpeed = 250.0f;
+
+    ASLNPCAIController* NPCController = Cast<ASLNPCAIController>(GetController());
+    if (NPCController)
+    {
+        BlackboardComp = NPCController->GetBlackboardComponent();
+    }
+}
+
+void ASLNPC::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    ASLNPCAIController* NPCController = Cast<ASLNPCAIController>(GetController());
+    if (NPCController->bPatrolPointsReady)
+    {
+        CurrentTargetLocation = BlackboardComp->GetValueAsVector("PatrolLocation");
+        PatrolPoints = NPCController->PatrolPoints;
+        NPCController->bPatrolPointsReady = false;
+    }
+
+    if (PatrolPoints.Num() > 0 && IsCloseToTargetPoint())
+    {
+        MoveToNextPatrolPoint();
+    }
 }
 
 void ASLNPC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -40,6 +64,39 @@ void ASLNPC::Attack()
         TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
         AnimInstance->SetIsAttacking(true);
         LastAttackTime = CurrentTime;
+    }
+}
+
+void ASLNPC::SetPatrolPoints(const TArray<FVector>& Points)
+{
+    PatrolPoints = Points;
+
+    if (PatrolPoints.Num() > 0)
+    {
+        if (BlackboardComp)
+        {
+            BlackboardComp->SetValueAsVector("PatrolLocation", CurrentTargetLocation);
+        }
+    }
+}
+
+bool ASLNPC::IsCloseToTargetPoint(float AcceptableDistance)
+{
+    float Distance = FVector::Dist(GetActorLocation(), CurrentTargetLocation);
+    return Distance <= AcceptableDistance;
+}
+
+void ASLNPC::MoveToNextPatrolPoint()
+{
+    
+    if (PatrolPoints.Num() == 0) return;
+    
+    CurrentPatrolIndex = (CurrentPatrolIndex + 1) % PatrolPoints.Num();
+    CurrentTargetLocation = PatrolPoints[CurrentPatrolIndex];
+
+    if (BlackboardComp)
+    {
+        BlackboardComp->SetValueAsVector("PatrolLocation", CurrentTargetLocation);
     }
 }
 
