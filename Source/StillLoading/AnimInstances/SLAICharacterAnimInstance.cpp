@@ -27,6 +27,8 @@ void USLAICharacterAnimInstance::NativeInitializeAnimation()
 	IsStun = false;
 	IsAttacking = false;
 	ShouldLookAtPlayer = false;
+	bIsFalling = false;
+	FallSpeed = 0.f;
 	FaceYaw = 0.f;
 	FacePitch = 0.f;
 	Angle = 0.f;
@@ -40,13 +42,27 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 	}
 
 	GroundSpeed = OwningCharacter->GetVelocity().Size2D();
-
+    
 	bHasAcceleration = OwningMovementComponent->GetCurrentAcceleration().SizeSquared2D() > 0.f;
-	
+    
 	LocomotionDirection = UKismetAnimationLibrary::CalculateDirection(OwningCharacter->GetVelocity(),OwningCharacter->GetActorRotation());
 
+	FVector Velocity = OwningCharacter->GetVelocity();
+	FallSpeed = Velocity.Z;
+    
+	float DistanceToGround = GetDistanceToGround();
+    
+	if (DistanceToGround <= 200.0f && FallSpeed <= 0.0f)
+	{
+		bIsFalling = false;
+	}
+	else
+	{
+		bIsFalling = (FallSpeed < -100.0f) || (DistanceToGround > 200.0f);
+	}
+    
 	Angle = UKismetMathLibrary::FindLookAtRotation(OwningCharacter->GetActorForwardVector(), OwningCharacter->GetVelocity()).Yaw;
-	
+    
 	AAIController* AIController = Cast<AAIController>(OwningCharacter->GetController());
 	if (AIController)
 	{
@@ -137,4 +153,34 @@ void USLAICharacterAnimInstance::AnimNotify_AttackEnd()
 bool USLAICharacterAnimInstance::GetIsAttacking()
 {
 	return IsAttacking;
+}
+
+float USLAICharacterAnimInstance::GetDistanceToGround() const
+{
+	if (!OwningCharacter)
+	{
+		return 0.0f;
+	}
+
+	// 캐릭터의 현재 위치
+	FVector StartLocation = OwningCharacter->GetActorLocation();
+    
+	// 아래쪽으로 레이캐스트할 끝점
+	FVector EndLocation = StartLocation + FVector(0, 0, -5000.0f);
+    
+	// 레이캐스트 설정
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(OwningCharacter);
+	QueryParams.bTraceComplex = false;
+    
+	// 레이캐스트 실행
+	if (OwningCharacter->GetWorld()->LineTraceSingleByChannel(
+		HitResult, StartLocation, EndLocation, ECC_WorldStatic, QueryParams))
+	{
+		return FVector::Dist(StartLocation, HitResult.Location);
+	}
+    
+	// 히트되지 않았으면 큰 값 반환
+	return 5000.0f;
 }

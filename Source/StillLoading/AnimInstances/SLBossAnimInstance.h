@@ -34,6 +34,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void FinishCharge();
 
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void CleanupJumpTimers();
+	
+	
+
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	EBossAttackPattern GetBossAttackPattern();
 
@@ -48,9 +53,28 @@ public:
 	// 원래 충돌 설정 저장
 	TEnumAsByte<ECollisionEnabled::Type> OriginalCollisionType;
 private:
-
+	// 착지 체크 함수
+	UFUNCTION()
+	void CheckForLanding();
+	
+	UFUNCTION()
+	void CompleteLanding();
+	
+	UFUNCTION()
+	void SetupJumpCollision();
+	
+	UFUNCTION()
+	void RestoreJumpCollision();
+	
+	UFUNCTION()
+	void StartLandingCheck();
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	EBossAttackPattern BossAttackPattern;
 
-
+	// 착지 모니터링을 위한 타이머
+	FTimerHandle LandingCheckTimer;
+    
+	// 목표 착지 위치
+	FVector TargetLandingLocation;
 };
