@@ -501,6 +501,7 @@ void UMovementHandlerComponent::Attack()
 
 void UMovementHandlerComponent::Execution()
 {
+	CachedBattleComponent->DoAttackSweep(EAttackAnimType::AAT_FinalAttackA);
 	CachedMontageComponent->PlayExecutionMontage(FName("ExecutionA"));
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack_ExecutionA);
 }
