@@ -383,12 +383,12 @@ void UMovementHandlerComponent::Jump()
 	}
 
 	CachedCombatComponent->ResetCombo();
-	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Jump);
+	OwnerCharacter->AddSecondaryState(TAG_Character_Movement_Jump);
 }
 
 void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
 {
-	OwnerCharacter->RemovePrimaryState(TAG_Character_Movement_Jump);
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_Jump);
 	CachedCombatComponent->ResetCombo();
 }
 
@@ -459,6 +459,7 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
+	Execution();
 }
 
 void UMovementHandlerComponent::Attack()
@@ -485,11 +486,20 @@ void UMovementHandlerComponent::Attack()
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
 }
 
+void UMovementHandlerComponent::Execution()
+{
+	CachedMontageComponent->PlayExecutionMontage(FName("ExecutionA"));
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack_ExecutionA);
+}
+
 void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)
 {
 	if (bIsFalling)
 	{
-		OwnerCharacter->GetCharacterMovement()->GravityScale = 0.4f;
+		FVector Velocity = OwnerCharacter->GetCharacterMovement()->Velocity;
+		Velocity.Z = 0.f;
+		OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
+		OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f; 
 	}
 
 	const bool bEmpowered = CachedCombatComponent->IsEmpowered();
@@ -704,6 +714,12 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		break;
 	case ECharacterMontageState::ECS_Attack_Airdown:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Airdown);
+		break;
+	case ECharacterMontageState::ECS_Attack_ExecutionA:
+		break;
+	case ECharacterMontageState::ECS_Attack_ExecutionB:
+		break;
+	case ECharacterMontageState::ECS_Attack_ExecutionC:
 		break;
 	case ECharacterMontageState::ECS_Defense_Block:
 		break;
