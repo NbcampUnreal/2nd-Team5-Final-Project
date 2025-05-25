@@ -9,6 +9,8 @@
 class ASLPlayerCharacter;
 class UMovementHandlerComponent;
 
+DECLARE_LOG_CATEGORY_EXTERN(InputBufferComponent, Log, All);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UInputBufferComponent : public UActorComponent
 {
@@ -27,9 +29,11 @@ public:
 	void OnIMCActionStarted(EInputActionType ActionType);
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Input Buffer")
-	float BufferDuration = 1.2f;
+	float BufferDuration = 1.0f;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Input Buffer")
 	int32 MaxInputBufferCount = 5;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Input Buffer")
+	float InputExpireTime = 1.0f;
 
 protected:
 	virtual void BeginPlay() override;

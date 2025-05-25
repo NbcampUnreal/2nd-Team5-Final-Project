@@ -88,6 +88,12 @@ void UAnimationMontageComponent::PlayBlockMontage(FName Section)
 		PlayMontage(MontageData->BlockMontage, Section);
 }
 
+void UAnimationMontageComponent::PlayExecutionMontage(FName Section)
+{
+	if (MontageData)
+		PlayMontage(MontageData->ExecutionMontage, Section);
+}
+
 void UAnimationMontageComponent::StopAllMontages(float BlendOutTime)
 {
 	if (!AnimInstance) return;

@@ -8,9 +8,12 @@ UCollisionRadarComponent::UCollisionRadarComponent()
     PrimaryComponentTick.bCanEverTick = false;
 
     DetectionZone = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionZone"));
-    DetectionZone->SetCollisionProfileName(TEXT("OverlapAll"));
+    
     DetectionZone->SetGenerateOverlapEvents(true);
-    DetectionZone->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    DetectionZone->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    DetectionZone->SetCollisionObjectType(ECC_GameTraceChannel1);
+    DetectionZone->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+    DetectionZone->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Overlap);
 }
 
 void UCollisionRadarComponent::BeginPlay()
@@ -21,8 +24,11 @@ void UCollisionRadarComponent::BeginPlay()
     {
         return;
     }
-    
+
     DetectionZone->SetSphereRadius(DetectionRadius, true);
+    DetectionZone->AttachToComponent(GetOwner()->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+    DetectionZone->RegisterComponent();
+    
     DetectionZone->OnComponentBeginOverlap.AddDynamic(this, &UCollisionRadarComponent::OnOverlapBegin);
     DetectionZone->OnComponentEndOverlap.AddDynamic(this, &UCollisionRadarComponent::OnOverlapEnd);
 
@@ -78,7 +84,7 @@ void UCollisionRadarComponent::DetectClosestActorInFOV()
         if (IsInFieldOfView(Actor))
         {
             float Distance = FVector::Dist(MyLocation, Actor->GetActorLocation());
-            //UE_LOG(LogTemp, Warning, TEXT("Detected Actor in FOV: %s, Distance: %.2f"), *Actor->GetName(), Distance);
+            UE_LOG(LogTemp, Warning, TEXT("Detected Actor in FOV: %s, Distance: %.2f"), *Actor->GetName(), Distance);
             
             if (Distance < MinDistance)
             {
@@ -91,7 +97,9 @@ void UCollisionRadarComponent::DetectClosestActorInFOV()
     if (ClosestActor)
     {
         //TODO: 여기서 딜리게이트로 뿌리던지 상호작용 시작점 케릭터랑 가장 가까운 액터 위치
-        //UE_LOG(LogTemp, Warning, TEXT("Closest Actor in FOV: %s, Distance: %.2f"), *ClosestActor->GetName(), MinDistance);
+        UE_LOG(LogTemp, Warning, TEXT("Closest Actor in FOV: %s, Distance: %.2f"), *ClosestActor->GetName(), MinDistance);
+
+        
     }
     
     DrawDebugVisualization();
@@ -126,7 +134,6 @@ void UCollisionRadarComponent::OnOverlapEnd(UPrimitiveComponent* OverlappedComp,
 {
     if (OtherActor && OtherActor != GetOwner())
     {
-        //UE_LOG(LogTemp, Warning, TEXT("Actor EndOverlapped with: %s"), *OtherActor->GetName());
         NearbyActors.Remove(OtherActor);
     }
 }
