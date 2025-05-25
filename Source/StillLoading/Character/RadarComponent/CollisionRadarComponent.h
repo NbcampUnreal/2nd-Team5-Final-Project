@@ -5,6 +5,8 @@
 #include "Components/SphereComponent.h"
 #include "CollisionRadarComponent.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogCollisionRadarComponent, Log, All);
+
 USTRUCT(Atomic, BlueprintType)
 struct FDetectedActorInfo
 {
@@ -56,7 +58,7 @@ protected:
     virtual void BeginPlay() override;
 
 private:
-    bool IsInFieldOfView(AActor* TargetActor) const;
+    bool IsInFieldOfView(const AActor* TargetActor) const;
     void DrawDebugVisualization();
 
     UFUNCTION()

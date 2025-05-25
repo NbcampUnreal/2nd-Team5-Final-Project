@@ -33,21 +33,25 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	LeftHandCollisionBox->SetupAttachment(GetMesh());
 	LeftHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	LeftHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+	LeftHandCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 
 	RightHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("RightHandCollisionBox");
 	RightHandCollisionBox->SetupAttachment(GetMesh());
 	RightHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RightHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+	RightHandCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 
 	LeftFootCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftFootCollisionBox");
 	LeftFootCollisionBox->SetupAttachment(GetMesh());
 	LeftFootCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	LeftFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+	LeftFootCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 
 	RightFootCollisionBox = CreateDefaultSubobject<UBoxComponent>("RightFootCollisionBox");
 	RightFootCollisionBox->SetupAttachment(GetMesh());
 	RightFootCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RightFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+	RightFootCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 	
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
 	BattleComponent = CreateDefaultSubobject<UBattleComponent>("BattleComponent");
@@ -60,8 +64,8 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	// BattleComponent 에서 사용 하기위한 캡슐 셋팅
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
 	
 	AIChapter = EChapter::EC_None;
 	IsDebugMode = false;
