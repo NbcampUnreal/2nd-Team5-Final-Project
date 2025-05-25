@@ -63,7 +63,6 @@ void ASLBossCharacter::SetTargetPointToBlackboard()
 		if (Blackboard)
 		{
 			Blackboard->SetValueAsObject("TargetPoint", TargetPoint);
-			UE_LOG(LogTemp, Display, TEXT("TargetPoint set to blackboard: %s"), *TargetPoint->GetName());
 		}
 	}
 	else
@@ -95,7 +94,6 @@ EBossAttackPattern ASLBossCharacter::SelectRandomPattern(float DistanceToTarget,
             AvailableLongRangePatterns.Contains(LastLongRangePattern))
         {
             AvailableLongRangePatterns.Remove(LastLongRangePattern);
-            UE_LOG(LogTemp, Display, TEXT("Removed last used pattern: %s"), *UEnum::GetValueAsString(LastLongRangePattern));
         }
         
         // 사용 가능한 패턴이 없다면 전체 목록에서 선택
@@ -119,7 +117,6 @@ EBossAttackPattern ASLBossCharacter::SelectRandomPattern(float DistanceToTarget,
     	{
     		if (AnimInstance->IsTargetBehindCharacter(120.0f)) // 90도 각도로 뒤에 있는지 확인
     		{
-    			UE_LOG(LogTemp, Display, TEXT("Target is behind - using EBAP_Attack_04"));
     			return EBossAttackPattern::EBAP_Attack_04;
     		}
     	}
@@ -134,7 +131,6 @@ EBossAttackPattern ASLBossCharacter::SelectRandomPattern(float DistanceToTarget,
         int32 RandomIndex = FMath::RandRange(0, CloseRangePatterns.Num() - 1);
         EBossAttackPattern SelectedPattern = CloseRangePatterns[RandomIndex];
         
-        UE_LOG(LogTemp, Display, TEXT("Selected close range pattern: %s"), *UEnum::GetValueAsString(SelectedPattern));
         return SelectedPattern;
     }
 }

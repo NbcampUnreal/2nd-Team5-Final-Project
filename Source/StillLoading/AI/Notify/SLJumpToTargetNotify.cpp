@@ -151,10 +151,6 @@ void USLJumpToTargetNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
     FVector JumpVelocity = DirectionXY * RequiredHorizontalSpeed;
     JumpVelocity.Z = Vz;
     
-    // 디버그 정보 출력
-    UE_LOG(LogTemp, Display, TEXT("Jump Info - Distance: %.2f, Time: %.2f, Speed: %.2f, Height Diff: %.2f, Arc: %.2f"),
-           DistanceXY, TimeToReachTarget, RequiredHorizontalSpeed, HeightDifference, ArcHeight);
-    
     // 함수 내부에서 로컬 변수로 선언 - 일반 포인터 사용
     UPrimitiveComponent* CharacterMesh = OwningCharacter->GetMesh();
     if (CharacterMesh)
@@ -231,7 +227,6 @@ void USLJumpToTargetNotify::FinishJump(USkeletalMeshComponent* MeshComp)
         if (CharacterMesh)
         {
             CharacterMesh->SetCollisionEnabled(OriginalCollisionTypes[MeshComp]);
-            UE_LOG(LogTemp, Display, TEXT("Jump finished: Collision restored"));
         }
         
         // 맵에서 제거

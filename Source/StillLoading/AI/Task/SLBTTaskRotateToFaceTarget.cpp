@@ -134,7 +134,6 @@ void USLBTTaskRotateToFaceTarget::TickTask(UBehaviorTreeComponent& OwnerComp, ui
 	// 최대 회전 시간을 초과한 경우
 	if (Memory->ElapsedTime >= MaxRotationTime)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Rotation time exceeded. Task completed by timeout."));
 		Memory->Reset();
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 		return;

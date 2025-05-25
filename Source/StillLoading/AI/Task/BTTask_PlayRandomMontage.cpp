@@ -66,7 +66,6 @@ EBTNodeResult::Type UBTTask_PlayRandomMontage::ExecuteTask(UBehaviorTreeComponen
     if (Duration > 0.f)
     {
         AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, MontageToPlay);
-        UE_LOG(LogTemp, Display, TEXT("Playing random montage: %s (Duration: %.2f)"), *MontageToPlay->GetName(), Duration);
         return EBTNodeResult::InProgress;  
     }
     

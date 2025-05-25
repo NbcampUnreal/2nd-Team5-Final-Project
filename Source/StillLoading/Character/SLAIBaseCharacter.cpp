@@ -183,8 +183,6 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 		}
 	}
 	
-	
-	UE_LOG(LogTemp, Warning, TEXT("%s에게 공격자(%s)가  데미지를 주었습니다."), *OtherActor->GetName(), *GetName());
 	// BattleComponent를 통해 데미지 전달
 	BattleComponent->SendHitResult(OtherActor, SweepResult, CurrentAttackType);
     
@@ -465,8 +463,6 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
 			FVector LaunchDirection = (TargetLocation - SpawnLocation).GetSafeNormal();
 			SpawnedProjectile->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
 		}
-
-		UE_LOG(LogTemp, Display, TEXT("Projectile spawned successfully: %s"), *SpawnedProjectile->GetName());
 	}
 	else
 	{
