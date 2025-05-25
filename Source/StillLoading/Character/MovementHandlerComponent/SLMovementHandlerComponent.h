@@ -67,7 +67,7 @@ public:
 
 	// 패링용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Parry")
-	float ParryDuration = 0.3f;
+	float ParryDuration = 0.2f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -102,6 +102,7 @@ private:
 	void Airborne();
 	void AirUp();
 	void AirDown();
+	void Execution();
 	void Block(const bool bIsBlocking);
 	void RotateToHitCauser(const AActor* Causer, FRotator &TargetRotation, bool &bIsHitFromBack);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
