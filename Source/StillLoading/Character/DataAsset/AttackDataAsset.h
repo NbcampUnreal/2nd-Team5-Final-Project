@@ -40,7 +40,9 @@ enum class EAttackAnimType : uint8 // 애니메이션 기준
 	AAT_Activate UMETA(DisplayName = "Activate"),
 
 	// 막타모션
-	AAT_FinalAttack UMETA(DisplayName = "FinalAttack"), // 막타모션
+	AAT_FinalAttackA UMETA(DisplayName = "FinalAttackA"), // 막타모션
+	AAT_FinalAttackB UMETA(DisplayName = "FinalAttackB"), // 막타모션
+	AAT_FinalAttackC UMETA(DisplayName = "FinalAttackC"), // 막타모션
 	AAT_ParryAttack UMETA(DisplayName = "ParryAttack"), // 패링
 };
 
