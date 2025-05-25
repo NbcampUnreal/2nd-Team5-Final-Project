@@ -40,7 +40,6 @@ bool USLBossAnimInstance::CleanupThrowActor()
     // 참조 초기화
     ActorToThrow = nullptr;
     
-    UE_LOG(LogTemp, Display, TEXT("Throw actor cleaned up successfully"));
     return true;
 }
 
@@ -212,7 +211,6 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float TimeToT
     if (CalculatedSpeed > LaunchSpeed)
     {
         LaunchVelocity = LaunchVelocity * (LaunchSpeed / CalculatedSpeed);
-        UE_LOG(LogTemp, Display, TEXT("Velocity scaled down to stay within limit. Consider increasing TimeToTarget."));
     }
     
     // 프로젝타일 설정 적용
@@ -222,10 +220,6 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float TimeToT
     ProjectileMovement->Velocity = LaunchVelocity;
     ProjectileMovement->InitialSpeed = LaunchVelocity.Size();
     ProjectileMovement->MaxSpeed = LaunchVelocity.Size() * 1.1f;
-    
-    // 디버그 정보
-    UE_LOG(LogTemp, Display, TEXT("Throw: Distance=%.1f, Time=%.2fs, Velocity=(%.1f,%.1f,%.1f)"),
-        PositionDelta.Size(), TimeToTarget, LaunchVelocity.X, LaunchVelocity.Y, LaunchVelocity.Z);
     
     // 액터 던진 후 참조 해제
     AActor* ThrownActor = ActorToThrow;
@@ -327,9 +321,6 @@ bool USLBossAnimInstance::JumpToTargetPoint(AActor* TargetPointActor, bool bUpda
     
     // 착지 모니터링 시작
     StartLandingCheck();
-    
-    UE_LOG(LogTemp, Display, TEXT("Jump to point started: Target(%s), Landing(%s), Velocity(%s), Time(%.2f)"), 
-           *TargetPointActor->GetName(), *TargetLandingLocation.ToString(), *JumpVelocity.ToString(), JumpTime);
     
     return true;
 }
