@@ -73,8 +73,10 @@ enum class ESLPublicWidgetImageType : uint8
 {
 	EPWI_None = 0,
 	EPWI_NormalBorder,
+	EPWI_NameBorder,
 	EPWI_TextBorder,
 	EPWI_Button,
+	EPWI_ButtonHover,
 	EPWI_SliderBack,
 	EPWI_SliderBar,
 	EPWI_ProgressBack,
