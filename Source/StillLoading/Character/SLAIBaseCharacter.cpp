@@ -2,6 +2,7 @@
 
 #include "BrainComponent.h"
 #include "MotionWarpingComponent.h"
+#include "NiagaraComponent.h"
 #include "AI/SLAIProjectile.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "BattleComponent/BattleComponent.h"
@@ -17,58 +18,58 @@
 
 ASLAIBaseCharacter::ASLAIBaseCharacter()
 {
-	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+    AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationRoll = false;
-	bUseControllerRotationYaw = false;
+    bUseControllerRotationPitch = false;
+    bUseControllerRotationRoll = false;
+    bUseControllerRotationYaw = false;
 
-	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 180.f, 0.f);
-	GetCharacterMovement()->MaxWalkSpeed = 300.f;
-	GetCharacterMovement()->BrakingDecelerationWalking = 1000.f;
+    GetCharacterMovement()->bUseControllerDesiredRotation = false;
+    GetCharacterMovement()->bOrientRotationToMovement = true;
+    GetCharacterMovement()->RotationRate = FRotator(0.f, 180.f, 0.f);
+    GetCharacterMovement()->MaxWalkSpeed = 300.f;
+    GetCharacterMovement()->BrakingDecelerationWalking = 1000.f;
 
-	LeftHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftHandCollisionBox");
-	LeftHandCollisionBox->SetupAttachment(GetMesh());
-	LeftHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	LeftHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-	LeftHandCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
+    LeftHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftHandCollisionBox");
+    LeftHandCollisionBox->SetupAttachment(GetMesh());
+    LeftHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    LeftHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+    LeftHandCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 
-	RightHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("RightHandCollisionBox");
-	RightHandCollisionBox->SetupAttachment(GetMesh());
-	RightHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	RightHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-	RightHandCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
+    RightHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("RightHandCollisionBox");
+    RightHandCollisionBox->SetupAttachment(GetMesh());
+    RightHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    RightHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+    RightHandCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 
-	LeftFootCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftFootCollisionBox");
-	LeftFootCollisionBox->SetupAttachment(GetMesh());
-	LeftFootCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	LeftFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-	LeftFootCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
+    LeftFootCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftFootCollisionBox");
+    LeftFootCollisionBox->SetupAttachment(GetMesh());
+    LeftFootCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    LeftFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+    LeftFootCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 
-	RightFootCollisionBox = CreateDefaultSubobject<UBoxComponent>("RightFootCollisionBox");
-	RightFootCollisionBox->SetupAttachment(GetMesh());
-	RightFootCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	RightFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-	RightFootCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
-	
-	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
-	BattleComponent = CreateDefaultSubobject<UBattleComponent>("BattleComponent");
-	BattleComponent->OnCharacterHited.AddDynamic(this, &ThisClass::CharacterHit);
-	
-	// 카메라 채널 무시
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+    RightFootCollisionBox = CreateDefaultSubobject<UBoxComponent>("RightFootCollisionBox");
+    RightFootCollisionBox->SetupAttachment(GetMesh());
+    RightFootCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    RightFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+    RightFootCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
+    
+    MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
+    BattleComponent = CreateDefaultSubobject<UBattleComponent>("BattleComponent");
+    BattleComponent->OnCharacterHited.AddDynamic(this, &ThisClass::CharacterHit);
+    
+    // 카메라 채널 무시
+    GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+    GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
-	// BattleComponent 에서 사용 하기위한 캡슐 셋팅
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
-	
-	AIChapter = EChapter::EC_None;
-	IsDebugMode = false;
+    // BattleComponent 에서 사용 하기위한 캡슐 셋팅
+    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
+    GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+    GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+    
+    AIChapter = EChapter::EC_None;
+    IsDebugMode = false;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -105,21 +106,6 @@ void ASLAIBaseCharacter::BeginPlay()
 	MaxHealth = 100.0f;
 	CurrentHealth = MaxHealth;
 	CombatPhase = ECombatPhase::ECP_Phase_None;
-}
-
-float ASLAIBaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
-{
-	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-	if (ActualDamage > 0.0f && BattleComponent)
-	{
-		
-		FHitResult HitResult;
-		
-		BattleComponent->ReceiveHitResult(ActualDamage, DamageCauser, HitResult, CurrentAttackType);
-	}
-    
-	return ActualDamage;
 }
 
 void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -332,6 +318,25 @@ UBattleComponent* ASLAIBaseCharacter::GetBattleComponent()
 
 void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
 {
+	// 이미 처형 중이면 무시
+	if (bIsBeingExecuted)
+	{
+		return;
+	}
+    
+	// 처형 공격인지 확인
+	if (AnimType == EAttackAnimType::AAT_FinalAttackA || 
+		AnimType == EAttackAnimType::AAT_FinalAttackB || 
+		AnimType == EAttackAnimType::AAT_FinalAttackC)
+	{
+		if (CanBeExecuted())
+		{
+			bIsBeingExecuted = true;  // 처형 상태로 설정
+			PlayExecutionAnimation(AnimType, DamageCauser);
+			return;
+		}
+	}
+	
 	// 데미지 적용
     CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
 
@@ -372,17 +377,6 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
                     SLAIAnimInstance->SetIsAttacking(false);
                     SLAIAnimInstance->SetShouldLookAtPlayer(false);
                 }
-                
-                // 랜덤 사망 몽타주 재생
-                /*if (DeathMontages.Num() > 0)
-                {
-                    const int32 MontageIndex = FMath::RandRange(0, DeathMontages.Num() - 1);
-                    UAnimMontage* MontageToPlay = DeathMontages[MontageIndex];
-                    if (MontageToPlay)
-                    { 
-                        AnimInstancePtr->Montage_Play(MontageToPlay);
-                    }
-                }*/
             }
         }
     }
@@ -417,6 +411,12 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
             SLAIAnimInstance->SetIsHit(true);
         }
     }
+
+	if (HitEffectComponent)
+	{
+		HitEffectComponent->SetWorldLocation(HitResult.Location);
+		HitEffectComponent->ActivateSystem();
+	}
 }
 
 void ASLAIBaseCharacter::SetCurrentAttackType(EAttackAnimType NewCurrentAttackType)
@@ -585,6 +585,147 @@ bool ASLAIBaseCharacter::GetIsTargetClose(float DistanceThreshold)
 		}
 	}
 	return false;
+}
+
+bool ASLAIBaseCharacter::CanBeExecuted() const
+{
+	//처형이 가능한 캐릭터인지 확인
+	if (!bCanBeExecuted)
+	{
+		return false;
+	}
+    
+	// 체력이 10% 이하인지 확인
+	float HealthPercentage = GetHealthPercentage();
+	//return HealthPercentage <= 10.0f && !IsDead;
+	return !IsDead;
+}
+
+void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, AActor* Executor)
+{
+    UE_LOG(LogTemp, Warning, TEXT("PlayExecutionAnimation Called - ExecutionType: %s"), *UEnum::GetValueAsString(ExecutionType));
+    
+    if (!AnimInstancePtr)
+    {
+        UE_LOG(LogTemp, Error, TEXT("AnimInstancePtr is null"));
+        return;
+    }
+    
+    if (IsDead)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Character is already dead"));
+        return;
+    }
+    
+    if (!Executor)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Executor is null"));
+        return;
+    }
+    
+    // 처형 애니메이션 몽타주 찾기
+    if (UAnimMontage* ExecutionMontage = ExecutionMontages.FindRef(ExecutionType))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Found Execution Montage: %s"), *ExecutionMontage->GetName());
+        
+        // 현재 재생 중인 몽타주 확인
+        if (AnimInstancePtr->IsAnyMontagePlaying())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Another montage is playing, stopping it"));
+            AnimInstancePtr->StopAllMontages(0.0f);
+        }
+        
+        // 이동 중지
+        GetCharacterMovement()->StopMovementImmediately();
+        GetCharacterMovement()->DisableMovement();
+        
+        // AI 일시 정지
+    	if (AIController)
+    	{
+    		// 모든 행동 중지
+    		AIController->GetBrainComponent()->StopLogic("Execution");
+    		AIController->StopMovement();
+    		AIController->ClearFocus(EAIFocusPriority::Gameplay);
+        
+    		// 블랙보드 업데이트
+    		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+    		{
+    			BlackboardComponent->SetValueAsBool(FName("IsBeingExecuted"), true);
+    			BlackboardComponent->SetValueAsObject(FName("TargetActor"), nullptr);
+    		}
+    	}
+        
+        // 플레이어 방향으로 회전
+        FVector DirectionToExecutor = (Executor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+        DirectionToExecutor.Z = 0.0f;
+        FRotator NewRotation = FRotationMatrix::MakeFromX(DirectionToExecutor).Rotator();
+        SetActorRotation(NewRotation);
+        
+        // 애니메이션 인스턴스 타입 확인
+        if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+        {
+            // 히트 반응 등 다른 애니메이션 상태 초기화
+            SLAIAnimInstance->SetIsHit(false);
+            SLAIAnimInstance->SetIsDown(false);
+            SLAIAnimInstance->SetIsStun(false);
+            SLAIAnimInstance->SetIsAttacking(false);
+            
+            UE_LOG(LogTemp, Warning, TEXT("Reset animation states"));
+        }
+        
+        // 처형 애니메이션 재생
+        float PlayRate = 1.2f;
+        float StartPosition = 0.0f;
+        FName StartSection = NAME_None;
+        
+        float MontageLength = AnimInstancePtr->Montage_Play(ExecutionMontage, PlayRate, EMontagePlayReturnType::MontageLength, StartPosition);
+        
+        UE_LOG(LogTemp, Warning, TEXT("Montage_Play returned length: %f"), MontageLength);
+        
+        if (MontageLength > 0.0f)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Montage started successfully"));
+            
+            // 처형 후 사망 처리
+            FTimerHandle ExecutionTimer;
+            GetWorld()->GetTimerManager().SetTimer(ExecutionTimer, [this]()
+            {
+                // 처형 완료 후 직접 사망 처리
+                CurrentHealth = 0.0f;
+                IsDead = true;
+                
+                // 충돌 비활성화
+                GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+                
+                // 애니메이션 상태 업데이트
+                if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+                {
+                    SLAIAnimInstance->SetIsDead(true);
+                }
+                
+                // AI 컨트롤러 블랙보드 업데이트
+                if (AIController)
+                {
+                    if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+                    {
+                        BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
+                    }
+                }
+                
+                UE_LOG(LogTemp, Warning, TEXT("Execution completed - Character is now dead"));
+                
+            }, MontageLength * 0.8f, false);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to play montage"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("No Execution Montage found for type: %s"), *UEnum::GetValueAsString(ExecutionType));
+    }
 }
 
 #if WITH_EDITOR

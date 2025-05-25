@@ -16,6 +16,9 @@ ASLBossCharacter::ASLBossCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	BossAttackPattern = EBossAttackPattern::EBAP_None;
+
+	//처형 안되게 수정해야함
+	bCanBeExecuted = true;
 }
 
 void ASLBossCharacter::SetBossAttackPattern(EBossAttackPattern NewPattern)
