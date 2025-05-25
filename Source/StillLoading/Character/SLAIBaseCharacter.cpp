@@ -651,7 +651,7 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
     		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
     		{
     			BlackboardComponent->SetValueAsBool(FName("IsBeingExecuted"), true);
-    			//BlackboardComponent->SetValueAsObject(FName("TargetActor"), nullptr);
+    			BlackboardComponent->SetValueAsObject(FName("TargetActor"), nullptr);
     		}
     	}
         
