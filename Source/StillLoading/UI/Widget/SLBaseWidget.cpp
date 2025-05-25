@@ -141,18 +141,24 @@ bool USLBaseWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 
 	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_Button]);
 
-	SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 1.0f));
+	SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 0.75f));
 	ButtonStyle.SetNormal(SlateBrush);
+
+	SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
+	ButtonStyle.SetDisabled(SlateBrush);
+
+	if (PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonHover) &&
+		IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_ButtonHover]))
+	{
+		SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_ButtonHover]);
+	}
 
 	SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
 	ButtonStyle.SetHovered(SlateBrush);
 
 	SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
 	ButtonStyle.SetPressed(SlateBrush);
-
-	SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
-	ButtonStyle.SetDisabled(SlateBrush);
-
+	
 	return true;
 }
 

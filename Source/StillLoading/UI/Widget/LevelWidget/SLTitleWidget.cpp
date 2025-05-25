@@ -61,18 +61,6 @@ void USLTitleWidget::ApplyTextData()
 	QuitText->SetText(OptionTextMap[QuitButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 }
 
-bool USLTitleWidget::ApplyBackgroundImage()
-{
-	if (!Super::ApplyBackgroundImage())
-	{
-		return false;
-	}
-	
-	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
-
-	return true;
-}
-
 bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 {
 	if (!Super::ApplyButtonImage(ButtonStyle))
@@ -89,44 +77,12 @@ bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 
 bool USLTitleWidget::ApplyBorderImage()
 {
-	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_NormalBorder) ||
-		(PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_NormalBorder) &&
-		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder])))
-	{
-		BackgroundBorder->SetVisibility(ESlateVisibility::Collapsed);
-	}
-
 	if (!Super::ApplyBorderImage())
 	{
 		return false;
 	}
 
-	//TitleTextImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
-	//ButtonsBackground->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
-
-	if (BackgroundBorder->GetVisibility() == ESlateVisibility::Visible)
-	{
-		BackgroundBorder->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
-		BackgroundImg->SetRenderScale(FVector2D(0.95f, 0.95f));
-
-		FLinearColor BackColor;
-
-		BackColor.R = 0.0f;
-		BackColor.G = 0.0f;
-		BackColor.B = 0.0f;
-
-		if (CurrentChapter == ESLChapterType::EC_Intro ||
-			CurrentChapter == ESLChapterType::EC_Chapter2D)
-		{
-			BackColor.A = 1.0f;
-		}
-		else if (CurrentChapter == ESLChapterType::EC_Chapter2_5D)
-		{
-			BackColor.A = 0.5f;
-		}
-
-		BackgroundImg->SetColorAndOpacity(BackColor);
-	}
+	BackgroundBorder->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
 	
 	return true;
 }
