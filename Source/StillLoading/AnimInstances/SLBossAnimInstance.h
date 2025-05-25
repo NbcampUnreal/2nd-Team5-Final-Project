@@ -23,7 +23,7 @@ public:
 	AActor* ThrowActorAtTarget(float LaunchSpeed = 1000.f, float TimeToTarget = 0.5f, FName SocketName = NAME_None);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
-	bool JumpToTarget(bool bUpdateRotation = true, float RemainingAnimTime = 0.0f);
+	bool JumpToTargetPoint(AActor* TargetPointActor, bool bUpdateRotation, float RemainingAnimTime, float OffsetDistance);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void FinishJump();
@@ -36,8 +36,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void CleanupJumpTimers();
-	
-	
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	EBossAttackPattern GetBossAttackPattern();

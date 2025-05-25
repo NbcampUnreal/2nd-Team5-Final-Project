@@ -78,4 +78,63 @@ void ASLBossCharacter::BeginPlay()
 
 	FindTargetPoint();
 	SetTargetPointToBlackboard();
+
+	MaxHealth = 500.0f;
+	CurrentHealth = MaxHealth;
+}
+
+EBossAttackPattern ASLBossCharacter::SelectRandomPattern(float DistanceToTarget, const TArray<EBossAttackPattern>& CloseRangePatterns, const TArray<EBossAttackPattern>& LongRangePatterns, float DistanceThreshold)
+{
+    if (DistanceToTarget >= DistanceThreshold)
+    {
+        // 원거리 패턴
+        TArray<EBossAttackPattern> AvailableLongRangePatterns = LongRangePatterns;
+        
+        // 이전에 사용한 패턴이 있고, 목록에 포함되어 있다면 제거
+        if (LastLongRangePattern != EBossAttackPattern::EBAP_None && 
+            AvailableLongRangePatterns.Contains(LastLongRangePattern))
+        {
+            AvailableLongRangePatterns.Remove(LastLongRangePattern);
+            UE_LOG(LogTemp, Display, TEXT("Removed last used pattern: %s"), *UEnum::GetValueAsString(LastLongRangePattern));
+        }
+        
+        // 사용 가능한 패턴이 없다면 전체 목록에서 선택
+        if (AvailableLongRangePatterns.Num() == 0)
+        {
+            AvailableLongRangePatterns = LongRangePatterns;
+        }
+        
+        // 랜덤 선택
+        int32 RandomIndex = FMath::RandRange(0, AvailableLongRangePatterns.Num() - 1);
+        EBossAttackPattern SelectedPattern = AvailableLongRangePatterns[RandomIndex];
+        
+        LastLongRangePattern = SelectedPattern;
+        
+        UE_LOG(LogTemp, Display, TEXT("Selected long range pattern: %s"), *UEnum::GetValueAsString(SelectedPattern));
+        return SelectedPattern;
+    }
+    else
+    {
+    	if (USLAICharacterAnimInstance* AnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+    	{
+    		if (AnimInstance->IsTargetBehindCharacter(120.0f)) // 90도 각도로 뒤에 있는지 확인
+    		{
+    			UE_LOG(LogTemp, Display, TEXT("Target is behind - using EBAP_Attack_04"));
+    			return EBossAttackPattern::EBAP_Attack_04;
+    		}
+    	}
+    
+        // 근거리 패턴
+        if (CloseRangePatterns.Num() == 0)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("No close range patterns available!"));
+            return EBossAttackPattern::EBAP_Attack_01; // 기본값
+        }
+        
+        int32 RandomIndex = FMath::RandRange(0, CloseRangePatterns.Num() - 1);
+        EBossAttackPattern SelectedPattern = CloseRangePatterns[RandomIndex];
+        
+        UE_LOG(LogTemp, Display, TEXT("Selected close range pattern: %s"), *UEnum::GetValueAsString(SelectedPattern));
+        return SelectedPattern;
+    }
 }

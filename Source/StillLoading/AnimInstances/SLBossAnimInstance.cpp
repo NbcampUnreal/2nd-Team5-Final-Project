@@ -234,22 +234,32 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float TimeToT
     return ThrownActor;
 }
 
-bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnimTime)
+bool USLBossAnimInstance::JumpToTargetPoint(AActor* TargetPointActor, bool bUpdateRotation, float RemainingAnimTime, float OffsetDistance)
 {
-    // 기본 유효성 검사
-    if (!TargetCharacter || !OwningCharacter)
+    if (!TargetPointActor || !OwningCharacter)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot jump to target: Missing target or owner"));
+        UE_LOG(LogTemp, Warning, TEXT("Cannot jump to target point: Missing target point actor or owner"));
         return false;
     }
     bIsFalling = true;
     
     FVector StartLocation = OwningCharacter->GetActorLocation();
-    FVector TargetLocation = TargetCharacter->GetActorLocation();
+    FVector TargetLocation = TargetPointActor->GetActorLocation();
     
-    // 착지 목표 위치 계산
-    FVector TargetForward = TargetCharacter->GetActorForwardVector();
-    TargetLandingLocation = TargetLocation - (TargetForward * 150.0f);
+    // 착지 목표 위치 계산 (오프셋 적용)
+    TargetLandingLocation = TargetLocation;
+    
+    // 오프셋이 설정된 경우, 타겟에서 랜덤한 방향으로 오프셋 적용
+    if (OffsetDistance > 0.0f)
+    {
+        FVector RandomDirection = FVector(
+            FMath::RandRange(-1.0f, 1.0f),
+            FMath::RandRange(-1.0f, 1.0f),
+            0.0f
+        ).GetSafeNormal();
+        
+        TargetLandingLocation += RandomDirection * OffsetDistance;
+    }
     
     // 땅 높이에 맞춰 착지 위치 조정
     FHitResult GroundHit;
@@ -258,7 +268,7 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
     
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(OwningCharacter);
-    QueryParams.AddIgnoredActor(TargetCharacter);
+    QueryParams.AddIgnoredActor(TargetPointActor);
     QueryParams.bTraceComplex = false;
     
     // 실제 땅 높이 찾기
@@ -318,8 +328,8 @@ bool USLBossAnimInstance::JumpToTarget(bool bUpdateRotation, float RemainingAnim
     // 착지 모니터링 시작
     StartLandingCheck();
     
-    UE_LOG(LogTemp, Display, TEXT("Jump started: Target(%s), Velocity(%s), Time(%.2f)"), 
-           *TargetLandingLocation.ToString(), *JumpVelocity.ToString(), JumpTime);
+    UE_LOG(LogTemp, Display, TEXT("Jump to point started: Target(%s), Landing(%s), Velocity(%s), Time(%.2f)"), 
+           *TargetPointActor->GetName(), *TargetLandingLocation.ToString(), *JumpVelocity.ToString(), JumpTime);
     
     return true;
 }

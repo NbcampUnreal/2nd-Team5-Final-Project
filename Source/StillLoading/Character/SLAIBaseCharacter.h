@@ -161,6 +161,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
 	TArray<ASLAIProjectile*> SpawnProjectileFanAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName = NAME_None, int32 ProjectileCount = 5, float FanHalfAngle = 30.0f, float ProjectileSpeed = 2000.0f, EAttackAnimType AnimType = EAttackAnimType::AAT_Attack_01);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	float GetHealthPercentage() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool GetIsTargetClose(float DistanceThreshold);
+
+	
 protected:
 	
 #if WITH_EDITOR
@@ -196,6 +204,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool IsDead; // 사망 상태인지 여부
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Debug")
+	bool IsDebugMode;
+	
 	// --- Chapter Info ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Chapter", meta = (AllowPrivateAccess = "true"))
 	EChapter AIChapter;
