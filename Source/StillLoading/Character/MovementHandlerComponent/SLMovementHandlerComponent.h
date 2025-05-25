@@ -69,6 +69,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Parry")
 	float ParryDuration = 0.2f;
 
+	// 막기용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Block")
+	int MaxBlockCount = 5;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -129,8 +133,13 @@ private:
 	float KnockbackTime = 0.3f;
 
 	// Block 용
+	UFUNCTION()
+	void OnDelayedAction();
 	UPROPERTY()
 	int BlockCount = 0;
 	UPROPERTY()
 	float LastBlockTime = 0.f;
+	UPROPERTY()
+	FTimerHandle DelayTimerHandle;
+	
 };

@@ -10,6 +10,7 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
+#include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
@@ -115,6 +116,7 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 				}
 
 				CachedCombatComponent->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered);
+				USlowMotionHelper::ApplyGlobalSlowMotion(this, 0.3f, 0.3f);
 				return;
 			}
 		}
@@ -199,13 +201,24 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 
 	if (OwnerCharacter->IsInPrimaryState(TAG_Character_Defense_Block) && !bIsFromBack)
 	{
-		if (BlockCount >= 2)
+		if (BlockCount >= MaxBlockCount && !OwnerCharacter->HasSecondaryState(TAG_Character_HitReaction_Block_Break))
 		{
 			OwnerCharacter->ClearAllStateTags();
-			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Block_Break);
+			OwnerCharacter->AddSecondaryState(TAG_Character_HitReaction_Block_Break);
 			CachedMontageComponent->PlayBlockMontage(FName("BlockBreak"));
 			BlockCount = 0;
 			LastBlockTime = 0;
+
+			if (!GetWorld()->GetTimerManager().IsTimerActive(DelayTimerHandle))
+			{
+				GetWorld()->GetTimerManager().SetTimer(
+					DelayTimerHandle,
+					this,
+					&UMovementHandlerComponent::OnDelayedAction,
+					5.0f,
+					false
+				);
+			}
 		}
 		else
 		{
@@ -499,7 +512,7 @@ void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool 
 		FVector Velocity = OwnerCharacter->GetCharacterMovement()->Velocity;
 		Velocity.Z = 0.f;
 		OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
-		OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f; 
+		OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f;
 	}
 
 	const bool bEmpowered = CachedCombatComponent->IsEmpowered();
@@ -550,6 +563,12 @@ void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool 
 			OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic1);
 		}
 	}
+}
+
+void UMovementHandlerComponent::OnDelayedAction()
+{
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_HitReaction_Block_Break);
+	GetWorld()->GetTimerManager().ClearTimer(DelayTimerHandle);
 }
 
 void UMovementHandlerComponent::PointMove()
