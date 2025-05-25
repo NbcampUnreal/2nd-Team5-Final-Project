@@ -52,13 +52,17 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
 	BattleComponent = CreateDefaultSubobject<UBattleComponent>("BattleComponent");
 	BattleComponent->OnCharacterHited.AddDynamic(this, &ThisClass::CharacterHit);
+	
 	// 카메라 채널 무시
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 	// BattleComponent 에서 사용 하기위한 캡슐 셋팅
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
-
+	
 	AIChapter = EChapter::EC_None;
 	IsDebugMode = false;
 }

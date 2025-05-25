@@ -6,6 +6,8 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 
+DEFINE_LOG_CATEGORY(InputBufferComponent);
+
 UInputBufferComponent::UInputBufferComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -40,7 +42,7 @@ void UInputBufferComponent::AddBufferedInput(ESkillType Action)
 
 	if (InputBuffer.Num() >= MaxInputBufferCount)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("InputBufferComponent: Input buffer full."));
+		UE_LOG(InputBufferComponent, Warning, TEXT("InputBufferComponent: Input buffer full."));
 		return;
 	}
 
@@ -53,7 +55,7 @@ void UInputBufferComponent::AddBufferedInput(ESkillType Action)
 	LastInputTime = CurrentTime;
 	InputBuffer.Add({Action, CurrentTime});
 
-	UE_LOG(LogTemp, Warning, TEXT("InputBufferComponent: Input [%s] array [%d]."), *UEnum::GetValueAsString(Action),
+	UE_LOG(InputBufferComponent, Warning, TEXT("InputBufferComponent: Input [%s] array [%d]."), *UEnum::GetValueAsString(Action),
 		   InputBuffer.Num());
 }
 
@@ -76,7 +78,7 @@ void UInputBufferComponent::ProcessBufferedInputs()
 		if (UCombatHandlerComponent* CombatComp = GetOwner()->FindComponentByClass<UCombatHandlerComponent>())
 		{
 			CombatComp->ResetCombo();
-			UE_LOG(LogTemp, Warning, TEXT("Combo Reset!"));
+			UE_LOG(InputBufferComponent, Warning, TEXT("Combo Reset!"));
 		}
 		LastInputTime = -1.0f;
 	}
@@ -88,7 +90,7 @@ void UInputBufferComponent::ProcessBufferedInputs()
 		{
 			if (!TryConsumeComboInput())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("PointMove 콤보 실패 → 전체 입력 폐기"));
+				UE_LOG(InputBufferComponent, Warning, TEXT("PointMove 콤보 실패 → 전체 입력 폐기"));
 				InputBuffer.Empty();
 			}
 			bWaitingForComboWindow = false;
@@ -101,15 +103,33 @@ void UInputBufferComponent::ProcessBufferedInputs()
 	if (TryConsumeComboInput())
 		return;
 
-	// 일반 단일 입력 처리 (PointMove 대기 아님)
 	if (!InputBuffer.IsEmpty())
 	{
-		const ESkillType NextInput = InputBuffer[0].Action;
-
-		if (CanConsumeInput(NextInput))
+		while (!InputBuffer.IsEmpty())
 		{
-			ExecuteInput(NextInput);
-			InputBuffer.RemoveAt(0);
+			const FBufferedInput& FrontInput = InputBuffer[0];
+			if ((CurrentTime - FrontInput.Timestamp) > InputExpireTime)
+			{
+				UE_LOG(InputBufferComponent, Warning, TEXT("입력 [%s] 폐기됨 (%.2f초 경과)"),
+					*UEnum::GetValueAsString(FrontInput.Action),
+					CurrentTime - FrontInput.Timestamp);
+
+				InputBuffer.RemoveAt(0);
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		if (!InputBuffer.IsEmpty())
+		{
+			const ESkillType NextInput = InputBuffer[0].Action;
+			if (CanConsumeInput(NextInput))
+			{
+				ExecuteInput(NextInput);
+				InputBuffer.RemoveAt(0);
+			}
 		}
 	}
 }
@@ -178,7 +198,7 @@ bool UInputBufferComponent::TryConsumeComboInput()
 						                    ? ComboRow->RequiredTag.ToString()
 						                    : TEXT("None");
 
-					UE_LOG(LogTemp, Log, TEXT("[Combo Matched] %s→ %s (%.2f초, RequiredTag: %s)"),
+					UE_LOG(InputBufferComponent, Log, TEXT("[Combo Matched] %s→ %s (%.2f초, RequiredTag: %s)"),
 					       *ComboString,
 					       *UEnum::GetValueAsString(ComboRow->ResultSkill),
 					       EndTime - StartTime,
