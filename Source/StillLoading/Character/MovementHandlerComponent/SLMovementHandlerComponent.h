@@ -67,7 +67,7 @@ public:
 
 	// 패링용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Parry")
-	float ParryDuration = 0.5f;
+	float ParryDuration = 0.3f;
 
 protected:
 	virtual void BeginPlay() override;
