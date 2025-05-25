@@ -32,6 +32,8 @@ class STILLLOADING_API ASLBossCharacter : public ASLAIBaseCharacter
 
 public:
 	ASLBossCharacter();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetBossAttackPattern(EBossAttackPattern NewPattern);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
@@ -39,6 +41,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetTargetPointToBlackboard();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	EBossAttackPattern SelectRandomPattern(float DistanceToTarget, const TArray<EBossAttackPattern>& CloseRangePatterns, const TArray<EBossAttackPattern>& LongRangePatterns,float DistanceThreshold = 500.0f);
 protected:
 	virtual void BeginPlay() override;
 
@@ -49,4 +54,7 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> TargetPoint;
+
+	UPROPERTY()
+	EBossAttackPattern LastLongRangePattern = EBossAttackPattern::EBAP_None;
 };

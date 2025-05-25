@@ -60,6 +60,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 
 	AIChapter = EChapter::EC_None;
+	IsDebugMode = false;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -146,27 +147,38 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 		return;
 	}
 
-	// 히트 위치 가져오기
-	FVector HitLocation = SweepResult.bBlockingHit ? SweepResult.ImpactPoint : SweepResult.Location;
-	
-	// 히트 위치가 유효하지 않으면 오버랩된 컴포넌트의 위치 사용
-	if (HitLocation.IsZero())
+	if (IsDebugMode)
 	{
-		HitLocation = OverlappedComponent->GetComponentLocation();
-	}
+		// 히트 위치 가져오기
+		FVector HitLocation = SweepResult.bBlockingHit ? SweepResult.ImpactPoint : SweepResult.Location;
+	
+		// 히트 위치가 유효하지 않으면 오버랩된 컴포넌트의 위치 사용
+		if (HitLocation.IsZero())
+		{
+			HitLocation = OverlappedComponent->GetComponentLocation();
+		}
 
-	// 디버그 스피어 그리기 (빨간색, 반지름 10, 5초간 표시)
-	DrawDebugSphere(
-		GetWorld(),
-		HitLocation,
-		10.0f,
-		12,
-		FColor::Red,
-		false,
-		5.0f,
-		0,
-		2.0f
-	);
+		// 오버랩된 컴포넌트의 크기에 맞는 디버그 박스 그리기
+		if (UBoxComponent* BoxComp = Cast<UBoxComponent>(OverlappedComponent))
+		{
+			FVector BoxExtent = BoxComp->GetScaledBoxExtent();
+			FVector BoxCenter = BoxComp->GetComponentLocation();
+			FRotator BoxRotation = BoxComp->GetComponentRotation();
+		
+			DrawDebugBox(
+				GetWorld(),
+				BoxCenter,
+				BoxExtent,
+				BoxRotation.Quaternion(),
+				FColor::Red,
+				false,
+				5.0f,
+				0,
+				2.0f
+			);
+		}
+	}
+	
 	
 	UE_LOG(LogTemp, Warning, TEXT("%s에게 공격자(%s)가  데미지를 주었습니다."), *OtherActor->GetName(), *GetName());
 	// BattleComponent를 통해 데미지 전달
@@ -539,6 +551,36 @@ TArray<ASLAIProjectile*> ASLAIBaseCharacter::SpawnProjectileFanAtLocation(TSubcl
     }
 
     return SpawnedProjectiles;
+}
+
+float ASLAIBaseCharacter::GetHealthPercentage() const
+{
+	if (MaxHealth <= 0.0f)
+	{
+		UE_LOG(LogBattleComponent, Warning, TEXT("GetHealthPercentage: MaxHealth is zero or negative (%f)"), MaxHealth);
+		return 0.0f;
+	}
+
+	float ClampedCurrentHealth = FMath::Clamp(CurrentHealth, 0.0f, MaxHealth);
+    
+	float HealthPercentage = (ClampedCurrentHealth / MaxHealth) * 100.0f;
+    
+	return HealthPercentage;
+}
+
+bool ASLAIBaseCharacter::GetIsTargetClose(float DistanceThreshold)
+{
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			if(ACharacter* TargetCharacter = Cast<ACharacter>(BlackboardComponent->GetValueAsObject(FName("TargetActor"))))
+			{
+				return GetDistanceTo(TargetCharacter) < DistanceThreshold;
+			}
+		}
+	}
+	return false;
 }
 
 #if WITH_EDITOR
