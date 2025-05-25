@@ -674,7 +674,7 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
         }
         
         // 처형 애니메이션 재생
-        float PlayRate = 1.0f;
+        float PlayRate = 1.2f;
         float StartPosition = 0.0f;
         FName StartSection = NAME_None;
         
