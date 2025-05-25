@@ -640,10 +640,20 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
         GetCharacterMovement()->DisableMovement();
         
         // AI 일시 정지
-        if (AIController)
-        {
-            //AIController->GetBrainComponent()->PauseLogic("Execution");
-        }
+    	if (AIController)
+    	{
+    		// 모든 행동 중지
+    		AIController->GetBrainComponent()->StopLogic("Execution");
+    		AIController->StopMovement();
+    		AIController->ClearFocus(EAIFocusPriority::Gameplay);
+        
+    		// 블랙보드 업데이트
+    		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+    		{
+    			BlackboardComponent->SetValueAsBool(FName("IsBeingExecuted"), true);
+    			//BlackboardComponent->SetValueAsObject(FName("TargetActor"), nullptr);
+    		}
+    	}
         
         // 플레이어 방향으로 회전
         FVector DirectionToExecutor = (Executor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
@@ -699,7 +709,6 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
                 {
                     if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
                     {
-                    	BlackboardComponent->SetValueAsBool(FName("IsBeingExecuted"), true);
                         BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
                     }
                 }
