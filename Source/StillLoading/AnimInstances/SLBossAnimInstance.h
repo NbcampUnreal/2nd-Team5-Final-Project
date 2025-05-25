@@ -23,7 +23,7 @@ public:
 	AActor* ThrowActorAtTarget(float LaunchSpeed = 1000.f, float TimeToTarget = 0.5f, FName SocketName = NAME_None);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
-	bool JumpToTarget(bool bUpdateRotation = true, float RemainingAnimTime = 0.0f);
+	bool JumpToTargetPoint(AActor* TargetPointActor, bool bUpdateRotation, float RemainingAnimTime, float OffsetDistance);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void FinishJump();
@@ -33,6 +33,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void FinishCharge();
+
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void CleanupJumpTimers();
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	EBossAttackPattern GetBossAttackPattern();
@@ -48,9 +51,28 @@ public:
 	// 원래 충돌 설정 저장
 	TEnumAsByte<ECollisionEnabled::Type> OriginalCollisionType;
 private:
-
+	// 착지 체크 함수
+	UFUNCTION()
+	void CheckForLanding();
+	
+	UFUNCTION()
+	void CompleteLanding();
+	
+	UFUNCTION()
+	void SetupJumpCollision();
+	
+	UFUNCTION()
+	void RestoreJumpCollision();
+	
+	UFUNCTION()
+	void StartLandingCheck();
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	EBossAttackPattern BossAttackPattern;
 
-
+	// 착지 모니터링을 위한 타이머
+	FTimerHandle LandingCheckTimer;
+    
+	// 목표 착지 위치
+	FVector TargetLandingLocation;
 };

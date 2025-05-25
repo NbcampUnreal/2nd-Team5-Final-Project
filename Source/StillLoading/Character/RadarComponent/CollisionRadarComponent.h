@@ -5,6 +5,8 @@
 #include "Components/SphereComponent.h"
 #include "CollisionRadarComponent.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogCollisionRadarComponent, Log, All);
+
 USTRUCT(Atomic, BlueprintType)
 struct FDetectedActorInfo
 {
@@ -52,11 +54,14 @@ public:
     UPROPERTY(EditAnywhere, Category = "Radar|Settings")
     bool bIsUseRadar = false;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<class UMotionWarpingComponent> MotionWarpComponent;
+
 protected:
     virtual void BeginPlay() override;
 
 private:
-    bool IsInFieldOfView(AActor* TargetActor) const;
+    bool IsInFieldOfView(const AActor* TargetActor) const;
     void DrawDebugVisualization();
 
     UFUNCTION()

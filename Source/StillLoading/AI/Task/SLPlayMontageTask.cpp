@@ -104,10 +104,6 @@ EBTNodeResult::Type USLPlayMontageTask::ExecuteTask(UBehaviorTreeComponent& Owne
     // 몽타주 종료 이벤트 등록
     AnimInst->OnMontageEnded.AddDynamic(this, &USLPlayMontageTask::OnMontageEnded);
 
-    // 디버그 로그
-    UE_LOG(LogTemp, Display, TEXT("Play Montage Task: %s 몽타주 재생 시작 (재생 속도: %.2f)"), 
-        *MontageToPlay->GetName(), FinalPlayRate);
-
     // 진행 중으로 반환 (몽타주 종료 시 완료됨)
     return EBTNodeResult::InProgress;
 }
@@ -143,10 +139,6 @@ void USLPlayMontageTask::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted
     {
         return;
     }
-
-    // 디버그 로그
-    UE_LOG(LogTemp, Display, TEXT("Play Montage Task: %s 몽타주 종료 (중단됨: %s)"), 
-        *Montage->GetName(), bInterrupted ? TEXT("예") : TEXT("아니오"));
 
     // 델리게이트 제거
     if (AnimInstance)

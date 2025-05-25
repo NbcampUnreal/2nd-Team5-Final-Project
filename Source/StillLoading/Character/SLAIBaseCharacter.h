@@ -7,6 +7,7 @@
 #include "DataAsset/AttackDataAsset.h"
 #include "SLAIBaseCharacter.generated.h"
 
+class UNiagaraComponent;
 class ASLAIProjectile;
 class UBattleComponent;
 class UMotionWarpingComponent;
@@ -81,9 +82,6 @@ public:
 	// --- Constructor ---
 	ASLAIBaseCharacter();
 	virtual void BeginPlay() override;
-
-	// --- Overrides ---
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	// --- Getters (Collision) ---
 	// 손 콜리전 컴포넌트 접근자
@@ -161,7 +159,27 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
 	TArray<ASLAIProjectile*> SpawnProjectileFanAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName = NAME_None, int32 ProjectileCount = 5, float FanHalfAngle = 30.0f, float ProjectileSpeed = 2000.0f, EAttackAnimType AnimType = EAttackAnimType::AAT_Attack_01);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	float GetHealthPercentage() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool GetIsTargetClose(float DistanceThreshold);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool CanBeExecuted() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat") 
+	void PlayExecutionAnimation(EAttackAnimType ExecutionType, AActor* Executor);
+	
 protected:
+	
+#if WITH_EDITOR
+	//~ Begin UObject Interface.
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	//~ End UObject Interface
+#endif
+	
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
 	TArray<FVector> GenerateHorizontalFanDirections(const FVector& BaseDirection, int32 Count, float FanHalfAngle) const;
 
@@ -189,6 +207,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool IsDead; // 사망 상태인지 여부
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Debug")
+	bool IsDebugMode;
+	
 	// --- Chapter Info ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Chapter", meta = (AllowPrivateAccess = "true"))
 	EChapter AIChapter;
@@ -242,6 +263,18 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "combat")
 	EAttackAnimType CurrentAttackType;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<UNiagaraComponent> HitEffectComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	bool bCanBeExecuted = true;  // 기본값은 true, 보스는 false로 설정
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Montages")
+	TMap<EAttackAnimType, TObjectPtr<UAnimMontage>> ExecutionMontages;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsBeingExecuted = false;
 };
 
 

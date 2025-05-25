@@ -21,6 +21,39 @@ void UCombatHandlerComponent::BeginPlay()
 	GenerateChargingWidget();
 }
 
+void UCombatHandlerComponent::SetEmpoweredCombatMode(ECharacterComboState Mode, float AdditionalDuration)
+{
+	CurrentMode = Mode;
+	
+	float TotalDuration = AdditionalDuration;
+	TotalDuration = FMath::Min(TotalDuration, MaxEmpoweredDuration);
+
+	if (Mode == ECharacterComboState::CCS_Empowered && GetWorld()->GetTimerManager().IsTimerActive(CombatModeResetTimer))
+	{
+		float Remaining = GetWorld()->GetTimerManager().GetTimerRemaining(CombatModeResetTimer);
+		TotalDuration += Remaining;
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(CombatModeResetTimer);
+
+	if (Mode != ECharacterComboState::CCS_Normal)
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			CombatModeResetTimer,
+			this,
+			&UCombatHandlerComponent::ResetCombatMode,
+			TotalDuration,
+			false
+		);
+	}
+}
+
+void UCombatHandlerComponent::ResetCombatMode()
+{
+	SetCombatMode(ECharacterComboState::CCS_Normal);
+	GetWorld()->GetTimerManager().ClearTimer(CombatModeResetTimer);
+}
+
 void UCombatHandlerComponent::GenerateChargingWidget()
 {
 	if (!ChargingWidgetActorClass) return;
@@ -94,9 +127,10 @@ void UCombatHandlerComponent::CancelCharging()
 	GetWorld()->GetTimerManager().ClearTimer(ChargingUpdateTimerHandle);
 
 	if (ChargingWidgetActor)
+	{
 		ChargingWidgetActor->GetWidgetComponent()->SetVisibility(false);
+	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Charging Cancelled by Damage"));
 }
 
 // Combo

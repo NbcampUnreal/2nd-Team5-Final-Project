@@ -27,4 +27,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> BlockMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
+	TObjectPtr<UAnimMontage> ExecutionMontage;
 };
