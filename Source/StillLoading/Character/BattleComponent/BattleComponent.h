@@ -28,9 +28,6 @@ public:
 	UFUNCTION()
 	void ClearHitTargets();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UMotionWarpingComponent> MotionWarpComponent;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool bShowDebugLine = false;
 	

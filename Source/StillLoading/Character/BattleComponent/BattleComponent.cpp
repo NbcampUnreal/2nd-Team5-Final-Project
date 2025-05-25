@@ -1,7 +1,5 @@
 #include "BattleComponent.h"
 
-#include "MotionWarpingComponent.h"
-
 DEFINE_LOG_CATEGORY(LogBattleComponent);
 
 UBattleComponent::UBattleComponent()
@@ -87,26 +85,10 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 			{
 				if (UBattleComponent* TargetBattleComp = HitActor->FindComponentByClass<UBattleComponent>())
 				{
-					if (AttackType == EAttackAnimType::AAT_FinalAttackA
-						|| AttackType == EAttackAnimType::AAT_FinalAttackB
-						|| AttackType == EAttackAnimType::AAT_FinalAttackC)
-					{
-						FVector TargetLoc = HitActor->GetActorLocation() - HitActor->GetActorForwardVector()*137.f;
-						FRotator TargetRot = HitActor->GetActorRotation();
-						MotionWarpComponent->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("Warp"), TargetLoc, TargetRot);
+					UE_LOG(LogBattleComponent, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
+					AlreadyHitActors.Add(HitActor);
 
-						UE_LOG(LogBattleComponent, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
-						AlreadyHitActors.Add(HitActor);
-
-						SendHitResult(HitActor, Hit, AttackType);
-					}
-					else
-					{
-						UE_LOG(LogBattleComponent, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
-						AlreadyHitActors.Add(HitActor);
-
-						SendHitResult(HitActor, Hit, AttackType);
-					}
+					SendHitResult(HitActor, Hit, AttackType);
 				}
 			}
 		}

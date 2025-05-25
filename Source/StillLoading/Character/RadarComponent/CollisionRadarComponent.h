@@ -54,6 +54,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "Radar|Settings")
     bool bIsUseRadar = false;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<class UMotionWarpingComponent> MotionWarpComponent;
+
 protected:
     virtual void BeginPlay() override;
 
