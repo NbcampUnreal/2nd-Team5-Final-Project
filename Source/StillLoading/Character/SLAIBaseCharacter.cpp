@@ -597,67 +597,126 @@ bool ASLAIBaseCharacter::CanBeExecuted() const
     
 	// 체력이 10% 이하인지 확인
 	float HealthPercentage = GetHealthPercentage();
-	return HealthPercentage <= 10.0f && !IsDead;
+	//return HealthPercentage <= 10.0f && !IsDead;
+	return !IsDead;
 }
 
 void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, AActor* Executor)
 {
-	if (!AnimInstancePtr || IsDead)
-	{
-		return;
-	}
+    UE_LOG(LogTemp, Warning, TEXT("PlayExecutionAnimation Called - ExecutionType: %s"), *UEnum::GetValueAsString(ExecutionType));
     
-	// 처형 애니메이션 몽타주 찾기
-	if (UAnimMontage* ExecutionMontage = ExecutionMontages.FindRef(ExecutionType))
-	{
-		// 이동 중지
-		GetCharacterMovement()->StopMovementImmediately();
-		GetCharacterMovement()->DisableMovement();
+    if (!AnimInstancePtr)
+    {
+        UE_LOG(LogTemp, Error, TEXT("AnimInstancePtr is null"));
+        return;
+    }
+    
+    if (IsDead)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Character is already dead"));
+        return;
+    }
+    
+    if (!Executor)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Executor is null"));
+        return;
+    }
+    
+    // 처형 애니메이션 몽타주 찾기
+    if (UAnimMontage* ExecutionMontage = ExecutionMontages.FindRef(ExecutionType))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Found Execution Montage: %s"), *ExecutionMontage->GetName());
         
-		// AI 일시 정지
-		if (AIController)
-		{
-			AIController->GetBrainComponent()->PauseLogic("Execution");
-		}
-
-		FVector DirectionToExecutor = (Executor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-		DirectionToExecutor.Z = 0.0f;  // 수평 방향만 고려
-		FRotator NewRotation = FRotationMatrix::MakeFromX(DirectionToExecutor).Rotator();
-		SetActorRotation(NewRotation);
-		
-		// 처형 애니메이션 재생
-		AnimInstancePtr->Montage_Play(ExecutionMontage);
+        // 현재 재생 중인 몽타주 확인
+        if (AnimInstancePtr->IsAnyMontagePlaying())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Another montage is playing, stopping it"));
+            AnimInstancePtr->StopAllMontages(0.0f);
+        }
         
-		// 처형 후 사망 처리
-		FTimerHandle ExecutionTimer;
-		float MontageLength = ExecutionMontage->GetPlayLength();
-		GetWorld()->GetTimerManager().SetTimer(ExecutionTimer, [this]()
-		{
-			// 처형 완료 후 직접 사망 처리
-			CurrentHealth = 0.0f;
-			IsDead = true;
+        // 이동 중지
+        GetCharacterMovement()->StopMovementImmediately();
+        GetCharacterMovement()->DisableMovement();
+        
+        // AI 일시 정지
+        if (AIController)
+        {
+            //AIController->GetBrainComponent()->PauseLogic("Execution");
+        }
+        
+        // 플레이어 방향으로 회전
+        FVector DirectionToExecutor = (Executor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+        DirectionToExecutor.Z = 0.0f;
+        FRotator NewRotation = FRotationMatrix::MakeFromX(DirectionToExecutor).Rotator();
+        SetActorRotation(NewRotation);
+        
+        // 애니메이션 인스턴스 타입 확인
+        if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+        {
+            // 히트 반응 등 다른 애니메이션 상태 초기화
+            SLAIAnimInstance->SetIsHit(false);
+            SLAIAnimInstance->SetIsDown(false);
+            SLAIAnimInstance->SetIsStun(false);
+            SLAIAnimInstance->SetIsAttacking(false);
             
-			// 충돌 비활성화
-			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+            UE_LOG(LogTemp, Warning, TEXT("Reset animation states"));
+        }
+        
+        // 처형 애니메이션 재생
+        float PlayRate = 1.0f;
+        float StartPosition = 0.0f;
+        FName StartSection = NAME_None;
+        
+        float MontageLength = AnimInstancePtr->Montage_Play(ExecutionMontage, PlayRate, EMontagePlayReturnType::MontageLength, StartPosition);
+        
+        UE_LOG(LogTemp, Warning, TEXT("Montage_Play returned length: %f"), MontageLength);
+        
+        if (MontageLength > 0.0f)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Montage started successfully"));
             
-			// 애니메이션 상태 업데이트
-			if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
-			{
-				SLAIAnimInstance->SetIsDead(true);
-			}
-            
-			// AI 컨트롤러 블랙보드 업데이트
-			if (AIController)
-			{
-				if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
-				{
-					BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
-				}
-			}
-            
-		}, MontageLength * 0.8f, false);
-	}
+            // 처형 후 사망 처리
+            FTimerHandle ExecutionTimer;
+            GetWorld()->GetTimerManager().SetTimer(ExecutionTimer, [this]()
+            {
+                // 처형 완료 후 직접 사망 처리
+                CurrentHealth = 0.0f;
+                IsDead = true;
+                
+                // 충돌 비활성화
+                GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+                
+                // 애니메이션 상태 업데이트
+                if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+                {
+                    SLAIAnimInstance->SetIsDead(true);
+                }
+                
+                // AI 컨트롤러 블랙보드 업데이트
+                if (AIController)
+                {
+                    if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+                    {
+                    	BlackboardComponent->SetValueAsBool(FName("IsBeingExecuted"), true);
+                        BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
+                    }
+                }
+                
+                UE_LOG(LogTemp, Warning, TEXT("Execution completed - Character is now dead"));
+                
+            }, MontageLength * 0.8f, false);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to play montage"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("No Execution Montage found for type: %s"), *UEnum::GetValueAsString(ExecutionType));
+    }
 }
 
 #if WITH_EDITOR
