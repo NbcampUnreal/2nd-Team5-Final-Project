@@ -67,7 +67,11 @@ public:
 
 	// 패링용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Parry")
-	float ParryDuration = 0.3f;
+	float ParryDuration = 0.2f;
+
+	// 막기용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Block")
+	int MaxBlockCount = 5;
 
 protected:
 	virtual void BeginPlay() override;
@@ -102,6 +106,7 @@ private:
 	void Airborne();
 	void AirUp();
 	void AirDown();
+	void Execution();
 	void Block(const bool bIsBlocking);
 	void RotateToHitCauser(const AActor* Causer, FRotator &TargetRotation, bool &bIsHitFromBack);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
@@ -128,8 +133,13 @@ private:
 	float KnockbackTime = 0.3f;
 
 	// Block 용
+	UFUNCTION()
+	void OnDelayedAction();
 	UPROPERTY()
 	int BlockCount = 0;
 	UPROPERTY()
 	float LastBlockTime = 0.f;
+	UPROPERTY()
+	FTimerHandle DelayTimerHandle;
+	
 };

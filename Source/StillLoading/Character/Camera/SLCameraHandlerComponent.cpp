@@ -24,5 +24,6 @@ void USLCameraHandlerComponent::AssignCamera(UCameraComponent* InThirdPersonCame
 	TopViewCamera = InTopViewCamera;
 
 	ThirdPersonCamera->SetActive(false);
+	TopViewCamera->SetActive(true);
 }
 

@@ -10,6 +10,7 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
+#include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
@@ -115,6 +116,7 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 				}
 
 				CachedCombatComponent->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered);
+				USlowMotionHelper::ApplyGlobalSlowMotion(this, 0.3f, 0.3f);
 				return;
 			}
 		}
@@ -199,13 +201,24 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 
 	if (OwnerCharacter->IsInPrimaryState(TAG_Character_Defense_Block) && !bIsFromBack)
 	{
-		if (BlockCount >= 2)
+		if (BlockCount >= MaxBlockCount && !OwnerCharacter->HasSecondaryState(TAG_Character_HitReaction_Block_Break))
 		{
 			OwnerCharacter->ClearAllStateTags();
-			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Block_Break);
+			OwnerCharacter->AddSecondaryState(TAG_Character_HitReaction_Block_Break);
 			CachedMontageComponent->PlayBlockMontage(FName("BlockBreak"));
 			BlockCount = 0;
 			LastBlockTime = 0;
+
+			if (!GetWorld()->GetTimerManager().IsTimerActive(DelayTimerHandle))
+			{
+				GetWorld()->GetTimerManager().SetTimer(
+					DelayTimerHandle,
+					this,
+					&UMovementHandlerComponent::OnDelayedAction,
+					5.0f,
+					false
+				);
+			}
 		}
 		else
 		{
@@ -383,12 +396,12 @@ void UMovementHandlerComponent::Jump()
 	}
 
 	CachedCombatComponent->ResetCombo();
-	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Jump);
+	OwnerCharacter->AddSecondaryState(TAG_Character_Movement_Jump);
 }
 
 void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
 {
-	OwnerCharacter->RemovePrimaryState(TAG_Character_Movement_Jump);
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_Jump);
 	CachedCombatComponent->ResetCombo();
 }
 
@@ -459,6 +472,7 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
+	Execution();
 }
 
 void UMovementHandlerComponent::Attack()
@@ -485,11 +499,21 @@ void UMovementHandlerComponent::Attack()
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
 }
 
+void UMovementHandlerComponent::Execution()
+{
+	CachedBattleComponent->DoAttackSweep(EAttackAnimType::AAT_FinalAttackA);
+	CachedMontageComponent->PlayExecutionMontage(FName("ExecutionA"));
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack_ExecutionA);
+}
+
 void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)
 {
 	if (bIsFalling)
 	{
-		OwnerCharacter->GetCharacterMovement()->GravityScale = 0.4f;
+		FVector Velocity = OwnerCharacter->GetCharacterMovement()->Velocity;
+		Velocity.Z = 0.f;
+		OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
+		OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f;
 	}
 
 	const bool bEmpowered = CachedCombatComponent->IsEmpowered();
@@ -540,6 +564,12 @@ void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool 
 			OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic1);
 		}
 	}
+}
+
+void UMovementHandlerComponent::OnDelayedAction()
+{
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_HitReaction_Block_Break);
+	GetWorld()->GetTimerManager().ClearTimer(DelayTimerHandle);
 }
 
 void UMovementHandlerComponent::PointMove()
@@ -704,6 +734,12 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		break;
 	case ECharacterMontageState::ECS_Attack_Airdown:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Airdown);
+		break;
+	case ECharacterMontageState::ECS_Attack_ExecutionA:
+		break;
+	case ECharacterMontageState::ECS_Attack_ExecutionB:
+		break;
+	case ECharacterMontageState::ECS_Attack_ExecutionC:
 		break;
 	case ECharacterMontageState::ECS_Defense_Block:
 		break;

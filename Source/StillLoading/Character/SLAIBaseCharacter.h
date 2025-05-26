@@ -7,6 +7,7 @@
 #include "DataAsset/AttackDataAsset.h"
 #include "SLAIBaseCharacter.generated.h"
 
+class UNiagaraComponent;
 class ASLAIProjectile;
 class UBattleComponent;
 class UMotionWarpingComponent;
@@ -81,9 +82,6 @@ public:
 	// --- Constructor ---
 	ASLAIBaseCharacter();
 	virtual void BeginPlay() override;
-
-	// --- Overrides ---
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	// --- Getters (Collision) ---
 	// 손 콜리전 컴포넌트 접근자
@@ -168,6 +166,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	bool GetIsTargetClose(float DistanceThreshold);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool CanBeExecuted() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat") 
+	void PlayExecutionAnimation(EAttackAnimType ExecutionType, AActor* Executor);
 	
 protected:
 	
@@ -260,6 +263,18 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "combat")
 	EAttackAnimType CurrentAttackType;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<UNiagaraComponent> HitEffectComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	bool bCanBeExecuted = true;  // 기본값은 true, 보스는 false로 설정
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Montages")
+	TMap<EAttackAnimType, TObjectPtr<UAnimMontage>> ExecutionMontages;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsBeingExecuted = false;
 };
 
 

@@ -46,8 +46,6 @@ void UCombatHandlerComponent::SetEmpoweredCombatMode(ECharacterComboState Mode, 
 			false
 		);
 	}
-
-	UE_LOG(LogTemp, Log, TEXT("CombatMode [%d] 설정됨. 유지 시간: %.1f초"), (int32)Mode, TotalDuration);
 }
 
 void UCombatHandlerComponent::ResetCombatMode()
@@ -129,9 +127,10 @@ void UCombatHandlerComponent::CancelCharging()
 	GetWorld()->GetTimerManager().ClearTimer(ChargingUpdateTimerHandle);
 
 	if (ChargingWidgetActor)
+	{
 		ChargingWidgetActor->GetWidgetComponent()->SetVisibility(false);
+	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Charging Cancelled by Damage"));
 }
 
 // Combo
