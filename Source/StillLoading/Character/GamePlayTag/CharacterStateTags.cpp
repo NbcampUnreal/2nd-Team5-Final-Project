@@ -53,3 +53,4 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Jump, "Character.Movement.Jump");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Run, "Character.Movement.Run");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Walk, "Character.Movement.Walk");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Dodge, "Character.Movement.Dodge");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_OnAir, "Character.Movement.OnAir");

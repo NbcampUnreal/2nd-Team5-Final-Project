@@ -26,6 +26,8 @@ public:
 	UFUNCTION()
 	void DoAttackSweep(EAttackAnimType AttackType);
 	UFUNCTION()
+	void DoSweep(EAttackAnimType AttackType);
+	UFUNCTION()
 	void ClearHitTargets();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
