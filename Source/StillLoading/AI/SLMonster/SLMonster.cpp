@@ -7,6 +7,7 @@
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "EngineUtils.h"
 #include "GenericTeamAgentInterface.h"
+#include "Components/CapsuleComponent.h"
 #include "Controller/SLEnemyAIController.h"
 #include "Components/SphereComponent.h"
 
@@ -32,14 +33,22 @@ ASLMonster::ASLMonster()
     AttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AttackSphere"));
     AttackSphere->SetupAttachment(RootComponent);
     AttackSphere->SetSphereRadius(550.f);
-    AttackSphere->SetCollisionProfileName(TEXT("OverlapAll"));
     AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
+    AttackSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+    AttackSphere->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+    
     AttackCheckSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AttackCheckSphere"));
     AttackCheckSphere->SetupAttachment(RootComponent);
     AttackCheckSphere->SetSphereRadius(550.f);
-    AttackCheckSphere->SetCollisionProfileName(TEXT("OverlapAll"));
     AttackCheckSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    AttackCheckSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+    AttackCheckSphere->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+
+    // BattleComponent 에서 사용 하기위한 캡슐 셋팅
+    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
+    GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+    GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
 }
 
 void ASLMonster::BeginPlay()
