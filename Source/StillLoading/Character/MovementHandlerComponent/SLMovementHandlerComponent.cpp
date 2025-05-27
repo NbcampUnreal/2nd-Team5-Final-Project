@@ -12,6 +12,7 @@
 #include "Character/PlayerState/SLBattlePlayerState.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
 {
@@ -111,12 +112,16 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 					else
 						CachedMontageComponent->PlayBlockMontage(FName("ParryL"));
 
-					OwnerCharacter->SetPrimaryState(TAG_Character_Defense_Parry);
+					OwnerCharacter->AddSecondaryState(TAG_Character_Defense_Parry);
 					BlockCount = 0;
 				}
-
 				CachedCombatComponent->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered);
-				USlowMotionHelper::ApplyGlobalSlowMotion(this, 0.3f, 0.3f);
+
+				// 전체 슬로우 (자기 자신 포함)
+				USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, nullptr, 0.2f, 0.15f, true, false);
+				// 자기 자신 제외한 모두 슬로우
+				USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, OwnerCharacter, 0.2f, 0.3f, true, true);
+
 				return;
 			}
 		}
@@ -193,7 +198,7 @@ void UMovementHandlerComponent::BindIMCComponent()
 void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                               EAttackAnimType AnimType)
 {
-	if (OwnerCharacter->IsInPrimaryState(TAG_Character_Defense_Parry)) return;
+	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)) return;
 
 	bool bIsFromBack = false;
 	FRotator TargetRotation;
@@ -402,7 +407,9 @@ void UMovementHandlerComponent::Jump()
 void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
 {
 	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_Jump);
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_OnAir);
 	CachedCombatComponent->ResetCombo();
+	AttackStateCount = 0;
 }
 
 void UMovementHandlerComponent::StartKnockback(float Speed, float Duration)
@@ -499,21 +506,43 @@ void UMovementHandlerComponent::Attack()
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
 }
 
-void UMovementHandlerComponent::Execution()
+void UMovementHandlerComponent::Execution() // 킬모션 분기필요
 {
-	CachedBattleComponent->DoAttackSweep(EAttackAnimType::AAT_FinalAttackA);
-	CachedMontageComponent->PlayExecutionMontage(FName("ExecutionA"));
-	OwnerCharacter->SetPrimaryState(TAG_Character_Attack_ExecutionA);
+	USlowMotionHelper::ApplyZoomWithSlowMotion(this, 0.2f, 0.5f);
+
+	struct FExecutionData
+	{
+		EAttackAnimType AttackType;
+		FName MontageName;
+		FGameplayTag SecondaryTag;
+	};
+
+	TArray<FExecutionData> ExecutionOptions = {
+		{ EAttackAnimType::AAT_FinalAttackA, FName("ExecutionA"), TAG_Character_Attack_ExecutionA },
+		{ EAttackAnimType::AAT_FinalAttackB, FName("ExecutionB"), TAG_Character_Attack_ExecutionB },
+		{ EAttackAnimType::AAT_FinalAttackC, FName("ExecutionC"), TAG_Character_Attack_ExecutionC }
+	};
+
+	const int32 RandomIndex = FMath::RandRange(0, ExecutionOptions.Num() - 1);
+	const FExecutionData& ChosenExecution = ExecutionOptions[RandomIndex];
+
+	UE_LOG(LogTemp, Warning, TEXT("RandomIndex [%d]"), RandomIndex);
+
+	CachedBattleComponent->DoSweep(ChosenExecution.AttackType);
+	CachedMontageComponent->PlayExecutionMontage(ChosenExecution.MontageName);
+	OwnerCharacter->AddSecondaryState(ChosenExecution.SecondaryTag);
 }
 
 void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)
 {
-	if (bIsFalling)
+	if (bIsFalling && AttackStateCount != 3)
 	{
 		FVector Velocity = OwnerCharacter->GetCharacterMovement()->Velocity;
 		Velocity.Z = 0.f;
 		OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
 		OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f;
+		OwnerCharacter->AddSecondaryState(TAG_Character_Movement_OnAir);
+		++AttackStateCount;
 	}
 
 	const bool bEmpowered = CachedCombatComponent->IsEmpowered();
@@ -736,16 +765,20 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Airdown);
 		break;
 	case ECharacterMontageState::ECS_Attack_ExecutionA:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_ExecutionA);
 		break;
 	case ECharacterMontageState::ECS_Attack_ExecutionB:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_ExecutionB);
 		break;
 	case ECharacterMontageState::ECS_Attack_ExecutionC:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_ExecutionC);
 		break;
 	case ECharacterMontageState::ECS_Defense_Block:
 		break;
 	case ECharacterMontageState::ECS_Defense_Block_Break:
 		break;
 	case ECharacterMontageState::ECS_Defense_Parry:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Defense_Parry);
 		break;
 	case ECharacterMontageState::ECS_Cinematic:
 		break;

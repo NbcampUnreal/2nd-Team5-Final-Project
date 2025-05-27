@@ -73,6 +73,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Block")
 	int MaxBlockCount = 5;
 
+	// AttackState 카운트용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
+	int AttackStateCount = 0;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
