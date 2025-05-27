@@ -16,36 +16,32 @@ ASLRenderingManager::ASLRenderingManager()
 	InitComponents();
 }
 
-void ASLRenderingManager::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
 #if WITH_EDITOR
 
 void ASLRenderingManager::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
-	const FName MemberPropertyName = PropertyChangedEvent.GetMemberPropertyName();
-    
-	if (PropertyName.IsNone())
-	{
-		UpdateMaterialParameters();
-		UpdatePostProcessRenderingType();
-	}
-	else if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(ASLRenderingManager, CurrentRenderingType))
+	const FName PropertyName = PropertyChangedEvent.GetMemberPropertyName();
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(ASLRenderingManager, CurrentRenderingType))
 	{
 		UpdatePostProcessRenderingType();
 	}
-	else if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(ASLRenderingManager, PixelSize) ||
-			 MemberPropertyName == GET_MEMBER_NAME_CHECKED(ASLRenderingManager, Brightness) ||
-			 MemberPropertyName == GET_MEMBER_NAME_CHECKED(ASLRenderingManager, SolidOutlineSettings) ||
-			 MemberPropertyName == GET_MEMBER_NAME_CHECKED(ASLRenderingManager, SoftOutlineSettings))
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(ASLRenderingManager, PixelArtSettings))
 	{
-		UpdateMaterialParameters();
+		UpdatePixelArtRenderingType();
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(ASLRenderingManager, SolidOutlineSettings))
+	{
+		UpdateSolidOutlineSettings();
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(ASLRenderingManager, SoftOutlineSettings))
+	{
+		UpdateSoftOutlineSettings();
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(ASLRenderingManager, CelShaderSettings))
+	{
+		UpdateCelShaderRenderingType();
 	}
 }
 
@@ -69,39 +65,6 @@ void ASLRenderingManager::InitComponents()
 	
 }
 
-void ASLRenderingManager::UpdateMaterialParameters()
-{
-    if (!MPCPixelization || !MPCSoftOutline || !MPCSolidOutline)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Material Parameter Collections are not set in %s"), *GetName());
-        return;
-    }
-    
-    UWorld* World = GetWorld();
-    if (!World)
-    {
-        return;
-    }
-    
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCPixelization, FName(TEXT("PixelSize")), PixelSize);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCPixelization, FName(TEXT("Brightness")), Brightness);
-    
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSolidOutline, FName(TEXT("MinKernelSize")), SolidOutlineSettings.MinKernelSize);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSolidOutline, FName(TEXT("MaxKernelSize")), SolidOutlineSettings.MaxKernelSize);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSolidOutline, FName(TEXT("MinDepthRange")), SolidOutlineSettings.MinDepthRange);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSolidOutline, FName(TEXT("MaxDepthRange")), SolidOutlineSettings.MaxDepthRange);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSolidOutline, FName(TEXT("NormalEdgeMinThreshold")), SolidOutlineSettings.NormalEdgeMinThreshold);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSolidOutline, FName(TEXT("NormalEdgeMaxThreshold")), SolidOutlineSettings.NormalEdgeMaxThreshold);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSolidOutline, FName(TEXT("DepthEdgeMinThreshold")), SolidOutlineSettings.DepthEdgeMinThreshold);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSolidOutline, FName(TEXT("DepthEdgeMaxThreshold")), SolidOutlineSettings.DepthEdgeMaxThreshold);
-    
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSoftOutline, FName(TEXT("MinKernelSize")), SoftOutlineSettings.MinKernelSize);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSoftOutline, FName(TEXT("MaxKernelSize")), SoftOutlineSettings.MaxKernelSize);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSoftOutline, FName(TEXT("MinDepthRange")), SoftOutlineSettings.MinDepthRange);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSoftOutline, FName(TEXT("MaxDepthRange")), SoftOutlineSettings.MaxDepthRange);
-    UKismetMaterialLibrary::SetScalarParameterValue(World, MPCSoftOutline, FName(TEXT("EdgeAlphaThreshold")), SoftOutlineSettings.EdgeAlphaThreshold);
-}
-
 void ASLRenderingManager::UpdatePostProcessRenderingType()
 {
 	check(PostProcess);
@@ -110,4 +73,41 @@ void ASLRenderingManager::UpdatePostProcessRenderingType()
 	PostProcess->Settings.WeightedBlendables.Array[0].Weight = CurrentRenderingType.bCelShaderFlag;
 	PostProcess->Settings.WeightedBlendables.Array[1].Weight = CurrentRenderingType.bPixelArtFlag;
 	PostProcess->Settings.WeightedBlendables.Array[2].Weight = CurrentRenderingType.bGrayScaleFlag;
+}
+
+void ASLRenderingManager::UpdatePixelArtRenderingType()
+{
+	check(MPCPixelization);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCPixelization, FName(TEXT("PixelSize")), PixelArtSettings.PixelSize);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCPixelization, FName(TEXT("Brightness")), PixelArtSettings.Brightness);
+}
+
+void ASLRenderingManager::UpdateSolidOutlineSettings()
+{
+	check(MPCCelShader);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SolidOutlineMinKernelSize")), SolidOutlineSettings.MinKernelSize);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SolidOutlineMaxKernelSize")), SolidOutlineSettings.MaxKernelSize);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SolidOutlineMinDepthRange")), SolidOutlineSettings.MinDepthRange);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SolidOutlineMaxDepthRange")), SolidOutlineSettings.MaxDepthRange);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SolidOutlineNormalEdgeMinThreshold")), SolidOutlineSettings.NormalEdgeMinThreshold);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SolidOutlineNormalEdgeMaxThreshold")), SolidOutlineSettings.NormalEdgeMaxThreshold);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SolidOutlineDepthEdgeMinThreshold")), SolidOutlineSettings.DepthEdgeMinThreshold);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SolidOutlineDepthEdgeMaxThreshold")), SolidOutlineSettings.DepthEdgeMaxThreshold);
+}
+
+void ASLRenderingManager::UpdateSoftOutlineSettings()
+{
+	check(MPCCelShader);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SoftOutlineMinKernelSize")), SoftOutlineSettings.MinKernelSize);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SoftOutlineMaxKernelSize")), SoftOutlineSettings.MaxKernelSize);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SoftOutlineMinDepthRange")), SoftOutlineSettings.MinDepthRange);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SoftOutlineMaxDepthRange")), SoftOutlineSettings.MaxDepthRange);
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("SoftOutlineEdgeAlphaThreshold")), SoftOutlineSettings.EdgeAlphaThreshold);
+}
+
+void ASLRenderingManager::UpdateCelShaderRenderingType()
+{
+	UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), MPCCelShader, FName(TEXT("ColorGrade")), CelShaderSettings.ColorGrade);
+	UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), MPCCelShader, FName(TEXT("LightColor")), CelShaderSettings.LightColor);
+	UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), MPCCelShader, FName(TEXT("ShadowColor")), CelShaderSettings.ShadowColor);
 }
