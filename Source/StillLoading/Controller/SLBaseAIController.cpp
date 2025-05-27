@@ -44,6 +44,28 @@ ASLBaseAIController::ASLBaseAIController()
 	bIsHostileToOtherAI = true;
 }
 
+void ASLBaseAIController::UpdateSightRadius(float SightRadius, float LoseSightRadius)
+{
+	UAIPerceptionComponent* PerceptionComp = GetPerceptionComponent();
+	if (!PerceptionComp)
+	{
+		return;
+	}
+    
+	// 시야 설정 가져오기
+	UAISenseConfig_Sight* SightConfig = Cast<UAISenseConfig_Sight>(PerceptionComp->GetSenseConfig(UAISense::GetSenseID<UAISense_Sight>()));
+
+	if (SightConfig)
+	{
+		// 전투 모드일 때 시야 확장
+		SightConfig->SightRadius = SightRadius;
+		SightConfig->LoseSightRadius = LoseSightRadius;
+        
+		PerceptionComp->ConfigureSense(*SightConfig);
+		PerceptionComp->SetDominantSense(SightConfig->GetSenseImplementation());
+	}
+}
+
 void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())

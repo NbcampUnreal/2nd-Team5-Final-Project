@@ -74,7 +74,7 @@ enum class EChapter : uint8
 };
 
 UCLASS()
-class STILLLOADING_API ASLAIBaseCharacter : public ASLPlayerCharacterBase
+class STILLLOADING_API ASLAIBaseCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -100,6 +100,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE float GetAttackPower() const { return AttackPower;}
 
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE float GetIsDead() const { return IsDead;}
+	
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentHealth(float NewHealth);
 
@@ -138,9 +141,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	UBattleComponent* GetBattleComponent();
-
-	UFUNCTION(BlueprintCallable)
-	void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
 
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentAttackType(EAttackAnimType NewCurrentAttackType);
@@ -183,6 +183,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
 	TArray<FVector> GenerateHorizontalFanDirections(const FVector& BaseDirection, int32 Count, float FanHalfAngle) const;
 
+	UFUNCTION(BlueprintCallable)
+	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
+	
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<ASLBaseAIController> AIController;

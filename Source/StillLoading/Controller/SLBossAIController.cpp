@@ -50,16 +50,13 @@ void ASLBossAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 		{
 			if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile)
 			{
-				// 현재 블랙보드에 저장된 타겟 가져오기
 				AActor* CurrentTarget = Cast<AActor>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
                 
-				// 새로운 타겟 설정 여부를 결정할 플래그
 				bool bShouldSetNewTarget = true;
                 
 				// 기존 타겟이 있으면 거리 비교
 				if (CurrentTarget)
 				{
-					// AI 캐릭터의 위치 가져오기
 					FVector MyLocation = GetPawn()->GetActorLocation();
                     
 					// 기존 타겟과의 거리 계산
@@ -68,7 +65,6 @@ void ASLBossAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 					// 새 타겟과의 거리 계산
 					float DistanceToNewTarget = FVector::Distance(MyLocation, Actor->GetActorLocation());
                     
-					// 거리 비교: 새 타겟이 더 멀면 타겟 설정하지 않음
 					if (DistanceToNewTarget >= DistanceToCurrentTarget)
 					{
 						bShouldSetNewTarget = false;

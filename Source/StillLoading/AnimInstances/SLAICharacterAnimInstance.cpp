@@ -177,6 +177,11 @@ bool USLAICharacterAnimInstance::GetIsAttacking()
 	return IsAttacking;
 }
 
+bool USLAICharacterAnimInstance::GetbIsInCombat()
+{
+	return bIsInCombat;
+}
+
 float USLAICharacterAnimInstance::GetDistanceToGround() const
 {
 	if (!OwningCharacter)

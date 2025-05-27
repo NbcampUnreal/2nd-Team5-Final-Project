@@ -19,8 +19,13 @@ class STILLLOADING_API ASLBaseAIController : public ADetourCrowdAIController
 public:
 	ASLBaseAIController();
 
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	void UpdateSightRadius(float SightRadius , float LoseSightRadius);
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	TObjectPtr<AActor> TargetActor;
+	
+	
 
 protected:
 	UFUNCTION()

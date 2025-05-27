@@ -3,7 +3,7 @@
 #include "BrainComponent.h"
 #include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
-#include "AI/SLAIProjectile.h"
+#include "AI/Projectile/SLAIProjectile.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "BattleComponent/BattleComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -57,7 +57,9 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
     MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
     BattleComponent = CreateDefaultSubobject<UBattleComponent>("BattleComponent");
     BattleComponent->OnCharacterHited.AddDynamic(this, &ThisClass::CharacterHit);
-    
+
+	HitEffectComponent = CreateDefaultSubobject<UNiagaraComponent>("HitEffectComponent");
+	HitEffectComponent->SetupAttachment(GetMesh());
     // 카메라 채널 무시
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
     GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -99,7 +101,6 @@ void ASLAIBaseCharacter::BeginPlay()
 	{
 		RightFootCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightFootCollisionBoxAttachBoneName);
 	}
-
 	
 	IsHitReaction = false;
 	IsDead = false;
@@ -143,15 +144,6 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 
 	if (IsDebugMode)
 	{
-		// 히트 위치 가져오기
-		FVector HitLocation = SweepResult.bBlockingHit ? SweepResult.ImpactPoint : SweepResult.Location;
-	
-		// 히트 위치가 유효하지 않으면 오버랩된 컴포넌트의 위치 사용
-		if (HitLocation.IsZero())
-		{
-			HitLocation = OverlappedComponent->GetComponentLocation();
-		}
-
 		// 오버랩된 컴포넌트의 크기에 맞는 디버그 박스 그리기
 		if (UBoxComponent* BoxComp = Cast<UBoxComponent>(OverlappedComponent))
 		{
@@ -172,9 +164,20 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 			);
 		}
 	}
-	
+	FVector HitLocation;
+	if (bFromSweep)
+	{
+		HitLocation = SweepResult.ImpactPoint;
+	}
+	else
+	{
+		HitLocation = (OverlappedComponent->GetComponentLocation() + OtherComp->GetComponentLocation()) * 0.5f;
+	}
+	FHitResult HitResult;
+	HitResult.Location = HitLocation;
+	HitResult.ImpactPoint = HitLocation;
 	// BattleComponent를 통해 데미지 전달
-	BattleComponent->SendHitResult(OtherActor, SweepResult, CurrentAttackType);
+	BattleComponent->SendHitResult(OtherActor, HitResult, CurrentAttackType);
     
 	//히트 이펙트 재생
 }

@@ -48,6 +48,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
 	bool GetIsAttacking();
 
+	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
+	bool GetbIsInCombat();
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
 	bool DoesOwnerHaveTag(FName TagToCheck) const;
@@ -117,6 +119,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
 	bool IsExecution;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
+	bool bIsInCombat;
 	
 	// --- Anim Data | Combat Specific ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Combat Specific")
