@@ -80,7 +80,7 @@ void USLBaseWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivate
 {
 	const USLWidgetImageDataAsset* WidgetDataAsset = Cast<USLWidgetImageDataAsset>(WidgetActivateBuffer.WidgetPublicData);
 
-	PublicImageMap = WidgetDataAsset->GetImageDataMap();
+	PublicAssetMap = WidgetDataAsset->GetBrushDataMap();
 	FontInfo = WidgetDataAsset->GetFondInfo();
 }
 
@@ -89,11 +89,13 @@ void USLBaseWidget::ApplyImageData()
 	FButtonStyle ButtonStyle;
 	FSliderStyle SliderStyle;
 	FProgressBarStyle ProgressBarStyle;
+	FSlateBrush SlateBrush;
 
-	ApplyBackgroundImage();
+	ApplyBackgroundImage(SlateBrush);
 	ApplyButtonImage(ButtonStyle);
 	ApplySliderImage(SliderStyle);
-	ApplyBorderImage();
+	ApplyBorderImage(SlateBrush);
+	ApplyTextBorderImage(SlateBrush);
 	ApplyProgressBarImage(ProgressBarStyle);
 	ApplyOtherImage();
 }
@@ -118,58 +120,74 @@ void USLBaseWidget::ApplyFontData()
 	}
 }
 
-bool USLBaseWidget::ApplyBackgroundImage()
+bool USLBaseWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
 {
-	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Background) ||
-		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]))
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Background) ||
+		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Background]))
 	{
 		return false;
 	}
+
+	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Background]);
 
 	return true;
 }
 
 bool USLBaseWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 {
-	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Button) ||
-		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Button]))
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Button) ||
+		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Button]))
 	{
 		return false;
 	}
 
 	FSlateBrush SlateBrush; 
-	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_Button]);
 
+	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Button]);
+
+	SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 0.75f));
 	ButtonStyle.SetNormal(SlateBrush);
-	ButtonStyle.SetHovered(SlateBrush);
-	ButtonStyle.SetPressed(SlateBrush);
+
+	SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
 	ButtonStyle.SetDisabled(SlateBrush);
 
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonHover) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover]))
+	{
+		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover]);
+	}
+
+	SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+	ButtonStyle.SetHovered(SlateBrush);
+
+	SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
+	ButtonStyle.SetPressed(SlateBrush);
+	
 	return true;
 }
 
 bool USLBaseWidget::ApplySliderImage(FSliderStyle& SliderStyle)
 {
-	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_SliderBack) ||
-		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBack]))
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_SliderBack) ||
+		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_SliderBack]))
 	{
 		return false;
 	}
 
-	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_SliderBar) ||
-		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBar]))
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_SliderBar) ||
+		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_SliderBar]))
 	{
 		return false;
 	}
 
 	FSlateBrush SlateBrush;
 
-	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBack]);
+	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_SliderBar]);
 	SliderStyle.SetNormalThumbImage(SlateBrush);
 	SliderStyle.SetHoveredThumbImage(SlateBrush);
 	SliderStyle.SetDisabledThumbImage(SlateBrush);
 
-	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_SliderBar]);
+	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_SliderBack]);
 	SliderStyle.SetNormalBarImage(SlateBrush);
 	SliderStyle.SetHoveredBarImage(SlateBrush);
 	SliderStyle.SetDisabledBarImage(SlateBrush);
@@ -177,48 +195,52 @@ bool USLBaseWidget::ApplySliderImage(FSliderStyle& SliderStyle)
 	return true;
 }
 
-bool USLBaseWidget::ApplyBorderImage()
+bool USLBaseWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
 {
-	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_NormalBorder) ||
-		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]))
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_NormalBorder) ||
+		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_NormalBorder]))
 	{
 		return false;
 	}
+
+	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
 
 	return true;
 }
 
-bool USLBaseWidget::ApplyTextBorderImage()
+bool USLBaseWidget::ApplyTextBorderImage(FSlateBrush& SlateBrush)
 {
-	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_TextBorder) ||
-		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_TextBorder]))
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_TextBorder) ||
+		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_TextBorder]))
 	{
 		return false;
 	}
+
+	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_TextBorder]);
 
 	return true;
 }
 
 bool USLBaseWidget::ApplyProgressBarImage(FProgressBarStyle& ProgressBarStyle)
 {
-	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_ProgressBack) ||
-		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_ProgressBack]))
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ProgressBack) ||
+		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ProgressBack]))
 	{
 		return false;
 	}
 
-	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_ProgressBar) ||
-		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_ProgressBar]))
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ProgressBar) ||
+		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ProgressBar]))
 	{
 		return false;
 	}
 
 	FSlateBrush SlateBrush;
 
-	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_ProgressBack]);
+	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ProgressBack]);
 	ProgressBarStyle.SetBackgroundImage(SlateBrush);
 	
-	SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_ProgressBar]);
+	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ProgressBar]);
 	ProgressBarStyle.SetFillImage(SlateBrush);
 
 	return true;
