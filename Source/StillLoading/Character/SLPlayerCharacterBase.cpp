@@ -3,10 +3,17 @@
 #include "Buffer/InputBufferComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 
 ASLPlayerCharacterBase::ASLPlayerCharacterBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	// AIPerception에 등록
+	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+	StimuliSource->RegisterForSense(TSubclassOf<UAISense_Sight>(UAISense_Sight::StaticClass()));
+	StimuliSource->bAutoRegister = true;
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
