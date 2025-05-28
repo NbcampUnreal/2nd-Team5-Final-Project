@@ -33,7 +33,7 @@ ASLPlayerCharacterBase::ASLPlayerCharacterBase()
 void ASLPlayerCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 }
 
 void ASLPlayerCharacterBase::Tick(float DeltaTime)
