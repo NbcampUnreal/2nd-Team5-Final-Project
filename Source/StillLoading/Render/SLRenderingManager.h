@@ -128,6 +128,9 @@ class STILLLOADING_API ASLRenderingManager : public AActor
 public:
 	ASLRenderingManager();
 
+protected:
+	virtual void BeginPlay() override;
+	
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

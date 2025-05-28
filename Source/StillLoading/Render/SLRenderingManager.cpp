@@ -16,6 +16,16 @@ ASLRenderingManager::ASLRenderingManager()
 	InitComponents();
 }
 
+void ASLRenderingManager::BeginPlay()
+{
+	Super::BeginPlay();
+	UpdatePostProcessRenderingType();
+	UpdateSolidOutlineSettings();
+	UpdateSoftOutlineSettings();
+	UpdateCelShaderRenderingType();
+	UpdatePixelArtRenderingType();
+}
+
 #if WITH_EDITOR
 
 void ASLRenderingManager::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)

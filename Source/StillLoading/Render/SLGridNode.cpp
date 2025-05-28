@@ -7,6 +7,8 @@
 #include "Camera/CameraComponent.h"
 #include "Components/BillboardComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/Character.h"
 
 
 USLGridNode::USLGridNode()
@@ -20,21 +22,46 @@ USLGridNode::USLGridNode()
 	SpawnPosition = CreateDefaultSubobject<UBillboardComponent>(FName(*CompName));
 }
 
+void USLGridNode::UpdateTriggerVolume()
+{
+    if (!TriggerVolume) return;
+
+    TriggerVolume->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+    TriggerVolume->SetCollisionResponseToAllChannels(ECR_Block);
+    TriggerVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    
+    if (ConnectedVolume.IsValid())
+    {
+        TriggerVolume->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+    }
+}
+
 void USLGridNode::BeginPlay()
 {
 	Super::BeginPlay();
 	TriggerVolume->OnComponentBeginOverlap.AddDynamic(this, &USLGridNode::OnTriggeredNode);
-	TriggerVolume->OnComponentEndOverlap.AddDynamic(this, &USLGridNode::OnExitTriggerNode);
+
+    UpdateTriggerVolume();
 }
 
-void USLGridNode::OnTriggeredNode(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-    bool bFromSweep, const FHitResult& SweepResult)
+#if WITH_EDITOR
+void USLGridNode::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-    if (!bIsUsable) return;
-    
-    APawn* Character = Cast<APawn>(OtherActor);
+    Super::PostEditChangeProperty(PropertyChangedEvent);
+
+    UpdateTriggerVolume();
+}
+#endif
+
+void USLGridNode::OnTriggeredNode(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+                                  bool bFromSweep, const FHitResult& SweepResult)
+{
+    ACharacter* Character = Cast<ACharacter>(OtherActor);
     if (!Character) return;
 
+    UCapsuleComponent* CharacterCapsule = Character->GetCapsuleComponent();
+    if (!CharacterCapsule) return;
+    
     APlayerController* PlayerController = Cast<APlayerController>(Character->GetController());
     if (!PlayerController) return;
 
@@ -46,9 +73,110 @@ void USLGridNode::OnTriggeredNode(UPrimitiveComponent* OverlappedComp, AActor* O
     
     FVector TargetLocation;
     
-    if (bUseSpawnPosition && TargetNode->SpawnPosition)
+    float TriggerThickness = 0.f;
+    
+    if (TargetNode->TriggerVolume)
     {
-        TargetLocation = TargetNode->SpawnPosition->GetComponentLocation();
+        FVector TriggerExtent = TargetNode->TriggerVolume->GetScaledBoxExtent();
+        switch (NodeDirection)
+        {
+        case EGridDirection::EGD_Up:
+        case EGridDirection::EGD_Down:
+            TriggerThickness = TriggerExtent.X * 2.0f;
+            break;
+        case EGridDirection::EGD_Left:
+        case EGridDirection::EGD_Right:
+            TriggerThickness = TriggerExtent.Y * 2.0f;
+            break;
+        }
+    }
+    
+    float CapsuleRadius = CharacterCapsule->GetScaledCapsuleRadius();
+    float CapsuleHalfHeight = CharacterCapsule->GetScaledCapsuleHalfHeight();
+    
+    float SafeDistance = TriggerThickness + CapsuleRadius + 10.0f;
+    
+    if (NodeDirection == EGridDirection::EGD_Up || NodeDirection == EGridDirection::EGD_Down)
+    {
+        SafeDistance = FMath::Max(SafeDistance, CapsuleHalfHeight + 10.0f);
+    }
+    
+     if (bUseSpawnPosition && TargetNode->SpawnPosition)
+    {
+        FVector TriggerLocation = TargetNode->TriggerVolume->GetComponentLocation();
+        FVector SpawnLocation = TargetNode->SpawnPosition->GetComponentLocation();
+        
+        FVector2D TriggerLocation2D(TriggerLocation.X, TriggerLocation.Y);
+        FVector2D SpawnLocation2D(SpawnLocation.X, SpawnLocation.Y);
+        FVector2D DirectionVector2D;
+        
+        switch (NodeDirection)
+        {
+        case EGridDirection::EGD_Up:
+            DirectionVector2D = FVector2D(1.0f, 0.0f);
+            break;
+        case EGridDirection::EGD_Down:
+            DirectionVector2D = FVector2D(-1.0f, 0.0f);
+            break;
+        case EGridDirection::EGD_Left:
+            DirectionVector2D = FVector2D(0.0f, -1.0f);
+            break;
+        case EGridDirection::EGD_Right:
+            DirectionVector2D = FVector2D(0.0f, 1.0f);
+            break;
+        }
+        
+        FVector EdgePosition;
+        const FVector TargetVolumeLocation = TargetVolume->GetActorLocation();
+        const float TargetGridWidth = TargetVolume->GetGridWidth();
+        const float TargetGridHeight = TargetVolume->GetGridHeight();
+        const float TargetHalfWidth = TargetGridWidth * 0.5f;
+        const float TargetHalfHeight = TargetGridHeight * 0.5f;
+        
+        switch (NodeDirection)
+        {
+        case EGridDirection::EGD_Up:
+            EdgePosition = TargetVolumeLocation + FVector(TargetHalfHeight - SafeDistance, 0, SpawnLocation.Z);
+            break;
+        case EGridDirection::EGD_Down:
+            EdgePosition = TargetVolumeLocation + FVector(-TargetHalfHeight + SafeDistance, 0, SpawnLocation.Z);
+            break;
+        case EGridDirection::EGD_Left:
+            EdgePosition = TargetVolumeLocation + FVector(0, -TargetHalfWidth + SafeDistance, SpawnLocation.Z);
+            break;
+        case EGridDirection::EGD_Right:
+            EdgePosition = TargetVolumeLocation + FVector(0, TargetHalfWidth - SafeDistance, SpawnLocation.Z);
+            break;
+        }
+        
+        FVector2D EdgePosition2D(EdgePosition.X, EdgePosition.Y);
+        
+        bool bIsInside = false;
+        
+        switch (NodeDirection)
+        {
+        case EGridDirection::EGD_Up:
+            bIsInside = SpawnLocation.X < EdgePosition.X;
+            break;
+        case EGridDirection::EGD_Down:
+            bIsInside = SpawnLocation.X > EdgePosition.X;
+            break;
+        case EGridDirection::EGD_Left:
+            bIsInside = SpawnLocation.Y < EdgePosition.Y;
+            break;
+        case EGridDirection::EGD_Right:
+            bIsInside = SpawnLocation.Y > EdgePosition.Y;
+            break;
+        }
+        
+        if (bIsInside)
+        {
+            TargetLocation = EdgePosition;
+        }
+        else
+        {
+            TargetLocation = SpawnLocation;
+        }
         
         FRotator TargetRotation = TargetNode->SpawnPosition->GetComponentRotation();
         Character->SetActorRotation(TargetRotation);
@@ -93,34 +221,35 @@ void USLGridNode::OnTriggeredNode(UPrimitiveComponent* OverlappedComp, AActor* O
         FVector EdgePosition;
         switch (NodeDirection)
         {
-            case EGridDirection::EGD_Up:
-                EdgePosition = TargetVolumeLocation + FVector(TargetHalfHeight, 0, 0);
-                break;
-            case EGridDirection::EGD_Down:
-                EdgePosition = TargetVolumeLocation + FVector(-TargetHalfHeight, 0, 0);
-                break;
-            case EGridDirection::EGD_Left:
-                EdgePosition = TargetVolumeLocation + FVector(0, -TargetHalfWidth, 0);
-                break;
-            case EGridDirection::EGD_Right:
-                EdgePosition = TargetVolumeLocation + FVector(0, TargetHalfWidth, 0);
-                break;
+        case EGridDirection::EGD_Up:
+            EdgePosition = TargetVolumeLocation + FVector(TargetHalfHeight - SafeDistance, 0, 0);
+            break;
+        case EGridDirection::EGD_Down:
+            EdgePosition = TargetVolumeLocation + FVector(-TargetHalfHeight + SafeDistance, 0, 0);
+            break;
+        case EGridDirection::EGD_Left:
+            EdgePosition = TargetVolumeLocation + FVector(0, -TargetHalfWidth + SafeDistance, 0);
+            break;
+        case EGridDirection::EGD_Right:
+            EdgePosition = TargetVolumeLocation + FVector(0, TargetHalfWidth - SafeDistance, 0);
+            break;
         }
+
         TargetLocation = EdgePosition + RelativeOffset;
+        
+        float ClampedY = FMath::Clamp(TargetLocation.Y, 
+                                     TargetVolumeLocation.Y - TargetHalfWidth + SafeDistance, 
+                                     TargetVolumeLocation.Y + TargetHalfWidth - SafeDistance);
+        float ClampedX = FMath::Clamp(TargetLocation.X, 
+                                     TargetVolumeLocation.X - TargetHalfHeight + SafeDistance, 
+                                     TargetVolumeLocation.X + TargetHalfHeight - SafeDistance);
+        
+        TargetLocation.Y = ClampedY;
+        TargetLocation.X = ClampedX;
     }
 
-    TargetNode->bIsUsable = false;
     Character->SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
     SwitchToVolumeCamera(PlayerController, TargetVolume);
-    
-}
-
-void USLGridNode::OnExitTriggerNode(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-    const APawn* Character = Cast<APawn>(OtherActor);
-    if (!Character) return;
-    
-    bIsUsable = true;
 }
 
 void USLGridNode::SwitchToVolumeCamera(APlayerController* PlayerController, ASLGridVolume* TargetVolume)
