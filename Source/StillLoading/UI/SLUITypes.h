@@ -87,7 +87,8 @@ enum class ESLPublicWidgetImageType : uint8
 	EPWI_RightArrow,
 	EPWI_Background,
 	EPWI_Fade,
-	EPWI_Logo
+	EPWI_Logo,
+	EPWI_ButtonEffect
 };
 
 UENUM(BlueprintType)
