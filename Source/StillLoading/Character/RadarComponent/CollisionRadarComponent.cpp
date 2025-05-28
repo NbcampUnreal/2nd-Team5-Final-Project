@@ -99,7 +99,7 @@ void UCollisionRadarComponent::DetectClosestActorInFOV()
     if (ClosestActor)
     {
         //TODO: 여기서 딜리게이트로 뿌리던지 상호작용 시작점 케릭터랑 가장 가까운 액터 위치
-        UE_LOG(LogCollisionRadarComponent, Warning, TEXT("Closest Actor in FOV: %s, Distance: %.2f"), *ClosestActor->GetName(), MinDistance);
+        //UE_LOG(LogCollisionRadarComponent, Warning, TEXT("Closest Actor in FOV: %s, Distance: %.2f"), *ClosestActor->GetName(), MinDistance);
         //GetOwner()->FindComponentByClass<UBattleComponent>()
     }
     

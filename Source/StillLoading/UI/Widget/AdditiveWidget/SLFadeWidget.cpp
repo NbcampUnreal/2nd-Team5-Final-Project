@@ -67,13 +67,15 @@ bool USLFadeWidget::ApplyOtherImage()
 {
 	Super::ApplyOtherImage();
 
-	if (!PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Fade) ||
-		!IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Fade]))
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Fade) ||
+		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Fade]))
 	{
 		return false;
 	}
 	
-	FadeImage->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Fade]);
+	FSlateBrush SlateBrush;
+	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Fade]);
+	FadeImage->SetBrush(SlateBrush);
 
 	return true;
 }

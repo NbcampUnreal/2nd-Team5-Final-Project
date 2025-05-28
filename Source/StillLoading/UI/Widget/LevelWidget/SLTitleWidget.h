@@ -21,10 +21,9 @@ public:
 
 protected:
 	virtual void ApplyTextData() override;
-
-	virtual bool ApplyBackgroundImage() override;
+	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush) override;
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
-	virtual bool ApplyBorderImage() override;
+	virtual bool ApplyOtherImage() override;
 
 private:
 	UFUNCTION()
@@ -59,13 +58,10 @@ private:
 	TObjectPtr<UTextBlock> QuitText = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UImage> BackgroundImg = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> TitleTextImg = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UImage> ButtonsBackground = nullptr;
+	TObjectPtr<UImage> BackgroundBorder = nullptr;
 
 	static const FName TitleTextIndex;
 	static const FName StartButtonIndex;

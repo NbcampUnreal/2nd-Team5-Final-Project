@@ -35,7 +35,7 @@ protected:
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
 
 	virtual void ApplyFontData() override;
-	virtual bool ApplyBorderImage() override;
+	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush) override;
 	virtual bool ApplyOtherImage() override;
 
 	void SetIsSubWidgetActivate(bool bIsActived, UWidgetAnimation* ActiveAnim, UWidgetAnimation* DeactiveAnim);
