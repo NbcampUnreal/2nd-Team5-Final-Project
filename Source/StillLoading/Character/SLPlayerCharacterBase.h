@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "SLPlayerCharacterBase.generated.h"
 
+class UAIPerceptionStimuliSourceComponent;
 class UCameraManagerComponent;
 class USpringArmComponent;
 class UCameraComponent;
@@ -16,6 +17,9 @@ class STILLLOADING_API ASLPlayerCharacterBase : public ACharacter
 
 public:
 	ASLPlayerCharacterBase();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSource;
 
 protected:
 	virtual void BeginPlay() override;

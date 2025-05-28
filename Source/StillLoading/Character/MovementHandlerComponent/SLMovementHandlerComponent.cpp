@@ -120,7 +120,7 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 				// 전체 슬로우 (자기 자신 포함)
 				USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, nullptr, 0.2f, 0.15f, true, false);
 				// 자기 자신 제외한 모두 슬로우
-				USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, OwnerCharacter, 0.2f, 0.3f, true, true);
+				//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, OwnerCharacter, 0.2f, 0.3f, true, true);
 
 				return;
 			}

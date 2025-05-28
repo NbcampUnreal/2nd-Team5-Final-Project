@@ -19,6 +19,8 @@ public class StillLoading : ModuleRules
 			"AIModule",
 			"MotionWarping",
 			"AnimGraphRuntime",
+			"NavigationSystem",
+			"AIModule",
 			"GameplayTags",
 			"Niagara",
             "GeometryCollectionEngine"
