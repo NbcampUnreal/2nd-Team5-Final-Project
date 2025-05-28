@@ -131,6 +131,18 @@ bool UAnimationMontageComponent::IsAttackMontagePlaying() const
     return IsMontagePlayingHelper(MontageData ? MontageData->AttackMontage : nullptr);
 }
 
+void UAnimationMontageComponent::PlayAIAttackMontage(FName Section)
+{
+	if (MontageData)
+		PlayMontage(MontageData->AIAttackMontage, Section);
+}
+
+void UAnimationMontageComponent::PlayAIHitMontage(FName Section)
+{
+	if (MontageData)
+		PlayMontage(MontageData->AIHitMontage, Section);
+}
+
 bool UAnimationMontageComponent::IsMontagePlayingHelper(const UAnimMontage* Montage) const
 {
     if (AnimInstance && Montage)

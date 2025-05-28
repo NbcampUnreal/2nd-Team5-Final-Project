@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "MonsterAIController.generated.h"
 
 class UAISenseConfig_Sight;
@@ -28,15 +29,14 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void Tick(float DeltaTime) override;
-
-	// 감지 콜백 함수
+	
 	UFUNCTION()
 	void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
+	UFUNCTION()
+	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
 	UPROPERTY()
 	TObjectPtr<UBlackboardComponent> BlackboardComponent;
-
-private:
-	UPROPERTY()
-	bool bFoundValidTarget = false;
 };

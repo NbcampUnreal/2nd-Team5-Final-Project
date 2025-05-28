@@ -3,6 +3,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/BattleComponent/BattleComponent.h"
+#include "Character/MontageComponent/AnimationMontageComponent.h"
 
 USLBTTask_Attack::USLBTTask_Attack()
 {
@@ -23,11 +24,14 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	AActor* Target = Cast<AActor>(BlackboardComp->GetValueAsObject("TargetActor"));
 	if (!Target) return EBTNodeResult::Failed;
 
-	// 공격 애니메이션 재생 및 데미지 적용 로직을 여기에 추가합니다.
 	UBattleComponent* BattleComp = AIPawn->FindComponentByClass<UBattleComponent>();
 	if (!BattleComp) return EBTNodeResult::Failed;
 
+	UAnimationMontageComponent* AnimComp = AIPawn->FindComponentByClass<UAnimationMontageComponent>();
+	if (!AnimComp) return EBTNodeResult::Failed;
+	
 	BattleComp->DoAttackSweep(EAttackAnimType::AAT_AINormal);
+	AnimComp->PlayAIAttackMontage();
 
 	// 공격 쿨다운 설정
 	BlackboardComp->SetValueAsBool("CanAttack", false);
