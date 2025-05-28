@@ -103,16 +103,16 @@ void USLInGameWidget::ApplyFontData()
 	Super::ApplyFontData();
 }
 
-bool USLInGameWidget::ApplyBorderImage()
+bool USLInGameWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
 {
-	if (!Super::ApplyBorderImage())
+	if (!Super::ApplyBorderImage(SlateBrush))
 	{
 		return false;
 	}
 
-	TimerBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
-	PlayerStateBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
-	GameStateBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+	TimerBack->SetBrush(SlateBrush);
+	PlayerStateBack->SetBrush(SlateBrush);
+	GameStateBack->SetBrush(SlateBrush);
 
 	return true;
 }

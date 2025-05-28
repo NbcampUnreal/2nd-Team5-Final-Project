@@ -21,9 +21,9 @@ public:
 
 protected:
 	virtual void ApplyTextData() override;
-
+	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush) override;
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
-	virtual bool ApplyBorderImage() override;
+	virtual bool ApplyOtherImage() override;
 
 private:
 	UFUNCTION()
