@@ -80,15 +80,22 @@ void USLTalkWidget::ApplyTextData()
 	PrintTalkText();
 }
 
-bool USLTalkWidget::ApplyTextBorderImage()
+bool USLTalkWidget::ApplyTextBorderImage(FSlateBrush& SlateBrush)
 {
-	if (!Super::ApplyTextBorderImage())
+	if (!Super::ApplyTextBorderImage(SlateBrush))
 	{
 		return false;
 	}
-
-	TalkBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_TextBorder]);
-	NameBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_TextBorder]);
+	
+	TalkBack->SetBrush(SlateBrush);
+	
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_NameBorder) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_NameBorder]))
+	{
+		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_NameBorder]);
+		NameBack->SetBrush(SlateBrush);
+	}
+	
 	return true;
 }
 

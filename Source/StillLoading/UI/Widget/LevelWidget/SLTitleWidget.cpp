@@ -61,6 +61,18 @@ void USLTitleWidget::ApplyTextData()
 	QuitText->SetText(OptionTextMap[QuitButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 }
 
+bool USLTitleWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
+{
+	if (!Super::ApplyBackgroundImage(SlateBrush))
+	{
+		return false;
+	}
+
+	BackgroundBorder->SetBrush(SlateBrush);
+
+	return true;
+}
+
 bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 {
 	if (!Super::ApplyButtonImage(ButtonStyle))
@@ -75,15 +87,19 @@ bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 	return true;
 }
 
-bool USLTitleWidget::ApplyBorderImage()
+bool USLTitleWidget::ApplyOtherImage()
 {
-	if (!Super::ApplyBorderImage())
+	Super::ApplyOtherImage();
+
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Logo) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Logo]))
 	{
-		return false;
+		FSlateBrush SlateBrush;
+		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Logo]);
+		TitleTextImg->SetBrush(SlateBrush);
+		TitleText->SetVisibility(ESlateVisibility::Collapsed);
 	}
 
-	BackgroundBorder->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
-	
 	return true;
 }
 

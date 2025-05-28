@@ -62,13 +62,13 @@ void USLNotifyWidget::OnEndedCloseAnim()
 	CloseWidget();
 }
 
-bool USLNotifyWidget::ApplyBackgroundImage()
+bool USLNotifyWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
 {
-	if (!Super::ApplyBackgroundImage())
+	if (!Super::ApplyBackgroundImage(SlateBrush))
 	{
 		return false;
 	}
 
-	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
+	BackgroundImg->SetBrush(SlateBrush);
 	return true;
 }

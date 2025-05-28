@@ -7,7 +7,9 @@
 #include "Components/ExpandableArea.h"
 #include "Components/Slider.h"
 #include "Components/Image.h"
+#include "Components/WidgetSwitcher.h"
 #include "UI/SLUISubsystem.h"
+#include "UI/Widget/AdditiveWidget/SubWidget/SLKeySettingWidget.h"
 #include "Animation/WidgetAnimation.h"
 #include "SubSystem/SLUserDataSubsystem.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
@@ -43,8 +45,8 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	FullScreenButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedFullScreen);
 	WindowScreenButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedWindowScreen);
 
-	KorButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedKor);
-	EngButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedEng);
+	LanguageLeftButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedLanguageLeftButton);
+	LanguageRightButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedLanguageRightButton);
 
 	FirstResolutionButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedFirstResolution);
 	SecondResolutionButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedSecondResolution);
@@ -55,11 +57,15 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 	BrightnessSlider->OnValueChanged.AddDynamic(this, &ThisClass::UpdateBrightness);
 
+	LanguageSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedLanguageSetting);
+	GraphicSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedGraphicSetting);
+	SoundSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedSoundSetting);
 	KeySettingButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedKeySetting);
 	QuitGameButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuit);
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
 
 	InitOptionVariable();
+	KeySettingWidget->InitWidget(NewUISubsystem);
 }
 
 void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
@@ -77,6 +83,9 @@ void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 
 	UpdateScreenModeButton();
 	UpdateLanguageButton();
+
+	LayerSwitcher->SetActiveWidgetIndex(0);
+	KeySettingWidget->ActivateWidget(WidgetActivateBuffer);
 
 	PlayUISound(ESLUISoundType::EUS_Open);
 }
@@ -117,8 +126,6 @@ void USLOptionWidget::ApplyTextData()
 	}
 
 	TitleText->SetText(OptionTextMap[TitleTextIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	KorText->SetText(OptionTextMap[KorButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	EngText->SetText(OptionTextMap[EngButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 	LanguageModeText->SetText(OptionTextMap[LanguageTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 	WindowModeText->SetText(OptionTextMap[WindowModeTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 	FullScreenText->SetText(OptionTextMap[FullScreenButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
@@ -130,18 +137,6 @@ void USLOptionWidget::ApplyTextData()
 	KeySettingText->SetText(OptionTextMap[KeySettingButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 	QuitGameText->SetText(OptionTextMap[QuitGameButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
 	CloseText->SetText(OptionTextMap[CloseButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-}
-
-bool USLOptionWidget::ApplyBackgroundImage()
-{
-	if (!Super::ApplyBackgroundImage())
-	{
-		return false;
-	}
-
-	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
-
-	return true;
 }
 
 bool USLOptionWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
@@ -156,6 +151,9 @@ bool USLOptionWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 	KeySettingButton->SetStyle(ButtonStyle);
 	QuitGameButton->SetStyle(ButtonStyle);
 	CloseButton->SetStyle(ButtonStyle);
+	LanguageSetBt->SetStyle(ButtonStyle);
+	GraphicSetBt->SetStyle(ButtonStyle);
+	SoundSetBt->SetStyle(ButtonStyle);
 
 	return true;
 }
@@ -174,14 +172,14 @@ bool USLOptionWidget::ApplySliderImage(FSliderStyle& SliderStyle)
 	return true;
 }
 
-bool USLOptionWidget::ApplyBorderImage()
+bool USLOptionWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
 {
-	if (!Super::ApplyBorderImage())
+	if (!Super::ApplyBorderImage(SlateBrush))
 	{
 		return false;
 	}
 
-	OptionPanelBack->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
+	OptionPanelBack->SetBrush(SlateBrush);
 
 	return true;
 }
@@ -190,42 +188,11 @@ bool USLOptionWidget::ApplyOtherImage()
 {
 	Super::ApplyOtherImage();
 
-	if (PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_Expandable) &&
-		IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_Expandable]))
-	{
-		FSlateBrush SlateBrush;
-
-		SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_Expandable]);
-		ResolutionList->SetBorderBrush(SlateBrush);
-		LanguageList->SetBorderBrush(SlateBrush);
-	}
-
-	if (PublicImageMap.Contains(ESLPublicWidgetImageType::EPWI_ExpandedButton) &&
-		IsValid(PublicImageMap[ESLPublicWidgetImageType::EPWI_ExpandedButton]))
-	{
-		FButtonStyle ButtonStyle;
-		FSlateBrush SlateBrush;
-
-		SlateBrush.SetResourceObject(PublicImageMap[ESLPublicWidgetImageType::EPWI_ExpandedButton]);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 1.0f));
-		ButtonStyle.SetNormal(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-		ButtonStyle.SetHovered(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
-		ButtonStyle.SetPressed(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
-		ButtonStyle.SetDisabled(SlateBrush);
-
-		KorButton->SetStyle(ButtonStyle);
-		EngButton->SetStyle(ButtonStyle);
-		FirstResolutionButton->SetStyle(ButtonStyle);
-		SecondResolutionButton->SetStyle(ButtonStyle);
-		ThirdResolutionButton->SetStyle(ButtonStyle);
-	}
+	ApplyExpandableImage();
+	ApplyExpandedImage();
+	ApplyListBackImage();
+	ApplyLeftArrowImage();
+	ApplyRightArrowImage();
 
 	return true;
 }
@@ -245,6 +212,28 @@ void USLOptionWidget::InitOptionVariable()
 	BrightnessSlider->SetValue(UserDataSubsystem->GetCurrentBrightness());
 }
 
+void USLOptionWidget::OnClickedLanguageSetting()
+{
+	LayerSwitcher->SetActiveWidgetIndex(0);
+}
+
+void USLOptionWidget::OnClickedGraphicSetting()
+{
+	LayerSwitcher->SetActiveWidgetIndex(1);
+}
+
+void USLOptionWidget::OnClickedSoundSetting()
+{
+	LayerSwitcher->SetActiveWidgetIndex(2);
+}
+
+void USLOptionWidget::OnClickedKeySetting()
+{
+	LayerSwitcher->SetActiveWidgetIndex(3);
+	/*CheckValidOfUISubsystem();
+	UISubsystem->AddAdditiveWidget(ESLAdditiveWidgetType::EAW_KeySettingWidget);*/
+}
+
 void USLOptionWidget::OnClickedKor()
 {
 	CheckValidOfUserDataSubsystem();
@@ -259,6 +248,51 @@ void USLOptionWidget::OnClickedEng()
 	UserDataSubsystem->SetLanguage(ESLLanguageType::EL_Eng);
 	UpdateLanguageButton();
 	PlayUISound(ESLUISoundType::EUS_Click);
+}
+
+void USLOptionWidget::OnClickedLanguageLeftButton()
+{
+	UpdateLanguage(true);
+	PlayUISound(ESLUISoundType::EUS_Click);
+}
+
+void USLOptionWidget::OnClickedLanguageRightButton()
+{
+	UpdateLanguage(false);
+	PlayUISound(ESLUISoundType::EUS_Click);
+}
+
+void USLOptionWidget::UpdateLanguage(bool bIsLeft)
+{
+	CheckValidOfUserDataSubsystem();
+	ESLLanguageType CurrentLanguage = UserDataSubsystem->GetCurrentLanguage();
+	int32 NextLanguageIndex = 0;
+
+	if (bIsLeft)
+	{
+		NextLanguageIndex = (int32)CurrentLanguage - 1;
+	}
+	else
+	{
+		NextLanguageIndex = (int32)CurrentLanguage + 1;
+	}
+
+	if (NextLanguageIndex == (int32)ESLLanguageType::EL_None)
+	{
+		NextLanguageIndex = (int32)ESLLanguageType::EL_Max - 1;
+	}
+	else if (NextLanguageIndex == (int32)ESLLanguageType::EL_Max)
+	{
+		NextLanguageIndex = (int32)ESLLanguageType::EL_None + 1;
+	}
+
+	CurrentLanguage = (ESLLanguageType)NextLanguageIndex;
+
+	if (LanguageTextMap.Contains(CurrentLanguage))
+	{
+		UserDataSubsystem->SetLanguage(CurrentLanguage);
+		LanguageText->SetText(LanguageTextMap[CurrentLanguage]);
+	}
 }
 
 void USLOptionWidget::OnClickedFullScreen()
@@ -313,12 +347,6 @@ void USLOptionWidget::UpdateBrightness(float BrightnessValue)
 	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
-void USLOptionWidget::OnClickedKeySetting()
-{
-	CheckValidOfUISubsystem();
-	UISubsystem->AddAdditiveWidget(ESLAdditiveWidgetType::EAW_KeySettingWidget);
-}
-
 void USLOptionWidget::OnClickedQuit()
 {
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
@@ -358,19 +386,10 @@ void USLOptionWidget::UpdateLanguageButton()
 	
 	ESLLanguageType CurrentLanguage = UserDataSubsystem->GetCurrentLanguage();
 	
-	FText TargetText = FText::GetEmpty();
-
-	if (CurrentLanguage == ESLLanguageType::EL_Kor)
+	if (LanguageTextMap.Contains(CurrentLanguage))
 	{
-		TargetText = KorText->GetText();
+		LanguageText->SetText(LanguageTextMap[CurrentLanguage]);
 	}
-	else if (CurrentLanguage == ESLLanguageType::EL_Eng)
-	{
-		TargetText = EngText->GetText();
-	}
-
-	CurrentLanguageText->SetText(TargetText);
-	LanguageList->SetIsExpanded(false);
 }
 
 void USLOptionWidget::UpdateResolution(int32 ResolutionNum)
@@ -385,4 +404,107 @@ void USLOptionWidget::UpdateResolution(int32 ResolutionNum)
 	ResolutionList->SetIsExpanded(false);
 	CurrentResolutionText->SetText(FText::FromString(FString::Printf(TEXT("%.0f * %.0f"), Width, Height)));
 	PlayUISound(ESLUISoundType::EUS_Click);
+}
+
+void USLOptionWidget::ApplyExpandableImage()
+{
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Expandable) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Expandable]))
+	{
+		FSlateBrush SlateBrush;
+
+		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Expandable]);
+		ResolutionList->SetBorderBrush(SlateBrush);
+	}
+}
+
+void USLOptionWidget::ApplyExpandedImage()
+{
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ExpandedButton) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ExpandedButton]))
+	{
+		FButtonStyle ButtonStyle;
+		FSlateBrush SlateBrush;
+
+		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ExpandedButton]);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 1.0f));
+		ButtonStyle.SetNormal(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+		ButtonStyle.SetHovered(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
+		ButtonStyle.SetPressed(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
+		ButtonStyle.SetDisabled(SlateBrush);
+
+		FirstResolutionButton->SetStyle(ButtonStyle);
+		SecondResolutionButton->SetStyle(ButtonStyle);
+		ThirdResolutionButton->SetStyle(ButtonStyle);
+	}
+}
+
+void USLOptionWidget::ApplyListBackImage()
+{
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ListBack) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ListBack]))
+	{
+		FSlateBrush SlateBrush;
+		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ListBack]);
+		LanguageBack->SetBrush(SlateBrush);
+	}
+}
+
+void USLOptionWidget::ApplyLeftArrowImage()
+{
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_LeftArrow) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_LeftArrow]))
+	{
+		FButtonStyle ButtonStyle;
+		FSlateBrush SlateBrush;
+
+		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_LeftArrow]);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 1.0f));
+		ButtonStyle.SetNormal(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+		ButtonStyle.SetHovered(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
+		ButtonStyle.SetPressed(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
+		ButtonStyle.SetDisabled(SlateBrush);
+
+		LanguageLeftButton->SetStyle(ButtonStyle);
+	}
+}
+
+void USLOptionWidget::ApplyRightArrowImage()
+{
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_RightArrow) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_RightArrow]))
+	{
+		FButtonStyle ButtonStyle;
+		FSlateBrush SlateBrush;
+
+		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_RightArrow]);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 1.0f));
+		ButtonStyle.SetNormal(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+		ButtonStyle.SetHovered(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
+		ButtonStyle.SetPressed(SlateBrush);
+
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
+		ButtonStyle.SetDisabled(SlateBrush);
+
+		LanguageRightButton->SetStyle(ButtonStyle);
+	}
 }
