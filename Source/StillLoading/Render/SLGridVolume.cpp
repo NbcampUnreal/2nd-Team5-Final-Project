@@ -78,6 +78,7 @@ void ASLGridVolume::Tick(float DeltaTime)
 #endif
 }
 
+#if WITH_EDITOR
 void ASLGridVolume::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
@@ -89,17 +90,28 @@ void ASLGridVolume::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
     InitializeGridEdges();
     InitializeTriggerVolume();
 }
-#if WITH_EDITOR
+#endif
 
 void ASLGridVolume::InitializeGridEdges()
 {
     const float HalfWidth = GetGridWidth() * 0.5f;
     const float HalfHeight = GetGridHeight() * 0.5f;
-    
-    UpGridNode->SpawnPosition->SetRelativeLocation(FVector(HalfHeight, 0.f, 0));
-    DownGridNode->SpawnPosition->SetRelativeLocation(FVector(-HalfHeight, 0.f, 0));
-    LeftGridNode->SpawnPosition->SetRelativeLocation(FVector(0.f, -HalfWidth, 0));
-    RightGridNode->SpawnPosition->SetRelativeLocation(FVector(0.f, HalfWidth, 0));
+    if (UpGridNode)
+    {
+        UpGridNode->SpawnPosition->SetRelativeLocation(FVector(HalfHeight, 0.f, 0));
+    }
+    if (DownGridNode)
+    {
+        DownGridNode->SpawnPosition->SetRelativeLocation(FVector(-HalfHeight, 0.f, 0));
+    }
+    if (LeftGridNode)
+    {
+        LeftGridNode->SpawnPosition->SetRelativeLocation(FVector(0.f, -HalfWidth, 0));
+    }
+    if (RightGridNode)
+    {
+        RightGridNode->SpawnPosition->SetRelativeLocation(FVector(0.f, HalfWidth, 0));
+    }
 }
 
 void ASLGridVolume::InitializeTriggerVolume()
@@ -113,37 +125,30 @@ void ASLGridVolume::InitializeTriggerVolume()
     {
         UpGridNode->TriggerVolume->SetRelativeLocation(FVector(HalfHeight, 0.f, 0.f));
         UpGridNode->TriggerVolume->SetBoxExtent(FVector(TriggerThickness, HalfWidth, TriggerThickness));
-        UpGridNode->TriggerVolume->SetCollisionProfileName(TEXT("Trigger"));
-        UpGridNode->TriggerVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        UpGridNode->UpdateTriggerVolume();
     }
     
     if (DownGridNode && DownGridNode->TriggerVolume)
     {
         DownGridNode->TriggerVolume->SetRelativeLocation(FVector(-HalfHeight, 0.f, 0.f));
         DownGridNode->TriggerVolume->SetBoxExtent(FVector(TriggerThickness, HalfWidth, TriggerThickness));
-        DownGridNode->TriggerVolume->SetCollisionProfileName(TEXT("Trigger"));
-        DownGridNode->TriggerVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        DownGridNode->UpdateTriggerVolume();
     }
     
     if (LeftGridNode && LeftGridNode->TriggerVolume)
     {
         LeftGridNode->TriggerVolume->SetRelativeLocation(FVector(0.f, -HalfWidth, 0.f));
         LeftGridNode->TriggerVolume->SetBoxExtent(FVector(HalfHeight, TriggerThickness, TriggerThickness));
-        LeftGridNode->TriggerVolume->SetCollisionProfileName(TEXT("Trigger"));
-        LeftGridNode->TriggerVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        LeftGridNode->UpdateTriggerVolume();
     }
     
     if (RightGridNode && RightGridNode->TriggerVolume)
     {
         RightGridNode->TriggerVolume->SetRelativeLocation(FVector(0.f, HalfWidth, 0.f));
         RightGridNode->TriggerVolume->SetBoxExtent(FVector(HalfHeight, TriggerThickness, TriggerThickness));
-        RightGridNode->TriggerVolume->SetCollisionProfileName(TEXT("Trigger"));
-        RightGridNode->TriggerVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        RightGridNode->UpdateTriggerVolume();
     }
 }
-
-
-#endif
 
 void ASLGridVolume::DrawGridBound() const
 {

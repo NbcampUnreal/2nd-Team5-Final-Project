@@ -32,16 +32,16 @@ public:
     float GetGridWidth() const;
     UCameraComponent* GetCameraComponent() const { return CameraComponent; }
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
+    UPROPERTY(VisibleAnywhere, Category = "GridNode")
     TObjectPtr<USLGridNode> UpGridNode;
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
+    UPROPERTY(VisibleAnywhere, Category = "GridNode")
     TObjectPtr<USLGridNode> DownGridNode;
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
+    UPROPERTY(VisibleAnywhere, Category = "GridNode")
     TObjectPtr<USLGridNode> LeftGridNode;
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
+    UPROPERTY(VisibleAnywhere, Category = "GridNode")
     TObjectPtr<USLGridNode> RightGridNode;
     
 protected:
@@ -54,9 +54,6 @@ protected:
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
-    FIntPoint GridCoordinate;
-
 private:
     void InitializeGridEdges();
     void InitializeTriggerVolume();
@@ -66,19 +63,19 @@ private:
     UPROPERTY()
     TObjectPtr<ASLGridVolumeManager> GridManager;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY()
     TObjectPtr<USceneComponent> SceneComponent;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Grid", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridVolume", meta = (AllowPrivateAccess = "true"))
     TObjectPtr<UCameraComponent> CameraComponent;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Grid", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridVolume", meta = (AllowPrivateAccess = "true"))
     float CameraPitch = -40.0f;
     
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Grid", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridVolume", meta = (AllowPrivateAccess = "true"))
     float GridHeight = 1080.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Grid", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridVolume", meta = (AllowPrivateAccess = "true"))
     float GridWidth = 1920.0f;
 
 };

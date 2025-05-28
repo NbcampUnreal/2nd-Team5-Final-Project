@@ -18,11 +18,13 @@ class STILLLOADING_API USLGridNode : public USceneComponent
 
 public:
 	USLGridNode();
+
+	void UpdateTriggerVolume();
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<UBoxComponent> TriggerVolume;
     
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<UBillboardComponent> SpawnPosition;
     
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
@@ -34,16 +36,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGridDirection NodeDirection;
 
-	bool bIsUsable = true;
-
 protected:
 	virtual void BeginPlay() override;
-
+	
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+	
 private:
 	UFUNCTION()
 	void OnTriggeredNode(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
-	void OnExitTriggerNode(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
 	void SwitchToVolumeCamera(APlayerController* PlayerController, ASLGridVolume* TargetVolume);
 };
