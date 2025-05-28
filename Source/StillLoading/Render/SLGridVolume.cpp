@@ -167,7 +167,7 @@ void ASLGridVolume::DrawGridBound() const
         Center + FVector(-HalfHeight, HalfWidth, 0.f)
     };
     
-    FColor BoundsColor = GridManager ? FColor::Cyan : FColor::Red;
+    FColor BoundsColor = FColor::Cyan;
     
     for (int32 i = 0; i < 4; ++i)
     {

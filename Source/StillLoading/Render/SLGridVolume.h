@@ -8,7 +8,6 @@ class USLGridNode;
 class UCameraComponent;
 class ASLGridVolume;
 class UBoxComponent;
-class ASLGridVolumeManager;
 
 UENUM(BlueprintType)
 enum class EGridDirection : uint8
@@ -60,9 +59,6 @@ private:
     void DrawGridBound() const;
     void DrawNodeConnection() const;
     
-    UPROPERTY()
-    TObjectPtr<ASLGridVolumeManager> GridManager;
-
     UPROPERTY()
     TObjectPtr<USceneComponent> SceneComponent;
 
