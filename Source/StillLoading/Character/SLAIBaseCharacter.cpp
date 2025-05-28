@@ -101,6 +101,21 @@ void ASLAIBaseCharacter::BeginPlay()
 	{
 		RightFootCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightFootCollisionBoxAttachBoneName);
 	}
+
+	if (WeaponClass && WeaponSocketName != NAME_None)
+	{
+		// 클래스로부터 액터 인스턴스 생성
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    
+		AActor* WeaponActor = GetWorld()->SpawnActor<AActor>(WeaponClass, GetActorLocation(), GetActorRotation(), SpawnParams);
+    
+		if (WeaponActor)
+		{
+			EquipWeapon(WeaponActor);
+		}
+	}
+
 	
 	IsHitReaction = false;
 	IsDead = false;

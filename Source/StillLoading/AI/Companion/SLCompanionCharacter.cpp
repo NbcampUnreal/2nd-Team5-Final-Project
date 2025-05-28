@@ -4,6 +4,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "NiagaraFunctionLibrary.h"
+#include "AI/GamePlayTag/AIGamePlayTag.h"
 #include "AI/Projectile/SLAIProjectile.h"
 #include "AI/Projectile/SLHomingProjectile.h"
 #include "AI/SLMonster/SLMonster.h"
@@ -13,36 +14,34 @@
 
 ASLCompanionCharacter::ASLCompanionCharacter()
 {
+    PrimaryActorTick.bCanEverTick = true;
+    
     // 기본 설정
     MaxHealth = 100.0f;
     CurrentHealth = MaxHealth;
     
     // 무적 설정
     bCanBeExecuted = false;
-    IsHitReaction = false;
+    IsHitReaction = true;
     
     // 전투 설정
     ProjectileSocketName = "hand_r";
     AutoStunInterval = 10.0f;
     StunDuration = 3.0f;
     bIsInCombat = false;
-    
-    // 팀 설정 (플레이어와 같은 팀)
-    // AIController에서 TeamId를 0으로 설정
+    IsBattleMage = false;
 }
 
 void ASLCompanionCharacter::BeginPlay()
 {
     Super::BeginPlay();
     
-    // 자동 기절 타이머 설정
-    /*GetWorld()->GetTimerManager().SetTimer(
-        AutoStunTimer,
-        this,
-        &ASLCompanionCharacter::AutoStunNearbyEnemy,
-        AutoStunInterval,
-        true
-    );*/
+}
+
+void ASLCompanionCharacter::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+    
 }
 
 void ASLCompanionCharacter::SetCombatMode(bool bInCombat)
@@ -69,6 +68,11 @@ void ASLCompanionCharacter::SetCombatMode(bool bInCombat)
             }
         }
     }
+}
+
+bool ASLCompanionCharacter::HasGameplayTag(const FGameplayTag& TagToCheck) const
+{
+    return CurrentGameplayTags.HasTag(TagToCheck);
 }
 
 void ASLCompanionCharacter::FireProjectile(EAttackAnimType AttackAnimType)
@@ -99,10 +103,14 @@ void ASLCompanionCharacter::FireProjectile(EAttackAnimType AttackAnimType)
     }
 }
 
-ECompanionActionPattern ASLCompanionCharacter::SelectRandomPattern(const TArray<ECompanionActionPattern>& Patterns)
+bool ASLCompanionCharacter::GetIsBattleMage()
 {
-    int32 RandomIndex = FMath::RandRange(0, Patterns.Num() - 1);
-    return Patterns[RandomIndex];
+    return IsBattleMage;
+}
+
+void ASLCompanionCharacter::SetIsBattleMage(bool bInBattleMage)
+{
+    IsBattleMage = bInBattleMage;
 }
 
 void ASLCompanionCharacter::CastStunSpell(AActor* Target)
@@ -136,7 +144,7 @@ void ASLCompanionCharacter::CastStunSpell(AActor* Target)
     
     // 기절 해제 타이머
     FTimerHandle StunTimer;
-    GetWorld()->GetTimerManager().SetTimer(StunTimer, [EnemyCharacter]()
+    GetWorld()->GetTimerManager().SetTimer(StunTimer, [EnemyCharacter, this]()
     {
         if (IsValid(EnemyCharacter) && !EnemyCharacter->GetIsDead())
         {
@@ -146,6 +154,13 @@ void ASLCompanionCharacter::CastStunSpell(AActor* Target)
             }
         }
     }, StunDuration, false);
+}
+
+
+ECompanionActionPattern ASLCompanionCharacter::SelectRandomPattern(const TArray<ECompanionActionPattern>& Patterns)
+{
+    int32 RandomIndex = FMath::RandRange(0, Patterns.Num() - 1);
+    return Patterns[RandomIndex];
 }
 
 void ASLCompanionCharacter::AutoStunNearbyEnemy()
@@ -172,7 +187,7 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
         {
             // 히트 방향 계산
             FVector AttackerLocation = DamageCauser->GetActorLocation();
-            FVector DirectionVector = AttackerLocation - GetActorLocation(); // 캐릭터 -> 공격자
+            FVector DirectionVector = AttackerLocation - GetActorLocation();
             DirectionVector.Normalize();
             
             FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);

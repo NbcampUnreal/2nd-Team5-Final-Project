@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "NiagaraSystem.h"
 #include "Character/SLAIBaseCharacter.h"
+#include "GameplayTagContainer.h"
 #include "SLCompanionCharacter.generated.h"
 
 // Companion의 행동 패턴
@@ -15,14 +16,6 @@ enum class ECompanionActionPattern : uint8
 	ECAP_MagicAttack_01      UMETA(DisplayName = "Magic Attack 01"),     // 마법 공격 1
 	ECAP_MagicAttack_02      UMETA(DisplayName = "Magic Attack 02"),     // 마법 공격 2
 	ECAP_MagicAttack_03      UMETA(DisplayName = "Magic Attack 03"),     // 마법 공격 3
-	ECAP_CastStun            UMETA(DisplayName = "Cast Stun Spell"),     // 기절 마법 시전
-	ECAP_HighRightCast       UMETA(DisplayName = "High Right Cast"),     // 오른쪽 상단 캐스팅
-	ECAP_OverHeadCast        UMETA(DisplayName = "Overhead Cast"),       // 머리 위 캐스팅
-	ECAP_PointCast           UMETA(DisplayName = "Point Cast"),          // 지시 캐스팅
-	ECAP_WaveCast            UMETA(DisplayName = "Wave Cast"),           // 파동 캐스팅
-	ECAP_HomingProjectile    UMETA(DisplayName = "Homing Projectile"),   // 추적 발사체
-	ECAP_DefensiveBarrier    UMETA(DisplayName = "Defensive Barrier"),   // 방어 장벽
-	ECAP_AreaStun            UMETA(DisplayName = "Area Stun")            // 광역 기절
 };
 
 UCLASS()
@@ -36,6 +29,9 @@ public:
 	// 전투 모드 전환
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetCombatMode(bool bInCombat);
+	// 현재 태그 확인
+	UFUNCTION(BlueprintCallable, Category = "Combat|GameplayTags")
+	bool HasGameplayTag(const FGameplayTag& TagToCheck) const;
 
 	// 기절 스킬 발동
 	UFUNCTION(BlueprintCallable, Category = "Combat")
@@ -45,13 +41,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void FireProjectile(EAttackAnimType AttackAnimType);
 
+	UFUNCTION(BlueprintCallable, Category = "State")
+	bool GetIsBattleMage();
+
+	UFUNCTION(BlueprintCallable, Category = "State")
+	void SetIsBattleMage(bool bInBattleMage);
+	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	ECompanionActionPattern SelectRandomPattern(const TArray<ECompanionActionPattern>& Patterns);
 protected:
 	virtual void BeginPlay() override;
-
+	virtual void Tick(float DeltaTime) override;
 	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType) override;
-
+	
 	// 자동 기절 타이머
 	void AutoStunNearbyEnemy();
 
@@ -63,6 +65,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	FName ProjectileSocketName;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	bool IsBattleMage;
+	
 	// 자동 기절 주기
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	float AutoStunInterval;
@@ -75,6 +80,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> StunEffect;
 
+	// 게임플레이 태그 컨테이너
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|GameplayTags")
+	FGameplayTagContainer CurrentGameplayTags;
+	
 private:
 	FTimerHandle AutoStunTimer;
 	bool bIsInCombat;

@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayEffectTypes.h"
+#include "GameplayEffectTypes.h"
 #include "SLPlayerCharacterBase.h"
 #include "DataAsset/AttackDataAsset.h"
 #include "SLAIBaseCharacter.generated.h"
@@ -255,6 +257,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon")
 	TObjectPtr<UPrimitiveComponent> CurrentWeaponCollision;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AActor> WeaponClass;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> EquippedWeapon;
 
