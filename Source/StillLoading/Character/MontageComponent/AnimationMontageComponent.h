@@ -36,6 +36,12 @@ public:
 	void StopActiveMontages(float BlendOutTime);
 	UFUNCTION()
 	bool IsAttackMontagePlaying() const;
+
+	// AI
+	UFUNCTION()
+	void PlayAIAttackMontage(FName Section = NAME_None);
+	UFUNCTION()
+	void PlayAIHitMontage(FName Section = NAME_None);
 	
 protected:
 	virtual void BeginPlay() override;
