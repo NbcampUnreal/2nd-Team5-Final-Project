@@ -95,4 +95,6 @@ private:
 	static const FName StartButtonIndex;
 	static const FName OptionButtonIndex;
 	static const FName QuitButtonIndex;
+
+	bool bIsContainEffect = false;
 };

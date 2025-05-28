@@ -12,6 +12,7 @@
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "NiagaraSystemWidget.h"
 #include "NiagaraSystem.h"
+#include "NiagaraUIComponent.h"
 #include <Blueprint/WidgetLayoutLibrary.h>
 #include "Components/CanvasPanelSlot.h"
 
@@ -89,7 +90,30 @@ bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 {
 	if (!Super::ApplyButtonImage(ButtonStyle))
 	{
-		return false;
+		FSlateBrush SlateBrush;
+		SlateBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
+		ButtonStyle.SetNormal(SlateBrush);
+		ButtonStyle.SetHovered(SlateBrush);
+		ButtonStyle.SetDisabled(SlateBrush);
+		//return false;
+	}
+
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonEffect) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonEffect]))
+	{
+		UNiagaraSystem* Niagara = Cast<UNiagaraSystem>(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonEffect]);
+
+		if (IsValid(Niagara))
+		{
+			StartButtonEffect->UpdateNiagaraSystemReference(Niagara);
+			OptionButtonEffect->UpdateNiagaraSystemReference(Niagara);
+			QuitButtonEffect->UpdateNiagaraSystemReference(Niagara);
+			bIsContainEffect = true;
+		}
+	}
+	else
+	{
+		bIsContainEffect = false;
 	}
 
 	StartButton->SetStyle(ButtonStyle);
@@ -110,19 +134,6 @@ bool USLTitleWidget::ApplyOtherImage()
 		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Logo]);
 		TitleTextImg->SetBrush(SlateBrush);
 		TitleText->SetVisibility(ESlateVisibility::Collapsed);
-	}
-
-	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonHover) &&
-		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover]))
-	{
-		UNiagaraSystem* Niagara = Cast<UNiagaraSystem>(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover]);
-
-		if (IsValid(Niagara))
-		{
-			StartButtonEffect->UpdateNiagaraSystemReference(Niagara);
-			OptionButtonEffect->UpdateNiagaraSystemReference(Niagara);
-			QuitButtonEffect->UpdateNiagaraSystemReference(Niagara);
-		}
 	}
 
 	return true;
@@ -148,30 +159,50 @@ void USLTitleWidget::OnClickedQuitButton()
 
 void USLTitleWidget::OnHoveredStartButton()
 {
-	StartButtonEffect->ActivateSystem(false);
+	if (!bIsContainEffect)
+	{
+		return;
+	}
+
+	StartButtonEffect->ActivateSystem(true);
 	StartButtonEffect->SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
 void USLTitleWidget::OnHoveredOptionButton()
 {
-	OptionButtonEffect->ActivateSystem(false);
+	if (!bIsContainEffect)
+	{
+		return;
+	}
+
+	OptionButtonEffect->ActivateSystem(true);
 	OptionButtonEffect->SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
 void USLTitleWidget::OnHoveredQuitButton()
 {
-	QuitButtonEffect->ActivateSystem(false);
+	if (!bIsContainEffect)
+	{
+		return;
+	}
+
+	QuitButtonEffect->ActivateSystem(true);
 	QuitButtonEffect->SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
 void USLTitleWidget::OnUnhorveredButton()
 {
-	StartButtonEffect->DeactivateSystem();
+	if (!bIsContainEffect)
+	{
+		return;
+	}
+
+	StartButtonEffect->GetNiagaraComponent()->DeactivateImmediate();
 	StartButtonEffect->SetVisibility(ESlateVisibility::Collapsed);
 
-	OptionButtonEffect->DeactivateSystem();
+	OptionButtonEffect->GetNiagaraComponent()->DeactivateImmediate();
 	OptionButtonEffect->SetVisibility(ESlateVisibility::Collapsed);
 
-	QuitButtonEffect->DeactivateSystem();
+	QuitButtonEffect->GetNiagaraComponent()->DeactivateImmediate();
 	QuitButtonEffect->SetVisibility(ESlateVisibility::Collapsed);
 }
