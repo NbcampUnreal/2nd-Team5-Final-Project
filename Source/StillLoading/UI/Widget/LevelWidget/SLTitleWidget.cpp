@@ -5,10 +5,15 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
+#include "Components/CanvasPanel.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
+#include "NiagaraSystemWidget.h"
+#include "NiagaraSystem.h"
+#include <Blueprint/WidgetLayoutLibrary.h>
+#include "Components/CanvasPanelSlot.h"
 
 const FName USLTitleWidget::TitleTextIndex = "TitleText";
 const FName USLTitleWidget::StartButtonIndex = "StartButton";
@@ -25,6 +30,13 @@ void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	StartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedStartButton);
 	OptionButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedOptionButton);
 	QuitButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuitButton);
+
+	StartButton->OnHovered.AddDynamic(this, &ThisClass::OnHoveredStartButton);
+	StartButton->OnUnhovered.AddDynamic(this, &ThisClass::OnUnhorveredButton);
+	OptionButton->OnHovered.AddDynamic(this, &ThisClass::OnHoveredOptionButton);
+	OptionButton->OnUnhovered.AddDynamic(this, &ThisClass::OnUnhorveredButton);
+	QuitButton->OnHovered.AddDynamic(this, &ThisClass::OnHoveredQuitButton);
+	QuitButton->OnUnhovered.AddDynamic(this, &ThisClass::OnUnhorveredButton);
 }
 
 void USLTitleWidget::DeactivateWidget()
@@ -100,6 +112,19 @@ bool USLTitleWidget::ApplyOtherImage()
 		TitleText->SetVisibility(ESlateVisibility::Collapsed);
 	}
 
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonHover) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover]))
+	{
+		UNiagaraSystem* Niagara = Cast<UNiagaraSystem>(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover]);
+
+		if (IsValid(Niagara))
+		{
+			StartButtonEffect->UpdateNiagaraSystemReference(Niagara);
+			OptionButtonEffect->UpdateNiagaraSystemReference(Niagara);
+			QuitButtonEffect->UpdateNiagaraSystemReference(Niagara);
+		}
+	}
+
 	return true;
 }
 
@@ -119,4 +144,34 @@ void USLTitleWidget::OnClickedQuitButton()
 {
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
 	PlayUISound(ESLUISoundType::EUS_Click);
+}
+
+void USLTitleWidget::OnHoveredStartButton()
+{
+	StartButtonEffect->ActivateSystem(false);
+	StartButtonEffect->SetVisibility(ESlateVisibility::HitTestInvisible);
+}
+
+void USLTitleWidget::OnHoveredOptionButton()
+{
+	OptionButtonEffect->ActivateSystem(false);
+	OptionButtonEffect->SetVisibility(ESlateVisibility::HitTestInvisible);
+}
+
+void USLTitleWidget::OnHoveredQuitButton()
+{
+	QuitButtonEffect->ActivateSystem(false);
+	QuitButtonEffect->SetVisibility(ESlateVisibility::HitTestInvisible);
+}
+
+void USLTitleWidget::OnUnhorveredButton()
+{
+	StartButtonEffect->DeactivateSystem();
+	StartButtonEffect->SetVisibility(ESlateVisibility::Collapsed);
+
+	OptionButtonEffect->DeactivateSystem();
+	OptionButtonEffect->SetVisibility(ESlateVisibility::Collapsed);
+
+	QuitButtonEffect->DeactivateSystem();
+	QuitButtonEffect->SetVisibility(ESlateVisibility::Collapsed);
 }
