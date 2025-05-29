@@ -94,6 +94,7 @@ bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 		SlateBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
 		ButtonStyle.SetNormal(SlateBrush);
 		ButtonStyle.SetHovered(SlateBrush);
+		ButtonStyle.SetPressed(SlateBrush);
 		ButtonStyle.SetDisabled(SlateBrush);
 		//return false;
 	}
