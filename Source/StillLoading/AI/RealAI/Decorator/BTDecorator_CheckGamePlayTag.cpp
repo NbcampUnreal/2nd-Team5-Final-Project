@@ -1,6 +1,6 @@
 #include "BTDecorator_CheckGamePlayTag.h"
 #include "AIController.h"
-#include "AI/Testing/MonsterAICharacter.h"
+#include "AI/RealAI/MonsterAICharacter.h"
 
 UBTDecorator_CheckGamePlayTag::UBTDecorator_CheckGamePlayTag()
 {
