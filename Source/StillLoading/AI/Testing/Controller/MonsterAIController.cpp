@@ -1,6 +1,7 @@
 #include "MonsterAIController.h"
 
-#include "MonsterAICharacter.h"
+#include "EngineUtils.h"
+#include "AI/Testing/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
@@ -34,6 +35,13 @@ AMonsterAIController::AMonsterAIController()
 void AMonsterAIController::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AMonsterAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	SetGenericTeamId(FGenericTeamId(1));
 
 	if (BehaviorTreeAsset)
 	{
@@ -45,13 +53,6 @@ void AMonsterAIController::BeginPlay()
 	{
 		Blackboard->SetValueAsObject("SelfActor", GetPawn());
 	}
-}
-
-void AMonsterAIController::OnPossess(APawn* InPawn)
-{
-	Super::OnPossess(InPawn);
-
-	SetGenericTeamId(FGenericTeamId(1));
 }
 
 void AMonsterAIController::Tick(float DeltaTime)
@@ -67,21 +68,54 @@ void AMonsterAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
 		if (Stimulus.WasSuccessfullySensed())
 		{
 			BlackboardComponent->SetValueAsObject("TargetActor", Actor);
-			
 			if (AMonsterAICharacter* MyChar = Cast<AMonsterAICharacter>(GetPawn()))
 			{
 				MyChar->SetChasing(true);
 				MyChar->SetPrimaryState(TAG_AI_AbleToAttack);
+
+				AlertNearbyAllies(Player);
 			}
 		}
 		else
 		{
 			BlackboardComponent->ClearValue("TargetActor");
-			
 			if (AMonsterAICharacter* MyChar = Cast<AMonsterAICharacter>(GetPawn()))
 			{
 				MyChar->SetChasing(false);
 				MyChar->SetPrimaryState(TAG_AI_Idle);
+			}
+		}
+	}
+}
+
+void AMonsterAIController::AlertNearbyAllies(AActor* TargetActor, float AlertRadius)
+{
+	if (!TargetActor || !GetPawn()) return;
+
+	const FVector MyLocation = GetPawn()->GetActorLocation();
+	const FGenericTeamId MyTeamId = GetGenericTeamId();
+
+	for (TActorIterator<AMonsterAICharacter> It(GetWorld()); It; ++It)
+	{
+		const AMonsterAICharacter* Ally = *It;
+		if (!Ally || Ally == GetPawn()) continue;
+
+		const float Distance = FVector::Dist(MyLocation, Ally->GetActorLocation());
+		if (Distance > AlertRadius) continue;
+
+		AAIController* AllyController = Cast<AAIController>(Ally->GetController());
+		if (!AllyController) continue;
+
+		if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(AllyController))
+		{
+			if (TeamAgent->GetGenericTeamId() != MyTeamId) continue;
+		}
+
+		if (UBlackboardComponent* BB = AllyController->GetBlackboardComponent())
+		{
+			if (!BB->GetValueAsObject("TargetActor"))
+			{
+				BB->SetValueAsObject("TargetActor", TargetActor);
 			}
 		}
 	}

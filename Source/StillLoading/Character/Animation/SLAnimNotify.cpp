@@ -1,6 +1,7 @@
 #include "SLAnimNotify.h"
 
 #include "Character/SLPlayerCharacter.h"
+#include "Character/MovementHandlerComponent/SL2DMovementHandlerComponent.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 
 void USLAnimNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -20,4 +21,9 @@ void USLAnimNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* 
 	if (!ActionComp) return;
 
 	ActionComp->OnAttackStageFinished(CharacterMontageStage);
+
+	USL2DMovementHandlerComponent* Action2DComp = MyCharacter->FindComponentByClass<USL2DMovementHandlerComponent>();
+	if (!Action2DComp) return;
+
+	Action2DComp->OnAttackStageFinished(CharacterMontageStage);
 }

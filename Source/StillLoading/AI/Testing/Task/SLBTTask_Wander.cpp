@@ -23,11 +23,9 @@ EBTNodeResult::Type USLBTTask_Wander::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	if (!NavSys) return EBTNodeResult::Failed;
 
 	FNavLocation ResultLocation;
-	const float SearchRadius = 1000.f;
-	const float MinDistanceFromOthers = 200.f;
 	bool bFound = false;
 
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < MaxAttempts; ++i)
 	{
 		if (NavSys->GetRandomReachablePointInRadius(Pawn->GetActorLocation(), SearchRadius, ResultLocation))
 		{
@@ -36,6 +34,7 @@ EBTNodeResult::Type USLBTTask_Wander::ExecuteTask(UBehaviorTreeComponent& OwnerC
 			for (TActorIterator<AMonsterAICharacter> It(Pawn->GetWorld()); It; ++It)
 			{
 				if (*It == Pawn) continue;
+				
 				float DistSqr = FVector::DistSquared(It->GetActorLocation(), ResultLocation.Location);
 				if (DistSqr < MinDistanceFromOthers * MinDistanceFromOthers)
 				{

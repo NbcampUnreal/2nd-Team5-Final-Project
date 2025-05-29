@@ -296,11 +296,13 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	case EAttackAnimType::AAT_FootAttack_Right:
 	case EAttackAnimType::AAT_GroundSlam_01:
 	case EAttackAnimType::AAT_GroundSlam_02:
+	case EAttackAnimType::AAT_AISpecial:
 	case EAttackAnimType::AAT_JumpAttack: // 중간거
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
 		RemoveDelay = 1.0f;
 		break;
 	case EAttackAnimType::AAT_Whirlwind: // 약한거
+	case EAttackAnimType::AAT_AINormal:
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
 		RemoveDelay = 1.0f;
 		break;

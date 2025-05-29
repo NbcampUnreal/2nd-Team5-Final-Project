@@ -20,6 +20,10 @@ class STILLLOADING_API USL2DMovementHandlerComponent : public UActorComponent
 public:
 	USL2DMovementHandlerComponent();
 
+	// 애니매이션 노티 확인용
+	UFUNCTION()
+	void OnAttackStageFinished(ECharacterMontageState AttackStage);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

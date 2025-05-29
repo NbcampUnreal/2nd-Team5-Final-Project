@@ -57,9 +57,9 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 {
 	if (AActor* OwnerActor = GetOwner())
 	{
-		const FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 50);
-		const FVector End = Start + OwnerActor->GetActorForwardVector() * 100;
-		const FCollisionShape SweepShape = FCollisionShape::MakeCapsule(30.f, 70.f);
+		const FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 25);
+		const FVector End = Start + OwnerActor->GetActorForwardVector() * 80;
+		const FCollisionShape SweepShape = FCollisionShape::MakeCapsule(20.f, 70.f);
 
 		TArray<FHitResult> HitResults;
 		FCollisionQueryParams Params;

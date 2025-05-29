@@ -16,8 +16,11 @@ protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
 	UPROPERTY(EditAnywhere, Category = "Wander")
-	float WanderRadius = 500.f;
+	float SearchRadius = 800.f;
 
-	UPROPERTY(EditAnywhere, Category = "Blackboard")
-	FBlackboardKeySelector DestinationKey;
+	UPROPERTY(EditAnywhere, Category = "Wander")
+	int32 MaxAttempts = 10;
+
+	UPROPERTY(EditAnywhere, Category = "Wander")
+	float MinDistanceFromOthers = 200.f;
 };

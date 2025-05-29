@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "SLBTTaskMoveForward.h"
 
 #include "AIController.h"
@@ -39,15 +36,35 @@ void USLBTTaskMoveForward::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* No
 		return;
 	}
     
-	// 지정된 시간 동안만 이동
 	if (Memory->TimeElapsed <= MoveDuration)
 	{
-		// 캐릭터의 전방 벡터 방향으로 이동 입력 추가
-		Character->AddMovementInput(Character->GetActorForwardVector(), MoveSpeed);
+		FVector Start = Character->GetActorLocation();
+		FVector Forward = Character->GetActorForwardVector();
+		FVector End = Start + Forward * 100.0f;
+
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(Character);
+
+		FHitResult HitResult;
+		bool bHit = Character->GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			Start,
+			End,
+			ECollisionChannel::ECC_Visibility,
+			QueryParams
+		);
+
+		if (!bHit)
+		{
+			Character->AddMovementInput(Forward, MoveSpeed);
+		}
+		else
+		{
+			FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+		}
 	}
 	else
 	{
-		// 지정된 시간이 지나면 태스크 완료
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 	}
 }
