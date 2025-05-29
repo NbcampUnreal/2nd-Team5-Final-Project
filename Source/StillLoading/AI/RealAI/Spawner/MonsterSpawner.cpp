@@ -1,7 +1,7 @@
 #include "MonsterSpawner.h"
 
 #include "NavigationSystem.h"
-#include "AI/Testing/MonsterAICharacter.h"
+#include "AI/RealAI/MonsterAICharacter.h"
 #include "Components/BoxComponent.h"
 
 AMonsterSpawner::AMonsterSpawner()

@@ -1,7 +1,7 @@
 #include "SLBTTask_Attack.h"
 
 #include "AIController.h"
-#include "AI/Testing/MonsterAICharacter.h"
+#include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"

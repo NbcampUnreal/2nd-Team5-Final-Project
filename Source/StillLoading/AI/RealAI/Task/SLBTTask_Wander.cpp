@@ -3,7 +3,7 @@
 #include "AIController.h"
 #include "EngineUtils.h"
 #include "NavigationSystem.h"
-#include "AI/Testing/MonsterAICharacter.h"
+#include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 USLBTTask_Wander::USLBTTask_Wander()
