@@ -65,14 +65,14 @@ void USLMapListWidget::ApplyFontData()
 	Super::ApplyFontData();
 }
 
-bool USLMapListWidget::ApplyBackgroundImage()
+bool USLMapListWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
 {
-	if (!Super::ApplyBorderImage())
+	if (!Super::ApplyBorderImage(SlateBrush))
 	{
 		return false;
 	}
 
-	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
+	//BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
 	return true;
 }
 

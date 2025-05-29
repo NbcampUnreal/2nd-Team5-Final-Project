@@ -64,14 +64,14 @@ void USLCreditWidget::ApplyTextData()
 
 }
 
-bool USLCreditWidget::ApplyBackgroundImage()
+bool USLCreditWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
 {
-	if (!Super::ApplyBackgroundImage())
+	if (!Super::ApplyBackgroundImage(SlateBrush))
 	{
 		return false;
 	}
 
-	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_Background]);
+	BackgroundImg->SetBrush(SlateBrush);
 
 	return true;
 }

@@ -13,46 +13,9 @@
 
 void USLKeySettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
-	WidgetType = ESLAdditiveWidgetType::EAW_KeySettingWidget;
-	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
-	WidgetOrder = 17;
-	bIsVisibleCursor = true;
-
 	InitElementWidget();
-	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
+
 	Super::InitWidget(NewUISubsystem);
-
-	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
-}
-
-void USLKeySettingWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
-{
-	Super::ActivateWidget(WidgetActivateBuffer);
-
-	if (IsValid(OpenAnim))
-	{
-		PlayAnimation(OpenAnim);
-	}
-	else
-	{
-		OnEndedOpenAnim();
-	}
-
-	PlayUISound(ESLUISoundType::EUS_Open);
-}
-
-void USLKeySettingWidget::DeactivateWidget()
-{
-	if (IsValid(CloseAnim))
-	{
-		PlayAnimation(CloseAnim);
-	}
-	else
-	{
-		OnEndedCloseAnim();
-	}
-
-	PlayUISound(ESLUISoundType::EUS_Close);
 }
 
 void USLKeySettingWidget::ApplyFontData()
@@ -96,30 +59,6 @@ void USLKeySettingWidget::ApplyTextData()
 			MappingWidget->UpdateTagText(KeySettingTextMap[Index].ChapterTextMap[ESLChapterType::EC_Intro]);
 		}
 	}
-}
-
-bool USLKeySettingWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
-{
-	if (!Super::ApplyButtonImage(ButtonStyle))
-	{
-		return false;
-	}
-
-	CloseButton->SetStyle(ButtonStyle);
-
-	return true;
-}
-
-bool USLKeySettingWidget::ApplyBorderImage()
-{
-	if (!Super::ApplyBorderImage())
-	{
-		return false;
-	}
-
-	BackgroundImg->SetBrushFromTexture(PublicImageMap[ESLPublicWidgetImageType::EPWI_NormalBorder]);
-
-	return true;
 }
 
 void USLKeySettingWidget::OnClickedKeyDataButton(EInputActionType TargetAction)

@@ -20,7 +20,7 @@ public:
 
 protected:
 	virtual void ApplyTextData() override;
-	virtual bool ApplyTextBorderImage() override;
+	virtual bool ApplyTextBorderImage(FSlateBrush& SlateBrush) override;
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
 
 private:

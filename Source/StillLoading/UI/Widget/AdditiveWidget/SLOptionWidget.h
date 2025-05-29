@@ -11,6 +11,8 @@ class UTextBlock;
 class USlider;
 class UImage;
 class UExpandableArea;
+class UWidgetSwitcher;
+class USLKeySettingWidget;
 class UGameUserSettings;
 class URendererSettings;
 class USLUserDataSubsystem;
@@ -27,22 +29,38 @@ public:
 
 protected:
 	virtual void ApplyTextData() override;
-
-	virtual bool ApplyBackgroundImage() override;
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
 	virtual bool ApplySliderImage(FSliderStyle& SliderStyle) override;
-	virtual bool ApplyBorderImage() override;
+	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush) override;
 	virtual bool ApplyOtherImage();
 
-	void InitOptionVariable();
-
 private:
-	// Language Funtion
+	// Layer Switch Function
+	UFUNCTION()
+	void OnClickedLanguageSetting();
+
+	UFUNCTION()
+	void OnClickedGraphicSetting();
+
+	UFUNCTION()
+	void OnClickedSoundSetting();
+
+	UFUNCTION()
+	void OnClickedKeySetting();
+	//
+	
+	// Language Function
 	UFUNCTION()
 	void OnClickedKor();
 
 	UFUNCTION()
 	void OnClickedEng();
+
+	UFUNCTION()
+	void OnClickedLanguageLeftButton();
+
+	UFUNCTION()
+	void OnClickedLanguageRightButton();
 	//
 
 	// Screen Mode Function
@@ -77,19 +95,26 @@ private:
 	void UpdateBrightness(float BrightnessValue);
 	//
 
-	// Key Setting Function
-	UFUNCTION()
-	void OnClickedKeySetting();
-	//
-
 	UFUNCTION()
 	void OnClickedQuit();
 
+	void InitOptionVariable();
 	void CheckValidOfUserDataSubsystem();
+	void UpdateLanguage(bool bIsLeft);
 
 	void UpdateScreenModeButton();
 	void UpdateLanguageButton();
 	void UpdateResolution(int32 ResolutionNum);
+
+	void ApplyExpandableImage();
+	void ApplyExpandedImage();
+	void ApplyListBackImage();
+	void ApplyLeftArrowImage();
+	void ApplyRightArrowImage();
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<ESLLanguageType, FText> LanguageTextMap;
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -101,27 +126,50 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> OptionPanelBack = nullptr;
 
+	// Layer Switch Handle
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UWidgetSwitcher> LayerSwitcher = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> LanguageSetBt = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> GraphicSetBt = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> SoundSetBt = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> KeySettingButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> LanguageSetText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> GraphicSetText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> SoundSetText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> KeySettingText = nullptr;
+	//
+
 	// Language Setting
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UExpandableArea> LanguageList = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> CurrentLanguageText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> KorButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> EngButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> KorText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> EngText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> LanguageModeText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> LanguageLeftButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> LanguageRightButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> LanguageText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> LanguageBack = nullptr;
 	//
 
 	// Screen Mode Setting
@@ -185,10 +233,7 @@ private:
 
 	// Key Setting
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> KeySettingButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> KeySettingText = nullptr;
+	TObjectPtr<USLKeySettingWidget> KeySettingWidget = nullptr;
 	//
 
 	// Widget Handle

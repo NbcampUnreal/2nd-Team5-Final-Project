@@ -26,7 +26,7 @@ protected:
 	void OnClickedElement(ESLLevelNameType TargetMapType);
 
 	virtual void ApplyFontData() override;
-	virtual bool ApplyBackgroundImage() override;
+	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush) override;
 	virtual bool ApplyOtherImage() override;
 
 private:

@@ -26,7 +26,7 @@ protected:
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
 
-	virtual bool ApplyBackgroundImage() override;
+	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush) override;
 
 public:
 	UPROPERTY(EditAnywhere)

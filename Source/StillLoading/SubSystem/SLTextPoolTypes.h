@@ -32,8 +32,10 @@ enum class ESLTargetWidgetType : uint8
 UENUM(BlueprintType)
 enum class ESLLanguageType : uint8
 {
-	EL_Kor = 0,
-	EL_Eng
+	EL_None = 0,
+	EL_Kor,
+	EL_Eng,
+	EL_Max
 };
 
 UCLASS()

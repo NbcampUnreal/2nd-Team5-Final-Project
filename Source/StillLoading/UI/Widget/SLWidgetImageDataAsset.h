@@ -8,19 +8,18 @@
 #include "UI/SLUITypes.h"
 #include "SLWidgetImageDataAsset.generated.h"
 
-
 UCLASS()
 class STILLLOADING_API USLWidgetImageDataAsset : public UDataAsset
 {
 	GENERATED_BODY()
 	
 public:
-	const TMap<ESLPublicWidgetImageType, UTexture2D*>& GetImageDataMap() const;
+	const TMap<ESLPublicWidgetImageType, UObject*>& GetBrushDataMap() const;
 	const FSlateFontInfo& GetFondInfo() const;
 
 private:
 	UPROPERTY(EditAnywhere)
-	TMap<ESLPublicWidgetImageType, UTexture2D*> PublicImageMap;
+	TMap<ESLPublicWidgetImageType, UObject*> PublicBrushMap;
 
 	UPROPERTY(EditAnywhere)
 	FSlateFontInfo FontInfo;

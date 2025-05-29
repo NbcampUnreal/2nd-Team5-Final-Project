@@ -54,3 +54,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Run, "Character.Movement.Run");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Walk, "Character.Movement.Walk");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_Dodge, "Character.Movement.Dodge");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_OnAir, "Character.Movement.OnAir");
+
+// AI
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI, "AI");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Idle, "AI.Idle");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Dead, "AI.Dead");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_AbleToAttack, "AI.AbleToAttack");

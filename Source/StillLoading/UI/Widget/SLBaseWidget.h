@@ -46,11 +46,11 @@ protected:
 	virtual void ApplyFontData();
 	virtual void ApplyTextData() {};
 
-	virtual bool ApplyBackgroundImage();
+	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush);
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
 	virtual bool ApplySliderImage(FSliderStyle& SliderStyle);
-	virtual bool ApplyBorderImage();
-	virtual bool ApplyTextBorderImage();
+	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush);
+	virtual bool ApplyTextBorderImage(FSlateBrush& SlateBrush);
 	virtual bool ApplyProgressBarImage(FProgressBarStyle& ProgressBarStyle);
 	virtual bool ApplyOtherImage();
 	
@@ -78,7 +78,7 @@ protected:
 	TObjectPtr<UWidgetAnimation> CloseAnim = nullptr;
 
 	UPROPERTY()
-	TMap<ESLPublicWidgetImageType, UTexture2D*> PublicImageMap;
+	TMap<ESLPublicWidgetImageType, UObject*> PublicAssetMap;
 
 	UPROPERTY()
 	FSlateFontInfo FontInfo;

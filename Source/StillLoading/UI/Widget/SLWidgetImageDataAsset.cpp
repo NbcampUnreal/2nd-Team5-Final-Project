@@ -3,12 +3,12 @@
 
 #include "UI/Widget/SLWidgetImageDataAsset.h"
 
-const TMap<ESLPublicWidgetImageType, UTexture2D*>& USLWidgetImageDataAsset::GetImageDataMap() const
-{
-	return PublicImageMap;
-}
-
 const FSlateFontInfo& USLWidgetImageDataAsset::GetFondInfo() const
 {
 	return FontInfo;
+}
+
+const TMap<ESLPublicWidgetImageType, UObject*>& USLWidgetImageDataAsset::GetBrushDataMap() const
+{
+	return PublicBrushMap;
 }

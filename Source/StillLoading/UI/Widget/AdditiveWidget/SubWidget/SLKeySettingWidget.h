@@ -21,15 +21,10 @@ class STILLLOADING_API USLKeySettingWidget : public USLAdditiveWidget
 	
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
-	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
-	virtual void DeactivateWidget() override;
 
 protected:
 	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
-
-	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
-	virtual bool ApplyBorderImage() override;
 
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InPointerEvent) override;
@@ -60,15 +55,6 @@ private:
 
 	UPROPERTY()
 	TArray<USLKeyMappingWidget*> MappingWidgetArray;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> CloseButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> TitleText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UImage> BackgroundImg = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UGridPanel> KeySettingGrid = nullptr;
