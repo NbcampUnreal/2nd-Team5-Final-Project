@@ -1,8 +1,10 @@
 #include "SLBTTask_Attack.h"
 
 #include "AIController.h"
+#include "AI/Testing/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/BattleComponent/BattleComponent.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 
 USLBTTask_Attack::USLBTTask_Attack()
@@ -18,6 +20,9 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	APawn* AIPawn = AICon->GetPawn();
 	if (!AIPawn) return EBTNodeResult::Failed;
 
+	AMonsterAICharacter* AICharacter = Cast<AMonsterAICharacter>(AIPawn);
+	if (!AICharacter) return EBTNodeResult::Failed;
+
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp) return EBTNodeResult::Failed;
 
@@ -29,19 +34,34 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 
 	UAnimationMontageComponent* AnimComp = AIPawn->FindComponentByClass<UAnimationMontageComponent>();
 	if (!AnimComp) return EBTNodeResult::Failed;
-	
-	BattleComp->DoAttackSweep(EAttackAnimType::AAT_AINormal);
-	AnimComp->PlayAIAttackMontage();
 
-	// 공격 쿨다운 설정
-	BlackboardComp->SetValueAsBool("CanAttack", false);
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+	const float LastAttackTime = BlackboardComp->GetValueAsFloat(LastAttackTimeKey);
 
-	// 일정 시간 후 CanAttack을 true로 설정하는 타이머를 설정합니다.
-	FTimerHandle TimerHandle;
-	AIPawn->GetWorldTimerManager().SetTimer(TimerHandle, [BlackboardComp]()
+	if (CurrentTime - LastAttackTime < AttackCooldown)
 	{
-		BlackboardComp->SetValueAsBool("CanAttack", true);
-	}, 2.0f, false);
+		return EBTNodeResult::Failed;
+	}
+
+	if (AttackType == EAttackAnimType::AAT_AINormal)
+	{
+		if (FMath::RandRange(0, 1) == 0)
+		{
+			AnimComp->PlayAIAttackMontage("Attack1");
+		}
+		else
+		{
+			AnimComp->PlayAIAttackMontage("Attack2");
+		}
+	}
+	else if (AttackType == EAttackAnimType::AAT_AISpecial)
+	{
+		AnimComp->PlayAIAttackMontage("Attack3");
+	}
+	
+	AICharacter->SetPrimaryState(TAG_AI_IsAttacking);
+	
+	BlackboardComp->SetValueAsFloat("LastAttackTime", GetWorld()->GetTimeSeconds());
 
 	return EBTNodeResult::Succeeded;
 }
