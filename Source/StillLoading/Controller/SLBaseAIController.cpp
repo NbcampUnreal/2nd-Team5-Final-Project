@@ -79,7 +79,7 @@ void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 		}
 		else
 		{
-			//GetBlackboardComponent()->ClearValue(FName("TargetActor"));
+			GetBlackboardComponent()->ClearValue(FName("TargetActor"));
 		}
 	}
 }

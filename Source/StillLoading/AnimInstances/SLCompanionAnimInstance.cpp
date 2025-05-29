@@ -11,9 +11,6 @@ USLCompanionAnimInstance::USLCompanionAnimInstance()
 	AttackLocomotionBlend = 0.0f;
 	bIsAttackCombo = false;
 	bIsMovableAttack = false;
-	InputDirection_X = 0.0f;
-	InputDirection_Y = 0.0f;
-	InputDirectionDegree = 0.0f;
 	LastSpeedDegree = 0.0f;
 	Speed_X = 0.0f;
 	Speed_Y = 0.0f;
@@ -40,9 +37,6 @@ void USLCompanionAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSecond
 	
 	// 속도 컴포넌트 업데이트
 	UpdateSpeedComponents();
-	
-	// 입력 방향 업데이트
-	UpdateInputDirection();
 	
 	// 가속 상태 업데이트
 	bIsAccelerating = bHasAcceleration;
@@ -83,19 +77,6 @@ void USLCompanionAnimInstance::UpdateSpeedComponents()
 	if (bIsAccelerating && SpeedLength > 200.0f)
 	{
 		LastSpeedDegree = SpeedDegree;
-	}
-}
-
-void USLCompanionAnimInstance::UpdateInputDirection()
-{
-	// 입력이 없을 때 기본값 설정 (뒤로: 180도)
-	if (FMath::IsNearlyEqual(InputDirection_X, 0.0f) && FMath::IsNearlyEqual(InputDirection_Y, 0.0f))
-	{
-		InputDirectionDegree = 180.0f;
-	}
-	else
-	{
-		InputDirectionDegree = UKismetMathLibrary::DegAtan2(InputDirection_X, InputDirection_Y);
 	}
 }
 

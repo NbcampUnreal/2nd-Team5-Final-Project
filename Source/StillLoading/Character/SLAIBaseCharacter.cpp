@@ -409,7 +409,7 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
             DirectionVector.Normalize();
             
             FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
-
+        	
             // 히트 방향 결정
             EHitDirection HitDir;
             float AbsX = FMath::Abs(LocalHitDirection.X);
@@ -427,6 +427,8 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
             // 애니메이션 인스턴스에 히트 정보 설정
             SLAIAnimInstance->SetHitDirection(HitDir);
             SLAIAnimInstance->SetIsHit(true);
+
+        	LocalHitDirection.Normalize();
         }
     }
 

@@ -34,7 +34,6 @@ protected:
 	void SetCompanionPattern(const ECompanionActionPattern CompanionPattern);
 
 	void UpdateSpeedComponents();
-	void UpdateInputDirection();
 	void UpdateAttackBlend(float DeltaTime);
 	void UpdateAcceleratingBlend(float DeltaTime);
 	
@@ -47,16 +46,6 @@ protected:
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Combat")
 	bool bIsMovableAttack;
-    
-	// 입력 방향 (AI의 경우 목표 방향)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
-	float InputDirection_X;
-    
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
-	float InputDirection_Y;
-    
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
-	float InputDirectionDegree;
     
 	// 이전 속도 기록 (부드러운 애니메이션 전환용)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")

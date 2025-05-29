@@ -18,6 +18,7 @@ class STILLLOADING_API USLAICharacterAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 public:
+	USLAICharacterAnimInstance();
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 
@@ -50,6 +51,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
 	bool GetbIsInCombat();
+
+	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
+	void SetDamagePosition(const FVector& NewDamagePosition);
+	
+	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
+	FVector GetDamagePosition() const;
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
 	bool DoesOwnerHaveTag(FName TagToCheck) const;
@@ -126,4 +133,11 @@ protected:
 	// --- Anim Data | Combat Specific ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Combat Specific")
     EHitDirection HitDirectionVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Combat Specific")
+	FVector DamagePosition;
+
+private:
+	FVector PreviousVelocity;
+	float PreviousGroundSpeed;
 };

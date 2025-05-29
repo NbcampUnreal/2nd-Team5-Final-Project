@@ -13,6 +13,39 @@
 #include "AI/SLMonster/SLMonster.h"
 #include "Components/SphereComponent.h"
 
+USLAICharacterAnimInstance::USLAICharacterAnimInstance()
+{
+	OwningCharacter = nullptr;
+	OwningMovementComponent = nullptr;
+	TargetCharacter = nullptr;
+    
+	GroundSpeed = 0.0f;
+	bHasAcceleration = false;
+	LocomotionDirection = 0.0f;
+	bIsFalling = false;
+	FallSpeed = 0.0f;
+	bIsJump = false;
+    
+	Angle = 0.0f;
+	ShouldLookAtPlayer = false;
+	FacePitch = 0.0f;
+	FaceYaw = 0.0f;
+    
+	IsAttacking = false;
+	bIsHit = false;
+	IsDown = false;
+	IsStun = false;
+	IsDead = false;
+	IsExecution = false;
+	bIsInCombat = false;
+    
+	HitDirectionVector = EHitDirection::EHD_Back; // enum 기본값에 맞게 조정
+	DamagePosition =  FVector::ZeroVector; 
+	// 이전 프레임 데이터 초기화
+	PreviousVelocity = FVector::ZeroVector;
+	PreviousGroundSpeed = 0.0f;
+}
+
 void USLAICharacterAnimInstance::NativeInitializeAnimation()
 {
 	OwningCharacter = Cast<ASLAIBaseCharacter>(TryGetPawnOwner());
@@ -20,6 +53,10 @@ void USLAICharacterAnimInstance::NativeInitializeAnimation()
 	if (OwningCharacter)
 	{
 		OwningMovementComponent = OwningCharacter->GetCharacterMovement();
+
+		// 초기 속도값 설정
+		PreviousVelocity = OwningCharacter->GetVelocity();
+		PreviousGroundSpeed = PreviousVelocity.Size2D();
 	}
 
 	bHasAcceleration = false;
@@ -43,15 +80,47 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 		return;
 	}
 
-	GroundSpeed = OwningCharacter->GetVelocity().Size2D();
+	// 현재 속도 계산
+	FVector CurrentVelocity = OwningCharacter->GetVelocity();
+	GroundSpeed = CurrentVelocity.Size2D();
     
-	bHasAcceleration = OwningMovementComponent->GetCurrentAcceleration().SizeSquared2D() > 0.f;
+	// AI 캐릭터를 위한 가속도 감지
+	const float MovementThreshold = 50.0f; // 이동으로 간주할 최소 속도
+	const float AccelerationThreshold = 15.0f; // 가속으로 간주할 속도 변화량 (AI용으로 낮춤)
+	const float StopThreshold = 5.0f; // 정지로 간주할 속도
 	
+	// 기존 방식
+	/*FVector CurrentAcceleration = OwningMovementComponent->GetCurrentAcceleration();
+	bool bHasEngineAcceleration = CurrentAcceleration.SizeSquared2D() > 0.f;*/
+	
+	// AI용 방식: 속도 변화 감지
+	float SpeedDifference = FMath::Abs(GroundSpeed - PreviousGroundSpeed);
+	bool bHasSpeedChange = SpeedDifference > AccelerationThreshold;
+	
+	// 가속 시작/정지 감지
+	bool bStartingMovement = (PreviousGroundSpeed <= StopThreshold && GroundSpeed > MovementThreshold);
+	bool bStoppingMovement = (PreviousGroundSpeed > MovementThreshold && GroundSpeed <= StopThreshold);
+	
+	// 방향 변화 감지 (회전하면서 이동하는 경우)
+	bool bHasDirectionChange = false;
+	if (GroundSpeed > MovementThreshold && PreviousGroundSpeed > MovementThreshold)
+	{
+		FVector CurrentDirection = CurrentVelocity.GetSafeNormal2D();
+		FVector PreviousDirection = PreviousVelocity.GetSafeNormal2D();
+		float DirectionDot = FVector::DotProduct(CurrentDirection, PreviousDirection);
+		bHasDirectionChange = DirectionDot < 0.9f; // 약 25도 이상 방향 변화
+	}
+	
+	// 최종 가속도 상태 결정
+	bHasAcceleration = bHasSpeedChange || bStartingMovement || bStoppingMovement || bHasDirectionChange;
+	
+	// 다음 프레임을 위해 이전 값들 저장
+	PreviousVelocity = CurrentVelocity;
+	PreviousGroundSpeed = GroundSpeed;
     
-	LocomotionDirection = UKismetAnimationLibrary::CalculateDirection(OwningCharacter->GetVelocity(),OwningCharacter->GetActorRotation());
+	LocomotionDirection = UKismetAnimationLibrary::CalculateDirection(CurrentVelocity, OwningCharacter->GetActorRotation());
 							
-	FVector Velocity = OwningCharacter->GetVelocity();
-	FallSpeed = Velocity.Z;
+	FallSpeed = CurrentVelocity.Z;
     
 	float DistanceToGround = GetDistanceToGround();
     
@@ -64,7 +133,7 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 		bIsFalling = (FallSpeed < -100.0f) || (DistanceToGround > 200.0f);
 	}
     
-	Angle = UKismetMathLibrary::FindLookAtRotation(OwningCharacter->GetActorForwardVector(), OwningCharacter->GetVelocity()).Yaw;
+	Angle = UKismetMathLibrary::FindLookAtRotation(OwningCharacter->GetActorForwardVector(), CurrentVelocity).Yaw;
     
 	AAIController* AIController = Cast<AAIController>(OwningCharacter->GetController());
 	if (AIController)
@@ -181,6 +250,16 @@ bool USLAICharacterAnimInstance::GetIsAttacking()
 bool USLAICharacterAnimInstance::GetbIsInCombat()
 {
 	return bIsInCombat;
+}
+
+void USLAICharacterAnimInstance::SetDamagePosition(const FVector& NewDamagePosition)
+{
+	DamagePosition = NewDamagePosition;
+}
+
+FVector USLAICharacterAnimInstance::GetDamagePosition() const
+{
+	return DamagePosition;
 }
 
 float USLAICharacterAnimInstance::GetDistanceToGround() const
