@@ -122,6 +122,9 @@ void ASLAIBaseCharacter::BeginPlay()
 	MaxHealth = 100.0f;
 	CurrentHealth = MaxHealth;
 	CombatPhase = ECombatPhase::ECP_Phase_None;
+	bCanBeExecuted = false;
+	bIsBeingExecuted = false;
+	
 }
 
 void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

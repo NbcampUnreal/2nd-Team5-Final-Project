@@ -26,6 +26,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void SetMovableAttack(bool bNewMovableAttack);
 
+	UFUNCTION()
+	void AnimNotify_PatternEnd();
+	
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	ECompanionActionPattern GetCompanionPattern() const;
@@ -33,8 +36,13 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetCompanionPattern(const ECompanionActionPattern CompanionPattern);
 
+	UFUNCTION()
 	void UpdateSpeedComponents();
+	
+	UFUNCTION()
 	void UpdateAttackBlend(float DeltaTime);
+	
+	UFUNCTION()
 	void UpdateAcceleratingBlend(float DeltaTime);
 	
 	// 공격 관련
@@ -76,6 +84,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|State")
 	bool IsBattleMage;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|GameplayTags")
+	FGameplayTagContainer ActiveTags;
 	
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))

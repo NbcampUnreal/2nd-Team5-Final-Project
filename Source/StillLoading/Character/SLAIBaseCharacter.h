@@ -276,13 +276,13 @@ protected:
 	TObjectPtr<UNiagaraComponent> HitEffectComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
-	bool bCanBeExecuted = true;  // 기본값은 true, 보스는 false로 설정
+	bool bCanBeExecuted;  // 기본값은 true, 보스는 false로 설정
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Montages")
 	TMap<EAttackAnimType, TObjectPtr<UAnimMontage>> ExecutionMontages;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
-	bool bIsBeingExecuted = false;
+	bool bIsBeingExecuted;
 };
 
 

@@ -30,6 +30,9 @@ ASLCompanionCharacter::ASLCompanionCharacter()
     StunDuration = 3.0f;
     bIsInCombat = false;
     IsBattleMage = false;
+
+    LastMidRangePattern = ECompanionActionPattern::ECAP_None;
+    LastLongRangePattern = ECompanionActionPattern::ECAP_None;
 }
 
 void ASLCompanionCharacter::BeginPlay()
@@ -161,6 +164,103 @@ ECompanionActionPattern ASLCompanionCharacter::SelectRandomPattern(const TArray<
 {
     int32 RandomIndex = FMath::RandRange(0, Patterns.Num() - 1);
     return Patterns[RandomIndex];
+}
+
+ECompanionActionPattern ASLCompanionCharacter::SelectPatternByDistance(float DistanceToTarget,
+    const TArray<ECompanionActionPattern>& CloseRangePatterns, const TArray<ECompanionActionPattern>& MidRangePatterns,
+    const TArray<ECompanionActionPattern>& LongRangePatterns, float MidRangeThreshold, float LongRangeThreshold)
+{
+    // 원거리 패턴
+    if (DistanceToTarget >= LongRangeThreshold)
+    {
+        TArray<ECompanionActionPattern> AvailableLongRangePatterns = LongRangePatterns;
+        
+        // 이전에 사용한 원거리 패턴이 있고, 목록에 포함되어 있다면 제거
+        if (LastLongRangePattern != ECompanionActionPattern::ECAP_None && AvailableLongRangePatterns.Contains(LastLongRangePattern))
+        {
+            AvailableLongRangePatterns.Remove(LastLongRangePattern);
+        }
+        
+        // 사용 가능한 패턴이 없다면 전체 목록에서 선택
+        if (AvailableLongRangePatterns.Num() == 0)
+        {
+            AvailableLongRangePatterns = LongRangePatterns;
+        }
+        
+        if (AvailableLongRangePatterns.Num() > 0)
+        {
+            int32 RandomIndex = FMath::RandRange(0, AvailableLongRangePatterns.Num() - 1);
+            ECompanionActionPattern SelectedPattern = AvailableLongRangePatterns[RandomIndex];
+            
+            LastLongRangePattern = SelectedPattern;
+            
+            return SelectedPattern;
+        }
+    }
+    // 중거리 패턴
+    else if (DistanceToTarget >= MidRangeThreshold)
+    {
+        TArray<ECompanionActionPattern> AvailableMidRangePatterns = MidRangePatterns;
+        
+        // 이전에 사용한 중거리 패턴이 있고, 목록에 포함되어 있다면 제거
+        if (LastMidRangePattern != ECompanionActionPattern::ECAP_None && AvailableMidRangePatterns.Contains(LastMidRangePattern))
+        {
+            AvailableMidRangePatterns.Remove(LastMidRangePattern);
+        }
+        
+        // 사용 가능한 패턴이 없다면 전체 목록에서 선택
+        if (AvailableMidRangePatterns.Num() == 0)
+        {
+            AvailableMidRangePatterns = MidRangePatterns;
+        }
+        
+        if (AvailableMidRangePatterns.Num() > 0)
+        {
+            int32 RandomIndex = FMath::RandRange(0, AvailableMidRangePatterns.Num() - 1);
+            ECompanionActionPattern SelectedPattern = AvailableMidRangePatterns[RandomIndex];
+            
+            LastMidRangePattern = SelectedPattern;
+            
+            return SelectedPattern;
+        }
+    }
+    // 근거리 패턴
+    else
+    {
+        // 타겟이 뒤에 있는지 확인
+        /*if (USLAICharacterAnimInstance* AnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
+        {
+            if (AnimInstance->IsTargetBehindCharacter(120.0f))
+            {
+                // Battle Mage와 Wizard에 따라 다른 뒤쪽 공격 패턴 반환
+                if (IsBattleMage)
+                {
+                    return ECompanionActionPattern::ECAP_BM_Attack13; // 뒤쪽 공격용
+                }
+                else
+                {
+                    return ECompanionActionPattern::ECAP_WZ_Attack17; // 뒤쪽 공격용
+                }
+            }
+        }*/
+        
+        // 일반 근거리 패턴
+        if (CloseRangePatterns.Num() == 0)
+        {
+            // 기본값 반환
+            return IsBattleMage ? ECompanionActionPattern::ECAP_BM_Attack01 : ECompanionActionPattern::ECAP_WZ_Attack01;
+        }
+        
+        int32 RandomIndex = FMath::RandRange(0, CloseRangePatterns.Num() - 1);
+        ECompanionActionPattern SelectedPattern = CloseRangePatterns[RandomIndex];
+        
+        return SelectedPattern;
+    }
+    
+    // 기본값 반환 (모든 패턴 배열이 비어있는 경우)
+    UE_LOG(LogTemp, Warning, TEXT("All pattern arrays are empty, returning default pattern"));
+    return IsBattleMage ? ECompanionActionPattern::ECAP_BM_Attack01 : ECompanionActionPattern::ECAP_WZ_Attack01;
+    
 }
 
 void ASLCompanionCharacter::AutoStunNearbyEnemy()
