@@ -8,6 +8,11 @@ const FSlateFontInfo& USLWidgetImageDataAsset::GetFondInfo() const
 	return FontInfo;
 }
 
+const float USLWidgetImageDataAsset::GetFontOffset() const
+{
+	return FontOffset;
+}
+
 const TMap<ESLPublicWidgetImageType, UObject*>& USLWidgetImageDataAsset::GetBrushDataMap() const
 {
 	return PublicBrushMap;

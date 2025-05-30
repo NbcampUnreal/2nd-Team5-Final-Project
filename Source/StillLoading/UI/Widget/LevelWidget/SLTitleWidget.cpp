@@ -13,6 +13,7 @@
 #include "NiagaraSystemWidget.h"
 #include "NiagaraSystem.h"
 #include "NiagaraUIComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include <Blueprint/WidgetLayoutLibrary.h>
 #include "Components/CanvasPanelSlot.h"
 
@@ -38,6 +39,21 @@ void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	OptionButton->OnUnhovered.AddDynamic(this, &ThisClass::OnUnhorveredButton);
 	QuitButton->OnHovered.AddDynamic(this, &ThisClass::OnHoveredQuitButton);
 	QuitButton->OnUnhovered.AddDynamic(this, &ThisClass::OnUnhorveredButton);
+
+	UNiagaraComponent* NiagaraComponent = BackgroundEffect->GetNiagaraComponent();
+	
+	//FNiagaraDataSetIterator<FVector> ParticlePos;
+	//NiagaraComponent->GetNiagaraDataInterface("PositionData")->GetDataSet()->GetFloatData(ParticlePos);
+
+	//UNiagaraComponent* NiagaraComponent = BackgroundEffect->GetNiagaraComponent();
+	//
+	//UNiagaraFunctionLibrary::GetNiagaraParticle
+
+	//for (int i = 0; i < ParticlePos.Num(); ++i)
+	//{
+	//	FVector2D Pos2D = ProjectToWidgetSpace(ParticlePos[i]); // 필요 시 Viewport 변환
+	//	// Pos2D 값을 저장
+	//}
 }
 
 void USLTitleWidget::DeactivateWidget()
@@ -88,16 +104,7 @@ bool USLTitleWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
 
 bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 {
-	if (!Super::ApplyButtonImage(ButtonStyle))
-	{
-		FSlateBrush SlateBrush;
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
-		ButtonStyle.SetNormal(SlateBrush);
-		ButtonStyle.SetHovered(SlateBrush);
-		ButtonStyle.SetPressed(SlateBrush);
-		ButtonStyle.SetDisabled(SlateBrush);
-		//return false;
-	}
+	Super::ApplyButtonImage(ButtonStyle);
 
 	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonEffect) &&
 		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonEffect]))
