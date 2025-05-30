@@ -24,9 +24,9 @@ public:
 	void ReceiveHitResult(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult,
 						  EAttackAnimType AnimType);
 	UFUNCTION()
-	void DoAttackSweep(EAttackAnimType AttackType);
+	virtual void DoAttackSweep(EAttackAnimType AttackType);
 	UFUNCTION()
-	void DoSweep(EAttackAnimType AttackType);
+	virtual void DoSweep(EAttackAnimType AttackType);
 	UFUNCTION()
 	void ClearHitTargets();
 
@@ -41,10 +41,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DataAsset")
 	TObjectPtr<UAttackDataAsset> AttackData;
+	UPROPERTY()
+	TSet<TWeakObjectPtr<AActor>> AlreadyHitActors;
+	
 private:
 	UFUNCTION(BlueprintCallable, Category = "Attack")
 	float GetDamageByType(EAttackAnimType InType) const;
 	
-	UPROPERTY()
-	TSet<TWeakObjectPtr<AActor>> AlreadyHitActors;
 };

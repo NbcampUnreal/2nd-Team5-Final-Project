@@ -18,12 +18,8 @@ void USLAnimNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* 
 	if (!MyCharacter) return;
 
 	UMovementHandlerComponent* ActionComp = MyCharacter->FindComponentByClass<UMovementHandlerComponent>();
-	if (!ActionComp) return;
-
-	ActionComp->OnAttackStageFinished(CharacterMontageStage);
-
+	if (ActionComp) ActionComp->OnAttackStageFinished(CharacterMontageStage);
+	
 	USL2DMovementHandlerComponent* Action2DComp = MyCharacter->FindComponentByClass<USL2DMovementHandlerComponent>();
-	if (!Action2DComp) return;
-
-	Action2DComp->OnAttackStageFinished(CharacterMontageStage);
+	if (Action2DComp) Action2DComp->OnAttackStageFinished(CharacterMontageStage);
 }
