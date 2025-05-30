@@ -21,6 +21,8 @@ public:
 	UFUNCTION()
 	void StopMontage(UAnimMontage* Montage, float BlendOutTime);
 	UFUNCTION()
+	void Play2DAttackMontage(FName Section = NAME_None);
+	UFUNCTION()
 	void PlayAttackMontage(FName Section = NAME_None);
 	UFUNCTION()
 	void PlaySkillMontage(FName Section = NAME_None);

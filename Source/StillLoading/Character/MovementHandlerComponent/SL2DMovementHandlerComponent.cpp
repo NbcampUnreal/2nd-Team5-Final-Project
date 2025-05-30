@@ -20,6 +20,11 @@ USL2DMovementHandlerComponent::USL2DMovementHandlerComponent(): OwnerCharacter(n
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
+void USL2DMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState AttackStage)
+{
+	
+}
+
 void USL2DMovementHandlerComponent::BeginPlay()
 {
 	Super::BeginPlay();
