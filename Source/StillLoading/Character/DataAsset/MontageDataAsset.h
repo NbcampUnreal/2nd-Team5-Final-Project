@@ -10,6 +10,11 @@ class STILLLOADING_API UMontageDataAsset : public UDataAsset
 	GENERATED_BODY()
 
 public:
+	// 2D
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
+	TObjectPtr<UAnimMontage> Attack2DMontage;
+	
+	// 3D
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> AttackMontage;
 
@@ -30,4 +35,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> ExecutionMontage;
+
+	// 3D
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
+	TObjectPtr<UAnimMontage> AIAttackMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
+	TObjectPtr<UAnimMontage> AIHitMontage;
 };

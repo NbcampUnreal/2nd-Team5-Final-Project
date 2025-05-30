@@ -12,7 +12,6 @@
 #include "Character/PlayerState/SLBattlePlayerState.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
 {
@@ -116,11 +115,13 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 					BlockCount = 0;
 				}
 				CachedCombatComponent->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered);
-
+				
+				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
+				
 				// 전체 슬로우 (자기 자신 포함)
-				USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, nullptr, 0.2f, 0.15f, true, false);
+				//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, nullptr, 0.2f, 0.15f, true, false);
 				// 자기 자신 제외한 모두 슬로우
-				USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, OwnerCharacter, 0.2f, 0.3f, true, true);
+				//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, OwnerCharacter, 0.2f, 0.3f, true, true);
 
 				return;
 			}
@@ -295,11 +296,13 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	case EAttackAnimType::AAT_FootAttack_Right:
 	case EAttackAnimType::AAT_GroundSlam_01:
 	case EAttackAnimType::AAT_GroundSlam_02:
+	case EAttackAnimType::AAT_AISpecial:
 	case EAttackAnimType::AAT_JumpAttack: // 중간거
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
 		RemoveDelay = 1.0f;
 		break;
 	case EAttackAnimType::AAT_Whirlwind: // 약한거
+	case EAttackAnimType::AAT_AINormal:
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
 		RemoveDelay = 1.0f;
 		break;

@@ -5,10 +5,17 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
+#include "Components/CanvasPanel.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
+#include "NiagaraSystemWidget.h"
+#include "NiagaraSystem.h"
+#include "NiagaraUIComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include <Blueprint/WidgetLayoutLibrary.h>
+#include "Components/CanvasPanelSlot.h"
 
 const FName USLTitleWidget::TitleTextIndex = "TitleText";
 const FName USLTitleWidget::StartButtonIndex = "StartButton";
@@ -25,6 +32,28 @@ void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	StartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedStartButton);
 	OptionButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedOptionButton);
 	QuitButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuitButton);
+
+	StartButton->OnHovered.AddDynamic(this, &ThisClass::OnHoveredStartButton);
+	StartButton->OnUnhovered.AddDynamic(this, &ThisClass::OnUnhorveredButton);
+	OptionButton->OnHovered.AddDynamic(this, &ThisClass::OnHoveredOptionButton);
+	OptionButton->OnUnhovered.AddDynamic(this, &ThisClass::OnUnhorveredButton);
+	QuitButton->OnHovered.AddDynamic(this, &ThisClass::OnHoveredQuitButton);
+	QuitButton->OnUnhovered.AddDynamic(this, &ThisClass::OnUnhorveredButton);
+
+	UNiagaraComponent* NiagaraComponent = BackgroundEffect->GetNiagaraComponent();
+	
+	//FNiagaraDataSetIterator<FVector> ParticlePos;
+	//NiagaraComponent->GetNiagaraDataInterface("PositionData")->GetDataSet()->GetFloatData(ParticlePos);
+
+	//UNiagaraComponent* NiagaraComponent = BackgroundEffect->GetNiagaraComponent();
+	//
+	//UNiagaraFunctionLibrary::GetNiagaraParticle
+
+	//for (int i = 0; i < ParticlePos.Num(); ++i)
+	//{
+	//	FVector2D Pos2D = ProjectToWidgetSpace(ParticlePos[i]); // 필요 시 Viewport 변환
+	//	// Pos2D 값을 저장
+	//}
 }
 
 void USLTitleWidget::DeactivateWidget()
@@ -75,9 +104,24 @@ bool USLTitleWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
 
 bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 {
-	if (!Super::ApplyButtonImage(ButtonStyle))
+	Super::ApplyButtonImage(ButtonStyle);
+
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonEffect) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonEffect]))
 	{
-		return false;
+		UNiagaraSystem* Niagara = Cast<UNiagaraSystem>(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonEffect]);
+
+		if (IsValid(Niagara))
+		{
+			StartButtonEffect->UpdateNiagaraSystemReference(Niagara);
+			OptionButtonEffect->UpdateNiagaraSystemReference(Niagara);
+			QuitButtonEffect->UpdateNiagaraSystemReference(Niagara);
+			bIsContainEffect = true;
+		}
+	}
+	else
+	{
+		bIsContainEffect = false;
 	}
 
 	StartButton->SetStyle(ButtonStyle);
@@ -119,4 +163,54 @@ void USLTitleWidget::OnClickedQuitButton()
 {
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
 	PlayUISound(ESLUISoundType::EUS_Click);
+}
+
+void USLTitleWidget::OnHoveredStartButton()
+{
+	if (!bIsContainEffect)
+	{
+		return;
+	}
+
+	StartButtonEffect->ActivateSystem(true);
+	StartButtonEffect->SetVisibility(ESlateVisibility::HitTestInvisible);
+}
+
+void USLTitleWidget::OnHoveredOptionButton()
+{
+	if (!bIsContainEffect)
+	{
+		return;
+	}
+
+	OptionButtonEffect->ActivateSystem(true);
+	OptionButtonEffect->SetVisibility(ESlateVisibility::HitTestInvisible);
+}
+
+void USLTitleWidget::OnHoveredQuitButton()
+{
+	if (!bIsContainEffect)
+	{
+		return;
+	}
+
+	QuitButtonEffect->ActivateSystem(true);
+	QuitButtonEffect->SetVisibility(ESlateVisibility::HitTestInvisible);
+}
+
+void USLTitleWidget::OnUnhorveredButton()
+{
+	if (!bIsContainEffect)
+	{
+		return;
+	}
+
+	StartButtonEffect->GetNiagaraComponent()->DeactivateImmediate();
+	StartButtonEffect->SetVisibility(ESlateVisibility::Collapsed);
+
+	OptionButtonEffect->GetNiagaraComponent()->DeactivateImmediate();
+	OptionButtonEffect->SetVisibility(ESlateVisibility::Collapsed);
+
+	QuitButtonEffect->GetNiagaraComponent()->DeactivateImmediate();
+	QuitButtonEffect->SetVisibility(ESlateVisibility::Collapsed);
 }

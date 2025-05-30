@@ -36,6 +36,9 @@ enum class EAttackAnimType : uint8 // 애니메이션 기준
 	AAT_ThrowStone UMETA(DisplayName = "Throw Stone"), // 날라가는거
 	AAT_Whirlwind UMETA(DisplayName = "Whirlwind Attack"), // 중간거
 
+	AAT_AINormal UMETA(DisplayName = "AI Normal Attack"),
+	AAT_AISpecial UMETA(DisplayName = "AI Special Attack"),
+
 	// Object
 	AAT_Activate UMETA(DisplayName = "Activate"),
 

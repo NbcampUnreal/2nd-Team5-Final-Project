@@ -21,6 +21,8 @@ public:
 	UFUNCTION()
 	void StopMontage(UAnimMontage* Montage, float BlendOutTime);
 	UFUNCTION()
+	void Play2DAttackMontage(FName Section = NAME_None);
+	UFUNCTION()
 	void PlayAttackMontage(FName Section = NAME_None);
 	UFUNCTION()
 	void PlaySkillMontage(FName Section = NAME_None);
@@ -36,6 +38,12 @@ public:
 	void StopActiveMontages(float BlendOutTime);
 	UFUNCTION()
 	bool IsAttackMontagePlaying() const;
+
+	// AI
+	UFUNCTION()
+	void PlayAIAttackMontage(FName Section = NAME_None);
+	UFUNCTION()
+	void PlayAIHitMontage(FName Section = NAME_None);
 	
 protected:
 	virtual void BeginPlay() override;

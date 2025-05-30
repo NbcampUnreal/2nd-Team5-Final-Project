@@ -83,6 +83,9 @@ protected:
 	UPROPERTY()
 	FSlateFontInfo FontInfo;
 
+	UPROPERTY()
+	float FontOffset = 0.0f;
+
 	ESLChapterType CurrentChapter = ESLChapterType::EC_None;
 	ESLInputModeType WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 
