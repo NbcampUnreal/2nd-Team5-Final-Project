@@ -32,33 +32,53 @@ void ASLBackgroundLooper::Tick(float DeltaTime)
         if (Tile && IsValid(Tile))
         {
             Tile->AddActorWorldOffset(MoveOffset);
-            CheckAndResetTile(Tile);
+           
         }
     }
+    CheckAndResetTile();
 }
 
-void ASLBackgroundLooper::CheckAndResetTile(AActor* Tile)
+void ASLBackgroundLooper::CheckAndResetTile()
 {
 
-    if (!Tile) return;
-
-    FVector Location = Tile->GetActorLocation();
-
-    if (Location.X < -TileLength)
+    for (AActor* Tile : Tiles)
     {
-        // 가장 오른쪽 타일의 X 위치 계산
-        float MaxX = -FLT_MAX;
-        for (AActor* Other : Tiles)
-        {
-            if (Other && Other != Tile)
-            {
-                MaxX = FMath::Max(MaxX, Other->GetActorLocation().X);
-            }
-        }
+        if (!IsValid(Tile)) continue;
 
-        FVector NewLocation = Location;
-        NewLocation.X = MaxX + TileLength;
-        Tile->SetActorLocation(NewLocation);
+        FVector Location = Tile->GetActorLocation();
+
+        // 왼쪽 경계 넘어갔을 때 처리
+        if (Location.X < -TileLength)
+        {
+            // 가장 오른쪽에 있는 타일 찾기
+            float MaxX = -FLT_MAX;
+
+            for (AActor* Other : Tiles)
+            {
+                if (Other && Other != Tile)
+                {
+                    float X = Other->GetActorLocation().X;
+
+                    // 부동소수점 보정
+                    X = FMath::GridSnap(X, TileLength);
+
+                    MaxX = FMath::Max(MaxX, X);
+                }
+            }
+
+            // 새로운 위치 계산: MaxX + TileLength
+            FVector NewLocation = Location;
+            NewLocation.X = MaxX + TileLength;
+
+            // 다시 스냅 (보정)
+            NewLocation.X = FMath::GridSnap(NewLocation.X, TileLength);
+
+            Tile->SetActorLocation(NewLocation);
+
+            // 디버그 로그
+            UE_LOG(LogTemp, Warning, TEXT("Moved tile to %.2f"), NewLocation.X);
+           
+        }
     }
 }
 
