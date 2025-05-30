@@ -10,7 +10,6 @@ class UButton;
 class UTextBlock;
 class UImage;
 class UNiagaraSystemWidget;
-class UCanvasPanel;
 
 UCLASS()
 class STILLLOADING_API USLTitleWidget : public USLLevelWidget
@@ -48,8 +47,6 @@ private:
 
 	UFUNCTION()
 	void OnUnhorveredButton();
-
-	void OnHoveredButton(UButton* TargetButton);
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -89,7 +86,7 @@ private:
 	TObjectPtr<UNiagaraSystemWidget> QuitButtonEffect = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UCanvasPanel> ButtonsPanel = nullptr;
+	TObjectPtr<UNiagaraSystemWidget> BackgroundEffect = nullptr;
 
 	static const FName TitleTextIndex;
 	static const FName StartButtonIndex;

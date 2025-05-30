@@ -82,6 +82,7 @@ void USLBaseWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivate
 
 	PublicAssetMap = WidgetDataAsset->GetBrushDataMap();
 	FontInfo = WidgetDataAsset->GetFondInfo();
+	FontOffset = WidgetDataAsset->GetFontOffset();
 }
 
 void USLBaseWidget::ApplyImageData()
@@ -115,6 +116,7 @@ void USLBaseWidget::ApplyFontData()
 			{
 				FontInfo.Size = TextBlock->GetFont().Size;
 				TextBlock->SetFont(FontInfo);
+				TextBlock->SetRenderTranslation(FVector2D(0, FontOffset));
 			}
 		}
 	}
@@ -135,34 +137,49 @@ bool USLBaseWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
 
 bool USLBaseWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 {
-	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Button) ||
-		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Button]))
+	FSlateBrush NormalBrush;
+	FSlateBrush HoverBrush;
+	FSlateBrush PressedBrush;
+	FSlateBrush DisableedBrush;
+
+	NormalBrush.TintColor = FSlateColor(FLinearColor(0.0f,0.0f, 0.0f, 0.0f));
+	HoverBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
+	PressedBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
+	DisableedBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
+
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Button) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Button]))
 	{
-		return false;
+		UObject* Resource = PublicAssetMap[ESLPublicWidgetImageType::EPWI_Button];
+		
+		NormalBrush.SetResourceObject(Resource);
+		HoverBrush.SetResourceObject(Resource);
+		PressedBrush.SetResourceObject(Resource);
+		DisableedBrush.SetResourceObject(Resource);
+
+		NormalBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 0.75f));
+		HoverBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+		PressedBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
+		DisableedBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
 	}
-
-	FSlateBrush SlateBrush; 
-
-	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Button]);
-
-	SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 0.75f));
-	ButtonStyle.SetNormal(SlateBrush);
-
-	SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
-	ButtonStyle.SetDisabled(SlateBrush);
 
 	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonHover) &&
 		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover]))
 	{
-		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover]);
+		UObject* Resource = PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover];
+
+		HoverBrush.SetResourceObject(Resource);
+		PressedBrush.SetResourceObject(Resource);
+
+		HoverBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+		PressedBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
 	}
 
-	SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-	ButtonStyle.SetHovered(SlateBrush);
+	ButtonStyle.SetNormal(NormalBrush);
+	ButtonStyle.SetHovered(HoverBrush);
+	ButtonStyle.SetPressed(PressedBrush);
+	ButtonStyle.SetDisabled(DisableedBrush);
 
-	SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
-	ButtonStyle.SetPressed(SlateBrush);
-	
 	return true;
 }
 

@@ -16,6 +16,7 @@ class STILLLOADING_API USLWidgetImageDataAsset : public UDataAsset
 public:
 	const TMap<ESLPublicWidgetImageType, UObject*>& GetBrushDataMap() const;
 	const FSlateFontInfo& GetFondInfo() const;
+	const float GetFontOffset() const;
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -23,4 +24,7 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	FSlateFontInfo FontInfo;
+
+	UPROPERTY(EditAnywhere)
+	float FontOffset = 0.0f;
 };
