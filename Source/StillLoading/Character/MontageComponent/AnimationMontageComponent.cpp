@@ -126,6 +126,12 @@ void UAnimationMontageComponent::StopMontage(UAnimMontage* Montage, float BlendO
 	}
 }
 
+void UAnimationMontageComponent::Play2DAttackMontage(FName Section)
+{
+	if (MontageData)
+		PlayMontage(MontageData->Attack2DMontage, Section);
+}
+
 bool UAnimationMontageComponent::IsAttackMontagePlaying() const
 {
     return IsMontagePlayingHelper(MontageData ? MontageData->AttackMontage : nullptr);

@@ -20,6 +20,10 @@ class STILLLOADING_API USL2DMovementHandlerComponent : public UActorComponent
 public:
 	USL2DMovementHandlerComponent();
 
+	// 애니매이션 노티 확인용
+	UFUNCTION()
+	void OnAttackStageFinished(ECharacterMontageState AttackStage);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -36,8 +40,8 @@ private:
 	UFUNCTION()
 	void Move(const float AxisValue, const EInputActionType ActionType);
 
-	void MoveByPixelUnit(const FVector& Direction, float AxisValue);
-	void StartPixelMovement(const FVector& Direction);
+	UFUNCTION()
+	void Attack();
 	
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
@@ -47,12 +51,7 @@ private:
 	TObjectPtr<UBattleComponent> CachedBattleComponent;
 	UPROPERTY()
 	TObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UMaterialParameterCollection> PixelizationMPC;
+	UPROPERTY()
+	TObjectPtr<USkeletalMeshComponent> CachedSkeletalMesh;
 	
-	// 픽셀 이동 관련 변수
-	bool bIsMoving = false;
-	FVector CurrentTargetLocation = FVector::ZeroVector;
-	FVector MoveDirection = FVector::ZeroVector;
-	float PixelSize = 0.0f;
 };
