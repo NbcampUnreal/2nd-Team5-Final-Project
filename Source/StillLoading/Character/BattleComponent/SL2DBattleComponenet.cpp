@@ -1,65 +1,21 @@
-#include "BattleComponent.h"
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "SL2DBattleComponenet.h"
 
 #include "MotionWarpingComponent.h"
+#include "Character/SLPlayerCharacter.h"
 #include "Kismet/KismetMathLibrary.h"
 
-DEFINE_LOG_CATEGORY(LogBattleComponent);
+class UMotionWarpingComponent;
 
-UBattleComponent::UBattleComponent()
+void USL2DBattleComponenet::DoAttackSweep(EAttackAnimType AttackType)
 {
-	PrimaryComponentTick.bCanEverTick = true;
-}
-
-void UBattleComponent::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitResult, EAttackAnimType AnimType)
-{
-	if (AActor* OwnerActor = GetOwner())
-	{
-		if (HitTarget)
-		{
-			if (UBattleComponent* TargetBattleComp = HitTarget->FindComponentByClass<UBattleComponent>())
-			{
-				UE_LOG(LogBattleComponent, Log, TEXT("Send Hit Result: %s -> %s | Damage: %.1f | AnimType: %s"),
-					*OwnerActor->GetName(),
-					*HitTarget->GetName(),
-					GetDamageByType(AnimType),
-					*UEnum::GetValueAsString(AnimType));
-
-				TargetBattleComp->ReceiveHitResult(GetDamageByType(AnimType), OwnerActor, HitResult, AnimType);
-			}
-		}
-	}
-}
-
-void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult, EAttackAnimType AnimType)
-{
-	if (const AActor* OwnerActor = GetOwner())
-	{
-		UE_LOG(LogBattleComponent, Warning,
-			   TEXT("피격 발생! 소유자: %s, 데미지: %.2f, 공격자: %s, 위치: %s, 뼈: %s, AnimType: %s"),
-			   *OwnerActor->GetName(),
-			   DamageAmount,
-			   DamageCauser ? *DamageCauser->GetName() : TEXT("None"),
-			   *HitResult.ImpactPoint.ToString(),
-			   *HitResult.BoneName.ToString(),
-			   *UEnum::GetValueAsString(AnimType)
-		);
-		
-		OnCharacterHited.Broadcast(DamageCauser, DamageAmount, HitResult, AnimType);
-	}
-}
-
-void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
-{
-	if (AActor* OwnerActor = GetOwner())
+	if (ASLPlayerCharacter* OwnerActor = Cast<ASLPlayerCharacter>(GetOwner()))
 	{
 		const FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 25);
-		const FVector End = Start + OwnerActor->GetActorForwardVector() * 80;
-		const FCollisionShape SweepShape = FCollisionShape::MakeCapsule(20.f, 70.f);
+		const FVector End = Start + OwnerActor->GetMesh()->GetRightVector() * AttackOffset;
+		const FCollisionShape SweepShape = FCollisionShape::MakeCapsule(AttackSize, 70.f);
 
 		TArray<FHitResult> HitResults;
 		FCollisionQueryParams Params;
@@ -98,7 +54,7 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 	}
 }
 
-void UBattleComponent::DoSweep(EAttackAnimType AttackType)
+void USL2DBattleComponenet::DoSweep(EAttackAnimType AttackType)
 {
 	if (AActor* OwnerActor = GetOwner())
 	{
@@ -157,23 +113,4 @@ void UBattleComponent::DoSweep(EAttackAnimType AttackType)
 			}
 		}
 	}
-}
-
-void UBattleComponent::ClearHitTargets()
-{
-	AlreadyHitActors.Empty();
-}
-
-float UBattleComponent::GetDamageByType(EAttackAnimType InType) const
-{
-	if (!AttackData) return 0;
-	
-	for (const auto& [AttackType, DamageAmount] : AttackData->AttackDataList)
-	{
-		if (AttackType == InType)
-		{
-			return DamageAmount;
-		}
-	}
-	return 0.0f;
 }
