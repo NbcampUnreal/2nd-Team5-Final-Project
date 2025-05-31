@@ -110,11 +110,6 @@ void USLCompanionAnimInstance::AnimNotify_PatternEnd()
 	SetIsAttacking(false);
 	SetCompanionPattern(ECompanionActionPattern::ECAP_None);
     
-	// 상태 태그 제거
-	ActiveTags.RemoveTag(SLAIGameplayTags::AI_Companion_State_Attacking);
-	ActiveTags.RemoveTag(SLAIGameplayTags::AI_Companion_State_Casting);
-	ActiveTags.RemoveTag(SLAIGameplayTags::AI_Companion_Combo_Active);
-	ActiveTags.RemoveTag(SLAIGameplayTags::AI_Companion_Combo_Chain);
 }
 
 ECompanionActionPattern USLCompanionAnimInstance::GetCompanionPattern() const

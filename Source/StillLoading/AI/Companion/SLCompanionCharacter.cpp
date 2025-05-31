@@ -1,9 +1,10 @@
+// SLCompanionCharacter.cpp
 #include "SLCompanionCharacter.h"
-
 #include "NiagaraComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "NiagaraFunctionLibrary.h"
+#include "AI/SLCompanionPatternData.h"
 #include "AI/GamePlayTag/AIGamePlayTag.h"
 #include "AI/Projectile/SLAIProjectile.h"
 #include "AI/Projectile/SLHomingProjectile.h"
@@ -12,39 +13,46 @@
 #include "Controller/SLBaseAIController.h"
 #include "Controller/SLCompanionAIController.h"
 
+FSLCompanionActionPatternMappingRow::FSLCompanionActionPatternMappingRow()
+{
+    ActionPattern = ECompanionActionPattern::ECAP_None;
+    DistanceType = ECompanionDistanceType::ECDT_Melee;
+    bIsBattleMagePattern = true;
+    Priority = 0;
+}
+
 ASLCompanionCharacter::ASLCompanionCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
     
-    // 기본 설정
     MaxHealth = 100.0f;
     CurrentHealth = MaxHealth;
     
-    // 무적 설정
     bCanBeExecuted = false;
     IsHitReaction = true;
     
-    // 전투 설정
     ProjectileSocketName = "hand_r";
     AutoStunInterval = 10.0f;
     StunDuration = 3.0f;
     bIsInCombat = false;
     IsBattleMage = false;
 
-    LastMidRangePattern = ECompanionActionPattern::ECAP_None;
-    LastLongRangePattern = ECompanionActionPattern::ECAP_None;
+    MeleeRangeThreshold = 200.0f;
+    MidRangeThreshold = 500.0f;
+    LongRangeThreshold = 800.0f;
+    
+    MaxRecentPatternMemory = 3;
+    PatternData = nullptr;
 }
 
 void ASLCompanionCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    
 }
 
 void ASLCompanionCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    
 }
 
 void ASLCompanionCharacter::SetCombatMode(bool bInCombat)
@@ -82,14 +90,12 @@ void ASLCompanionCharacter::FireProjectile(EAttackAnimType AttackAnimType)
 {
     if (!ProjectileClass || !AIController) return;
     
-    // 타겟 가져오기
     UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
     if (!BlackboardComponent) return;
     
     AActor* Target = Cast<AActor>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
     if (!Target) return;
     
-    // 발사 위치 계산
     FVector SpawnLocation = GetMesh()->GetSocketLocation(ProjectileSocketName);
     FRotator SpawnRotation = (Target->GetActorLocation() - SpawnLocation).Rotation();
     
@@ -120,17 +126,9 @@ void ASLCompanionCharacter::CastStunSpell(AActor* Target)
 {
     if (!Target) return;
     
-    // 몬스터인지 확인
     ASLAIBaseCharacter* EnemyCharacter = Cast<ASLAIBaseCharacter>(Target);
     if (!EnemyCharacter || EnemyCharacter->GetIsDead()) return;
     
-    // 상태이상 효과 적용
-    if (USLAICharacterAnimInstance* AnimInstance = Cast<USLAICharacterAnimInstance>(EnemyCharacter->GetMesh()->GetAnimInstance()))
-    {
-        //AnimInstance->SetIsStun(true);
-    }
-    
-    // 상태이상 이펙트 재생
     if (StunEffect)
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(
@@ -145,7 +143,6 @@ void ASLCompanionCharacter::CastStunSpell(AActor* Target)
         );
     }
     
-    // 기절 해제 타이머
     FTimerHandle StunTimer;
     GetWorld()->GetTimerManager().SetTimer(StunTimer, [EnemyCharacter, this]()
     {
@@ -159,115 +156,10 @@ void ASLCompanionCharacter::CastStunSpell(AActor* Target)
     }, StunDuration, false);
 }
 
-
-ECompanionActionPattern ASLCompanionCharacter::SelectRandomPattern(const TArray<ECompanionActionPattern>& Patterns)
-{
-    int32 RandomIndex = FMath::RandRange(0, Patterns.Num() - 1);
-    return Patterns[RandomIndex];
-}
-
-ECompanionActionPattern ASLCompanionCharacter::SelectPatternByDistance(float DistanceToTarget,
-    const TArray<ECompanionActionPattern>& CloseRangePatterns, const TArray<ECompanionActionPattern>& MidRangePatterns,
-    const TArray<ECompanionActionPattern>& LongRangePatterns, float MidRangeThreshold, float LongRangeThreshold)
-{
-    // 원거리 패턴
-    if (DistanceToTarget >= LongRangeThreshold)
-    {
-        TArray<ECompanionActionPattern> AvailableLongRangePatterns = LongRangePatterns;
-        
-        // 이전에 사용한 원거리 패턴이 있고, 목록에 포함되어 있다면 제거
-        if (LastLongRangePattern != ECompanionActionPattern::ECAP_None && AvailableLongRangePatterns.Contains(LastLongRangePattern))
-        {
-            AvailableLongRangePatterns.Remove(LastLongRangePattern);
-        }
-        
-        // 사용 가능한 패턴이 없다면 전체 목록에서 선택
-        if (AvailableLongRangePatterns.Num() == 0)
-        {
-            AvailableLongRangePatterns = LongRangePatterns;
-        }
-        
-        if (AvailableLongRangePatterns.Num() > 0)
-        {
-            int32 RandomIndex = FMath::RandRange(0, AvailableLongRangePatterns.Num() - 1);
-            ECompanionActionPattern SelectedPattern = AvailableLongRangePatterns[RandomIndex];
-            
-            LastLongRangePattern = SelectedPattern;
-            
-            return SelectedPattern;
-        }
-    }
-    // 중거리 패턴
-    else if (DistanceToTarget >= MidRangeThreshold)
-    {
-        TArray<ECompanionActionPattern> AvailableMidRangePatterns = MidRangePatterns;
-        
-        // 이전에 사용한 중거리 패턴이 있고, 목록에 포함되어 있다면 제거
-        if (LastMidRangePattern != ECompanionActionPattern::ECAP_None && AvailableMidRangePatterns.Contains(LastMidRangePattern))
-        {
-            AvailableMidRangePatterns.Remove(LastMidRangePattern);
-        }
-        
-        // 사용 가능한 패턴이 없다면 전체 목록에서 선택
-        if (AvailableMidRangePatterns.Num() == 0)
-        {
-            AvailableMidRangePatterns = MidRangePatterns;
-        }
-        
-        if (AvailableMidRangePatterns.Num() > 0)
-        {
-            int32 RandomIndex = FMath::RandRange(0, AvailableMidRangePatterns.Num() - 1);
-            ECompanionActionPattern SelectedPattern = AvailableMidRangePatterns[RandomIndex];
-            
-            LastMidRangePattern = SelectedPattern;
-            
-            return SelectedPattern;
-        }
-    }
-    // 근거리 패턴
-    else
-    {
-        // 타겟이 뒤에 있는지 확인
-        /*if (USLAICharacterAnimInstance* AnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
-        {
-            if (AnimInstance->IsTargetBehindCharacter(120.0f))
-            {
-                // Battle Mage와 Wizard에 따라 다른 뒤쪽 공격 패턴 반환
-                if (IsBattleMage)
-                {
-                    return ECompanionActionPattern::ECAP_BM_Attack13; // 뒤쪽 공격용
-                }
-                else
-                {
-                    return ECompanionActionPattern::ECAP_WZ_Attack17; // 뒤쪽 공격용
-                }
-            }
-        }*/
-        
-        // 일반 근거리 패턴
-        if (CloseRangePatterns.Num() == 0)
-        {
-            // 기본값 반환
-            return IsBattleMage ? ECompanionActionPattern::ECAP_BM_Attack01 : ECompanionActionPattern::ECAP_WZ_Attack01;
-        }
-        
-        int32 RandomIndex = FMath::RandRange(0, CloseRangePatterns.Num() - 1);
-        ECompanionActionPattern SelectedPattern = CloseRangePatterns[RandomIndex];
-        
-        return SelectedPattern;
-    }
-    
-    // 기본값 반환 (모든 패턴 배열이 비어있는 경우)
-    UE_LOG(LogTemp, Warning, TEXT("All pattern arrays are empty, returning default pattern"));
-    return IsBattleMage ? ECompanionActionPattern::ECAP_BM_Attack01 : ECompanionActionPattern::ECAP_WZ_Attack01;
-    
-}
-
 void ASLCompanionCharacter::AutoStunNearbyEnemy()
 {
     if (!bIsInCombat || !AIController) return;
     
-    // 현재 타겟 가져오기
     UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
     if (!BlackboardComponent) return;
     
@@ -282,17 +174,14 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
 {
     if (DamageCauser && IsHitReaction && AnimInstancePtr)
     {
-        // 히트 반응 애니메이션 설정
         if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
         {
-            // 히트 방향 계산
             FVector AttackerLocation = DamageCauser->GetActorLocation();
             FVector DirectionVector = AttackerLocation - GetActorLocation();
             DirectionVector.Normalize();
             
             FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
 
-            // 히트 방향 결정
             EHitDirection HitDir;
             float AbsX = FMath::Abs(LocalHitDirection.X);
             float AbsY = FMath::Abs(LocalHitDirection.Y);
@@ -306,7 +195,6 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
                 HitDir = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
             }
             
-            // 애니메이션 인스턴스에 히트 정보 설정
             SLAIAnimInstance->SetHitDirection(HitDir);
             SLAIAnimInstance->SetIsHit(true);
         }
@@ -314,10 +202,8 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
 
     if (HitEffectComponent)
     {
-        // ImpactPoint가 유효하면 사용, 아니면 Location 사용
         FVector EffectLocation = HitResult.bBlockingHit ? HitResult.ImpactPoint : HitResult.Location;
         
-        // 만약 둘 다 Zero 벡터라면 캐릭터 중심 사용
         if (EffectLocation.IsZero())
         {
             EffectLocation = GetActorLocation();
@@ -327,4 +213,180 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
         HitEffectComponent->SetWorldLocation(EffectLocation);
         HitEffectComponent->ActivateSystem();
     }
+}
+
+/**
+ * 특정 거리값에 따라 사용할 수 있는 행동 패턴 태그 컨테이너를 반환합니다.
+ * 거리 값은 근접, 중거리, 장거리, 매우 장거리 기준으로 구분되며, 이를 기반으로 적합한 패턴을 필터링합니다.
+ *
+ * @param DistanceToTarget 타겟까지의 거리. 이 값에 따라 적합한 거리 유형이 결정됩니다.
+ * @return 해당 거리 조건에 맞는 행동 패턴 태그 컨테이너. 유효한 패턴 데이터가 없을 경우 빈 컨테이너를 반환합니다.
+ */
+FGameplayTagContainer ASLCompanionCharacter::GetAvailablePatternsByDistance(float DistanceToTarget) const
+{
+    if (!PatternData)
+    {
+        return FGameplayTagContainer();
+    }
+
+    ECompanionDistanceType DistanceType;
+    if (DistanceToTarget <= MeleeRangeThreshold)
+    {
+        DistanceType = ECompanionDistanceType::ECDT_Melee;
+    }
+    else if (DistanceToTarget <= MidRangeThreshold)
+    {
+        DistanceType = ECompanionDistanceType::ECDT_MidRange;
+    }
+    else if (DistanceToTarget <= LongRangeThreshold)
+    {
+        DistanceType = ECompanionDistanceType::ECDT_LongRange;
+    }
+    else
+    {
+        DistanceType = ECompanionDistanceType::ECDT_VeryLong;
+    }
+
+    return PatternData->GetPatternsByDistanceTypeAsContainer(DistanceType, IsBattleMage);
+}
+
+/**
+ * 입력된 태그 목록에서 적합한 행동 패턴을 필터링하고, 무작위로 패턴을 선택하여 반환합니다.
+ * 특정 캐릭터 유형과 최근 사용 이력을 고려하여 적절한 패턴을 선택합니다.
+ *
+ * @param PatternTags 행동 패턴 태그의 컨테이너. 선택 가능한 태그 목록을 제공합니다.
+ * @return 무작위로 선택된 행동 패턴. 적합한 패턴이 없는 경우 ECAP_None을 반환합니다.
+ */
+ECompanionActionPattern ASLCompanionCharacter::SelectRandomPatternFromTags(const FGameplayTagContainer& PatternTags)
+{
+    if (PatternTags.IsEmpty() || !PatternData)
+    {
+        return ECompanionActionPattern::ECAP_None;
+    }
+
+    // 캐릭터 타입에 맞게 필터링
+    FGameplayTagContainer ValidPatterns = PatternData->FilterPatternsByCharacterType(PatternTags, IsBattleMage);
+    
+    if (ValidPatterns.IsEmpty())
+    {
+        return ECompanionActionPattern::ECAP_None;
+    }
+
+    // 최근 사용한 패턴 제외
+    FGameplayTagContainer FilteredPatterns;
+    TArray<FGameplayTag> TagArray;
+    ValidPatterns.GetGameplayTagArray(TagArray);
+
+    for (const FGameplayTag& Tag : TagArray)
+    {
+        if (!RecentlyUsedPatterns.HasTag(Tag))
+        {
+            FilteredPatterns.AddTag(Tag);
+        }
+    }
+
+    // 필터링 후 패턴이 없으면 전체에서 선택
+    if (FilteredPatterns.IsEmpty())
+    {
+        FilteredPatterns = ValidPatterns;
+    }
+
+    // 랜덤 선택
+    TArray<FGameplayTag> FinalTagArray;
+    FilteredPatterns.GetGameplayTagArray(FinalTagArray);
+    
+    int32 RandomIndex = FMath::RandRange(0, FinalTagArray.Num() - 1);
+    FGameplayTag SelectedTag = FinalTagArray[RandomIndex];
+
+    // 최근 사용 패턴에 추가
+    RecentlyUsedPatterns.AddTag(SelectedTag);
+    
+    // 최대 개수 제한
+    TArray<FGameplayTag> RecentArray;
+    RecentlyUsedPatterns.GetGameplayTagArray(RecentArray);
+    if (RecentArray.Num() > MaxRecentPatternMemory)
+    {
+        RecentlyUsedPatterns.RemoveTag(RecentArray[0]);
+    }
+
+    return PatternData->GetActionPatternForTag(SelectedTag);
+}
+
+/**
+ * 주어진 거리 값과 태그 컨테이너를 기반으로 적합한 행동 패턴을 랜덤하게 선택하여 반환합니다.
+ * 선택 과정에서 캐릭터 타입에 맞지 않는 패턴은 필터링되며, 최근 사용한 패턴은 가능한 제외됩니다.
+ * 적합한 패턴이 없는 경우 예외 처리가 이루어지며, 최근 사용한 패턴 기록은 설정된 최대 개수를 초과하지 않도록 관리됩니다.
+ *
+ * @param PatternTags 사용 가능한 패턴 태그의 컨테이너입니다. 이 컨테이너의 태그에서 선택이 이루어집니다.
+ * @param DistanceToTarget 타겟까지의 거리. 해당 값은 거리 기반 패턴 필터링에 사용됩니다.
+ * @return 선택된 ECompanionActionPattern 값. 적합한 패턴이 없을 경우 ECAP_None 또는 예외처리 값을 반환합니다.
+ */
+ECompanionActionPattern ASLCompanionCharacter::SelectRandomPatternFromTagsWithDistance(const FGameplayTagContainer& PatternTags, float DistanceToTarget)
+{
+    if (PatternTags.IsEmpty() || !PatternData)
+    {
+        return ECompanionActionPattern::ECAP_None;
+    }
+
+    // 거리에 맞는 패턴들 가져오기
+    FGameplayTagContainer DistancePatterns = GetAvailablePatternsByDistance(DistanceToTarget);
+    
+    // 교집합 구하기
+    FGameplayTagContainer ValidPatterns;
+    TArray<FGameplayTag> InputArray;
+    PatternTags.GetGameplayTagArray(InputArray);
+
+    for (const FGameplayTag& Tag : InputArray)
+    {
+        if (DistancePatterns.HasTag(Tag))
+        {
+            ValidPatterns.AddTag(Tag);
+        }
+    }
+
+    // 캐릭터 타입 필터링
+    ValidPatterns = PatternData->FilterPatternsByCharacterType(ValidPatterns, IsBattleMage);
+
+    if (ValidPatterns.IsEmpty())
+    {
+        // 폴백: 거리 무시하고 캐릭터 타입만 맞추기
+        return SelectRandomPatternFromTags(PatternTags);
+    }
+
+    // 최근 사용한 패턴 제외
+    FGameplayTagContainer FilteredPatterns;
+    TArray<FGameplayTag> TagArray;
+    ValidPatterns.GetGameplayTagArray(TagArray);
+
+    for (const FGameplayTag& Tag : TagArray)
+    {
+        if (!RecentlyUsedPatterns.HasTag(Tag))
+        {
+            FilteredPatterns.AddTag(Tag);
+        }
+    }
+
+    if (FilteredPatterns.IsEmpty())
+    {
+        FilteredPatterns = ValidPatterns;
+    }
+
+    // 랜덤 선택
+    TArray<FGameplayTag> FinalArray;
+    FilteredPatterns.GetGameplayTagArray(FinalArray);
+    
+    int32 RandomIndex = FMath::RandRange(0, FinalArray.Num() - 1);
+    FGameplayTag SelectedTag = FinalArray[RandomIndex];
+
+    RecentlyUsedPatterns.AddTag(SelectedTag);
+    
+    // 최대 개수 제한
+    TArray<FGameplayTag> RecentArray;
+    RecentlyUsedPatterns.GetGameplayTagArray(RecentArray);
+    if (RecentArray.Num() > MaxRecentPatternMemory)
+    {
+        RecentlyUsedPatterns.RemoveTag(RecentArray[0]);
+    }
+
+    return PatternData->GetActionPatternForTag(SelectedTag);
 }
