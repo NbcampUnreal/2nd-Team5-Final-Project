@@ -52,65 +52,6 @@ void AMonsterAICharacter::BeginPlay()
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 }
 
-void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType)
-{
-	AnimationComponent->StopAllMontages(0.2f);
-	HitDirection(Causer);
-
-	UE_LOG(LogTemp, Warning, TEXT("IsFalling: %s"), GetCharacterMovement()->IsFalling() ? TEXT("True") : TEXT("False"));
-	UE_LOG(LogTemp, Warning, TEXT("MovementMode: %d"), (int32)GetCharacterMovement()->MovementMode);
-
-	switch (AnimType)
-	{
-	case EAttackAnimType::AAT_NormalAttack1:
-	case EAttackAnimType::AAT_NormalAttack2:
-	case EAttackAnimType::AAT_NormalAttack3:
-	case EAttackAnimType::AAT_SpecialAttack1:
-	case EAttackAnimType::AAT_SpecialAttack2:
-	case EAttackAnimType::AAT_SpecialAttack3:
-	case EAttackAnimType::AAT_AirAttack1:
-	case EAttackAnimType::AAT_AirAttack2:
-	case EAttackAnimType::AAT_AirAttack3:
-		if (GetCharacterMovement()->IsFalling())
-		{
-			AnimationComponent->PlayAIHitMontage("HitAir");
-			FVector Velocity = GetCharacterMovement()->Velocity;
-			Velocity.Z = 0.f;
-			GetCharacterMovement()->Velocity = Velocity;
-		}
-		SetPrimaryState(TAG_AI_Hit);
-		break;
-		
-	case EAttackAnimType::AAT_Airborn:
-		AnimationComponent->PlayAIHitMontage("Airborne");
-		SetPrimaryState(TAG_AI_Hit);
-		break;
-	case EAttackAnimType::AAT_Skill1:
-		AnimationComponent->PlayAIHitMontage("AirUp");
-		SetPrimaryState(TAG_AI_Hit);
-		break;
-	case EAttackAnimType::AAT_Skill2:
-		AnimationComponent->PlayAIHitMontage("GroundHit");
-		SetPrimaryState(TAG_AI_Hit);
-		break;
-	case EAttackAnimType::AAT_FinalAttackA:
-		AnimationComponent->PlayAIHitMontage("ExecutionA");
-		SetPrimaryState(TAG_AI_Dead);
-		break;
-	case EAttackAnimType::AAT_FinalAttackB:
-		AnimationComponent->PlayAIHitMontage("ExecutionB");
-		SetPrimaryState(TAG_AI_Dead);
-		break;
-	case EAttackAnimType::AAT_FinalAttackC:
-		AnimationComponent->PlayAIHitMontage("ExecutionC");
-		SetPrimaryState(TAG_AI_Dead);
-		break;
-	case EAttackAnimType::AAT_ParryAttack:
-		break;
-	default: break;
-	}
-}
-
 void AMonsterAICharacter::HitDirection(AActor* Causer)
 {
 	if (!Causer) return;
@@ -168,6 +109,73 @@ bool AMonsterAICharacter::IsInPrimaryState(const FGameplayTag StateToCheck) cons
 	return StateTags.HasTagExact(StateToCheck);
 }
 
+void AMonsterAICharacter::SetBattleState(const FGameplayTag NewState)
+{
+	BattleStateTags.Reset();
+	BattleStateTags.AddTag(NewState);
+}
+
+bool AMonsterAICharacter::HasBattleState(const FGameplayTag StateToCheck) const
+{
+	return BattleStateTags.HasTag(StateToCheck);
+}
+
+void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType)
+{
+	AnimationComponent->StopAllMontages(0.2f);
+	HitDirection(Causer);
+
+	switch (AnimType)
+	{
+	case EAttackAnimType::AAT_NormalAttack1:
+	case EAttackAnimType::AAT_NormalAttack2:
+	case EAttackAnimType::AAT_NormalAttack3:
+	case EAttackAnimType::AAT_SpecialAttack1:
+	case EAttackAnimType::AAT_SpecialAttack2:
+	case EAttackAnimType::AAT_SpecialAttack3:
+	case EAttackAnimType::AAT_AirAttack1:
+	case EAttackAnimType::AAT_AirAttack2:
+	case EAttackAnimType::AAT_AirAttack3:
+		if (GetCharacterMovement()->IsFalling())
+		{
+			AnimationComponent->PlayAIHitMontage("HitAir");
+			FVector Velocity = GetCharacterMovement()->Velocity;
+			Velocity.Z = 0.f;
+			GetCharacterMovement()->Velocity = Velocity;
+		}
+		SetBattleState(TAG_AI_Hit);
+		break;
+		
+	case EAttackAnimType::AAT_Airborn:
+		AnimationComponent->PlayAIHitMontage("Airborne");
+		SetBattleState(TAG_AI_Hit);
+		break;
+	case EAttackAnimType::AAT_Skill1:
+		AnimationComponent->PlayAIHitMontage("AirUp");
+		SetBattleState(TAG_AI_Hit);
+		break;
+	case EAttackAnimType::AAT_Skill2:
+		AnimationComponent->PlayAIHitMontage("GroundHit");
+		SetBattleState(TAG_AI_Hit);
+		break;
+	case EAttackAnimType::AAT_FinalAttackA:
+		AnimationComponent->PlayAIHitMontage("ExecutionA");
+		SetBattleState(TAG_AI_Dead);
+		break;
+	case EAttackAnimType::AAT_FinalAttackB:
+		AnimationComponent->PlayAIHitMontage("ExecutionB");
+		SetBattleState(TAG_AI_Dead);
+		break;
+	case EAttackAnimType::AAT_FinalAttackC:
+		AnimationComponent->PlayAIHitMontage("ExecutionC");
+		SetBattleState(TAG_AI_Dead);
+		break;
+	case EAttackAnimType::AAT_ParryAttack:
+		break;
+	default: break;
+	}
+}
+
 void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 {
 	switch (MonsterMontageStage)
@@ -185,7 +193,7 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	default: break;
 	}
 
-	SetPrimaryState(TAG_AI_Idle);
+	SetBattleState(TAG_AI_Idle);
 }
 
 void AMonsterAICharacter::Dead(bool bWithMontage)
