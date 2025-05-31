@@ -59,7 +59,7 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 		AnimComp->PlayAIAttackMontage("Attack3");
 	}
 	
-	AICharacter->SetPrimaryState(TAG_AI_IsAttacking);
+	AICharacter->SetBattleState(TAG_AI_IsAttacking);
 	
 	BlackboardComp->SetValueAsFloat("LastAttackTime", GetWorld()->GetTimeSeconds());
 

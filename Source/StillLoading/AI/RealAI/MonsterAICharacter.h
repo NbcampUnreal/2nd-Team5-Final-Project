@@ -38,9 +38,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void SetPrimaryState(const FGameplayTag NewState);
-
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	bool IsInPrimaryState(const FGameplayTag StateToCheck) const;
+
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	void SetBattleState(const FGameplayTag NewState);
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	bool HasBattleState(const FGameplayTag StateToCheck) const;
 
 	UFUNCTION()
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
@@ -52,6 +56,8 @@ public:
 	EMonsterType CurrentMonsterType = EMonsterType::MT_None;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StateTags;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
+	FGameplayTagContainer BattleStateTags;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
@@ -70,7 +76,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UBattleComponent> BattleComponent;
 	
