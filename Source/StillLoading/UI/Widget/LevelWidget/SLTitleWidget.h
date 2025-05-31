@@ -9,6 +9,7 @@
 class UButton;
 class UTextBlock;
 class UImage;
+class UNiagaraSystemWidget;
 
 UCLASS()
 class STILLLOADING_API USLTitleWidget : public USLLevelWidget
@@ -34,6 +35,18 @@ private:
 
 	UFUNCTION()
 	void OnClickedQuitButton();
+
+	UFUNCTION()
+	void OnHoveredStartButton();
+
+	UFUNCTION()
+	void OnHoveredOptionButton();
+
+	UFUNCTION()
+	void OnHoveredQuitButton();
+
+	UFUNCTION()
+	void OnUnhorveredButton();
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -63,8 +76,22 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> BackgroundBorder = nullptr;
 
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UNiagaraSystemWidget> StartButtonEffect = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UNiagaraSystemWidget> OptionButtonEffect = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UNiagaraSystemWidget> QuitButtonEffect = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UNiagaraSystemWidget> BackgroundEffect = nullptr;
+
 	static const FName TitleTextIndex;
 	static const FName StartButtonIndex;
 	static const FName OptionButtonIndex;
 	static const FName QuitButtonIndex;
+
+	bool bIsContainEffect = false;
 };

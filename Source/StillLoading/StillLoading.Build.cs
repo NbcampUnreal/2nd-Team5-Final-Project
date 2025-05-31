@@ -24,6 +24,7 @@ public class StillLoading : ModuleRules
 			"GameplayTags",
 			"Niagara",
             "GeometryCollectionEngine",
+			"NiagaraUIRenderer",
             "GameplayAbilities"
         });
 
