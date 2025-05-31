@@ -8,14 +8,12 @@
 
 class UButton;
 class UTextBlock;
-class USlider;
 class UImage;
-class UExpandableArea;
 class UWidgetSwitcher;
+class USLLanguageSettingWidget;
+class USLGraphicSettingWidget;
+class USLSoundSettingWidget;
 class USLKeySettingWidget;
-class UGameUserSettings;
-class URendererSettings;
-class USLUserDataSubsystem;
 
 UCLASS()
 class STILLLOADING_API USLOptionWidget : public USLAdditiveWidget
@@ -30,9 +28,7 @@ public:
 protected:
 	virtual void ApplyTextData() override;
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
-	virtual bool ApplySliderImage(FSliderStyle& SliderStyle) override;
 	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush) override;
-	virtual bool ApplyOtherImage();
 
 private:
 	// Layer Switch Function
@@ -48,73 +44,10 @@ private:
 	UFUNCTION()
 	void OnClickedKeySetting();
 	//
-	
-	// Language Function
-	UFUNCTION()
-	void OnClickedKor();
-
-	UFUNCTION()
-	void OnClickedEng();
-
-	UFUNCTION()
-	void OnClickedLanguageLeftButton();
-
-	UFUNCTION()
-	void OnClickedLanguageRightButton();
-	//
-
-	// Screen Mode Function
-	UFUNCTION()
-	void OnClickedFullScreen();
-
-	UFUNCTION()
-	void OnClickedWindowScreen();
-	//
-
-	// Resolution Function
-	UFUNCTION()
-	void OnClickedFirstResolution();
-
-	UFUNCTION()
-	void OnClickedSecondResolution();
-
-	UFUNCTION()
-	void OnClickedThirdResolution();
-	//
-
-	// Sound Volume Funtion
-	UFUNCTION()
-	void UpdateBgmVolume(float VolumeValue);
-
-	UFUNCTION()
-	void UpdateEffectVolume(float VolumeValue);
-	//
-
-	// Brightness Function
-	UFUNCTION()
-	void UpdateBrightness(float BrightnessValue);
-	//
 
 	UFUNCTION()
 	void OnClickedQuit();
 
-	void InitOptionVariable();
-	void CheckValidOfUserDataSubsystem();
-	void UpdateLanguage(bool bIsLeft);
-
-	void UpdateScreenModeButton();
-	void UpdateLanguageButton();
-	void UpdateResolution(int32 ResolutionNum);
-
-	void ApplyExpandableImage();
-	void ApplyExpandedImage();
-	void ApplyListBackImage();
-	void ApplyLeftArrowImage();
-	void ApplyRightArrowImage();
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<ESLLanguageType, FText> LanguageTextMap;
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -155,83 +88,16 @@ private:
 	TObjectPtr<UTextBlock> KeySettingText = nullptr;
 	//
 
-	// Language Setting
+	// Layer Widget
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> LanguageModeText = nullptr;
+	TObjectPtr<USLLanguageSettingWidget> LanguageSettingWidget = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> LanguageLeftButton = nullptr;
+	TObjectPtr<USLGraphicSettingWidget> GraphicSettingWidget = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> LanguageRightButton = nullptr;
+	TObjectPtr<USLSoundSettingWidget> SoundSettingWidget = nullptr;
 
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> LanguageText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UImage> LanguageBack = nullptr;
-	//
-
-	// Screen Mode Setting
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> FullScreenButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> WindowScreenButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> WindowModeText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> FullScreenText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> WindowScreenText = nullptr;
-	//
-
-	// Resolution Setting
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UExpandableArea> ResolutionList = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> FirstResolutionButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> SecondResolutionButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> ThirdResolutionButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> ResolutionText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> CurrentResolutionText = nullptr;
-	//
-
-	// Sound Volume Setting
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USlider> BgmVolumeSlider = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USlider> EffectVolumeSlider = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> BgmVolumeText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> EffectVolumeText = nullptr;
-	//
-
-	// Brightness Setting
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USlider> BrightnessSlider = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> BrightnessText = nullptr;
-	//
-
-	// Key Setting
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLKeySettingWidget> KeySettingWidget = nullptr;
 	//
@@ -250,23 +116,11 @@ private:
 	TObjectPtr<UTextBlock> CloseText = nullptr;
 	//
 
-	UPROPERTY()
-	TObjectPtr<USLUserDataSubsystem> UserDataSubsystem = nullptr;
-
-	static const TArray<TPair<float, float>> ResolutionSet;
-
 	static const FName TitleTextIndex;
-	static const FName LanguageTagIndex;
-	static const FName WindowModeTagIndex;
-	static const FName ResolutionTagIndex;
-	static const FName BgmTagIndex;
-	static const FName EffectTagIndex;
-	static const FName BrigthnessTagIndex;
-	static const FName KorButtonIndex;
-	static const FName EngButtonIndex;
-	static const FName FullScreenButtonIndex;
-	static const FName WindowedButtonIndex;
 	static const FName KeySettingButtonIndex;
 	static const FName QuitGameButtonIndex;
 	static const FName CloseButtonIndex;
+	static const FName LanguageSettingIndex;
+	static const FName GraphicSettingIndex;
+	static const FName SoundSettingIndex;
 };

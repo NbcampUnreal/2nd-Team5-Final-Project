@@ -23,7 +23,8 @@ public class StillLoading : ModuleRules
 			"AIModule",
 			"GameplayTags",
 			"Niagara",
-            "GeometryCollectionEngine"
+            "GeometryCollectionEngine",
+			"NiagaraUIRenderer"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
