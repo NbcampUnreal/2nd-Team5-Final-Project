@@ -40,6 +40,13 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	QuitGameButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuit);
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
 
+	LanguageSetBt->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	GraphicSetBt->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	SoundSetBt->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	KeySettingButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	QuitGameButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	CloseButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+
 	LanguageSettingWidget->InitWidget(NewUISubsystem);
 	GraphicSettingWidget->InitWidget(NewUISubsystem);
 	SoundSettingWidget->InitWidget(NewUISubsystem);
@@ -145,24 +152,29 @@ bool USLOptionWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
 void USLOptionWidget::OnClickedLanguageSetting()
 {
 	LayerSwitcher->SetActiveWidgetIndex(0);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::OnClickedGraphicSetting()
 {
 	LayerSwitcher->SetActiveWidgetIndex(1);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::OnClickedSoundSetting()
 {
 	LayerSwitcher->SetActiveWidgetIndex(2);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::OnClickedKeySetting()
 {
 	LayerSwitcher->SetActiveWidgetIndex(3);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::OnClickedQuit()
 {
+	PlayUISound(ESLUISoundType::EUS_Click);
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
 }

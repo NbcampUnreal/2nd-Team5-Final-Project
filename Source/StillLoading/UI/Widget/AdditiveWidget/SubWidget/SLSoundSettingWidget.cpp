@@ -17,7 +17,7 @@ void USLSoundSettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 	BgmVolumeSlider->OnValueChanged.AddDynamic(this, &ThisClass::UpdateBgmVolume);
 	EffectVolumeSlider->OnValueChanged.AddDynamic(this, &ThisClass::UpdateEffectVolume);
-
+	
 	CheckValidOfUserDataSubsystem();
 
 	BgmVolumeSlider->SetValue(UserDataSubsystem->GetCurrentBgmVolume());
