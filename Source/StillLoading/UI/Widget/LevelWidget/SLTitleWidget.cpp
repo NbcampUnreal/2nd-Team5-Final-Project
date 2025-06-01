@@ -167,6 +167,8 @@ void USLTitleWidget::OnClickedQuitButton()
 
 void USLTitleWidget::OnHoveredStartButton()
 {
+	PlayHoverSound();
+
 	if (!bIsContainEffect)
 	{
 		return;
@@ -178,6 +180,8 @@ void USLTitleWidget::OnHoveredStartButton()
 
 void USLTitleWidget::OnHoveredOptionButton()
 {
+	PlayHoverSound();
+
 	if (!bIsContainEffect)
 	{
 		return;
@@ -189,6 +193,8 @@ void USLTitleWidget::OnHoveredOptionButton()
 
 void USLTitleWidget::OnHoveredQuitButton()
 {
+	PlayHoverSound();
+
 	if (!bIsContainEffect)
 	{
 		return;

@@ -32,6 +32,13 @@ void USLGraphicSettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 	BrightnessSlider->OnValueChanged.AddDynamic(this, &ThisClass::UpdateBrightness);
 
+	FullScreenButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	WindowScreenButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+
+	FirstResolutionButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	SecondResolutionButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	ThirdResolutionButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+
 	CheckValidOfUserDataSubsystem();
 
 	TPair<float, float> CurrentReolution = UserDataSubsystem->GetCurrentScreenSize();
@@ -130,16 +137,19 @@ void USLGraphicSettingWidget::OnClickedWindowScreen()
 
 void USLGraphicSettingWidget::OnClickedFirstResolution()
 {
+	PlayUISound(ESLUISoundType::EUS_Click);
 	UpdateResolution(0);
 }
 
 void USLGraphicSettingWidget::OnClickedSecondResolution()
 {
+	PlayUISound(ESLUISoundType::EUS_Click);
 	UpdateResolution(1);
 }
 
 void USLGraphicSettingWidget::OnClickedThirdResolution()
 {
+	PlayUISound(ESLUISoundType::EUS_Click);
 	UpdateResolution(2);
 }
 

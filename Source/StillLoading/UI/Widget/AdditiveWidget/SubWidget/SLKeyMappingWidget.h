@@ -34,6 +34,9 @@ private:
 	UFUNCTION()
 	void OnClickedChangeKey();
 
+	UFUNCTION()
+	void PlayHoverSound();
+
 public:
 	UPROPERTY()
 	FOnClickedKey KeyDelegate;

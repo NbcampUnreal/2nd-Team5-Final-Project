@@ -17,6 +17,9 @@ void USLLanguageSettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 	LanguageLeftButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedLanguageLeftButton);
 	LanguageRightButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedLanguageRightButton);
+
+	LanguageLeftButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	LanguageRightButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
 }
 
 void USLLanguageSettingWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
