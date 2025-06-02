@@ -1,6 +1,7 @@
 #include "SLBTTask_Attack.h"
 
 #include "AIController.h"
+#include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/BattleComponent/BattleComponent.h"
@@ -26,7 +27,7 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp) return EBTNodeResult::Failed;
 
-	AActor* Target = Cast<AActor>(BlackboardComp->GetValueAsObject("TargetActor"));
+	AActor* Target = Cast<AActor>(BlackboardComp->GetValueAsObject(BlackboardKeys::TargetActor));
 	if (!Target) return EBTNodeResult::Failed;
 
 	UBattleComponent* BattleComp = AIPawn->FindComponentByClass<UBattleComponent>();
@@ -36,7 +37,7 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	if (!AnimComp) return EBTNodeResult::Failed;
 
 	const float CurrentTime = GetWorld()->GetTimeSeconds();
-	const float LastAttackTime = BlackboardComp->GetValueAsFloat(LastAttackTimeKey);
+	const float LastAttackTime = BlackboardComp->GetValueAsFloat(BlackboardKeys::LastAttackTime);
 
 	if (CurrentTime - LastAttackTime < AttackCooldown)
 	{
@@ -59,7 +60,7 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 		AnimComp->PlayAIAttackMontage("Attack3");
 	}
 	
-	AICharacter->SetPrimaryState(TAG_AI_IsAttacking);
+	AICharacter->SetBattleState(TAG_AI_IsAttacking);
 	
 	BlackboardComp->SetValueAsFloat("LastAttackTime", GetWorld()->GetTimeSeconds());
 

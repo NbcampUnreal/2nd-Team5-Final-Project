@@ -3,6 +3,7 @@
 #include "AIController.h"
 #include "EngineUtils.h"
 #include "NavigationSystem.h"
+#include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -53,6 +54,6 @@ EBTNodeResult::Type USLBTTask_Wander::ExecuteTask(UBehaviorTreeComponent& OwnerC
 
 	if (!bFound) return EBTNodeResult::Failed;
 
-	OwnerComp.GetBlackboardComponent()->SetValueAsVector("WanderLocation", ResultLocation.Location);
+	OwnerComp.GetBlackboardComponent()->SetValueAsVector(BlackboardKeys::WanderLocation, ResultLocation.Location);
 	return EBTNodeResult::Succeeded;
 }

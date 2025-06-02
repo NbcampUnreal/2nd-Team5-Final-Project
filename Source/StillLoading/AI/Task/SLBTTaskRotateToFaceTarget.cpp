@@ -19,7 +19,7 @@ USLBTTaskRotateToFaceTarget::USLBTTaskRotateToFaceTarget()
 	bNotifyTaskFinished = true;	//태스크가 끝났을 때, 완료된 것을 알림
 	bCreateNodeInstance = false;	//이 태스크는 새로운 노드 인스턴스를 생성하지 않도록 설정
 
-	INIT_TASK_NODE_NOTIFY_FLAGS();	//태스크 노드에서 필요한 알림 플래그를 초기화(bNotifyTick, bNotifyTaskFinished, bCreateNodeInstance를 설정하고 이 코드를 불러서  초기화하는듯)
+	INIT_TASK_NODE_NOTIFY_FLAGS();	//태스크 노드에서 필요한 알림 플래그를 초기화
 
 	//InTargetToFaceKey라는 블랙보드키에 AActor만 들어가도록 필터링 설정
 	InTargetToFaceKey.AddObjectFilter(this, GET_MEMBER_NAME_CHECKED(ThisClass, InTargetToFaceKey), AActor::StaticClass());
@@ -34,35 +34,6 @@ void USLBTTaskRotateToFaceTarget::InitializeFromAsset(UBehaviorTree& Asset)
 		// AI가 회전해서 바라볼 타겟(목표 액터)을 지정
 		InTargetToFaceKey.ResolveSelectedKey(*BBAsset);
 	}
-}
-
-bool USLBTTaskRotateToFaceTarget::HasReachedAnglePrecision(APawn* QueryPawn, AActor* TargetActor) const
-{
-	if (!QueryPawn || !TargetActor)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("QueryPawn 또는 TargetActor가 nullptr입니다."));
-		return false;
-	}
-	
-	const FVector OwnerForward = QueryPawn->GetActorForwardVector();
-	const FVector ToTarget = TargetActor->GetActorLocation() - QueryPawn->GetActorLocation();
-	
-	if (ToTarget.IsNearlyZero())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("QueryPawn과 TargetActor의 위치 차이가 0입니다."));
-		return false;
-	}
-	
-	const FVector OwnerToTargetNormalized = ToTarget.GetSafeNormal();
-	
-	//두 벡터 사이의 내적(Dot Product)을 계산
-	const float DotResult = FMath::Clamp(FVector::DotProduct(OwnerForward, OwnerToTargetNormalized), -1.0f, 1.0f);
-
-	//내적 값을 통해 두 벡터 사이의 각도를 계산
-	const float AngleDiff = UKismetMathLibrary::DegAcos(DotResult);
-
-	
-	return AngleDiff <= AnglePrecision;
 }
 
 uint16 USLBTTaskRotateToFaceTarget::GetInstanceMemorySize() const
@@ -89,7 +60,6 @@ EBTNodeResult::Type USLBTTaskRotateToFaceTarget::ExecuteTask(UBehaviorTreeCompon
 	APawn* OwningPawn = OwnerComp.GetAIOwner()->GetPawn();
 
 	//태스크의 실행 중에 사용할 메모리를 저장
-	//NodeMemory: 태스크 인스턴스에서 상태를 저장하는 메모리
 	FRotateToFaceTargetTaskMemory* Memory = CastInstanceNodeMemory<FRotateToFaceTargetTaskMemory>(NodeMemory);
 	check(Memory);
 
@@ -161,4 +131,32 @@ void USLBTTaskRotateToFaceTarget::TickTask(UBehaviorTreeComponent& OwnerComp, ui
 	TargetRot.Pitch = CurrentRot.Pitch;
 
 	Memory->OwningPawn->SetActorRotation(TargetRot);
+}
+
+bool USLBTTaskRotateToFaceTarget::HasReachedAnglePrecision(APawn* QueryPawn, AActor* TargetActor) const
+{
+	if (!QueryPawn || !TargetActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("QueryPawn 또는 TargetActor가 nullptr입니다."));
+		return false;
+	}
+	
+	const FVector OwnerForward = QueryPawn->GetActorForwardVector();
+	const FVector ToTarget = TargetActor->GetActorLocation() - QueryPawn->GetActorLocation();
+	
+	if (ToTarget.IsNearlyZero())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("QueryPawn과 TargetActor의 위치 차이가 0입니다."));
+		return false;
+	}
+	
+	const FVector OwnerToTargetNormalized = ToTarget.GetSafeNormal();
+	
+	//두 벡터 사이의 내적(Dot Product)을 계산
+	const float DotResult = FMath::Clamp(FVector::DotProduct(OwnerForward, OwnerToTargetNormalized), -1.0f, 1.0f);
+
+	//내적 값을 통해 두 벡터 사이의 각도를 계산
+	const float AngleDiff = UKismetMathLibrary::DegAcos(DotResult);
+
+	return AngleDiff <= AnglePrecision;
 }

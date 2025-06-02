@@ -1,6 +1,7 @@
 #include "SLPlayerCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GamePlayTag/GamePlayTag.h"
@@ -58,6 +59,17 @@ void ASLPlayerCharacter::BeginPlay()
 void ASLPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (GetMovementComponent()->IsFalling())
+	{
+		// 점프 중: AI와 충돌 무시
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	}
+	else
+	{
+		// 착지 후: AI와 충돌 활성화
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	}
 }
 
 void ASLPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
