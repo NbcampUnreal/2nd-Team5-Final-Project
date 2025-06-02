@@ -5,6 +5,7 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "MonsterAIController.generated.h"
 
+class UAISenseConfig_Damage;
 class UAISenseConfig_Sight;
 class UBehaviorTreeComponent;
 
@@ -34,8 +35,6 @@ protected:
 	void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
-	UFUNCTION()
-	void AlertNearbyAllies(AActor* TargetActor, float AlertRadius = 1000.f);
 
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
