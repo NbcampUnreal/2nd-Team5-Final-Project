@@ -17,7 +17,7 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	void CheckAndResetTile();
+	//void CheckAndResetTile();
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TArray<TObjectPtr<AActor>> Tiles;
@@ -28,17 +28,18 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Loop Settings")
 	float TileLength = 1000.0f; // 타일의 X 길이
 
-	
+	TObjectPtr<USceneComponent> Root;
 
 protected:
-	// Called when the game starts or when spawned
+
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
 
 private:
 
-	UPROPERTY(VisibleAnywhere)
-	USceneComponent* Root;
+	FTimerHandle TileLoopTimerHandle;
+
+	void MoveLeftmostTile();
+
+	TObjectPtr<AActor> GetLeftTile();
 };
