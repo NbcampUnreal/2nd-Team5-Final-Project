@@ -18,7 +18,7 @@ void ASLReactiveObjectTree::OnReacted(const ASLPlayerCharacterBase* InCharacter,
 void ASLReactiveObjectTree::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	Move();
+	Move(DeltaTime);
 }
 
 void ASLReactiveObjectTree::BeginOverlapCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -33,10 +33,10 @@ void ASLReactiveObjectTree::BeginOverlapCollision(UPrimitiveComponent* Overlappe
 	}
 }
 
-void ASLReactiveObjectTree::Move()
+void ASLReactiveObjectTree::Move(float DeltaTime)
 {
 	FVector MyPos = GetActorLocation();
-	MyPos.X += MoveSpeed;
+	MyPos.X -= MoveSpeed * DeltaTime;
 	SetActorLocation(MyPos);
 }
 

@@ -26,9 +26,9 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 private:
-	FORCEINLINE void Move();
+	FORCEINLINE void Move(float DeltaTime);
 
 private:
 	UPROPERTY(EditAnywhere)
-	float MoveSpeed = 5;
+	float MoveSpeed = 1500;
 };
