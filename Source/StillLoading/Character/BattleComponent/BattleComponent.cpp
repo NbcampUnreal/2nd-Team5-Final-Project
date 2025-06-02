@@ -57,9 +57,22 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 {
 	if (AActor* OwnerActor = GetOwner())
 	{
-		const FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 25);
-		const FVector End = Start + OwnerActor->GetActorForwardVector() * 80;
-		const FCollisionShape SweepShape = FCollisionShape::MakeCapsule(20.f, 70.f);
+		FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 25);
+		FVector End = Start + OwnerActor->GetActorForwardVector() * 80;
+		FCollisionShape SweepShape = FCollisionShape::MakeCapsule(20.f, 70.f);
+		
+		switch (AttackType)
+		{
+		case EAttackAnimType::AAT_Airborn:
+		case EAttackAnimType::AAT_Skill1:
+			SweepShape = FCollisionShape::MakeCapsule(50.f, 70.f);
+			break;
+		case EAttackAnimType::AAT_Skill2:
+			Start = OwnerActor->GetActorLocation() + FVector(0, 0, 0);
+			End = Start * 200;
+			SweepShape = FCollisionShape::MakeSphere(200.f);
+			break;
+		}
 
 		TArray<FHitResult> HitResults;
 		FCollisionQueryParams Params;
@@ -77,7 +90,15 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 
 		if (bShowDebugLine)
 		{
-			DrawDebugCapsule(GetWorld(), End, SweepShape.GetCapsuleHalfHeight(), SweepShape.GetCapsuleRadius(), FQuat::Identity, FColor::Green, false, 1.0f);
+			switch (AttackType)
+			{
+			case EAttackAnimType::AAT_Skill2:
+				DrawDebugSphere(GetWorld(), Start, SweepShape.GetSphereRadius(), 16, FColor::Green, false, 1.0f);
+				break;
+			default:
+				DrawDebugCapsule(GetWorld(), End, SweepShape.GetCapsuleHalfHeight(), SweepShape.GetCapsuleRadius(), FQuat::Identity, FColor::Green, false, 1.0f);
+				break;
+			}
 		}
 
 		for (const FHitResult& Hit : HitResults)

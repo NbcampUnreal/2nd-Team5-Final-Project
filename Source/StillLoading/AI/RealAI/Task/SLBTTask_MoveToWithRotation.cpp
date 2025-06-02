@@ -1,6 +1,7 @@
 #include "SLBTTask_MoveToWithRotation.h"
 
 #include "AIController.h"
+#include "AI/RealAI/Blackboardkeys.h"
 #include "Navigation/PathFollowingComponent.h"
 
 USLBTTask_MoveToWithRotation::USLBTTask_MoveToWithRotation()
@@ -19,7 +20,7 @@ EBTNodeResult::Type USLBTTask_MoveToWithRotation::ExecuteTask(UBehaviorTreeCompo
 	UBlackboardComponent* BBComp = OwnerComp.GetBlackboardComponent();
 	if (!BBComp) return EBTNodeResult::Failed;
 
-	AActor* Target = Cast<AActor>(BBComp->GetValueAsObject("TargetActor"));
+	AActor* Target = Cast<AActor>(BBComp->GetValueAsObject(BlackboardKeys::TargetActor));
 	if (!Target) return EBTNodeResult::Failed;
 
 	FAIMoveRequest MoveReq;

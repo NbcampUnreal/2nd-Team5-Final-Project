@@ -54,4 +54,7 @@ protected:
 private:
 	UPROPERTY()
 	float SpawnSpacing = 200.f;
+	
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> SpawnedMonsters;
 };

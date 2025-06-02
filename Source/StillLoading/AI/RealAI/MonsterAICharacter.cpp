@@ -1,6 +1,7 @@
 #include "MonsterAICharacter.h"
 
-#include "BrainComponent.h"
+#include "FormationComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
@@ -21,11 +22,34 @@ AMonsterAICharacter::AMonsterAICharacter()
 
 	AnimationComponent = CreateDefaultSubobject<UAnimationMontageComponent>(TEXT("AnimationComponent"));
 	BattleComponent = CreateDefaultSubobject<UBattleComponent>(TEXT("BattleComponent"));
+	FormationComponent = CreateDefaultSubobject<UFormationComponent>(TEXT("FormationComponent"));
 
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement(); MoveComp && MoveComp->MovementMode ==
 		EMovementMode::MOVE_None)
 	{
 		MoveComp->SetMovementMode(MOVE_Walking);
+	}
+}
+
+void AMonsterAICharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (bIsLeader)
+	{
+		FVector Location = GetActorLocation();
+
+		// 머리 위에 텍스트 표시
+		FVector TextLocation = Location + FVector(0, 0, 120);
+		DrawDebugString(
+			GetWorld(),
+			TextLocation,
+			TEXT("Leader"),
+			nullptr,
+			FColor::White,
+			0.f, // 지속 시간
+			true // 카메라 고정 여부
+		);
 	}
 }
 
@@ -48,8 +72,48 @@ void AMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
+	SetStrategyState(TAG_AI_STRATEGY_ORGANIZED_SQUAD);
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
+
+	GetCharacterMovement()->bUseRVOAvoidance = true;
+}
+
+void AMonsterAICharacter::SetLeader()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Im Leader"));
+	bIsLeader = true;
+	
+	AAIController* LeaderController = Cast<AAIController>(GetController());
+	
+	if (LeaderController && LeaderController->GetBlackboardComponent())
+	{
+		LeaderController->GetBlackboardComponent()->SetValueAsObject(FName("Leader"), this);
+	}
+}
+
+void AMonsterAICharacter::RotateToHitCauser(const AActor* Causer)
+{
+	if (!Causer) return;
+
+	const FVector OwnerLocation = GetActorLocation();
+	const FVector CauserLocation = Causer->GetActorLocation();
+
+	const FVector ToCauser = (CauserLocation - OwnerLocation).GetSafeNormal2D();
+	const FVector Forward = GetActorForwardVector().GetSafeNormal2D();
+
+	const float Dot = FVector::DotProduct(Forward, ToCauser);
+
+	FRotator TargetRotation = ToCauser.Rotation();
+	TargetRotation.Pitch = 0.f;
+	TargetRotation.Roll = 0.f;
+
+	SetActorRotation(TargetRotation);
+
+	if (Dot >= -0.7f) // 뒤쪽 아님
+	{}
+	else
+	{}
 }
 
 void AMonsterAICharacter::HitDirection(AActor* Causer)
@@ -76,11 +140,6 @@ void AMonsterAICharacter::AttachItemToHand(AActor* ItemActor, const FName Socket
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		SocketName
 	);
-}
-
-void AMonsterAICharacter::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
 }
 
 void AMonsterAICharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -120,7 +179,18 @@ bool AMonsterAICharacter::HasBattleState(const FGameplayTag StateToCheck) const
 	return BattleStateTags.HasTag(StateToCheck);
 }
 
-void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType)
+void AMonsterAICharacter::SetStrategyState(const FGameplayTag NewState)
+{
+	StrategyStateTags.AddTag(NewState);
+}
+
+bool AMonsterAICharacter::HasStrategyState(const FGameplayTag StateToCheck) const
+{
+	return StrategyStateTags.HasTag(StateToCheck);
+}
+
+void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
+                                        EAttackAnimType AnimType)
 {
 	AnimationComponent->StopAllMontages(0.2f);
 	HitDirection(Causer);
@@ -145,7 +215,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		}
 		SetBattleState(TAG_AI_Hit);
 		break;
-		
+
 	case EAttackAnimType::AAT_Airborn:
 		AnimationComponent->PlayAIHitMontage("Airborne");
 		SetBattleState(TAG_AI_Hit);
@@ -156,6 +226,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		break;
 	case EAttackAnimType::AAT_Skill2:
 		AnimationComponent->PlayAIHitMontage("GroundHit");
+		RotateToHitCauser(Causer);
 		SetBattleState(TAG_AI_Hit);
 		break;
 	case EAttackAnimType::AAT_FinalAttackA:
