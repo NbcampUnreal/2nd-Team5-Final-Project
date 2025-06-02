@@ -62,7 +62,7 @@ void ASLNPC::Attack()
     if (CurrentTime - LastAttackTime > AttackCooldown)
     {
         TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
-        AnimInstance->SetIsAttacking(true);
+        //AnimInstance->SetIsAttacking(true);
         LastAttackTime = CurrentTime;
     }
 }

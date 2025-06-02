@@ -18,10 +18,11 @@ class STILLLOADING_API USLAICharacterAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 public:
+	USLAICharacterAnimInstance();
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
+	/*UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
 	void SetHitDirection(EHitDirection NewDirection);
     
 	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
@@ -40,7 +41,7 @@ public:
 	void SetIsAttacking(bool bNewIsAttacking);
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
-	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer);
+	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer);*/
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	bool IsTargetBehindCharacter(float AngleThreshold) const;
@@ -48,12 +49,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
 	bool GetIsAttacking();
 
+	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
+	bool GetbIsInCombat();
+
+	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
+	void SetDamagePosition(const FVector& NewDamagePosition);
+	
+	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
+	FVector GetDamagePosition() const;
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
 	bool DoesOwnerHaveTag(FName TagToCheck) const;
-
-	UFUNCTION()
-	void AnimNotify_AttackEnd();
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	float GetDistanceToGround() const;
@@ -117,8 +123,18 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
 	bool IsExecution;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
+	bool bIsInCombat;
 	
 	// --- Anim Data | Combat Specific ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Combat Specific")
     EHitDirection HitDirectionVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Combat Specific")
+	FVector DamagePosition;
+
+private:
+	FVector PreviousVelocity;
+	float PreviousGroundSpeed;
 };

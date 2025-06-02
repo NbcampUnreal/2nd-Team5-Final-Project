@@ -79,7 +79,7 @@ void ASLEnemyAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 			{
 				IsPatrolState = false;
 				BlackboardComponent->SetValueAsBool("IsPatrolState", IsPatrolState);
-				TargetActor = Actor;
+//				TargetActor = Actor;
 				BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
 				BlackboardComponent->SetValueAsBool(FName("HasLineOfSight"), true);
 			}

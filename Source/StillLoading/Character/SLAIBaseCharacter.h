@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayEffectTypes.h"
+#include "GameplayEffectTypes.h"
 #include "SLPlayerCharacterBase.h"
 #include "DataAsset/AttackDataAsset.h"
 #include "SLAIBaseCharacter.generated.h"
@@ -74,7 +76,7 @@ enum class EChapter : uint8
 };
 
 UCLASS()
-class STILLLOADING_API ASLAIBaseCharacter : public ASLPlayerCharacterBase
+class STILLLOADING_API ASLAIBaseCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -82,7 +84,8 @@ public:
 	// --- Constructor ---
 	ASLAIBaseCharacter();
 	virtual void BeginPlay() override;
-
+	virtual void Landed(const FHitResult& Hit) override;
+	
 	// --- Getters (Collision) ---
 	// 손 콜리전 컴포넌트 접근자
 	FORCEINLINE UBoxComponent* GetLeftHandCollisionBox() const { return LeftHandCollisionBox; }
@@ -98,8 +101,30 @@ public:
 	FORCEINLINE float GetCurrentHealth() const { return CurrentHealth; }
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE float GetAttackPower() const { return AttackPower;}
+	FORCEINLINE bool GetIsDead() const { return IsDead;}
 
+	// Getter 함수들 추가
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsHit() const { return bIsHit; }
+    
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsDown() const { return bIsDown; }
+    
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsStun() const { return bIsStun; }
+    
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsAttacking() const { return bIsAttacking; }
+    
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE EHitDirection GetHitDirection() const { return HitDirection; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE FVector GetHitDirectionVector() const { return HitDirectionVector; }
+	
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetShouldLookAtPlayer() const { return bShouldLookAtPlayer; }
+	
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentHealth(float NewHealth);
 
@@ -107,8 +132,20 @@ public:
 	void SetIsHitReaction(bool bNewIsHitReaction);
 
 	UFUNCTION(BlueprintCallable)
-	void SetAttackPower(float NewAttackPower);
+	void SetIsHit(bool bNewIsHit);
 
+	UFUNCTION(BlueprintCallable)
+	void SetIsDown(bool bNewIsDown);
+
+	UFUNCTION(BlueprintCallable)
+	void SetIsStun(bool bNewIsStun);
+
+	UFUNCTION(BlueprintCallable)
+	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer);
+	
+	UFUNCTION(BlueprintCallable)
+	void SetIsAttacking(bool bNewIsAttacking);
+	
 	UFUNCTION(BlueprintCallable)
 	void SetCombatPhase(ECombatPhase NewCombatPhase);
 
@@ -140,9 +177,6 @@ public:
 	UBattleComponent* GetBattleComponent();
 
 	UFUNCTION(BlueprintCallable)
-	void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
-
-	UFUNCTION(BlueprintCallable)
 	void SetCurrentAttackType(EAttackAnimType NewCurrentAttackType);
 
 	UFUNCTION(BlueprintCallable)
@@ -171,7 +205,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat") 
 	void PlayExecutionAnimation(EAttackAnimType ExecutionType, AActor* Executor);
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void AIJump();
+    
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	bool CanAIJump() const;
+    
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	FORCEINLINE bool IsJumping() const { return bIsJumping; }
+    
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	FORCEINLINE bool IsLanding() const { return bIsLanding; }
 protected:
 	
 #if WITH_EDITOR
@@ -183,6 +228,11 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
 	TArray<FVector> GenerateHorizontalFanDirections(const FVector& BaseDirection, int32 Count, float FanHalfAngle) const;
 
+	UFUNCTION(BlueprintCallable)
+	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
+
+	virtual void OnLanded(const FHitResult& Hit);
+	
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<ASLBaseAIController> AIController;
@@ -196,9 +246,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attributes")
 	float CurrentHealth; // 현재 체력
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
-	float AttackPower;
 
 	// --- State Flags ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
@@ -252,6 +299,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon")
 	TObjectPtr<UPrimitiveComponent> CurrentWeaponCollision;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AActor> WeaponClass;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> EquippedWeapon;
 
@@ -268,13 +318,40 @@ protected:
 	TObjectPtr<UNiagaraComponent> HitEffectComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
-	bool bCanBeExecuted = true;  // 기본값은 true, 보스는 false로 설정
+	bool bCanBeExecuted;  // 기본값은 true, 보스는 false로 설정
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Montages")
 	TMap<EAttackAnimType, TObjectPtr<UAnimMontage>> ExecutionMontages;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
-	bool bIsBeingExecuted = false;
+	bool bIsBeingExecuted;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsHit;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsDown;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsStun;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsAttacking;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bShouldLookAtPlayer;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	EHitDirection HitDirection;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	FVector HitDirectionVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsJumping;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsLanding;
 };
 
 
