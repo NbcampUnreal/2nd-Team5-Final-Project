@@ -17,7 +17,7 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	void CheckAndResetTile(AActor* Tile);
+	void CheckAndResetTile();
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TArray<TObjectPtr<AActor>> Tiles;
