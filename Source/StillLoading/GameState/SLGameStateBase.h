@@ -6,10 +6,7 @@
 #include "GameFramework/GameState.h"
 #include "SLGameStateBase.generated.h"
 
-class USLGameSubjectBase;
-/**
- * 
- */
+
 UCLASS()
 class STILLLOADING_API ASLGameStateBase : public AGameState
 {
@@ -18,11 +15,4 @@ class STILLLOADING_API ASLGameStateBase : public AGameState
 public:
 	ASLGameStateBase();
 	
-	TArray<USLGameSubjectBase*> GetGameSubjects() const;
-	void AddGameSubject(USLGameSubjectBase *Subject);
-	void RemoveGameSubject(USLGameSubjectBase *Subject);
-	
-private:
-	UPROPERTY()
-	TArray<TObjectPtr<USLGameSubjectBase>> GameSubjects;
 };

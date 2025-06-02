@@ -7,6 +7,7 @@
 
 ASLGameModeBase::ASLGameModeBase()
 {
+	GameStateClass = ASLGameStateBase::StaticClass();
 }
 
 void ASLGameModeBase::BeginPlay()
@@ -19,16 +20,4 @@ void ASLGameModeBase::BeginPlay()
 void ASLGameModeBase::LoadGame()
 {
 	
-}
-
-void ASLGameModeBase::StartGameSubject(USLGameSubjectBase* Subject)
-{
-	SLGameState->AddGameSubject(Subject);
-	OnGameSubjectStartedDelegate.Broadcast(Subject);
-}
-
-void ASLGameModeBase::EndGameSubject(USLGameSubjectBase* Subject)
-{
-	SLGameState->RemoveGameSubject(Subject);
-	OnGameSubjectFinishedDelegate.Broadcast(Subject);
 }
