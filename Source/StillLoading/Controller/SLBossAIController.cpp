@@ -44,46 +44,27 @@ ETeamAttitude::Type ASLBossAIController::GetTeamAttitudeTowards(const AActor& Ot
 
 void ASLBossAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-	if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
+	if (!Actor)
 	{
-		if (Stimulus.WasSuccessfullySensed() && Actor)
+		return;
+	}
+
+	// 죽은 액터는 무시
+	if (!IsActorAlive(Actor))
+	{
+		return;
+	}
+
+	if (Stimulus.WasSuccessfullySensed())
+	{
+		if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile)
 		{
-			if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile)
-			{
-				AActor* CurrentTarget = Cast<AActor>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
-                
-				bool bShouldSetNewTarget = true;
-                
-				// 기존 타겟이 있으면 거리 비교
-				if (CurrentTarget)
-				{
-					FVector MyLocation = GetPawn()->GetActorLocation();
-                    
-					// 기존 타겟과의 거리 계산
-					float DistanceToCurrentTarget = FVector::Distance(MyLocation, CurrentTarget->GetActorLocation());
-                    
-					// 새 타겟과의 거리 계산
-					float DistanceToNewTarget = FVector::Distance(MyLocation, Actor->GetActorLocation());
-                    
-					if (DistanceToNewTarget >= DistanceToCurrentTarget)
-					{
-						bShouldSetNewTarget = false;
-					}
-				}
-                
-				// 새 타겟으로 설정해야 하는 경우
-				if (bShouldSetNewTarget)
-				{
-					TargetActor = Actor;
-					BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
-				}
-			}
-			else
-			{
-				GetBlackboardComponent()->ClearValue(FName("TargetActor"));
-			}
+			// 부모 클래스의 타겟 시스템 사용
+			AddOrUpdateTarget(Actor);
+			UpdateTargetEvaluation();
 		}
 	}
+
 }
 
 

@@ -22,7 +22,7 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
+	/*UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
 	void SetHitDirection(EHitDirection NewDirection);
     
 	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
@@ -41,7 +41,7 @@ public:
 	void SetIsAttacking(bool bNewIsAttacking);
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Setters")
-	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer);
+	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer);*/
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	bool IsTargetBehindCharacter(float AngleThreshold) const;
@@ -60,9 +60,6 @@ public:
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
 	bool DoesOwnerHaveTag(FName TagToCheck) const;
-
-	UFUNCTION()
-	void AnimNotify_AttackEnd();
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	float GetDistanceToGround() const;

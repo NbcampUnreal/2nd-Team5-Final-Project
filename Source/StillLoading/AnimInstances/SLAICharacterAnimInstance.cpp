@@ -80,6 +80,15 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 		return;
 	}
 
+	bIsHit = OwningCharacter->GetIsHit();
+	IsDown = OwningCharacter->GetIsDown();
+	IsStun = OwningCharacter->GetIsStun();
+	IsAttacking = OwningCharacter->GetIsAttacking();
+	IsDead = OwningCharacter->GetIsDead();
+	HitDirectionVector = OwningCharacter->GetHitDirection();
+	ShouldLookAtPlayer = OwningCharacter->GetShouldLookAtPlayer();
+	DamagePosition = OwningCharacter->GetHitDirectionVector();
+	bIsJump = OwningCharacter->IsJumping();
 	// 현재 속도 계산
 	FVector CurrentVelocity = OwningCharacter->GetVelocity();
 	GroundSpeed = CurrentVelocity.Size2D();
@@ -157,7 +166,7 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 	}
 }
 
-void USLAICharacterAnimInstance::SetHitDirection(EHitDirection NewDirection)
+/*void USLAICharacterAnimInstance::SetHitDirection(EHitDirection NewDirection)
 {
 	HitDirectionVector = NewDirection;
 }
@@ -190,7 +199,7 @@ void USLAICharacterAnimInstance::SetIsAttacking(bool bNewIsAttacking)
 void USLAICharacterAnimInstance::SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer)
 {
 	ShouldLookAtPlayer = bNewShouldLookAtPlayer;
-}
+}*/
 
 bool USLAICharacterAnimInstance::IsTargetBehindCharacter(float AngleThreshold) const
 {
@@ -215,31 +224,6 @@ bool USLAICharacterAnimInstance::IsTargetBehindCharacter(float AngleThreshold) c
 bool USLAICharacterAnimInstance::DoesOwnerHaveTag(FName TagToCheck) const
 {
 	return TryGetPawnOwner()->ActorHasTag(TagToCheck);
-}
-
-void USLAICharacterAnimInstance::AnimNotify_AttackEnd()
-{
-	APawn* Pawn = TryGetPawnOwner();
-	ASLMonster* Monster = Cast<ASLMonster>(Pawn);
-	if (Monster)
-	{
-		SetIsAttacking(false);
-		/*Monster->AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);*/
-		TWeakObjectPtr<ASLMonster> WeakMonster = Monster;
-		FTimerHandle TimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(
-			TimerHandle,
-			[WeakMonster]()
-		{
-			if (WeakMonster.IsValid() && WeakMonster->AttackSphere)
-			{
-				WeakMonster->AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			}
-		},
-			5.f, // 지연 시간
-			false
-		);
-	}
 }
 
 bool USLAICharacterAnimInstance::GetIsAttacking()

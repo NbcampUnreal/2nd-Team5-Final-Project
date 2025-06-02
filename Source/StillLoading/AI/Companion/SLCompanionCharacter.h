@@ -17,12 +17,12 @@ enum class ECompanionActionPattern : uint8
 	ECAP_Attack_Air              UMETA(DisplayName = "Attack Air"),
 
     // BM Attack Patterns
-	ECAP_BM_MeleeCombo1          UMETA(DisplayName = "BM Melee Combo 1"),
-	ECAP_BM_MeleeCombo2          UMETA(DisplayName = "BM Melee Combo 2"),
-	ECAP_BM_MeleeCombo3          UMETA(DisplayName = "BM Melee Combo 3"),
-	ECAP_BM_QuickCombo1          UMETA(DisplayName = "BM Quick Combo 1"),
-	ECAP_BM_HeavyCombo1          UMETA(DisplayName = "BM Heavy Combo 1"),
-	ECAP_BM_FinisherCombo1       UMETA(DisplayName = "BM Finisher Combo 1"),
+	ECAP_BM_MeleeCombo1          UMETA(DisplayName = "BM Melee Combo 1"),// BM 01->02->03->04->10
+	ECAP_BM_MeleeCombo2          UMETA(DisplayName = "BM Melee Combo 2"),// BM 13->05->06->08->12
+	ECAP_BM_MeleeCombo3          UMETA(DisplayName = "BM Melee Combo 3"),// BM 05->06->07->08->09
+	ECAP_BM_QuickCombo1          UMETA(DisplayName = "BM Quick Combo 1"),// BM 10->11->12
+	ECAP_BM_HeavyCombo1          UMETA(DisplayName = "BM Heavy Combo 1"),// BM 13->14->15->16
+	ECAP_BM_FinisherCombo1       UMETA(DisplayName = "BM Finisher Combo 1"),// BM 17->18
 
     ECAP_BM_Attack01             UMETA(DisplayName = "BM Attack 01"),
     ECAP_BM_Attack02             UMETA(DisplayName = "BM Attack 02"),
@@ -124,9 +124,6 @@ public:
 	bool HasGameplayTag(const FGameplayTag& TagToCheck) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void CastStunSpell(AActor* Target);
-
-	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void FireProjectile(EAttackAnimType AttackAnimType);
 
 	UFUNCTION(BlueprintCallable, Category = "State")
@@ -144,13 +141,22 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	ECompanionActionPattern SelectRandomPatternFromTagsWithDistance(const FGameplayTagContainer& PatternTags, float DistanceToTarget);
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	FORCEINLINE ECompanionActionPattern GetCurrentActionPattern() const { return CurrentActionPattern; }
+    
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetCurrentActionPattern(ECompanionActionPattern NewPattern);
+
+	UFUNCTION(BlueprintCallable, Category = "Teleport")
+	bool GetIsTeleporting() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Teleport")
+	void SetIsTeleporting(bool NewIsTeleporting);
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType) override;
-	
-	void AutoStunNearbyEnemy();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	TSubclassOf<ASLAIProjectile> ProjectileClass;
@@ -160,15 +166,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	bool IsBattleMage;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	float AutoStunInterval;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	float StunDuration;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
-	TObjectPtr<UNiagaraSystem> StunEffect;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|GameplayTags")
 	FGameplayTagContainer CurrentGameplayTags;
@@ -191,10 +188,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	int32 MaxRecentPatternMemory;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	ECompanionActionPattern CurrentActionPattern;
+
 private:
-	UPROPERTY()
-	FTimerHandle AutoStunTimer;
 
 	UPROPERTY()
 	bool bIsInCombat;
+
+	UPROPERTY()
+	bool bIsTeleporting;
 };

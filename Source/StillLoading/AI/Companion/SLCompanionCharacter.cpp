@@ -12,6 +12,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Controller/SLBaseAIController.h"
 #include "Controller/SLCompanionAIController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 FSLCompanionActionPatternMappingRow::FSLCompanionActionPatternMappingRow()
 {
@@ -32,8 +33,6 @@ ASLCompanionCharacter::ASLCompanionCharacter()
     IsHitReaction = true;
     
     ProjectileSocketName = "hand_r";
-    AutoStunInterval = 10.0f;
-    StunDuration = 3.0f;
     bIsInCombat = false;
     IsBattleMage = false;
 
@@ -43,6 +42,7 @@ ASLCompanionCharacter::ASLCompanionCharacter()
     
     MaxRecentPatternMemory = 3;
     PatternData = nullptr;
+    CurrentActionPattern = ECompanionActionPattern::ECAP_None;
 }
 
 void ASLCompanionCharacter::BeginPlay()
@@ -122,54 +122,6 @@ void ASLCompanionCharacter::SetIsBattleMage(bool bInBattleMage)
     IsBattleMage = bInBattleMage;
 }
 
-void ASLCompanionCharacter::CastStunSpell(AActor* Target)
-{
-    if (!Target) return;
-    
-    ASLAIBaseCharacter* EnemyCharacter = Cast<ASLAIBaseCharacter>(Target);
-    if (!EnemyCharacter || EnemyCharacter->GetIsDead()) return;
-    
-    if (StunEffect)
-    {
-        UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-            GetWorld(),
-            StunEffect,
-            Target->GetActorLocation(),
-            FRotator::ZeroRotator,
-            FVector(1.0f),
-            true,
-            true,
-            ENCPoolMethod::AutoRelease
-        );
-    }
-    
-    FTimerHandle StunTimer;
-    GetWorld()->GetTimerManager().SetTimer(StunTimer, [EnemyCharacter, this]()
-    {
-        if (IsValid(EnemyCharacter) && !EnemyCharacter->GetIsDead())
-        {
-            if (USLAICharacterAnimInstance* AnimInstance = Cast<USLAICharacterAnimInstance>(EnemyCharacter->GetMesh()->GetAnimInstance()))
-            {
-                AnimInstance->SetIsStun(false);
-            }
-        }
-    }, StunDuration, false);
-}
-
-void ASLCompanionCharacter::AutoStunNearbyEnemy()
-{
-    if (!bIsInCombat || !AIController) return;
-    
-    UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
-    if (!BlackboardComponent) return;
-    
-    AActor* Target = Cast<AActor>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
-    if (Target)
-    {
-        CastStunSpell(Target);
-    }
-}
-
 void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
 {
     if (DamageCauser && IsHitReaction && AnimInstancePtr)
@@ -194,9 +146,6 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
             {
                 HitDir = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
             }
-            
-            SLAIAnimInstance->SetHitDirection(HitDir);
-            SLAIAnimInstance->SetIsHit(true);
         }
     }
 
@@ -389,4 +338,27 @@ ECompanionActionPattern ASLCompanionCharacter::SelectRandomPatternFromTagsWithDi
     }
 
     return PatternData->GetActionPatternForTag(SelectedTag);
+}
+
+void ASLCompanionCharacter::SetCurrentActionPattern(ECompanionActionPattern NewPattern)
+{
+    CurrentActionPattern = NewPattern;
+
+    if (AIController)
+    {
+        if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+        {
+            BlackboardComponent->SetValueAsEnum(FName("CompanionPattern"), static_cast<uint8>(NewPattern));
+        }
+    }
+}
+
+bool ASLCompanionCharacter::GetIsTeleporting() const
+{
+    return bIsTeleporting;
+}
+
+void ASLCompanionCharacter::SetIsTeleporting(bool NewIsTeleporting)
+{
+    bIsTeleporting = NewIsTeleporting;
 }

@@ -84,7 +84,8 @@ public:
 	// --- Constructor ---
 	ASLAIBaseCharacter();
 	virtual void BeginPlay() override;
-
+	virtual void Landed(const FHitResult& Hit) override;
+	
 	// --- Getters (Collision) ---
 	// 손 콜리전 컴포넌트 접근자
 	FORCEINLINE UBoxComponent* GetLeftHandCollisionBox() const { return LeftHandCollisionBox; }
@@ -100,10 +101,29 @@ public:
 	FORCEINLINE float GetCurrentHealth() const { return CurrentHealth; }
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE float GetAttackPower() const { return AttackPower;}
+	FORCEINLINE bool GetIsDead() const { return IsDead;}
+
+	// Getter 함수들 추가
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsHit() const { return bIsHit; }
+    
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsDown() const { return bIsDown; }
+    
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsStun() const { return bIsStun; }
+    
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsAttacking() const { return bIsAttacking; }
+    
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE EHitDirection GetHitDirection() const { return HitDirection; }
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE float GetIsDead() const { return IsDead;}
+	FORCEINLINE FVector GetHitDirectionVector() const { return HitDirectionVector; }
+	
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetShouldLookAtPlayer() const { return bShouldLookAtPlayer; }
 	
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentHealth(float NewHealth);
@@ -112,8 +132,20 @@ public:
 	void SetIsHitReaction(bool bNewIsHitReaction);
 
 	UFUNCTION(BlueprintCallable)
-	void SetAttackPower(float NewAttackPower);
+	void SetIsHit(bool bNewIsHit);
 
+	UFUNCTION(BlueprintCallable)
+	void SetIsDown(bool bNewIsDown);
+
+	UFUNCTION(BlueprintCallable)
+	void SetIsStun(bool bNewIsStun);
+
+	UFUNCTION(BlueprintCallable)
+	void SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer);
+	
+	UFUNCTION(BlueprintCallable)
+	void SetIsAttacking(bool bNewIsAttacking);
+	
 	UFUNCTION(BlueprintCallable)
 	void SetCombatPhase(ECombatPhase NewCombatPhase);
 
@@ -173,7 +205,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat") 
 	void PlayExecutionAnimation(EAttackAnimType ExecutionType, AActor* Executor);
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void AIJump();
+    
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	bool CanAIJump() const;
+    
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	FORCEINLINE bool IsJumping() const { return bIsJumping; }
+    
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	FORCEINLINE bool IsLanding() const { return bIsLanding; }
 protected:
 	
 #if WITH_EDITOR
@@ -187,6 +230,8 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
+
+	virtual void OnLanded(const FHitResult& Hit);
 	
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -201,9 +246,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attributes")
 	float CurrentHealth; // 현재 체력
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
-	float AttackPower;
 
 	// --- State Flags ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
@@ -283,6 +325,33 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool bIsBeingExecuted;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsHit;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsDown;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsStun;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsAttacking;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bShouldLookAtPlayer;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	EHitDirection HitDirection;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	FVector HitDirectionVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsJumping;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsLanding;
 };
 
 

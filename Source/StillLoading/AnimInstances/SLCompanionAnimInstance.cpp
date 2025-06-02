@@ -42,6 +42,8 @@ void USLCompanionAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSecond
 	
 	// 가속 상태 업데이트
 	bIsAccelerating = bHasAcceleration;
+	CompanionPattern = OwningCompanionCharacter->GetCurrentActionPattern();
+	bIsTeleporting = OwningCompanionCharacter->GetIsTeleporting();
 	UpdateAcceleratingBlend(DeltaSeconds);
 	IsBattleMage = OwningCompanionCharacter->GetIsBattleMage();
 	// 달리기 상태 업데이트 (속도 기반으로 판단, 임계값은 프로젝트에 맞게 조정)
@@ -107,8 +109,12 @@ void USLCompanionAnimInstance::SetMovableAttack(bool bNewMovableAttack)
 
 void USLCompanionAnimInstance::AnimNotify_PatternEnd()
 {
-	SetIsAttacking(false);
-	SetCompanionPattern(ECompanionActionPattern::ECAP_None);
+	if (OwningCompanionCharacter)
+	{
+		// 캐릭터의 상태 직접 변경
+		OwningCompanionCharacter->SetIsAttacking(false);
+		OwningCompanionCharacter->SetCurrentActionPattern(ECompanionActionPattern::ECAP_None);
+	}
     
 }
 

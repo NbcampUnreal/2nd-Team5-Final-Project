@@ -83,7 +83,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|State")
 	bool IsBattleMage;
-
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|State")
+	bool bIsTeleporting;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|GameplayTags")
 	FGameplayTagContainer ActiveTags;
 	

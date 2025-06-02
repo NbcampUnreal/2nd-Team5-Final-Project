@@ -107,33 +107,29 @@ ETeamAttitude::Type ASLCompanionAIController::GetTeamAttitudeTowards(const AActo
 
 void ASLCompanionAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+    if (!Actor)
+    {
+        return;
+    }
+	
+    // 죽은 액터는 무시
+    if (!IsActorAlive(Actor))
+    {
+        return;
+    }
+	
     if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
     {
         // 전투 모드에서만 타겟 설정
         bool bIsInCombat = BlackboardComponent->GetValueAsBool(FName("IsInCombat"));
-        
-        if (bIsInCombat && Stimulus.WasSuccessfullySensed() && Actor)
+		
+        if (bIsInCombat && Stimulus.WasSuccessfullySensed())
         {
             if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile)
             {
-                
-                // 현재 타겟이 없거나 새 타겟이 더 가까운 경우
-                AActor* CurrentTarget = Cast<AActor>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
-                
-                if (!CurrentTarget)
-                {
-                    BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
-                }
-                else
-                {
-                    float DistanceToCurrent = FVector::Dist(GetPawn()->GetActorLocation(), CurrentTarget->GetActorLocation());
-                    float DistanceToNew = FVector::Dist(GetPawn()->GetActorLocation(), Actor->GetActorLocation());
-                    
-                    if (DistanceToNew < DistanceToCurrent)
-                    {
-                        BlackboardComponent->SetValueAsObject(FName("TargetActor"), Actor);
-                    }
-                }
+                // 부모 클래스의 타겟 시스템 사용
+                AddOrUpdateTarget(Actor);
+                UpdateTargetEvaluation();
             }
         }
     }
