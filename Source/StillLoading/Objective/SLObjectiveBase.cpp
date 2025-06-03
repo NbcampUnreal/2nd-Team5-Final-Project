@@ -6,6 +6,8 @@
 void USLObjectiveBase::AddObjectiveProgress(const int32 Count)
 {
 	ObjectiveProgressCount += Count;
+
+	OnObjectiveProgressChanged.Broadcast(ObjectiveProgressCount);
 	if (ObjectiveProgressCount >= ObjectiveCompleteCount && ObjectiveState == ESLObjectiveState::InProgress)
 	{
 		ObjectiveComplete();
