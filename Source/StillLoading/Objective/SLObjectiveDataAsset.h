@@ -14,8 +14,14 @@ UCLASS()
 class STILLLOADING_API USLObjectiveDataAsset : public UDataAsset
 {
 	GENERATED_BODY()
-
+	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, DisplayName ="챕터 오브젝트 리스트")
-	TArray<TObjectPtr<USLObjectiveBase>> ObjectiveList;
+	TMap<FName, TObjectPtr<USLObjectiveBase>> ChapterObjectiveMap;
+
+#if WITH_EDITOR
+protected:
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+	
 };
