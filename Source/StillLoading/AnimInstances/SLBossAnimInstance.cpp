@@ -314,7 +314,7 @@ bool USLBossAnimInstance::JumpToTargetPoint(AActor* TargetPointActor, bool bUpda
     }
     
     // 충돌 설정 (점프 중 캐릭터 간 충돌 방지)
-    //SetupJumpCollision();
+    SetupJumpCollision();
     
     // 점프 실행
     OwningCharacter->LaunchCharacter(JumpVelocity, true, true);

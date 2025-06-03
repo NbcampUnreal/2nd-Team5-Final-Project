@@ -9,6 +9,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
+#include "AI/Companion/SLCompanionCharacter.h"
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
 

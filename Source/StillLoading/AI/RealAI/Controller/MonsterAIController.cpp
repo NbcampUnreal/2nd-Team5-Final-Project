@@ -1,12 +1,16 @@
 #include "MonsterAIController.h"
 
 #include "EngineUtils.h"
+#include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISenseConfig_Sight.h"
+
+struct FStateTreeInstanceData;
 
 AMonsterAIController::AMonsterAIController()
 {
@@ -15,9 +19,10 @@ AMonsterAIController::AMonsterAIController()
 	AIPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 
-	SightConfig->SightRadius = 1000.0f;
-	SightConfig->LoseSightRadius = 1200.0f;
-	SightConfig->PeripheralVisionAngleDegrees = 45.0f;
+	// Sight 구성
+	SightConfig->SightRadius = 1500.0f;
+	SightConfig->LoseSightRadius = 1700.0f;
+	SightConfig->PeripheralVisionAngleDegrees = 120.0f;
 	SightConfig->SetMaxAge(5.0f);
 
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
@@ -51,7 +56,7 @@ void AMonsterAIController::OnPossess(APawn* InPawn)
 
 	if (Blackboard)
 	{
-		Blackboard->SetValueAsObject("SelfActor", GetPawn());
+		Blackboard->SetValueAsObject(BlackboardKeys::SelfActor, GetPawn());
 	}
 }
 
@@ -67,55 +72,20 @@ void AMonsterAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
 	{
 		if (Stimulus.WasSuccessfullySensed())
 		{
-			BlackboardComponent->SetValueAsObject("TargetActor", Actor);
+			BlackboardComponent->SetValueAsObject(BlackboardKeys::TargetActor, Actor);
 			if (AMonsterAICharacter* MyChar = Cast<AMonsterAICharacter>(GetPawn()))
 			{
 				MyChar->SetChasing(true);
 				MyChar->SetPrimaryState(TAG_AI_AbleToAttack);
-
-				AlertNearbyAllies(Player);
 			}
 		}
 		else
 		{
-			BlackboardComponent->ClearValue("TargetActor");
+			BlackboardComponent->ClearValue(BlackboardKeys::TargetActor);
 			if (AMonsterAICharacter* MyChar = Cast<AMonsterAICharacter>(GetPawn()))
 			{
 				MyChar->SetChasing(false);
 				MyChar->SetPrimaryState(TAG_AI_Idle);
-			}
-		}
-	}
-}
-
-void AMonsterAIController::AlertNearbyAllies(AActor* TargetActor, float AlertRadius)
-{
-	if (!TargetActor || !GetPawn()) return;
-
-	const FVector MyLocation = GetPawn()->GetActorLocation();
-	const FGenericTeamId MyTeamId = GetGenericTeamId();
-
-	for (TActorIterator<AMonsterAICharacter> It(GetWorld()); It; ++It)
-	{
-		const AMonsterAICharacter* Ally = *It;
-		if (!Ally || Ally == GetPawn()) continue;
-
-		const float Distance = FVector::Dist(MyLocation, Ally->GetActorLocation());
-		if (Distance > AlertRadius) continue;
-
-		AAIController* AllyController = Cast<AAIController>(Ally->GetController());
-		if (!AllyController) continue;
-
-		if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(AllyController))
-		{
-			if (TeamAgent->GetGenericTeamId() != MyTeamId) continue;
-		}
-
-		if (UBlackboardComponent* BB = AllyController->GetBlackboardComponent())
-		{
-			if (!BB->GetValueAsObject("TargetActor"))
-			{
-				BB->SetValueAsObject("TargetActor", TargetActor);
 			}
 		}
 	}

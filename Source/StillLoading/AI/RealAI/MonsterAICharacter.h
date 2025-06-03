@@ -5,11 +5,13 @@
 #include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
+class USLMonsterStateTreeComponent;
 enum class EAttackAnimType : uint8;
 class UBattleComponent;
 class UAnimationMontageComponent;
 class AAIController;
 class UMonsterMeshDataAsset;
+class UFormationComponent;
 
 UENUM(BlueprintType)
 enum class EMonsterType : uint8
@@ -38,10 +40,19 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void SetPrimaryState(const FGameplayTag NewState);
-
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	bool IsInPrimaryState(const FGameplayTag StateToCheck) const;
 
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	void SetBattleState(const FGameplayTag NewState);
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	bool HasBattleState(const FGameplayTag StateToCheck) const;
+
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	void SetStrategyState(const FGameplayTag NewState);
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	bool HasStrategyState(const FGameplayTag StateToCheck) const;
+	
 	UFUNCTION()
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
 
@@ -50,8 +61,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster")
 	EMonsterType CurrentMonsterType = EMonsterType::MT_None;
+	// BT 연동 단일
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StateTags;
+	// 내부 사용 단일
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
+	FGameplayTagContainer BattleStateTags;
+	// BT연동 다중
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
+	FGameplayTagContainer StrategyStateTags;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
@@ -68,11 +86,12 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UBattleComponent> BattleComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Formation")
+	TObjectPtr<UFormationComponent> FormationComponent;
 	
 	UPROPERTY()
 	TObjectPtr<AActor> Sword;
@@ -86,7 +105,16 @@ private:
 	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
 	UFUNCTION()
 	void HitDirection(AActor* Causer);
+	UFUNCTION()
+	void RotateToHitCauser(const AActor* Causer);
 
 	bool bIsChasing = false;
 	bool bIsLeader = false;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
+	void SetLeader();
+	
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
+	FORCEINLINE void SetFollower() { bIsLeader = false; }
 };

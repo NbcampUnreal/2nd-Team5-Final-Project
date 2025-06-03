@@ -113,7 +113,7 @@ void ASLMonster::Attack()
         {
             RandomAttackInt = FMath::RandRange(0, 1);
             TObjectPtr<USLAICharacterAnimInstance> AnimInstance = Cast<USLAICharacterAnimInstance>(GetMesh()->GetAnimInstance());
-            AnimInstance->SetIsAttacking(true);
+//            AnimInstance->SetIsAttacking(true);
             LastAttackTime = CurrentTime;
         }
     }

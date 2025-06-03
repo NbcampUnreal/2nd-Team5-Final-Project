@@ -19,12 +19,12 @@ class STILLLOADING_API ASLNPCAIController : public ASLBaseAIController
 public:
 	ASLNPCAIController();
 
-	UFUNCTION(BlueprintCallable, Category = "AI")
+	/*UFUNCTION(BlueprintCallable, Category = "AI")
 	void StartChasing(AActor* Target);
 	UFUNCTION(BlueprintCallable, Category = "AI")
-	void StopChasing();
-	UFUNCTION(BlueprintCallable, Category = "AI")
-	void UpdateAIState();
+	void StopChasing();*/
+	/*UFUNCTION(BlueprintCallable, Category = "AI")
+	void UpdateAIState();*/
 	UFUNCTION(BlueprintPure, Category = "AI")
 	EAIState GetCurrentState() const { return CurrentState;}
 
@@ -50,8 +50,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	/*virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 	virtual void OnPossess(APawn* InPawn) override;
+	*/
 
 	UPROPERTY(BlueprintReadWrite, Category ="AI")
 	TObjectPtr<UBlackboardComponent> BlackboardComp;
@@ -69,7 +70,7 @@ protected:
 	bool IsPatrolState = true;
 
 private:
-	void InitializePatrolPoints();
+	/*void InitializePatrolPoints();*/
 
 	FVector CurrentTargetLocation;
 	FVector LastKnownLocation;

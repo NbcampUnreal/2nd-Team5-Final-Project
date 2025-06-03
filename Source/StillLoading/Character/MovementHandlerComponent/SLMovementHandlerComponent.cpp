@@ -200,6 +200,7 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
                                               EAttackAnimType AnimType)
 {
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)) return;
+	OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
 
 	bool bIsFromBack = false;
 	FRotator TargetRotation;
