@@ -25,7 +25,7 @@ void ASLNPCAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UpdateAIState();
+	//UpdateAIState();
 
 	if (CurrentState == EAIState::EAIS_Waiting)
 	{
@@ -69,9 +69,9 @@ void ASLNPCAIController::BeginPlay()
 	BlackboardComp->SetValueAsBool("IsPatrolState", IsPatrolState);
 }
 
-void ASLNPCAIController::UpdateAIState()
-{
-	if (!TargetActor) return;
+/*void ASLNPCAIController::UpdateAIState()
+{*/
+	/*if (!TargetActor) return;
 	APawn* ControlledPawn = GetPawn();
 	if (!ControlledPawn) return;
 	float DistanceToTarget = FVector::Dist(ControlledPawn->GetActorLocation(), TargetActor->GetActorLocation());
@@ -127,7 +127,7 @@ void ASLNPCAIController::UpdateAIState()
 
 			MoveToLocation(NewLocation, 10.f);
 
-			CurrentState = EAIState::Waiting;*/
+			CurrentState = EAIState::Waiting;#1#
 
 			CurrentState = EAIState::EAIS_Combat;
 			
@@ -188,20 +188,20 @@ void ASLNPCAIController::UpdateAIState()
 		else if (DistanceToTarget < CombatRadius && AnimInstance->GetIsAttacking() == true)
 		{
 			/*NPC->bUseControllerRotationYaw = false;
-			ClearFocus(EAIFocusPriority::Gameplay);*/
+			ClearFocus(EAIFocusPriority::Gameplay);#1#
 			StopMovement();
 		}
 		else
 		{
 				MoveToActor(TargetActor, 110.f);
-				AnimInstance->SetIsAttacking(false);
+				//AnimInstance->SetIsAttacking(false);
 			
 		}
 		break;
 	}
-}
+}*/
 
-void ASLNPCAIController::StopChasing()
+/*void ASLNPCAIController::StopChasing()
 {
 	bIsChasing = false;
 	StopMovement();
@@ -210,7 +210,7 @@ void ASLNPCAIController::StopChasing()
 
 void ASLNPCAIController::StartChasing(AActor* Target)
 {
-	TargetActor = Target;
+	//TargetActor = Target;
 	bIsChasing = true;
 
 	ASLNPC* NPC = Cast<ASLNPC>(GetPawn());
@@ -239,7 +239,7 @@ void ASLNPCAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 		{
 			if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile)
 			{
-				TargetActor = Actor;
+				//TargetActor = Actor;
 				APawn* ControlledPawn = GetPawn();
 				if (ControlledPawn)
 				{
@@ -323,5 +323,5 @@ void ASLNPCAIController::OnPossess(APawn* InPawn)
 
 	FTimerHandle TimerHandle;
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &ASLNPCAIController::InitializePatrolPoints, 0.5f, false);
-}
+}*/
 

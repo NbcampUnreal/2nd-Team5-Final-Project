@@ -3,7 +3,7 @@
 #include "BrainComponent.h"
 #include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
-#include "AI/SLAIProjectile.h"
+#include "AI/Projectile/SLAIProjectile.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "BattleComponent/BattleComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -14,6 +14,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Perception/AISense_Damage.h"
 
 
 ASLAIBaseCharacter::ASLAIBaseCharacter()
@@ -57,7 +58,9 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
     MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
     BattleComponent = CreateDefaultSubobject<UBattleComponent>("BattleComponent");
     BattleComponent->OnCharacterHited.AddDynamic(this, &ThisClass::CharacterHit);
-    
+
+	HitEffectComponent = CreateDefaultSubobject<UNiagaraComponent>("HitEffectComponent");
+	HitEffectComponent->SetupAttachment(GetMesh());
     // 카메라 채널 무시
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
     GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -70,6 +73,16 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
     
     AIChapter = EChapter::EC_None;
     IsDebugMode = false;
+
+	bIsHit = false;
+	bIsDown = false;
+	bIsStun = false;
+	bIsAttacking = false;
+	bShouldLookAtPlayer = false;
+	HitDirection = EHitDirection::EHD_Front;
+
+	bIsJumping = false;
+	bIsLanding = false;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -100,12 +113,67 @@ void ASLAIBaseCharacter::BeginPlay()
 		RightFootCollisionBox->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightFootCollisionBoxAttachBoneName);
 	}
 
+	if (WeaponClass && WeaponSocketName != NAME_None)
+	{
+		// 클래스로부터 액터 인스턴스 생성
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    
+		AActor* WeaponActor = GetWorld()->SpawnActor<AActor>(WeaponClass, GetActorLocation(), GetActorRotation(), SpawnParams);
+    
+		if (WeaponActor)
+		{
+			EquipWeapon(WeaponActor);
+		}
+	}
+
 	
 	IsHitReaction = false;
 	IsDead = false;
 	MaxHealth = 100.0f;
 	CurrentHealth = MaxHealth;
 	CombatPhase = ECombatPhase::ECP_Phase_None;
+	bCanBeExecuted = false;
+	bIsBeingExecuted = false;
+	
+}
+
+void ASLAIBaseCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	if (bIsJumping)
+	{
+		bIsJumping = false;
+		bIsLanding = true;
+        
+		UE_LOG(LogTemp, Warning, TEXT("AI Character Landed!"));
+        
+		if (AIController)
+		{
+			if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+			{
+				BlackboardComponent->SetValueAsBool(FName("IsJumping"), false);
+				BlackboardComponent->SetValueAsBool(FName("IsLanding"), true);
+			}
+		}
+        
+		OnLanded(Hit);
+        
+		FTimerHandle LandingResetTimer;
+		GetWorld()->GetTimerManager().SetTimer(LandingResetTimer, [this]()
+		{
+			bIsLanding = false;
+            
+			if (AIController)
+			{
+				if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+				{
+					BlackboardComponent->SetValueAsBool(FName("IsLanding"), false);
+				}
+			}
+		}, 1.0f, false);
+	}
 }
 
 void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -143,15 +211,6 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 
 	if (IsDebugMode)
 	{
-		// 히트 위치 가져오기
-		FVector HitLocation = SweepResult.bBlockingHit ? SweepResult.ImpactPoint : SweepResult.Location;
-	
-		// 히트 위치가 유효하지 않으면 오버랩된 컴포넌트의 위치 사용
-		if (HitLocation.IsZero())
-		{
-			HitLocation = OverlappedComponent->GetComponentLocation();
-		}
-
 		// 오버랩된 컴포넌트의 크기에 맞는 디버그 박스 그리기
 		if (UBoxComponent* BoxComp = Cast<UBoxComponent>(OverlappedComponent))
 		{
@@ -172,9 +231,20 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 			);
 		}
 	}
-	
+	FVector HitLocation;
+	if (bFromSweep)
+	{
+		HitLocation = SweepResult.ImpactPoint;
+	}
+	else
+	{
+		HitLocation = (OverlappedComponent->GetComponentLocation() + OtherComp->GetComponentLocation()) * 0.5f;
+	}
+	FHitResult HitResult;
+	HitResult.Location = HitLocation;
+	HitResult.ImpactPoint = HitLocation;
 	// BattleComponent를 통해 데미지 전달
-	BattleComponent->SendHitResult(OtherActor, SweepResult, CurrentAttackType);
+	BattleComponent->SendHitResult(OtherActor, HitResult, CurrentAttackType);
     
 	//히트 이펙트 재생
 }
@@ -189,9 +259,37 @@ void ASLAIBaseCharacter::SetIsHitReaction(bool bNewIsHitReaction)
 	IsHitReaction = bNewIsHitReaction;
 }
 
-void ASLAIBaseCharacter::SetAttackPower(float NewAttackPower)
+void ASLAIBaseCharacter::SetIsHit(bool bNewIsHit)
 {
-	AttackPower = NewAttackPower;
+	bIsHit = bNewIsHit;
+}
+
+void ASLAIBaseCharacter::SetIsDown(bool bNewIsDown)
+{
+	bIsDown = bNewIsDown;
+}
+
+void ASLAIBaseCharacter::SetIsStun(bool bNewIsStun)
+{
+	bIsStun = bNewIsStun;
+}
+
+void ASLAIBaseCharacter::SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer)
+{
+	bShouldLookAtPlayer = bNewShouldLookAtPlayer;
+}
+
+void ASLAIBaseCharacter::SetIsAttacking(bool bNewIsAttacking)
+{
+	bIsAttacking = bNewIsAttacking;
+
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("IsAttacking"), bNewIsAttacking);
+		}
+	}
 }
 
 void ASLAIBaseCharacter::SetCombatPhase(ECombatPhase NewCombatPhase)
@@ -340,6 +438,18 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
 	// 데미지 적용
     CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
 
+	if (DamageCauser)
+	{
+		UAISense_Damage::ReportDamageEvent(
+			GetWorld(),
+			this,           // 데미지 받은 액터
+			DamageCauser,   // 데미지 준 액터
+			DamageAmount,   // 데미지 양
+			GetActorLocation(), // 데미지 받은 위치
+			HitResult.Location  // 히트 위치
+		);
+	}
+	
     if (CurrentHealth <= 0.0f)
     {
         if (!IsDead)
@@ -364,57 +474,54 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
             		BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
             	}
             }
-            
-            // 애니메이션 설정
-            if (AnimInstancePtr)
-            {
-                if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
-                {
-                    SLAIAnimInstance->SetIsDead(IsDead);
-                    SLAIAnimInstance->SetIsHit(false);  
-                    SLAIAnimInstance->SetIsDown(false);
-                    SLAIAnimInstance->SetIsStun(false);
-                    SLAIAnimInstance->SetIsAttacking(false);
-                    SLAIAnimInstance->SetShouldLookAtPlayer(false);
-                }
-            }
         }
     }
-    else if (DamageCauser && IsHitReaction && AnimInstancePtr)
+    else if (DamageCauser && IsHitReaction)
     {
-        // 히트 반응 애니메이션 설정
-        if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
-        {
-            // 히트 방향 계산
-            FVector AttackerLocation = DamageCauser->GetActorLocation();
-            FVector DirectionVector = AttackerLocation - GetActorLocation(); // 캐릭터 -> 공격자
-            DirectionVector.Normalize();
-            
-            FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
+    	// 애님 인스턴스에 설정하는 대신 캐릭터 멤버 변수에 직접 설정
+    	FVector AttackerLocation = DamageCauser->GetActorLocation();
+    	FVector DirectionVector = AttackerLocation - GetActorLocation();
+    	DirectionVector.Normalize();
+        
+    	FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
+        
+    	// 히트 방향 결정
+    	float AbsX = FMath::Abs(LocalHitDirection.X);
+    	float AbsY = FMath::Abs(LocalHitDirection.Y);
 
-            // 히트 방향 결정
-            EHitDirection HitDir;
-            float AbsX = FMath::Abs(LocalHitDirection.X);
-            float AbsY = FMath::Abs(LocalHitDirection.Y);
+    	if (AbsY > AbsX)
+    	{
+    		HitDirection = (LocalHitDirection.Y > 0) ? EHitDirection::EHD_Right : EHitDirection::EHD_Left;
+    	}
+    	else 
+    	{
+    		HitDirection = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
+    	}
 
-            if (AbsY > AbsX)
-            {
-                HitDir = (LocalHitDirection.Y > 0) ? EHitDirection::EHD_Right : EHitDirection::EHD_Left;
-            }
-            else 
-            {
-                HitDir = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
-            }
-            
-            // 애니메이션 인스턴스에 히트 정보 설정
-            SLAIAnimInstance->SetHitDirection(HitDir);
-            SLAIAnimInstance->SetIsHit(true);
-        }
+    	HitDirectionVector = LocalHitDirection;
+    	// 캐릭터 상태 직접 설정
+    	bIsHit = true;
+        
+    	// 일정 시간 후 히트 상태 해제
+    	FTimerHandle HitResetTimer;
+    	GetWorld()->GetTimerManager().SetTimer(HitResetTimer, [this]()
+		{
+			bIsHit = false;
+		}, 0.5f, false);
     }
 
 	if (HitEffectComponent)
 	{
 		HitEffectComponent->SetWorldLocation(HitResult.Location);
+		HitEffectComponent->ActivateSystem();
+	}
+}
+
+void ASLAIBaseCharacter::OnLanded(const FHitResult& Hit)
+{
+	if (HitEffectComponent)
+	{
+		HitEffectComponent->SetWorldLocation(Hit.ImpactPoint);
 		HitEffectComponent->ActivateSystem();
 	}
 }
@@ -661,28 +768,13 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
         FRotator NewRotation = FRotationMatrix::MakeFromX(DirectionToExecutor).Rotator();
         SetActorRotation(NewRotation);
         
-        // 애니메이션 인스턴스 타입 확인
-        if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
-        {
-            // 히트 반응 등 다른 애니메이션 상태 초기화
-            SLAIAnimInstance->SetIsHit(false);
-            SLAIAnimInstance->SetIsDown(false);
-            SLAIAnimInstance->SetIsStun(false);
-            SLAIAnimInstance->SetIsAttacking(false);
-            
-            UE_LOG(LogTemp, Warning, TEXT("Reset animation states"));
-        }
-        
         // 처형 애니메이션 재생
         float PlayRate = 1.2f;
         float StartPosition = 0.0f;
-        FName StartSection = NAME_None;
         
         float MontageLength = AnimInstancePtr->Montage_Play(ExecutionMontage, PlayRate, EMontagePlayReturnType::MontageLength, StartPosition);
-        
-        UE_LOG(LogTemp, Warning, TEXT("Montage_Play returned length: %f"), MontageLength);
-        
-        if (MontageLength > 0.0f)
+
+    	if (MontageLength > 0.0f)
         {
             UE_LOG(LogTemp, Warning, TEXT("Montage started successfully"));
             
@@ -697,12 +789,6 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
                 // 충돌 비활성화
                 GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
                 GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-                
-                // 애니메이션 상태 업데이트
-                if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
-                {
-                    SLAIAnimInstance->SetIsDead(true);
-                }
                 
                 // AI 컨트롤러 블랙보드 업데이트
                 if (AIController)
@@ -726,6 +812,34 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
     {
         UE_LOG(LogTemp, Error, TEXT("No Execution Montage found for type: %s"), *UEnum::GetValueAsString(ExecutionType));
     }
+}
+
+void ASLAIBaseCharacter::AIJump()
+{
+	if (CanAIJump())
+	{
+		bIsJumping = true;
+		bIsLanding = false;
+		Jump();
+		
+		if (AIController)
+		{
+			if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+			{
+				BlackboardComponent->SetValueAsBool(FName("IsJumping"), true);
+			}
+		}
+	}
+}
+
+bool ASLAIBaseCharacter::CanAIJump() const
+{
+	if (!GetCharacterMovement())
+	{
+		return false;
+	}
+    
+	return GetCharacterMovement()->IsMovingOnGround() && !bIsJumping && !bIsLanding && !GetCharacterMovement()->IsFalling() &&!IsDead;
 }
 
 #if WITH_EDITOR

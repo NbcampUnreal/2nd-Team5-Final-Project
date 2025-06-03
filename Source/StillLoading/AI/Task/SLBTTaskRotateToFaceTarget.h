@@ -34,9 +34,11 @@ UCLASS()
 class STILLLOADING_API USLBTTaskRotateToFaceTarget : public UBTTaskNode
 {
 	GENERATED_BODY()
+
 public:
 	USLBTTaskRotateToFaceTarget();
-private:
+
+protected:
 	//~ Begin UBTNode Interface
 	virtual void InitializeFromAsset(UBehaviorTree& Asset) override;
 	virtual uint16 GetInstanceMemorySize() const override;
@@ -46,6 +48,7 @@ private:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
+private:
 	bool HasReachedAnglePrecision(APawn* QueryPawn, AActor* TargetActor) const;
 	
 	UPROPERTY(EditAnywhere, Category = "Face Target")

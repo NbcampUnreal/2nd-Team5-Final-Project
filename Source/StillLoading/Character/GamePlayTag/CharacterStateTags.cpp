@@ -57,9 +57,26 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_OnAir, "Character.Movement.OnAir")
 
 // AI
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI, "AI");
-UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Idle, "AI.Idle");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Hit, "AI.Hit");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Hit_Air, "AI.Hit.Air");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Dead, "AI.Dead");
-UE_DEFINE_GAMEPLAY_TAG(TAG_AI_AbleToAttack, "AI.AbleToAttack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_IsAttacking, "AI.IsAttacking");
+
+// AI State
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Idle, "AI.Idle");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_AbleToAttack, "AI.AbleToAttack");
+
+// 전략 - 개별 행동
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_SINGLE_WANDER, "AI.Strategy.Single.Wander"); // 방향 없이 배회하며 접근
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_SINGLE_AGGRESSIVE, "AI.Strategy.Single.Aggressive"); // 시야 확보 시 바로 돌진 공격
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_SINGLE_SNEAKY, "AI.Strategy.Single.Sneaky"); // 은밀하게 접근 후 공격
+
+// 전략 - 그룹 행동
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_GROUPED_SWARM, "AI.Strategy.Grouped.Swarm"); // 무리 지어 몰려다니며 공격 (난잡한 형태)
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_GROUPED_FORMATION, "AI.Strategy.Grouped.Formation"); // 대열을 갖춘 정돈된 전술적 움직임
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_GROUPED_FLANK, "AI.Strategy.Grouped.Flank"); // 측면 또는 후방에서 공격
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_GROUPED_PATROL, "AI.Strategy.Grouped.Patrol"); // 일정 구역을 분산 정찰
+
+// 전략 - 조직적 행동
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_ORGANIZED_SQUAD, "AI.Strategy.Organized.Squad"); // 소규모 팀 단위로 움직이며 역할 분담
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_ORGANIZED_HOLDPOSITION, "AI.Strategy.Organized.HoldPosition"); // 지정 위치 방어 유지
