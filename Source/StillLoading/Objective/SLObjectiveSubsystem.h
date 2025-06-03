@@ -24,6 +24,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	USLObjectiveBase* GetObjective(ESLChapterType Chapter, FName Name);
 
+	UFUNCTION(BlueprintCallable)
+	bool IsObjectiveCompleted(ESLChapterType Chapter, FName Name);
+	
 private:
 	UPROPERTY()
 	const USLObjectiveDataSettings* ObjectiveDataSettings = nullptr;

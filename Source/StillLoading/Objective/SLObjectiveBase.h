@@ -61,7 +61,7 @@ public:
 	FOnObjectiveProgressChanged OnObjectiveProgressChanged;
 	
 private:
-	UPROPERTY(EditAnywhere, Category = "Objective")
+	UPROPERTY(VisibleAnywhere, Category = "Objective")
 	FName ObjectiveName;
 	UPROPERTY(EditAnywhere, Category = "Objective")
 	FString Description;

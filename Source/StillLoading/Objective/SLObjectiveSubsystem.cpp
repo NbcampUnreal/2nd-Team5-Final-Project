@@ -20,47 +20,31 @@ USLObjectiveBase* USLObjectiveSubsystem::GetObjective(const ESLChapterType Chapt
         return nullptr;
     }
 
-    TSoftObjectPtr<USLObjectiveDataAsset> ChapterDataAssetPtr;
-    switch (Chapter)
-    {
-    case ESLChapterType::EC_Intro:
-        ChapterDataAssetPtr = ObjectiveDataSettings->ObjectiveDataAssetChapter0;
-        break;
-    case ESLChapterType::EC_Chapter2D:
-        ChapterDataAssetPtr = ObjectiveDataSettings->ObjectiveDataAssetChapter1;
-        break;
-    case ESLChapterType::EC_Chapter2_5D:
-        ChapterDataAssetPtr = ObjectiveDataSettings->ObjectiveDataAssetChapter2;
-        break;
-    case ESLChapterType::EC_Chapter3D:
-        ChapterDataAssetPtr = ObjectiveDataSettings->ObjectiveDataAssetChapter3;
-        break;
-    case ESLChapterType::EC_ChapterHighQuality:
-        ChapterDataAssetPtr = ObjectiveDataSettings->ObjectiveDataAssetChapter4;
-        break;
-    default:
-        return nullptr;
-    }
+    const TSoftObjectPtr<USLObjectiveDataAsset>* ChapterDataAssetPtr = ObjectiveDataSettings->ChapterObjectiveDataMap.Find(Chapter);
     
-    if (ChapterDataAssetPtr.IsNull())
+    if (ChapterDataAssetPtr->IsNull())
     {
         return nullptr;
     }
 
-    const USLObjectiveDataAsset* ChapterDataAsset = ChapterDataAssetPtr.LoadSynchronous();
+    const USLObjectiveDataAsset* ChapterDataAsset = ChapterDataAssetPtr->LoadSynchronous();
     
     if (ChapterDataAsset == nullptr)
     {
         return nullptr;
     }
 
-    for (const auto& Objective : ChapterDataAsset->ObjectiveList)
-    {
-        if (Objective && Objective->GetObjectiveName() == Name)
-        {
-            return Objective;
-        }
-    }
+    USLObjectiveBase* Objective = ChapterDataAsset->ChapterObjectiveMap.FindRef(Name);
+    
+    return Objective;
+}
 
-    return nullptr;
+bool USLObjectiveSubsystem::IsObjectiveCompleted(const ESLChapterType Chapter, const FName Name)
+{
+    const USLObjectiveBase* Objective = GetObjective(Chapter, Name);
+    if (Objective == nullptr)
+    {
+        return false;
+    }
+    return Objective->GetObjectiveState() == ESLObjectiveState::Complete;
 }
