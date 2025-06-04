@@ -22,7 +22,7 @@ USLObjectiveBase* USLObjectiveSubsystem::GetObjective(const ESLChapterType Chapt
 
     const TSoftObjectPtr<USLObjectiveDataAsset>* ChapterDataAssetPtr = ObjectiveDataSettings->ChapterObjectiveDataMap.Find(Chapter);
     
-    if (ChapterDataAssetPtr->IsNull())
+    if (ChapterDataAssetPtr == nullptr)
     {
         return nullptr;
     }
