@@ -10,4 +10,5 @@ namespace BlackboardKeys
 	static const FName LastAttackTime = TEXT("LastAttackTime");
 	static const FName AllyCountKey = TEXT("AllyCountKey");
 	static const FName CenterActorKey = TEXT("CenterActorKey");
+	static const FName TargetLocation = TEXT("TargetLocation");
 }
