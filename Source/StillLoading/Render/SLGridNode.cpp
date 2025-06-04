@@ -19,7 +19,8 @@ USLGridNode::USLGridNode()
 	TriggerVolume = CreateDefaultSubobject<UBoxComponent>(FName(*CompName));
     
 	CompName = GetName() + "_SpawnPosition";
-	SpawnPosition = CreateDefaultSubobject<UBillboardComponent>(FName(*CompName));
+	SpawnPosition = CreateDefaultSubobject<USLGridNodePosition>(FName(*CompName));
+    SpawnPosition->OwnerNode = this;
 }
 
 void USLGridNode::UpdateTriggerVolume()
@@ -53,201 +54,290 @@ void USLGridNode::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyC
 }
 #endif
 
-void USLGridNode::OnTriggeredNode(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-                                  bool bFromSweep, const FHitResult& SweepResult)
+// 방향별 벡터를 반환하는 헬퍼 함수
+FVector USLGridNode::GetDirectionVector(EGridDirection Direction) const
 {
+    switch (Direction)
+    {
+    case EGridDirection::EGD_Up:    return FVector(1.0f, 0.0f, 0.0f);
+    case EGridDirection::EGD_Down:  return FVector(-1.0f, 0.0f, 0.0f);
+    case EGridDirection::EGD_Left:  return FVector(0.0f, -1.0f, 0.0f);
+    case EGridDirection::EGD_Right: return FVector(0.0f, 1.0f, 0.0f);
+    default:
+        UE_LOG(LogTemp, Warning, TEXT("USLGridNode: Unknown grid direction"));
+        return FVector::ZeroVector;
+    }
+}
+
+// 트리거 두께 계산
+float USLGridNode::CalculateTriggerThickness(UBoxComponent* InTriggerVolume, EGridDirection Direction) const
+{
+    if (!TriggerVolume)
+    {
+        return 0.0f;
+    }
+
+    const FVector TriggerExtent = InTriggerVolume->GetScaledBoxExtent();
+    
+    switch (Direction)
+    {
+    case EGridDirection::EGD_Up:
+    case EGridDirection::EGD_Down:
+        return TriggerExtent.X * TriggerExtentMultiplier;
+    case EGridDirection::EGD_Left:
+    case EGridDirection::EGD_Right:
+        return TriggerExtent.Y * TriggerExtentMultiplier;
+    default:
+        return 0.0f;
+    }
+}
+
+// 안전 거리 계산 - 2D 이동용으로 수정
+float USLGridNode::CalculateSafeDistance(const UCapsuleComponent* CharacterCapsule, float TriggerThickness, EGridDirection Direction) const
+{
+    if (!CharacterCapsule)
+    {
+        return SafeDistanceBuffer;
+    }
+
+    const float CapsuleRadius = CharacterCapsule->GetScaledCapsuleRadius();
+    
+    // 2D 이동이므로 캡슐 반지름만 고려하고 높이는 제외
+    const float SafeDistance = TriggerThickness + CapsuleRadius + SafeDistanceBuffer;
+    
+    return SafeDistance;
+}
+
+
+// 엣지 위치 계산
+FVector USLGridNode::CalculateEdgePosition(const ASLGridVolume* TargetVolume, EGridDirection Direction, float SafeDistance, float ZOffset) const
+{
+    if (!TargetVolume)
+    {
+        return FVector::ZeroVector;
+    }
+
+    const FVector TargetVolumeLocation = TargetVolume->GetActorLocation();
+    const float TargetGridWidth = TargetVolume->GetGridWidth();
+    const float TargetGridHeight = TargetVolume->GetGridHeight();
+    const float TargetHalfWidth = TargetGridWidth * 0.5f;
+    const float TargetHalfHeight = TargetGridHeight * 0.5f;
+    
+    switch (Direction)
+    {
+    case EGridDirection::EGD_Up:
+        return TargetVolumeLocation + FVector(TargetHalfHeight - SafeDistance, 0.0f, ZOffset);
+    case EGridDirection::EGD_Down:
+        return TargetVolumeLocation + FVector(-TargetHalfHeight + SafeDistance, 0.0f, ZOffset);
+    case EGridDirection::EGD_Left:
+        return TargetVolumeLocation + FVector(0.0f, -TargetHalfWidth + SafeDistance, ZOffset);
+    case EGridDirection::EGD_Right:
+        return TargetVolumeLocation + FVector(0.0f, TargetHalfWidth - SafeDistance, ZOffset);
+    default:
+        return TargetVolumeLocation;
+    }
+}
+
+// 스폰 위치 기반 타겟 위치 계산
+FVector USLGridNode::CalculateSpawnBasedTargetLocation(const USLGridNode* TargetNode, const ASLGridVolume* TargetVolume, 
+                                                       float SafeDistance, ACharacter* Character) const
+{
+    if (!TargetNode || !TargetNode->SpawnPosition || !TargetVolume || !Character)
+    {
+        return FVector::ZeroVector;
+    }
+
+    const FVector SpawnLocation = TargetNode->SpawnPosition->GetComponentLocation();
+    const FVector EdgePosition = CalculateEdgePosition(TargetVolume, NodeDirection, SafeDistance, SpawnLocation.Z);
+    
+    // 스폰 위치가 볼륨 내부에 있는지 확인
+    const bool bIsInside = IsSpawnLocationInside(SpawnLocation, EdgePosition, NodeDirection);
+    
+    const FVector TargetLocation = bIsInside ? EdgePosition : SpawnLocation;
+    
+    // 캐릭터 회전 설정
+    const FRotator TargetRotation = TargetNode->SpawnPosition->GetComponentRotation();
+    Character->SetActorRotation(TargetRotation);
+    
+    return TargetLocation;
+}
+
+// 스폰 위치가 볼륨 내부에 있는지 확인
+bool USLGridNode::IsSpawnLocationInside(const FVector& SpawnLocation, const FVector& EdgePosition, EGridDirection Direction) const
+{
+    switch (Direction)
+    {
+    case EGridDirection::EGD_Up:
+        return SpawnLocation.X > EdgePosition.X;
+    case EGridDirection::EGD_Down:
+        return SpawnLocation.X < EdgePosition.X;
+    case EGridDirection::EGD_Left:
+        return SpawnLocation.Y < EdgePosition.Y;
+    case EGridDirection::EGD_Right:
+        return SpawnLocation.Y > EdgePosition.Y;
+    default:
+        return false;
+    }
+}
+
+// 상대적 오프셋 기반 타겟 위치 계산
+FVector USLGridNode::CalculateRelativeOffsetTargetLocation(const ACharacter* Character, const ASLGridVolume* CurrentVolume, 
+                                                           const ASLGridVolume* TargetVolume, float SafeDistance) const
+{
+    if (!Character || !CurrentVolume || !TargetVolume)
+    {
+        return FVector::ZeroVector;
+    }
+
+    const FVector CurrentVolumeLocation = CurrentVolume->GetActorLocation();
+    const FVector CharacterLocation = Character->GetActorLocation();
+    
+    // 상대적 오프셋 계산
+    FVector RelativeOffset = CalculateRelativeOffset(CharacterLocation, CurrentVolumeLocation, NodeDirection);
+    
+    // 엣지 위치 계산
+    const FVector EdgePosition = CalculateEdgePosition(TargetVolume, NodeDirection, SafeDistance);
+    
+    // 최종 위치 계산 및 클램핑
+    FVector TargetLocation = EdgePosition + RelativeOffset;
+    ClampLocationToBounds(TargetLocation, TargetVolume, SafeDistance);
+    
+    return TargetLocation;
+}
+
+// 상대적 오프셋 계산
+FVector USLGridNode::CalculateRelativeOffset(const FVector& CharacterLocation, const FVector& VolumeLocation, EGridDirection Direction) const
+{
+    FVector RelativeOffset = FVector::ZeroVector;
+    
+    switch (Direction)
+    {
+    case EGridDirection::EGD_Up:
+    case EGridDirection::EGD_Down:
+        RelativeOffset.Y = CharacterLocation.Y - VolumeLocation.Y;
+        RelativeOffset.Z = CharacterLocation.Z - VolumeLocation.Z;
+        break;
+    case EGridDirection::EGD_Left:
+    case EGridDirection::EGD_Right:
+        RelativeOffset.X = CharacterLocation.X - VolumeLocation.X;
+        RelativeOffset.Z = CharacterLocation.Z - VolumeLocation.Z;
+        break;
+    }
+    
+    return RelativeOffset;
+}
+
+// 위치를 볼륨 경계 내로 클램핑
+void USLGridNode::ClampLocationToBounds(FVector& Location, const ASLGridVolume* TargetVolume, float SafeDistance) const
+{
+    if (!TargetVolume)
+    {
+        return;
+    }
+
+    const FVector TargetVolumeLocation = TargetVolume->GetActorLocation();
+    const float TargetGridWidth = TargetVolume->GetGridWidth();
+    const float TargetGridHeight = TargetVolume->GetGridHeight();
+    const float TargetHalfWidth = TargetGridWidth * 0.5f;
+    const float TargetHalfHeight = TargetGridHeight * 0.5f;
+    
+    Location.Y = FMath::Clamp(Location.Y, 
+                             TargetVolumeLocation.Y - TargetHalfWidth + SafeDistance, 
+                             TargetVolumeLocation.Y + TargetHalfWidth - SafeDistance);
+    Location.X = FMath::Clamp(Location.X, 
+                             TargetVolumeLocation.X - TargetHalfHeight + SafeDistance, 
+                             TargetVolumeLocation.X + TargetHalfHeight - SafeDistance);
+}
+
+// 필수 컴포넌트들 검증
+bool USLGridNode::ValidateRequiredComponents(ACharacter* Character, APlayerController*& OutPlayerController, 
+                                            UCapsuleComponent*& OutCapsuleComponent, ASLGridVolume*& OutTargetVolume, 
+                                            USLGridNode*& OutTargetNode) const
+{
+    if (!Character)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("USLGridNode: Invalid character"));
+        return false;
+    }
+
+    OutCapsuleComponent = Character->GetCapsuleComponent();
+    if (!OutCapsuleComponent)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("USLGridNode: Character has no capsule component"));
+        return false;
+    }
+    
+    OutPlayerController = Cast<APlayerController>(Character->GetController());
+    if (!OutPlayerController)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("USLGridNode: Character has no player controller"));
+        return false;
+    }
+
+    OutTargetVolume = ConnectedVolume.Get();
+    if (!OutTargetVolume)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("USLGridNode: No connected volume"));
+        return false;
+    }
+
+    OutTargetNode = OutTargetVolume->GetNodeByDirection(NodeDirection);
+    if (!OutTargetNode)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("USLGridNode: No target node found for direction"));
+        return false;
+    }
+
+    return true;
+}
+
+// 메인 트리거 함수 - 리팩토링됨
+void USLGridNode::OnTriggeredNode(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, 
+                                  int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+    // 캐스팅 및 검증
     ACharacter* Character = Cast<ACharacter>(OtherActor);
-    if (!Character) return;
-
-    UCapsuleComponent* CharacterCapsule = Character->GetCapsuleComponent();
-    if (!CharacterCapsule) return;
+    APlayerController* PlayerController = nullptr;
+    UCapsuleComponent* CharacterCapsule = nullptr;
+    ASLGridVolume* TargetVolume = nullptr;
+    USLGridNode* TargetNode = nullptr;
     
-    APlayerController* PlayerController = Cast<APlayerController>(Character->GetController());
-    if (!PlayerController) return;
-
-    ASLGridVolume* TargetVolume = ConnectedVolume.Get();
-    if (!TargetVolume) return;
-
-    USLGridNode* TargetNode = TargetVolume->GetNodeByDirection(NodeDirection);
-    if (!TargetNode) return;
+    if (!ValidateRequiredComponents(Character, PlayerController, CharacterCapsule, TargetVolume, TargetNode))
+    {
+        return;
+    }
     
+    // 트리거 두께 및 안전 거리 계산
+    const float TriggerThickness = CalculateTriggerThickness(TargetNode->TriggerVolume, NodeDirection);
+    const float SafeDistance = CalculateSafeDistance(CharacterCapsule, TriggerThickness, NodeDirection);
+    
+    // 타겟 위치 계산
     FVector TargetLocation;
-    
-    float TriggerThickness = 0.f;
-    
-    if (TargetNode->TriggerVolume)
+    if (bUseSpawnPosition && TargetNode->SpawnPosition)
     {
-        FVector TriggerExtent = TargetNode->TriggerVolume->GetScaledBoxExtent();
-        switch (NodeDirection)
-        {
-        case EGridDirection::EGD_Up:
-        case EGridDirection::EGD_Down:
-            TriggerThickness = TriggerExtent.X * 2.0f;
-            break;
-        case EGridDirection::EGD_Left:
-        case EGridDirection::EGD_Right:
-            TriggerThickness = TriggerExtent.Y * 2.0f;
-            break;
-        }
-    }
-    
-    float CapsuleRadius = CharacterCapsule->GetScaledCapsuleRadius();
-    float CapsuleHalfHeight = CharacterCapsule->GetScaledCapsuleHalfHeight();
-    
-    float SafeDistance = TriggerThickness + CapsuleRadius + 10.0f;
-    
-    if (NodeDirection == EGridDirection::EGD_Up || NodeDirection == EGridDirection::EGD_Down)
-    {
-        SafeDistance = FMath::Max(SafeDistance, CapsuleHalfHeight + 10.0f);
-    }
-    
-     if (bUseSpawnPosition && TargetNode->SpawnPosition)
-    {
-        FVector TriggerLocation = TargetNode->TriggerVolume->GetComponentLocation();
-        FVector SpawnLocation = TargetNode->SpawnPosition->GetComponentLocation();
-        
-        FVector2D TriggerLocation2D(TriggerLocation.X, TriggerLocation.Y);
-        FVector2D SpawnLocation2D(SpawnLocation.X, SpawnLocation.Y);
-        FVector2D DirectionVector2D;
-        
-        switch (NodeDirection)
-        {
-        case EGridDirection::EGD_Up:
-            DirectionVector2D = FVector2D(1.0f, 0.0f);
-            break;
-        case EGridDirection::EGD_Down:
-            DirectionVector2D = FVector2D(-1.0f, 0.0f);
-            break;
-        case EGridDirection::EGD_Left:
-            DirectionVector2D = FVector2D(0.0f, -1.0f);
-            break;
-        case EGridDirection::EGD_Right:
-            DirectionVector2D = FVector2D(0.0f, 1.0f);
-            break;
-        }
-        
-        FVector EdgePosition;
-        const FVector TargetVolumeLocation = TargetVolume->GetActorLocation();
-        const float TargetGridWidth = TargetVolume->GetGridWidth();
-        const float TargetGridHeight = TargetVolume->GetGridHeight();
-        const float TargetHalfWidth = TargetGridWidth * 0.5f;
-        const float TargetHalfHeight = TargetGridHeight * 0.5f;
-        
-        switch (NodeDirection)
-        {
-        case EGridDirection::EGD_Up:
-            EdgePosition = TargetVolumeLocation + FVector(TargetHalfHeight - SafeDistance, 0, SpawnLocation.Z);
-            break;
-        case EGridDirection::EGD_Down:
-            EdgePosition = TargetVolumeLocation + FVector(-TargetHalfHeight + SafeDistance, 0, SpawnLocation.Z);
-            break;
-        case EGridDirection::EGD_Left:
-            EdgePosition = TargetVolumeLocation + FVector(0, -TargetHalfWidth + SafeDistance, SpawnLocation.Z);
-            break;
-        case EGridDirection::EGD_Right:
-            EdgePosition = TargetVolumeLocation + FVector(0, TargetHalfWidth - SafeDistance, SpawnLocation.Z);
-            break;
-        }
-        
-        FVector2D EdgePosition2D(EdgePosition.X, EdgePosition.Y);
-        
-        bool bIsInside = false;
-        
-        switch (NodeDirection)
-        {
-        case EGridDirection::EGD_Up:
-            bIsInside = SpawnLocation.X < EdgePosition.X;
-            break;
-        case EGridDirection::EGD_Down:
-            bIsInside = SpawnLocation.X > EdgePosition.X;
-            break;
-        case EGridDirection::EGD_Left:
-            bIsInside = SpawnLocation.Y < EdgePosition.Y;
-            break;
-        case EGridDirection::EGD_Right:
-            bIsInside = SpawnLocation.Y > EdgePosition.Y;
-            break;
-        }
-        
-        if (bIsInside)
-        {
-            TargetLocation = EdgePosition;
-        }
-        else
-        {
-            TargetLocation = SpawnLocation;
-        }
-        
-        FRotator TargetRotation = TargetNode->SpawnPosition->GetComponentRotation();
-        Character->SetActorRotation(TargetRotation);
+        TargetLocation = CalculateSpawnBasedTargetLocation(TargetNode, TargetVolume, SafeDistance, Character);
     }
     else
     {
+        // 현재 볼륨 정보 가져오기
         AActor* OwningActor = GetOwner();
-        if (!OwningActor) return;
+        if (!OwningActor)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("USLGridNode: No owning actor"));
+            return;
+        }
         
         ASLGridVolume* CurrentVolume = Cast<ASLGridVolume>(OwningActor);
-        if (!CurrentVolume) return;
-        
-        FVector CurrentVolumeLocation = CurrentVolume->GetActorLocation();
-        FVector CharacterLocation = Character->GetActorLocation();
-        
-        FVector RelativeOffset;
-        
-        switch (NodeDirection)
+        if (!CurrentVolume)
         {
-            case EGridDirection::EGD_Up:
-            case EGridDirection::EGD_Down:
-                RelativeOffset.X = 0;
-                RelativeOffset.Y = CharacterLocation.Y - CurrentVolumeLocation.Y; 
-                RelativeOffset.Z = CharacterLocation.Z - CurrentVolumeLocation.Z;
-                break;
-                
-            case EGridDirection::EGD_Left:
-            case EGridDirection::EGD_Right:
-                RelativeOffset.X = CharacterLocation.X - CurrentVolumeLocation.X;
-                RelativeOffset.Y = 0;
-                RelativeOffset.Z = CharacterLocation.Z - CurrentVolumeLocation.Z;
-                break;
+            UE_LOG(LogTemp, Warning, TEXT("USLGridNode: Owning actor is not a grid volume"));
+            return;
         }
-
-        const FVector TargetVolumeLocation = TargetVolume->GetActorLocation();
-
-        const float TargetGridWidth = TargetVolume->GetGridWidth();
-        const float TargetGridHeight = TargetVolume->GetGridHeight();
-        const float TargetHalfWidth = TargetGridWidth * 0.5f;
-        const float TargetHalfHeight = TargetGridHeight * 0.5f;
         
-        FVector EdgePosition;
-        switch (NodeDirection)
-        {
-        case EGridDirection::EGD_Up:
-            EdgePosition = TargetVolumeLocation + FVector(TargetHalfHeight - SafeDistance, 0, 0);
-            break;
-        case EGridDirection::EGD_Down:
-            EdgePosition = TargetVolumeLocation + FVector(-TargetHalfHeight + SafeDistance, 0, 0);
-            break;
-        case EGridDirection::EGD_Left:
-            EdgePosition = TargetVolumeLocation + FVector(0, -TargetHalfWidth + SafeDistance, 0);
-            break;
-        case EGridDirection::EGD_Right:
-            EdgePosition = TargetVolumeLocation + FVector(0, TargetHalfWidth - SafeDistance, 0);
-            break;
-        }
-
-        TargetLocation = EdgePosition + RelativeOffset;
-        
-        float ClampedY = FMath::Clamp(TargetLocation.Y, 
-                                     TargetVolumeLocation.Y - TargetHalfWidth + SafeDistance, 
-                                     TargetVolumeLocation.Y + TargetHalfWidth - SafeDistance);
-        float ClampedX = FMath::Clamp(TargetLocation.X, 
-                                     TargetVolumeLocation.X - TargetHalfHeight + SafeDistance, 
-                                     TargetVolumeLocation.X + TargetHalfHeight - SafeDistance);
-        
-        TargetLocation.Y = ClampedY;
-        TargetLocation.X = ClampedX;
+        TargetLocation = CalculateRelativeOffsetTargetLocation(Character, CurrentVolume, TargetVolume, SafeDistance);
     }
 
+    // 캐릭터 이동 및 카메라 전환
     Character->SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
     SwitchToVolumeCamera(PlayerController, TargetVolume);
 }

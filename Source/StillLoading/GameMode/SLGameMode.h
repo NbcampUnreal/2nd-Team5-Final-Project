@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class STILLLOADING_API ASLGameMode : public AGameMode
+class STILLLOADING_API ASLGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 	
