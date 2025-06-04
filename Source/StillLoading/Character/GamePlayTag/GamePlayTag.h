@@ -4,6 +4,11 @@
 // Character
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character)
 
+// Side Effect
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_PrepareLockOn)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_LockOn)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Invulnerable)
+
 // Hit Reactions
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Weak)

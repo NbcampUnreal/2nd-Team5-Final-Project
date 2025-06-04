@@ -1,5 +1,7 @@
 #include "SLMovementHandlerComponent.h"
 
+#include "AIController.h"
+#include "AI/RealAI/Controller/MonsterAIController.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/SLAnimNotify.h"
@@ -10,10 +12,13 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
+#include "Character/RadarComponent/CollisionRadarComponent.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
-UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr)
+UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr), CameraFocusTarget(nullptr)
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
@@ -29,6 +34,9 @@ void UMovementHandlerComponent::BeginPlay()
 		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
 		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
 		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
+		CachedRadarComponent = OwnerCharacter->FindComponentByClass<UCollisionRadarComponent>();
+
+		CachedRadarComponent->OnActorDetectedEnhanced.AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
 
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 600.f;
 		BindIMCComponent();
@@ -51,6 +59,93 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick T
 		{
 			bDoKnockback = false;
 		}
+	}
+
+	if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn))
+	{
+		if (CameraFocusTarget)
+		{
+			float Distance = FVector::Dist(OwnerCharacter->GetActorLocation(), CameraFocusTarget->GetActorLocation());
+			if (Distance > FocusMaxDistance)
+			{
+				if (const APawn* Pawn = Cast<APawn>(CameraFocusTarget))
+				{
+					if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+					{
+						AIController->ToggleLockOnWidget(false);
+					}
+				}
+				
+				CameraFocusTarget = nullptr;
+				OwnerCharacter->DisableLockOnMode();
+				
+				return;
+			}
+
+			if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
+			{
+				FVector CameraLocation = OwnerCharacter->CameraBoom->GetComponentLocation();
+				FVector TargetLocation = CameraFocusTarget->GetActorLocation();
+
+				float DistanceToTarget = FVector::Dist(CameraLocation, TargetLocation);
+				if (DistanceToTarget < 50.0f) return;
+
+				FRotator DesiredRotation = UKismetMathLibrary::FindLookAtRotation(CameraLocation, TargetLocation);
+				DesiredRotation.Pitch = FMath::Clamp(DesiredRotation.Pitch, -30.0f, 30.0f);
+				DesiredRotation.Roll = 0.0f;
+
+				FRotator CurrentRotation = PC->GetControlRotation();
+				FRotator NewRotation = FMath::RInterpTo(CurrentRotation, DesiredRotation, DeltaTime, 5.0f);
+
+				PC->SetControlRotation(NewRotation);
+			}
+		}
+	}
+}
+
+void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
+{
+	if (!OwnerCharacter->HasSecondaryState(TAG_Character_PrepareLockOn)) return;
+
+	if (Distance <= FocusMaxDistance && IsValid(DetectedActor))
+	{
+		if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn)) return;
+		CameraFocusTarget = DetectedActor;
+		OwnerCharacter->EnableLockOnMode();
+
+		if (const APawn* Pawn = Cast<APawn>(DetectedActor))
+		{
+			if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+			{
+				AIController->ToggleLockOnWidget(true);
+			}
+		}
+
+		/*
+		const FVector Start = OwnerCharacter->GetActorLocation();
+		const FVector End = DetectedActor->GetActorLocation();
+
+		FHitResult HitResult;
+		const FCollisionQueryParams TraceParams(SCENE_QUERY_STAT(RadarLineTrace), true, OwnerCharacter);
+
+		const bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			Start,
+			End,
+			ECC_Visibility,
+			TraceParams
+		);
+
+		if (bHit)
+		{
+			if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn)) return;
+			
+			DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.5f, 0, 1.0f);
+			AActor* HitActor = HitResult.GetActor();
+			CameraFocusTarget = HitActor;
+			OwnerCharacter->EnableLockOnMode();
+		}
+		*/
 	}
 }
 
@@ -143,6 +238,8 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 		break;
 	case EInputActionType::EIAT_Menu:
 		ToggleMenu();
+	case EInputActionType::EIAT_LockObject:
+		ToggleLockState();
 		break;
 
 	default:
@@ -196,6 +293,11 @@ void UMovementHandlerComponent::BindIMCComponent()
 	CachedBattleComponent->OnCharacterHited.AddDynamic(this, &UMovementHandlerComponent::OnHitReceived);
 }
 
+void UMovementHandlerComponent::RemoveInvulnerability()
+{
+	OwnerCharacter->SecondaryStateTags.RemoveTag(TAG_Character_Invulnerable);
+}
+
 void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                               EAttackAnimType AnimType)
 {
@@ -240,9 +342,17 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 		return;
 	}
 
-	OwnerCharacter->ClearAllStateTags();
-	CachedMontageComponent->StopAllMontages(0.2f);
+	// 피격무적
+	if (OwnerCharacter->HasSecondaryState(TAG_Character_Invulnerable)) return;
+	OwnerCharacter->AddSecondaryState(TAG_Character_Invulnerable);
+	OwnerCharacter->GetWorldTimerManager().PauseTimer(InvulnerabilityTimerHandle);
+	OwnerCharacter->GetWorldTimerManager().ClearTimer(InvulnerabilityTimerHandle);
+	OwnerCharacter->GetWorldTimerManager().SetTimer(InvulnerabilityTimerHandle, this, &UMovementHandlerComponent::RemoveInvulnerability, InvulnerableDuration, false);
 
+	// 피격
+	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable});
+	CachedMontageComponent->StopAllMontages(0.2f);
+	
 	float RemoveDelay = 1.0f;
 
 	switch (AnimType)
@@ -632,6 +742,27 @@ void UMovementHandlerComponent::ToggleMenu()
 {
 	UE_LOG(LogTemp, Log, TEXT("Menu opened or closed"));
 	// TODO: UI 호출 / Input 모드 변경 등 처리
+}
+
+void UMovementHandlerComponent::ToggleLockState()
+{
+	if (OwnerCharacter->HasSecondaryState(TAG_Character_PrepareLockOn))
+	{
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_PrepareLockOn);
+		OwnerCharacter->DisableLockOnMode();
+		if (const APawn* Pawn = Cast<APawn>(CameraFocusTarget))
+		{
+			if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+			{
+				AIController->ToggleLockOnWidget(false);
+			}
+		}
+		CameraFocusTarget = nullptr;
+	}
+	else
+	{
+		OwnerCharacter->AddSecondaryState(TAG_Character_PrepareLockOn);
+	}
 }
 
 void UMovementHandlerComponent::Dodge()

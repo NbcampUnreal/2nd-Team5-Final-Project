@@ -28,7 +28,7 @@ struct FDetectedActorList
     TArray<FDetectedActorInfo> DetectedActors;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActorDetectedEnhanced, FDetectedActorList&, DetectedActors);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnActorDetectedEnhanced, AActor*, DetectedActor, float, Distance);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class STILLLOADING_API UCollisionRadarComponent : public UActorComponent

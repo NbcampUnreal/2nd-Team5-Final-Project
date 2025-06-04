@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
+class UWidgetComponent;
 class USLMonsterStateTreeComponent;
 enum class EAttackAnimType : uint8;
 class UBattleComponent;
