@@ -7,6 +7,7 @@
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
+class UCollisionRadarComponent;
 class UCombatHandlerComponent;
 class UBattleComponent;
 class UAnimationMontageComponent;
@@ -90,12 +91,25 @@ protected:
 	UFUNCTION()
 	void BindIMCComponent();
 	UFUNCTION()
+	void RemoveInvulnerability();
+	UFUNCTION()
 	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
 	UFUNCTION()
 	void HitDirection(AActor* Causer);
+	UFUNCTION()
+	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
 
 	UPROPERTY()
 	FVector2D MovementInputAxis = FVector2D::ZeroVector;
+
+	UPROPERTY(EditAnywhere, Category = "Camera Focus")
+	float FocusMaxDistance = 800.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Camera Focus")
+	int32 InvulnerableDuration = 5;
+	
+	UPROPERTY()
+	TObjectPtr<AActor> CameraFocusTarget;
 
 private:
 	void Attack();
@@ -106,6 +120,7 @@ private:
 	void PointMove();
 	void ToggleWalk(const bool bNewWalking);
 	void ToggleMenu();
+	void ToggleLockState();
 	void Dodge();
 	void Airborne();
 	void AirUp();
@@ -124,7 +139,11 @@ private:
 	UPROPERTY()
 	TObjectPtr<UBattleComponent> CachedBattleComponent;
 	UPROPERTY()
+	TObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
+	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;
+	UPROPERTY()
+	FTimerHandle InvulnerabilityTimerHandle;
 
 	// 넉백용
 	UPROPERTY()

@@ -1,13 +1,12 @@
 #include "MonsterAIController.h"
 
-#include "EngineUtils.h"
 #include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
+#include "Components/WidgetComponent.h"
 #include "Perception/AIPerceptionComponent.h"
-#include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISenseConfig_Sight.h"
 
 struct FStateTreeInstanceData;
@@ -58,11 +57,60 @@ void AMonsterAIController::OnPossess(APawn* InPawn)
 	{
 		Blackboard->SetValueAsObject(BlackboardKeys::SelfActor, GetPawn());
 	}
+
+	if (InPawn)
+	{
+		ACharacter* AICharacter = Cast<ACharacter>(InPawn);
+		if (AICharacter && AICharacter->GetMesh())
+		{
+			LockOnWidgetFront = NewObject<UWidgetComponent>(AICharacter);
+			LockOnWidgetFront->SetupAttachment(AICharacter->GetMesh());
+			LockOnWidgetFront->RegisterComponent();
+			
+			LockOnWidgetFront->SetWidgetSpace(EWidgetSpace::World);
+			LockOnWidgetFront->SetDrawAtDesiredSize(true);
+			LockOnWidgetFront->SetDrawSize(FVector2D(100.0f, 100.0f));
+			LockOnWidgetFront->SetRelativeLocation(FVector(0.0f, 0.0f, 200.1f));
+			LockOnWidgetFront->SetRelativeRotation(FRotator(0.0f, 90.f, 0.0f));
+			LockOnWidgetFront->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			LockOnWidgetFront->SetVisibility(false);
+
+			if (LockOnWidgetClass)
+			{
+				UUserWidget* CreatedWidget = CreateWidget<UUserWidget>(GetWorld(), LockOnWidgetClass);
+				LockOnWidgetFront->SetWidget(CreatedWidget);
+			}
+
+			LockOnWidgetBack = NewObject<UWidgetComponent>(AICharacter);
+			LockOnWidgetBack->SetupAttachment(AICharacter->GetMesh());
+			LockOnWidgetBack->RegisterComponent();
+			
+			LockOnWidgetBack->SetWidgetSpace(EWidgetSpace::World);
+			LockOnWidgetBack->SetDrawAtDesiredSize(true);
+			LockOnWidgetBack->SetDrawSize(FVector2D(100.0f, 100.0f));
+			LockOnWidgetBack->SetRelativeLocation(FVector(0.0f, 0.0f, 199.f));
+			LockOnWidgetBack->SetRelativeRotation(FRotator(0.0f, 270.f, 0.0f));
+			LockOnWidgetBack->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			LockOnWidgetBack->SetVisibility(false);
+
+			if (LockOnWidgetClass)
+			{
+				UUserWidget* CreatedWidget = CreateWidget<UUserWidget>(GetWorld(), LockOnWidgetClass);
+				LockOnWidgetBack->SetWidget(CreatedWidget);
+			}
+		}
+	}
 }
 
 void AMonsterAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void AMonsterAIController::ToggleLockOnWidget(bool bIsLockOnWidget)
+{
+	LockOnWidgetFront->SetVisibility(bIsLockOnWidget);
+	LockOnWidgetBack->SetVisibility(bIsLockOnWidget);
 }
 
 // 개별 액터의 감지/미감지 상태 기반 행동(추격 시작/중단 등)을 할 때

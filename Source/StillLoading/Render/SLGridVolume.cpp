@@ -87,8 +87,15 @@ void ASLGridVolume::OnConstruction(const FTransform& Transform)
 void ASLGridVolume::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
     Super::PostEditChangeProperty(PropertyChangedEvent);
-    InitializeGridEdges();
-    InitializeTriggerVolume();
+    
+    FName PropertyName = PropertyChangedEvent.GetPropertyName();
+    if (PropertyName == GET_MEMBER_NAME_CHECKED(ASLGridVolume, CameraPitch) ||
+        PropertyName == GET_MEMBER_NAME_CHECKED(ASLGridVolume, GridHeight) ||
+        PropertyName == GET_MEMBER_NAME_CHECKED(ASLGridVolume, GridWidth))
+    {
+        InitializeGridEdges();
+        InitializeTriggerVolume();
+    }
 }
 #endif
 
