@@ -73,7 +73,7 @@ void USLTitleWidget::ApplyTextData()
 	TArray<FSLUITextPoolDataRow*> TempArray;
 	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
 
-	TMap<FName, FSLUITextData> OptionTextMap;
+	TMap<FName, FText> OptionTextMap;
 
 	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
 	{
@@ -84,10 +84,10 @@ void USLTitleWidget::ApplyTextData()
 		}
 	}
 
-	TitleText->SetText(OptionTextMap[TitleTextIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	StartText->SetText(OptionTextMap[StartButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	OptionText->SetText(OptionTextMap[OptionButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	QuitText->SetText(OptionTextMap[QuitButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	TitleText->SetText(OptionTextMap[TitleTextIndex]);
+	StartText->SetText(OptionTextMap[StartButtonIndex]);
+	OptionText->SetText(OptionTextMap[OptionButtonIndex]);
+	QuitText->SetText(OptionTextMap[QuitButtonIndex]);
 }
 
 bool USLTitleWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)

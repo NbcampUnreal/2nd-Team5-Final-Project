@@ -3,6 +3,7 @@
 
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/SLTextPoolSettings.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
 
 void USLTextPoolSubsystem::OnChangedLanguage(ESLLanguageType LanguageType)
 {
@@ -12,8 +13,8 @@ void USLTextPoolSubsystem::OnChangedLanguage(ESLLanguageType LanguageType)
 
 const UDataTable* USLTextPoolSubsystem::GetUITextPool()
 {
-	CheckValidOfTextPool(ESLTextDataType::ETD_UI);
-	return TextPoolMap[ESLTextDataType::ETD_UI];
+	CheckValidOfUITextPool();
+	return UITextPool;
 }
 
 const UDataTable* USLTextPoolSubsystem::GetStoryTextPool()
@@ -34,15 +35,35 @@ const UDataTable* USLTextPoolSubsystem::GetNotifyTextPool()
 	return TextPoolMap[ESLTextDataType::ETD_Notify];
 }
 
-const UDataTable* USLTextPoolSubsystem::GetOtherTextPool()
+const UDataTable* USLTextPoolSubsystem::GetObjectiveTextPool()
 {
-	CheckValidOfTextPool(ESLTextDataType::ETD_Other);
-	return TextPoolMap[ESLTextDataType::ETD_Other];
+	CheckValidOfTextPool(ESLTextDataType::ETD_Objective);
+	return TextPoolMap[ESLTextDataType::ETD_Objective];
+}
+
+void USLTextPoolSubsystem::CheckValidOfUITextPool()
+{
+	if (CurrentPoolLanguageMap.Contains(ESLTextDataType::ETD_UI) &&
+		CurrentPoolLanguageMap[ESLTextDataType::ETD_UI] == CurrentLanguage)
+	{
+		if (IsValid(UITextPool))
+		{
+			return;
+		}
+	}
+
+	CheckValidOfTextPoolSettings();
+
+	UITextPool = TextPoolSettings->UITextPoolDataMap[CurrentLanguage].LoadSynchronous();
+	CurrentPoolLanguageMap.Add(ESLTextDataType::ETD_UI, CurrentLanguage);
 }
 
 void USLTextPoolSubsystem::CheckValidOfTextPool(ESLTextDataType TextDataType)
 {
-	if (CurrentPoolLanguageMap.Contains(TextDataType) && 
+	CheckValidOfLevelSubsystem();
+
+	if (DataChapter == LevelSubsystem->GetCurrentChapter() &&
+		CurrentPoolLanguageMap.Contains(TextDataType) &&
 		CurrentPoolLanguageMap[TextDataType] == CurrentLanguage)
 	{
 		if (TextPoolMap.Contains(TextDataType) &&
@@ -62,13 +83,17 @@ void USLTextPoolSubsystem::CheckValidOfTextPool(ESLTextDataType TextDataType)
 
 void USLTextPoolSubsystem::CheckValidOfTextPoolData(ESLTextDataType TextDataType)
 {
-	if (TextPoolDataMap.Contains(TextDataType))
+	CheckValidOfLevelSubsystem();
+
+	if (DataChapter == LevelSubsystem->GetCurrentChapter() && 
+		TextPoolDataMap.Contains(TextDataType))
 	{
 		return;
 	}
 
 	CheckValidOfTextPoolSettings();
-	TextPoolDataMap.Add(TextDataType, TextPoolSettings->TextPoolDataMap[TextDataType]);
+	DataChapter = LevelSubsystem->GetCurrentChapter();
+	TextPoolDataMap.Add(TextDataType, TextPoolSettings->TextPoolDataMap[DataChapter].TextTypeMap[TextDataType]);
 }
 
 void USLTextPoolSubsystem::CheckValidOfTextPoolSettings()
@@ -80,4 +105,15 @@ void USLTextPoolSubsystem::CheckValidOfTextPoolSettings()
 
 	TextPoolSettings = GetDefault<USLTextPoolSettings>();
 	checkf(IsValid(TextPoolSettings), TEXT("TextPoolSettings is invalid"));
+}
+
+void USLTextPoolSubsystem::CheckValidOfLevelSubsystem()
+{
+	if (IsValid(LevelSubsystem))
+	{
+		return;
+	}
+
+	LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
 }

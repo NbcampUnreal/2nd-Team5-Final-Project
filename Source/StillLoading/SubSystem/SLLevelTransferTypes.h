@@ -28,11 +28,11 @@ UENUM(BlueprintType)
 enum class ESLChapterType : uint8
 {
 	EC_None = 0,
-	EC_Intro,
-	EC_Chapter2D,
-	EC_Chapter2_5D,
-	EC_Chapter3D,
-	EC_ChapterHighQuality
+	EC_Chapter0,
+	EC_Chapter1,
+	EC_Chapter2,
+	EC_Chapter3,
+	EC_Chapter4
 };
 
 UCLASS()

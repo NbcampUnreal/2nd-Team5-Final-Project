@@ -24,7 +24,7 @@ protected:
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
 
 private:
-	void UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 TargetIndex);
+	void UpdateTalkState(ESLTalkTargetType TalkTargetType, const FName& TargetName, const FName& TalkName);
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -53,5 +53,6 @@ private:
 
 
 	ESLTalkTargetType CurrentTalkType = ESLTalkTargetType::ETT_None;
-	int32 CurrentTalkIndex = 0;
+	FName CurrentTalkTarget = "";
+	FName CurrentTalkName = "";
 };

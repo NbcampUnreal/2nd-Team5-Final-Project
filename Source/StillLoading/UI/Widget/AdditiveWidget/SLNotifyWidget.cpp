@@ -29,7 +29,7 @@ void USLNotifyWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 	PlayUISound(ESLUISoundType::EUS_Notify);
 }
 
-void USLNotifyWidget::UpdateNotifyText(ESLGameMapType MapType, ESLNotifyType NotiType)
+void USLNotifyWidget::UpdateNotifyText(ESLGameMapType MapType, const FName& NotiName)
 {
 	CheckValidOfTextPoolSubsystem();
 	const UDataTable* NotifyDataTable = TextPoolSubsystem->GetNotifyTextPool();
@@ -39,10 +39,9 @@ void USLNotifyWidget::UpdateNotifyText(ESLGameMapType MapType, ESLNotifyType Not
 
 	for (const FSLNotifyTextPoolDataRow* NotifyData : NotifyDataArray)
 	{
-		if (NotifyData->Chapter == CurrentChapter &&
-			NotifyData->TextMap.Contains(MapType))
+		if (NotifyData->TextMap.Contains(MapType))
 		{
-			NotifyText->SetText(NotifyData->TextMap[MapType].NotifyMap[NotiType]);
+			NotifyText->SetText(NotifyData->TextMap[MapType].NotifyMap[NotiName]);
 			break;
 		}
 	}

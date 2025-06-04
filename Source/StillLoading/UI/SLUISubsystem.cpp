@@ -73,26 +73,27 @@ void USLUISubsystem::ActivateFade(bool bIsFadeIn, bool bIsMoveLevel)
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
 }
 
-void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType)
+void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, const FName& NotiName)
 {
 	WidgetActivateBuffer.TargetMap = MapType;
-	WidgetActivateBuffer.TargetNotify = NotiType;
+	WidgetActivateBuffer.TargetNotify = NotiName;
 
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_NotifyWidget);
 }
 
-void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, int32 TargetIndex)
+void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName)
 {
 	WidgetActivateBuffer.TargetStory = TargetStoryType;
-	WidgetActivateBuffer.TargetIndex = TargetIndex;
+	WidgetActivateBuffer.TalkName = StoryName;
 
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
 }
 
-void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex)
+void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, const FName& TargetName, const FName& TalkName)
 {
 	WidgetActivateBuffer.TargetTalk = TalkTargetType;
-	WidgetActivateBuffer.TargetIndex = TargetIndex;
+	WidgetActivateBuffer.TargetName = TargetName;
+	WidgetActivateBuffer.TalkName = TalkName;
 
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_TalkWidget);
 }

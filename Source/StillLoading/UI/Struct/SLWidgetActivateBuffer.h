@@ -14,7 +14,7 @@ struct STILLLOADING_API FSLWidgetActivateBuffer
 	
 public:
 	UPROPERTY()
-	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
+	ESLChapterType CurrentChapter = ESLChapterType::EC_Chapter0;
 
 	UPROPERTY()
 	ESLGameMapType TargetMap = ESLGameMapType::EGM_None;
@@ -26,10 +26,13 @@ public:
 	ESLTalkTargetType TargetTalk = ESLTalkTargetType::ETT_None;
 
 	UPROPERTY()
-	ESLNotifyType TargetNotify = ESLNotifyType::EN_None;
+	FName TargetNotify = "";
 
 	UPROPERTY()
-	int32 TargetIndex = 0;
+	FName TargetName = "";
+
+	UPROPERTY()
+	FName TalkName = "";
 
 	UPROPERTY()
 	bool bIsFade = true;
