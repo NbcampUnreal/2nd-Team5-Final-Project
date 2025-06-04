@@ -100,7 +100,7 @@ void USLOptionWidget::ApplyTextData()
 	TArray<FSLUITextPoolDataRow*> TempArray;
 	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
 
-	TMap<FName, FSLUITextData> OptionTextMap;
+	TMap<FName, FText> OptionTextMap;
 
 	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
 	{
@@ -111,13 +111,13 @@ void USLOptionWidget::ApplyTextData()
 		}
 	}
 
-	TitleText->SetText(OptionTextMap[TitleTextIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	KeySettingText->SetText(OptionTextMap[KeySettingButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	LanguageSetText->SetText(OptionTextMap[LanguageSettingIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	GraphicSetText->SetText(OptionTextMap[GraphicSettingIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	SoundSetText->SetText(OptionTextMap[SoundSettingIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	QuitGameText->SetText(OptionTextMap[QuitGameButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	CloseText->SetText(OptionTextMap[CloseButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	TitleText->SetText(OptionTextMap[TitleTextIndex]);
+	KeySettingText->SetText(OptionTextMap[KeySettingButtonIndex]);
+	LanguageSetText->SetText(OptionTextMap[LanguageSettingIndex]);
+	GraphicSetText->SetText(OptionTextMap[GraphicSettingIndex]);
+	SoundSetText->SetText(OptionTextMap[SoundSettingIndex]);
+	QuitGameText->SetText(OptionTextMap[QuitGameButtonIndex]);
+	CloseText->SetText(OptionTextMap[CloseButtonIndex]);
 }
 
 bool USLOptionWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)

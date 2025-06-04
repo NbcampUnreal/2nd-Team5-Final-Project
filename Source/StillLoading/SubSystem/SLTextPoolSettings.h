@@ -6,6 +6,7 @@
 #include "Engine/DeveloperSettings.h"
 #include "SubSystem/Struct/SLTextPoolDataStruct.h"
 #include "SubSystem/SLTextPoolTypes.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLTextPoolSettings.generated.h"
 
 
@@ -16,6 +17,8 @@ class STILLLOADING_API USLTextPoolSettings : public UDeveloperSettings
 	
 public:
 	UPROPERTY(EditAnywhere, Config, Category = "TextPoolData")
-	TMap<ESLTextDataType, FSLTextPoolDataStruct> TextPoolDataMap;
+	TMap<ESLChapterType, FSLTextTypeStruct> TextPoolDataMap;
 
+	UPROPERTY(EditAnywhere, Config, Category = "TextPoolData")
+	TMap<ESLLanguageType, TSoftObjectPtr<UDataTable>> UITextPoolDataMap;
 };

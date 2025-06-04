@@ -59,7 +59,7 @@ private:
 	ESLLevelNameType CurrentLevel = ESLLevelNameType::ELN_None;
 
 	UPROPERTY()
-	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
+	ESLChapterType CurrentChapter = ESLChapterType::EC_Chapter0;
 
 	FString OptionString = "";
 

@@ -18,7 +18,7 @@ public:
 	ESLAdditiveWidgetType WidgetType = ESLAdditiveWidgetType::EAW_OptionWidget;
 
 	UPROPERTY(EditAnywhere)
-	ESLChapterType TargetChapter = ESLChapterType::EC_Intro;
+	ESLChapterType TargetChapter = ESLChapterType::EC_Chapter0;
 
 	UPROPERTY(EditAnywhere)
 	FSlateFontInfo FontInfo;

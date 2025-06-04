@@ -66,7 +66,7 @@ void USLGraphicSettingWidget::ApplyTextData()
 	TArray<FSLUITextPoolDataRow*> TempArray;
 	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
 
-	TMap<FName, FSLUITextData> OptionTextMap;
+	TMap<FName, FText> OptionTextMap;
 
 	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
 	{
@@ -77,11 +77,30 @@ void USLGraphicSettingWidget::ApplyTextData()
 		}
 	}
 
-	WindowModeText->SetText(OptionTextMap[WindowModeTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	FullScreenText->SetText(OptionTextMap[FullScreenButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	WindowScreenText->SetText(OptionTextMap[WindowedButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	ResolutionText->SetText(OptionTextMap[ResolutionTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	BrightnessText->SetText(OptionTextMap[BrigthnessTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	if (OptionTextMap.Contains(WindowModeTagIndex))
+	{
+		WindowModeText->SetText(OptionTextMap[WindowModeTagIndex]);
+	}
+
+	if (OptionTextMap.Contains(FullScreenButtonIndex))
+	{
+		FullScreenText->SetText(OptionTextMap[FullScreenButtonIndex]);
+	}
+
+	if (OptionTextMap.Contains(WindowedButtonIndex))
+	{
+		WindowScreenText->SetText(OptionTextMap[WindowedButtonIndex]);
+	}
+
+	if (OptionTextMap.Contains(ResolutionTagIndex))
+	{
+		ResolutionText->SetText(OptionTextMap[ResolutionTagIndex]);
+	}
+
+	if (OptionTextMap.Contains(BrigthnessTagIndex))
+	{
+		BrightnessText->SetText(OptionTextMap[BrigthnessTagIndex]);
+	}
 }
 
 bool USLGraphicSettingWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)

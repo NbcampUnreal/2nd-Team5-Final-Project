@@ -34,7 +34,7 @@ void USLSoundSettingWidget::ApplyTextData()
 	TArray<FSLUITextPoolDataRow*> TempArray;
 	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
 
-	TMap<FName, FSLUITextData> OptionTextMap;
+	TMap<FName, FText> OptionTextMap;
 
 	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
 	{
@@ -45,8 +45,15 @@ void USLSoundSettingWidget::ApplyTextData()
 		}
 	}
 
-	BgmVolumeText->SetText(OptionTextMap[BgmTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	EffectVolumeText->SetText(OptionTextMap[EffectTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	if (OptionTextMap.Contains(BgmTagIndex))
+	{
+		BgmVolumeText->SetText(OptionTextMap[BgmTagIndex]);
+	}
+
+	if (OptionTextMap.Contains(EffectTagIndex))
+	{
+		EffectVolumeText->SetText(OptionTextMap[EffectTagIndex]);
+	}
 }
 
 bool USLSoundSettingWidget::ApplySliderImage(FSliderStyle& SliderStyle)

@@ -38,7 +38,7 @@ struct STILLLOADING_API FSLNotifyTextData
 
 public:
 	UPROPERTY(EditAnywhere)
-	TMap<ESLNotifyType, FText> NotifyMap;
+	TMap<FName, FText> NotifyMap;
 };
 
 USTRUCT(BlueprintType)
@@ -51,7 +51,7 @@ public:
 	ESLTargetWidgetType TargetWidget = ESLTargetWidgetType::ETW_None;
 
 	UPROPERTY(EditAnywhere)
-	TMap<FName, FSLUITextData> TextMap;
+	TMap<FName, FText> TextMap;
 };
 
 USTRUCT(BlueprintType)
@@ -60,9 +60,6 @@ struct STILLLOADING_API FSLStoryTextPoolDataRow : public FTableRowBase
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere)
-	ESLChapterType Chapter = ESLChapterType::EC_Intro;
-
 	UPROPERTY(EditAnywhere)
 	TMap<ESLStoryType, FSLTalkTextData> TextMap;
 };
@@ -77,7 +74,10 @@ public:
 	ESLTalkTargetType TalkTarget = ESLTalkTargetType::ETT_None;
 
 	UPROPERTY(EditAnywhere)
-	TMap<int32, FSLTalkTextData> TalkMap;
+	FName TargetName = "";
+
+	UPROPERTY(EditAnywhere)
+	TMap<FName, FSLTalkTextData> TalkMap;
 };
 
 USTRUCT(BlueprintType)
@@ -87,17 +87,15 @@ struct STILLLOADING_API FSLNotifyTextPoolDataRow : public FTableRowBase
 
 public:
 	UPROPERTY(EditAnywhere)
-	ESLChapterType Chapter = ESLChapterType::EC_Intro;
-
-	UPROPERTY(EditAnywhere)
 	TMap<ESLGameMapType, FSLNotifyTextData> TextMap;
 };
 
 USTRUCT(BlueprintType)
-struct STILLLOADING_API FSLOtherTextPoolDataRow : public FTableRowBase
+struct STILLLOADING_API FSLObjectiveTextPoolDataRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
 public:
-	
+	UPROPERTY(EditAnywhere)
+	TMap<FName, FText> TextMap;
 };

@@ -6,8 +6,7 @@
 #include "SubSystem/SLTextPoolTypes.h"
 #include "SLTextPoolDataStruct.generated.h"
 
-
-USTRUCT()
+USTRUCT(BlueprintType)
 struct STILLLOADING_API FSLTextPoolDataStruct
 {
 	GENERATED_BODY()
@@ -15,4 +14,14 @@ struct STILLLOADING_API FSLTextPoolDataStruct
 public:
 	UPROPERTY(EditAnywhere)
 	TMap<ESLLanguageType, TSoftObjectPtr<UDataTable>> LanguageTextTableMap;
+};
+
+USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLTextTypeStruct
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	TMap<ESLTextDataType, FSLTextPoolDataStruct> TextTypeMap;
 };
