@@ -126,6 +126,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
 	bool bIsInCombat;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
+	bool IsLoop;
 	
 	// --- Anim Data | Combat Specific ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Combat Specific")

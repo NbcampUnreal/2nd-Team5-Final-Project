@@ -842,6 +842,10 @@ bool ASLAIBaseCharacter::CanAIJump() const
 	return GetCharacterMovement()->IsMovingOnGround() && !bIsJumping && !bIsLanding && !GetCharacterMovement()->IsFalling() &&!IsDead;
 }
 
+void ASLAIBaseCharacter::SetIsLoop(bool bNewLoop)
+{
+	bIsLoop = bNewLoop;
+}
 #if WITH_EDITOR
 void ASLAIBaseCharacter::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {

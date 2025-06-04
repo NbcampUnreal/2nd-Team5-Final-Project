@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SLCompanionAIController.h"
+#include "SLCompanionNormalAIController.h"
 
 #include "EngineUtils.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -12,7 +12,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 
 
-ASLCompanionAIController::ASLCompanionAIController()
+ASLCompanionNormalAIController::ASLCompanionNormalAIController()
 {
     // 플레이어와 같은 팀 (TeamId = 0)
     SetGenericTeamId(FGenericTeamId(0));
@@ -26,7 +26,7 @@ ASLCompanionAIController::ASLCompanionAIController()
     bIsHostileToOtherAI = false;
 }
 
-void ASLCompanionAIController::BeginPlay()
+void ASLCompanionNormalAIController::BeginPlay()
 {
     Super::BeginPlay();
     
@@ -46,7 +46,7 @@ void ASLCompanionAIController::BeginPlay()
     }
 }
 
-void ASLCompanionAIController::OnPossess(APawn* InPawn)
+void ASLCompanionNormalAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
     
@@ -64,7 +64,7 @@ void ASLCompanionAIController::OnPossess(APawn* InPawn)
     }
 }
 
-void ASLCompanionAIController::SetPlayerToFollow(ACharacter* PlayerCharacter)
+void ASLCompanionNormalAIController::SetPlayerToFollow(ACharacter* PlayerCharacter)
 {
     PlayerToFollow = PlayerCharacter;
     
@@ -74,7 +74,7 @@ void ASLCompanionAIController::SetPlayerToFollow(ACharacter* PlayerCharacter)
     }
 }
 
-ETeamAttitude::Type ASLCompanionAIController::GetTeamAttitudeTowards(const AActor& Other) const
+ETeamAttitude::Type ASLCompanionNormalAIController::GetTeamAttitudeTowards(const AActor& Other) const
 {
     const APawn* OtherPawn = Cast<const APawn>(&Other);
     if (!OtherPawn)
@@ -92,7 +92,7 @@ ETeamAttitude::Type ASLCompanionAIController::GetTeamAttitudeTowards(const AActo
     FGenericTeamId MyTeamID = GetGenericTeamId();
     
     // 같은 팀 (플레이어 팀)
-    if (OtherTeamID == 0 || OtherTeamID == MyTeamID)
+    if (OtherTeamID == MyTeamID)
     {
         return ETeamAttitude::Friendly;
     }
@@ -105,7 +105,7 @@ ETeamAttitude::Type ASLCompanionAIController::GetTeamAttitudeTowards(const AActo
     return ETeamAttitude::Neutral;
 }
 
-void ASLCompanionAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+void ASLCompanionNormalAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
     if (!Actor)
     {
@@ -118,19 +118,14 @@ void ASLCompanionAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus 
         return;
     }
 	
-    if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
+   
+    if (Stimulus.WasSuccessfullySensed())
     {
-        // 전투 모드에서만 타겟 설정
-        bool bIsInCombat = BlackboardComponent->GetValueAsBool(FName("IsInCombat"));
-		
-        if (bIsInCombat && Stimulus.WasSuccessfullySensed())
+        if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile)
         {
-            if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile)
-            {
-                // 부모 클래스의 타겟 시스템 사용
-                AddOrUpdateTarget(Actor);
-                UpdateTargetEvaluation();
-            }
+            // 부모 클래스의 타겟 시스템 사용
+            AddOrUpdateTarget(Actor);
+            UpdateTargetEvaluation();
         }
     }
 }

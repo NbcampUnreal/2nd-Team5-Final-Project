@@ -4,14 +4,16 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "NiagaraFunctionLibrary.h"
+#include "AI/SLAIFunctionLibrary.h"
 #include "AI/SLCompanionPatternData.h"
 #include "AI/GamePlayTag/AIGamePlayTag.h"
 #include "AI/Projectile/SLAIProjectile.h"
 #include "AI/Projectile/SLHomingProjectile.h"
 #include "AI/SLMonster/SLMonster.h"
+#include "Character/BattleComponent/BattleComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Controller/SLBaseAIController.h"
-#include "Controller/SLCompanionAIController.h"
+#include "Controller/SLCompanionNormalAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 FSLCompanionActionPatternMappingRow::FSLCompanionActionPatternMappingRow()
@@ -20,6 +22,20 @@ FSLCompanionActionPatternMappingRow::FSLCompanionActionPatternMappingRow()
     DistanceType = ECompanionDistanceType::ECDT_Melee;
     bIsBattleMagePattern = true;
     Priority = 0;
+    bIsLoop = false;
+}
+
+FNiagaraSpawnParams::FNiagaraSpawnParams()
+{
+    NiagaraSystem = nullptr;
+    Location = FVector::ZeroVector;
+    Rotation = FRotator::ZeroRotator;
+    Scale = FVector(1.0f);
+    bAutoDestroy = true;
+    bAutoActivate = true;
+    PoolingMethod = ENCPoolMethod::None;
+    bPreCullCheck = true;
+    EffectDuration = 3.0f;
 }
 
 ASLCompanionCharacter::ASLCompanionCharacter()
@@ -43,6 +59,7 @@ ASLCompanionCharacter::ASLCompanionCharacter()
     MaxRecentPatternMemory = 3;
     PatternData = nullptr;
     CurrentActionPattern = ECompanionActionPattern::ECAP_None;
+    bIsTeleporting = false;
 }
 
 void ASLCompanionCharacter::BeginPlay()
@@ -66,7 +83,7 @@ void ASLCompanionCharacter::SetCombatMode(bool bInCombat)
             BlackboardComponent->SetValueAsBool(FName("IsInCombat"), bIsInCombat);
         }
 
-        ASLCompanionAIController* CompanionAIController = Cast<ASLCompanionAIController>(AIController);
+        ASLCompanionNormalAIController* CompanionAIController = Cast<ASLCompanionNormalAIController>(AIController);
         if (CompanionAIController)
         {
             if (bIsInCombat)
@@ -122,55 +139,6 @@ void ASLCompanionCharacter::SetIsBattleMage(bool bInBattleMage)
     IsBattleMage = bInBattleMage;
 }
 
-void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
-{
-    if (DamageCauser && IsHitReaction && AnimInstancePtr)
-    {
-        if (USLAICharacterAnimInstance* SLAIAnimInstance = Cast<USLAICharacterAnimInstance>(AnimInstancePtr.Get()))
-        {
-            FVector AttackerLocation = DamageCauser->GetActorLocation();
-            FVector DirectionVector = AttackerLocation - GetActorLocation();
-            DirectionVector.Normalize();
-            
-            FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
-
-            EHitDirection HitDir;
-            float AbsX = FMath::Abs(LocalHitDirection.X);
-            float AbsY = FMath::Abs(LocalHitDirection.Y);
-
-            if (AbsY > AbsX)
-            {
-                HitDir = (LocalHitDirection.Y > 0) ? EHitDirection::EHD_Right : EHitDirection::EHD_Left;
-            }
-            else 
-            {
-                HitDir = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
-            }
-        }
-    }
-
-    if (HitEffectComponent)
-    {
-        FVector EffectLocation = HitResult.bBlockingHit ? HitResult.ImpactPoint : HitResult.Location;
-        
-        if (EffectLocation.IsZero())
-        {
-            EffectLocation = GetActorLocation();
-            EffectLocation.Z += GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 0.5f;
-        }
-        
-        HitEffectComponent->SetWorldLocation(EffectLocation);
-        HitEffectComponent->ActivateSystem();
-    }
-}
-
-/**
- * 특정 거리값에 따라 사용할 수 있는 행동 패턴 태그 컨테이너를 반환합니다.
- * 거리 값은 근접, 중거리, 장거리, 매우 장거리 기준으로 구분되며, 이를 기반으로 적합한 패턴을 필터링합니다.
- *
- * @param DistanceToTarget 타겟까지의 거리. 이 값에 따라 적합한 거리 유형이 결정됩니다.
- * @return 해당 거리 조건에 맞는 행동 패턴 태그 컨테이너. 유효한 패턴 데이터가 없을 경우 빈 컨테이너를 반환합니다.
- */
 FGameplayTagContainer ASLCompanionCharacter::GetAvailablePatternsByDistance(float DistanceToTarget) const
 {
     if (!PatternData)
@@ -199,13 +167,6 @@ FGameplayTagContainer ASLCompanionCharacter::GetAvailablePatternsByDistance(floa
     return PatternData->GetPatternsByDistanceTypeAsContainer(DistanceType, IsBattleMage);
 }
 
-/**
- * 입력된 태그 목록에서 적합한 행동 패턴을 필터링하고, 무작위로 패턴을 선택하여 반환합니다.
- * 특정 캐릭터 유형과 최근 사용 이력을 고려하여 적절한 패턴을 선택합니다.
- *
- * @param PatternTags 행동 패턴 태그의 컨테이너. 선택 가능한 태그 목록을 제공합니다.
- * @return 무작위로 선택된 행동 패턴. 적합한 패턴이 없는 경우 ECAP_None을 반환합니다.
- */
 ECompanionActionPattern ASLCompanionCharacter::SelectRandomPatternFromTags(const FGameplayTagContainer& PatternTags)
 {
     if (PatternTags.IsEmpty() || !PatternData)
@@ -247,6 +208,16 @@ ECompanionActionPattern ASLCompanionCharacter::SelectRandomPatternFromTags(const
     int32 RandomIndex = FMath::RandRange(0, FinalTagArray.Num() - 1);
     FGameplayTag SelectedTag = FinalTagArray[RandomIndex];
 
+    // 선택된 패턴의 Loop 상태 확인 및 업데이트
+    if (PatternData->IsPatternLoop(SelectedTag))
+    {
+        SetIsLoop(true);
+    }
+    else
+    {
+        SetIsLoop(false);
+    }
+
     // 최근 사용 패턴에 추가
     RecentlyUsedPatterns.AddTag(SelectedTag);
     
@@ -261,15 +232,6 @@ ECompanionActionPattern ASLCompanionCharacter::SelectRandomPatternFromTags(const
     return PatternData->GetActionPatternForTag(SelectedTag);
 }
 
-/**
- * 주어진 거리 값과 태그 컨테이너를 기반으로 적합한 행동 패턴을 랜덤하게 선택하여 반환합니다.
- * 선택 과정에서 캐릭터 타입에 맞지 않는 패턴은 필터링되며, 최근 사용한 패턴은 가능한 제외됩니다.
- * 적합한 패턴이 없는 경우 예외 처리가 이루어지며, 최근 사용한 패턴 기록은 설정된 최대 개수를 초과하지 않도록 관리됩니다.
- *
- * @param PatternTags 사용 가능한 패턴 태그의 컨테이너입니다. 이 컨테이너의 태그에서 선택이 이루어집니다.
- * @param DistanceToTarget 타겟까지의 거리. 해당 값은 거리 기반 패턴 필터링에 사용됩니다.
- * @return 선택된 ECompanionActionPattern 값. 적합한 패턴이 없을 경우 ECAP_None 또는 예외처리 값을 반환합니다.
- */
 ECompanionActionPattern ASLCompanionCharacter::SelectRandomPatternFromTagsWithDistance(const FGameplayTagContainer& PatternTags, float DistanceToTarget)
 {
     if (PatternTags.IsEmpty() || !PatternData)
@@ -327,6 +289,16 @@ ECompanionActionPattern ASLCompanionCharacter::SelectRandomPatternFromTagsWithDi
     int32 RandomIndex = FMath::RandRange(0, FinalArray.Num() - 1);
     FGameplayTag SelectedTag = FinalArray[RandomIndex];
 
+    // 선택된 패턴의 Loop 상태 확인 및 업데이트
+    if (PatternData->IsPatternLoop(SelectedTag))
+    {
+        SetIsLoop(true);
+    }
+    else
+    {
+        SetIsLoop(false);
+    }
+
     RecentlyUsedPatterns.AddTag(SelectedTag);
     
     // 최대 개수 제한
@@ -361,4 +333,193 @@ bool ASLCompanionCharacter::GetIsTeleporting() const
 void ASLCompanionCharacter::SetIsTeleporting(bool NewIsTeleporting)
 {
     bIsTeleporting = NewIsTeleporting;
+}
+
+void ASLCompanionCharacter::PerformGroundExplosion(const FNiagaraSpawnParams& InWarningParams, const FNiagaraSpawnParams& InExplosionParams, float ExplosionRadius, EAttackAnimType AttackAnimType, float WarningDuration)
+{
+    if (!GetWorld())
+    {
+        return;
+    }
+
+    FNiagaraSpawnParams WarningParams = InWarningParams;
+    FNiagaraSpawnParams ExplosionParams = InExplosionParams;
+
+    WarningParams.Location = USLAIFunctionLibrary::FindGroundLocation(
+        GetWorld(), 
+        ExplosionParams.Location, 
+        2000.0f, 
+        IsDebugMode 
+    ) + WarningParams.Offset;
+    
+    ExplosionParams.Location = USLAIFunctionLibrary::FindGroundLocation(
+        GetWorld(), 
+        ExplosionParams.Location, 
+        2000.0f, 
+        IsDebugMode 
+    ) + ExplosionParams.Offset;
+    
+    // 경고 이펙트가 있는 경우
+    if (WarningParams.NiagaraSystem)
+    {
+        SpawnNiagaraEffect(WarningParams);
+        
+        // 타이머로 지연 폭발
+        FTimerHandle ExplosionTimer;
+        FTimerDelegate TimerDelegate;
+        TimerDelegate.BindLambda([this, ExplosionParams, ExplosionRadius, AttackAnimType]()
+        {
+            // 폭발 이펙트 재생
+            SpawnNiagaraEffect(ExplosionParams);
+            
+            // 데미지 적용
+            ApplyExplosionDamage(ExplosionParams.Location, ExplosionRadius, AttackAnimType);
+        });
+        
+        GetWorld()->GetTimerManager().SetTimer(ExplosionTimer, TimerDelegate, WarningDuration, false);
+    }
+    else
+    {
+        // 즉시 폭발
+        SpawnNiagaraEffect(ExplosionParams);
+        
+        // 데미지 적용
+        ApplyExplosionDamage(ExplosionParams.Location, ExplosionRadius, AttackAnimType);
+    }
+}
+
+void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+{
+    if (DamageCauser && IsHitReaction && AnimInstancePtr)
+    {
+        FVector AttackerLocation = DamageCauser->GetActorLocation();
+        FVector DirectionVector = AttackerLocation - GetActorLocation();
+        DirectionVector.Normalize();
+        
+        FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
+
+        EHitDirection HitDir;
+        float AbsX = FMath::Abs(LocalHitDirection.X);
+        float AbsY = FMath::Abs(LocalHitDirection.Y);
+
+        if (AbsY > AbsX)
+        {
+            HitDir = (LocalHitDirection.Y > 0) ? EHitDirection::EHD_Right : EHitDirection::EHD_Left;
+        }
+        else 
+        {
+            HitDir = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
+        }
+        HitDirection = HitDir;
+        HitDirectionVector = LocalHitDirection;
+    }
+
+    if (HitEffectComponent)
+    {
+        FVector EffectLocation = HitResult.bBlockingHit ? HitResult.ImpactPoint : HitResult.Location;
+        
+        if (EffectLocation.IsZero())
+        {
+            EffectLocation = GetActorLocation();
+            EffectLocation.Z += GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 0.5f;
+        }
+        
+        HitEffectComponent->SetWorldLocation(EffectLocation);
+        HitEffectComponent->ActivateSystem();
+    }
+}
+
+void ASLCompanionCharacter::ApplyExplosionDamage(FVector ExplosionLocation, float ExplosionRadius, EAttackAnimType AttackAnimType)
+{
+    if (!GetWorld())
+    {
+        return;
+    }
+    
+    TArray<FHitResult> HitResults;
+    FCollisionShape ExplosionShape = FCollisionShape::MakeSphere(ExplosionRadius);
+    
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this);
+    
+    GetWorld()->SweepMultiByChannel(
+        HitResults,
+        ExplosionLocation,
+        ExplosionLocation + FVector(0, 0, 1),
+        FQuat::Identity,
+        ECC_GameTraceChannel1,
+        ExplosionShape,
+        QueryParams
+    );
+    
+    for (const FHitResult& Hit : HitResults)
+    {
+        if (AActor* HitActor = Hit.GetActor())
+        {
+            if (ASLAIBaseCharacter* OwnerCharacter = Cast<ASLAIBaseCharacter>(GetInstigator()))
+            {
+                OwnerCharacter->GetBattleComponent()->SendHitResult(HitActor, Hit, AttackAnimType);
+            }
+        }
+    }
+    
+    // 디버그 표시
+    if (IsDebugMode)
+    {
+        DrawDebugSphere(
+            GetWorld(),
+            ExplosionLocation,
+            ExplosionRadius,
+            32,
+            FColor::Red,
+            false,
+            2.0f
+        );
+    }
+}
+
+UNiagaraComponent* ASLCompanionCharacter::SpawnNiagaraEffect(const FNiagaraSpawnParams& SpawnParams)
+{
+    if (!GetWorld() || !SpawnParams.NiagaraSystem)
+    {
+        return nullptr;
+    }
+    
+    UNiagaraComponent* SpawnedComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+        GetWorld(),
+        SpawnParams.NiagaraSystem,
+        SpawnParams.Location,
+        SpawnParams.Rotation,
+        SpawnParams.Scale,
+        SpawnParams.bAutoDestroy,
+        SpawnParams.bAutoActivate,
+        SpawnParams.PoolingMethod,
+        SpawnParams.bPreCullCheck
+    );
+    
+    // 이펙트 제거 타이머 설정
+    if (SpawnedComponent)
+    {
+        //사용자 파라미터
+        SpawnedComponent->SetVariableFloat(FName("_ColorHue"), SpawnParams.UserParams._ColorHue);
+        SpawnedComponent->SetVariableFloat(FName("_Size"), SpawnParams.UserParams._Size);
+        SpawnedComponent->SetVariableFloat(FName("Z_Threashold"), SpawnParams.UserParams.Z_Threashold);
+        
+        // 이펙트 제거 타이머 설정
+        if (SpawnParams.EffectDuration > 0.0f)
+        {
+            FTimerHandle RemovalTimer;
+            GetWorld()->GetTimerManager().SetTimer(RemovalTimer, 
+                [SpawnedComponent]()
+                {
+                    if (IsValid(SpawnedComponent))
+                    {
+                        SpawnedComponent->DestroyComponent();
+                    }
+                }, 
+                SpawnParams.EffectDuration, false);
+        }
+    }
+    
+    return SpawnedComponent;
 }

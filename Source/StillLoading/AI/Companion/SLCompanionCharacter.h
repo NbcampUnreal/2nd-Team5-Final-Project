@@ -72,6 +72,11 @@ enum class ECompanionActionPattern : uint8
 	ECAP_WZ_Attack21             UMETA(DisplayName = "WZ Attack 21"),
 	ECAP_WZ_Attack22             UMETA(DisplayName = "WZ Attack 22"),
 	ECAP_WZ_Attack23             UMETA(DisplayName = "WZ Attack 23"),
+
+	ECAP_WZ_Attack_Aim01             UMETA(DisplayName = "WZ Attack Aim 01"),
+	ECAP_WZ_Attack_Aim02             UMETA(DisplayName = "WZ Attack Aim 02"),
+	ECAP_WZ_Attack_Aim03             UMETA(DisplayName = "WZ Attack Aim 03"),
+	ECAP_WZ_Attack_Aim04             UMETA(DisplayName = "WZ Attack Aim 04"),
 };
 
 UENUM(BlueprintType)
@@ -104,8 +109,69 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mapping")
 	int32 Priority;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mapping")
+	bool bIsLoop;
+	
 	FSLCompanionActionPatternMappingRow();
 };
+
+USTRUCT(BlueprintType)
+struct FNiagaraUserParams
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _ColorHue;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _Size;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float  Z_Threashold;
+};
+
+USTRUCT(BlueprintType)
+struct FNiagaraSpawnParams
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UNiagaraSystem> NiagaraSystem;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Location;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FRotator Rotation;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Scale;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bAutoDestroy;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bAutoActivate;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ENCPoolMethod PoolingMethod;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bPreCullCheck;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float EffectDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FNiagaraUserParams UserParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Offset;
+	FNiagaraSpawnParams();
+};
+
 
 class USLCompanionPatternData;
 
@@ -153,11 +219,20 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Teleport")
 	void SetIsTeleporting(bool NewIsTeleporting);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PerformGroundExplosion(const FNiagaraSpawnParams& InWarningParams, const FNiagaraSpawnParams& InExplosionParams, float ExplosionRadius, EAttackAnimType AttackAnimType, float WarningDuration = 1.0f);
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ApplyExplosionDamage(FVector ExplosionLocation, float ExplosionRadius, EAttackAnimType AttackAnimType);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	UNiagaraComponent* SpawnNiagaraEffect(const FNiagaraSpawnParams& SpawnParams);
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	TSubclassOf<ASLAIProjectile> ProjectileClass;
 
@@ -193,7 +268,7 @@ protected:
 
 private:
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	bool bIsInCombat;
 
 	UPROPERTY()

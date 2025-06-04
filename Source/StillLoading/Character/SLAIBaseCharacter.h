@@ -217,6 +217,12 @@ public:
     
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FORCEINLINE bool IsLanding() const { return bIsLanding; }
+
+	UFUNCTION(BlueprintCallable, Category = "combat")
+	FORCEINLINE bool GetIsLoop() const { return bIsLoop; }
+
+	UFUNCTION(BlueprintCallable, Category = "combat")
+	void SetIsLoop(bool bNewLoop);
 protected:
 	
 #if WITH_EDITOR
@@ -352,6 +358,9 @@ protected:
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool bIsLanding;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsLoop;
 };
 
 
