@@ -24,8 +24,8 @@ AMonsterAICharacter::AMonsterAICharacter()
 	BattleComponent = CreateDefaultSubobject<UBattleComponent>(TEXT("BattleComponent"));
 	FormationComponent = CreateDefaultSubobject<UFormationComponent>(TEXT("FormationComponent"));
 
-	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement(); MoveComp && MoveComp->MovementMode ==
-		EMovementMode::MOVE_None)
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+						MoveComp && MoveComp->MovementMode == EMovementMode::MOVE_None)
 	{
 		MoveComp->SetMovementMode(MOVE_Walking);
 	}
@@ -72,7 +72,7 @@ void AMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
-	SetStrategyState(TAG_AI_STRATEGY_ORGANIZED_HOLDPOSITION);
+	SetStrategyState(TAG_AI_STRATEGY_SINGLE_SNEAKY);
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 

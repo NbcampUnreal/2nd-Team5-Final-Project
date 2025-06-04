@@ -35,6 +35,11 @@ class STILLLOADING_API ASLPlayerCharacter : public ASLPlayerCharacterBase
 public:
 	ASLPlayerCharacter();
 
+	UFUNCTION()
+	void EnableLockOnMode();
+	UFUNCTION()
+	void DisableLockOnMode();
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
@@ -94,6 +99,10 @@ public:
 	// 전체 제거
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void ClearAllStateTags();
+
+	// 분류 제거
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	void ClearStateTags(const TArray<FGameplayTag>& PrimaryExceptTagList, const TArray<FGameplayTag>& SecondaryExceptTagList);
 
 	// 상태 태그 컨테이너
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")

@@ -4,6 +4,11 @@
 // Character
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character, "Character");
 
+// Side Effect
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_PrepareLockOn, "Character.PrepareLockOn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_LockOn, "Character.LockOn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Invulnerable, "Character.Invulnerable");
+
 // Hit Reactions
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction, "Character.HitReaction");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Weak, "Character.HitReaction.Weak");
