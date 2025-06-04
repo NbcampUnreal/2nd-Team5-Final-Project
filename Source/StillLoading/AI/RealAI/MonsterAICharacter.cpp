@@ -72,16 +72,16 @@ void AMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
-	SetStrategyState(TAG_AI_STRATEGY_ORGANIZED_SQUAD);
+	SetStrategyState(TAG_AI_STRATEGY_ORGANIZED_HOLDPOSITION);
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 
 	GetCharacterMovement()->bUseRVOAvoidance = true;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 150.f;
 }
 
 void AMonsterAICharacter::SetLeader()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Im Leader"));
 	bIsLeader = true;
 	
 	AAIController* LeaderController = Cast<AAIController>(GetController());
@@ -89,6 +89,7 @@ void AMonsterAICharacter::SetLeader()
 	if (LeaderController && LeaderController->GetBlackboardComponent())
 	{
 		LeaderController->GetBlackboardComponent()->SetValueAsObject(FName("Leader"), this);
+		LeaderController->GetBlackboardComponent()->SetValueAsVector(FName("LeaderOrderLocation"), FVector::ZeroVector);
 	}
 }
 
