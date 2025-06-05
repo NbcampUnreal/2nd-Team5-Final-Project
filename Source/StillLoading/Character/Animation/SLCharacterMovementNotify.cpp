@@ -1,6 +1,7 @@
 #include "SLCharacterMovementNotify.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                                         const FAnimNotifyEventReference& EventReference)
@@ -28,7 +29,11 @@ void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 		}
 		break;
 
-	default:
+	case ECharacterMovementAction::CMA_LaunchOff:
+		Character->GetCharacterMovement()->StopMovementImmediately();
+		Character->GetCharacterMovement()->Velocity = FVector::ZeroVector;
 		break;
+		
+	default: break;
 	}
 }

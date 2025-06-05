@@ -24,22 +24,6 @@ void UCombatHandlerComponent::BeginPlay()
 
 void UCombatHandlerComponent::SetEmpoweredCombatMode(ECharacterComboState Mode, float AdditionalDuration)
 {
-	if (CurrentMode == ECharacterComboState::CCS_Normal)
-	{
-		if (USkeletalMeshComponent* Mesh = OwnerCharacter->FindComponentByClass<USkeletalMeshComponent>())
-		{
-			UNiagaraFunctionLibrary::SpawnSystemAttached(
-				EmpoweredNiagaraEffect,
-				Mesh,
-				FName("root"),
-				FVector::ZeroVector,
-				FRotator::ZeroRotator,
-				EAttachLocation::SnapToTarget,
-				true
-			);
-		}
-	}
-	
 	CurrentMode = Mode;
 	
 	float TotalDuration = AdditionalDuration;

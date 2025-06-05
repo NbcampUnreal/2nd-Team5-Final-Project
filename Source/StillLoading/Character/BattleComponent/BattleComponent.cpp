@@ -88,8 +88,7 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 			{
 				UNiagaraSystem* EffectToSpawn = HitEffectData->DefaultEffect;
 
-				if (const UCombatHandlerComponent* CombatHandler = DamageCauser->FindComponentByClass<
-					UCombatHandlerComponent>())
+				if (const UCombatHandlerComponent* CombatHandler = DamageCauser->FindComponentByClass<UCombatHandlerComponent>())
 				{
 					if (CombatHandler->IsEmpowered())
 					{
@@ -137,6 +136,14 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 		default: break;
 		}
 
+		if (const UCombatHandlerComponent* CombatHandler = OwnerActor->FindComponentByClass<UCombatHandlerComponent>())
+		{
+			if (CombatHandler->IsEmpowered())
+			{
+				SweepShape = FCollisionShape::MakeSphere(100.f);
+			}
+		}
+
 		TArray<FHitResult> HitResults;
 		FCollisionQueryParams Params;
 		Params.AddIgnoredActor(OwnerActor);
@@ -173,7 +180,7 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 			{
 				if (UBattleComponent* TargetBattleComp = HitActor->FindComponentByClass<UBattleComponent>())
 				{
-					UE_LOG(LogBattleComponent, Warning, TEXT("DoAttackSweep Hit Actor: %s"), *HitActor->GetName());
+					//UE_LOG(LogBattleComponent, Warning, TEXT("DoAttackSweep Hit Actor: %s"), *HitActor->GetName());
 					AlreadyHitActors.Add(HitActor);
 
 					SendHitResult(HitActor, Hit, AttackType);
