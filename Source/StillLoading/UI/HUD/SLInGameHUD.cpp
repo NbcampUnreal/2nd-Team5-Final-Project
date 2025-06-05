@@ -16,6 +16,12 @@ void ASLInGameHUD::OnStartedHUD()
 	checkf(IsValid(InGameWidget), TEXT("Cast Fail. Level Widget To InGame Widget"));
 }
 
+void ASLInGameHUD::ApplyObjective(const FName& ObjectiveName)
+{
+	SetObjectiveValue(ObjectiveName);
+	SetObjectiveVisibility(true);
+}
+
 void ASLInGameHUD::SetTimerVisibility(bool bIsVisible)
 {
 	InGameWidget->SetIsTimerActivate(bIsVisible);
@@ -26,9 +32,9 @@ void ASLInGameHUD::SetPlayerStateVisibility(bool bIsVisible)
 	InGameWidget->SetIsPlayerStateActivate(bIsVisible);
 }
 
-void ASLInGameHUD::SetGameStateVisibility(bool bIsVisible)
+void ASLInGameHUD::SetObjectiveVisibility(bool bIsVisible)
 {
-	InGameWidget->SetIsGameStateActivate(bIsVisible);
+	InGameWidget->SetIsObjectiveActivate(bIsVisible);
 }
 
 void ASLInGameHUD::SetHitEffectVisibility(bool bIsVisible)
@@ -51,10 +57,9 @@ void ASLInGameHUD::SetPlayerHpValue(int32 MaxHp, int32 CurrentHp)
 	InGameWidget->SetHpValue(MaxHp, CurrentHp);
 }
 
-void ASLInGameHUD::SetGameStateValue(int32 TargetState, const FText& NewText)
+void ASLInGameHUD::SetObjectiveValue(const FName& ObjectiveName)
 {
-	// 
-	InGameWidget->SetGameStateText(NewText);
+	InGameWidget->SetObjectiveText(ObjectiveName);
 }
 
 void ASLInGameHUD::SetBossHpValue(int32 MaxHp, int32 CurrentHp)

@@ -22,14 +22,14 @@ public:
 
 	void SetIsTimerActivate(bool bIsActived);
 	void SetIsPlayerStateActivate(bool bIsActived);
-	void SetIsGameStateActivate(bool bIsActived);
+	void SetIsObjectiveActivate(bool bIsActived);
 	void SetIsHitEffectActivate(bool bIsActived);
 	void SetIsBossStateActivate(bool bIsActived);
 
 	void SetTimerText(int32 TimeSeconds);
 	void SetHpValue(int32 MaxHp, int32 CurrentHp);
 	void SetBossHpValue(int32 MaxHp, int32 CurrentHp);
-	void SetGameStateText(const FText& StateText);
+	void SetObjectiveText(const FName& ObjectiveName);
 
 protected:
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
@@ -98,4 +98,6 @@ protected:
 
 	UPROPERTY()
 	TMap<ESLInGamePrivateImageType, UTexture2D*> PrivateImageMap;
+
+	bool bIsObjectiveVisible = false;
 };
