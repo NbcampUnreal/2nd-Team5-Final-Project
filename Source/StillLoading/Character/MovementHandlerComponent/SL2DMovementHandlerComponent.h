@@ -24,6 +24,11 @@ public:
 	UFUNCTION()
 	void OnAttackStageFinished(ECharacterMontageState AttackStage);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
+	int AttackStateCount = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
+	int AttackStateCountLimit = 25;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -37,11 +42,10 @@ private:
 	void OnActionStarted(EInputActionType ActionType);
 	UFUNCTION()
 	void OnActionCompleted(EInputActionType ActionType);
-	UFUNCTION()
+	
 	void Move(const float AxisValue, const EInputActionType ActionType);
-
-	UFUNCTION()
 	void Attack();
+	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
 	
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
