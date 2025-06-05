@@ -2,6 +2,7 @@
 
 #include "ChargingWidget.h"
 #include "ChargingWidgetActor.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/Character.h"
@@ -23,6 +24,22 @@ void UCombatHandlerComponent::BeginPlay()
 
 void UCombatHandlerComponent::SetEmpoweredCombatMode(ECharacterComboState Mode, float AdditionalDuration)
 {
+	if (CurrentMode == ECharacterComboState::CCS_Normal)
+	{
+		if (USkeletalMeshComponent* Mesh = OwnerCharacter->FindComponentByClass<USkeletalMeshComponent>())
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAttached(
+				EmpoweredNiagaraEffect,
+				Mesh,
+				FName("root"),
+				FVector::ZeroVector,
+				FRotator::ZeroRotator,
+				EAttachLocation::SnapToTarget,
+				true
+			);
+		}
+	}
+	
 	CurrentMode = Mode;
 	
 	float TotalDuration = AdditionalDuration;

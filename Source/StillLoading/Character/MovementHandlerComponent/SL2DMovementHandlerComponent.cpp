@@ -7,11 +7,13 @@
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/SLAnimNotify.h"
 #include "Character/BattleComponent/BattleComponent.h"
+#include "Character/Buffer/InputBufferComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 USL2DMovementHandlerComponent::USL2DMovementHandlerComponent(): OwnerCharacter(nullptr), CachedSkeletalMesh(nullptr)
 {
@@ -21,10 +23,22 @@ USL2DMovementHandlerComponent::USL2DMovementHandlerComponent(): OwnerCharacter(n
 
 void USL2DMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState AttackStage)
 {
-	if (AttackStage == ECharacterMontageState::ECS_Attack_Basic1)
+	switch (AttackStage)
 	{
-		OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Idle);
+	case ECharacterMontageState::ECS_Attack_Basic1:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Basic1);
+		break;
+	case ECharacterMontageState::ECS_Attack_Basic2:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Basic2);
+		break;
+	case ECharacterMontageState::ECS_Attack_Basic3:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Basic3);
+		break;
+	default:
+		break;
 	}
+	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Idle);
+	AttackStateCount = 0;
 }
 
 void USL2DMovementHandlerComponent::BeginPlay()
@@ -77,7 +91,6 @@ void USL2DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionTyp
 	case EInputActionType::EIAT_MoveRight:
 		Move(Value.Get<float>(), ActionType);
 		break;
-
 	default:
 		checkNoEntry();
 		break;
@@ -98,6 +111,7 @@ void USL2DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 
 void USL2DMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 {
+	
 }
 
 void USL2DMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)
@@ -166,15 +180,46 @@ void USL2DMovementHandlerComponent::Move(const float AxisValue, const EInputActi
 	default:
 		break;
 	}
+	AttackStateCount++;
+	if (AttackStateCount >= AttackStateCountLimit)
+	{
+		CachedCombatComponent->ResetCombo();
+	}
 }
 
 void USL2DMovementHandlerComponent::Attack()
 {
-	if (OwnerCharacter->IsInPrimaryState(TAG_Character_Attack_Basic1)) return;
+	if (OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Basic1) || OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Basic3)) return;
+	UAnimMontage* Montage = nullptr;
+	FName SectionName;
 	
-	OwnerCharacter->SetPrimaryState(TAG_Character_Attack_Basic1);
-	if (CachedMontageComponent)
+	if (!CachedCombatComponent->GetCurrentComboInfo(Montage, SectionName))
 	{
-		CachedMontageComponent->Play2DAttackMontage();
+		UE_LOG(LogTemp, Warning, TEXT("No valid combo found"));
+		return;
+	}
+
+	const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
+	ApplyAttackState(SectionName, bIsFalling);
+
+	if (CachedMontageComponent && Montage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SectionName[%s]"), *SectionName.ToString());
+		CachedMontageComponent->PlayMontage(Montage, SectionName);
+	}
+	CachedCombatComponent->AdvanceCombo();
+
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
+}
+
+void USL2DMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)
+{
+	if (SectionName == "Attack3")
+	{
+		OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic3);
+	}
+	else if (SectionName == "Attack1")
+	{
+		OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic1);
 	}
 }

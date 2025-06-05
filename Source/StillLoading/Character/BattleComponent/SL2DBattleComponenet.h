@@ -14,7 +14,7 @@ class STILLLOADING_API USL2DBattleComponenet : public UBattleComponent
 
 public:
 	virtual void DoAttackSweep(EAttackAnimType AttackType) override;
-	virtual void DoSweep(EAttackAnimType AttackType) override;
+	virtual bool DoSweep(EAttackAnimType AttackType) override;
 
 private:
 	UPROPERTY(EditAnywhere)

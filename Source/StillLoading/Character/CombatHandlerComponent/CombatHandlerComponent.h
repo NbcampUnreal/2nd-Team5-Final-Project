@@ -5,6 +5,7 @@
 #include "Components/ActorComponent.h"
 #include "CombatHandlerComponent.generated.h"
 
+class UNiagaraSystem;
 class ASLPlayerCharacter;
 class AChargingWidgetActor;
 
@@ -63,18 +64,22 @@ public:
     /** Empowered 상태 설정 */
     UFUNCTION()
     void SetEmpoweredCombatMode(const ECharacterComboState Mode, float Duration = 7.0f);
+    
     UFUNCTION()
-    FORCEINLINE void SetCombatMode(const ECharacterComboState Mode) { CurrentMode = Mode; }
+    void SetCombatMode(const ECharacterComboState Mode) { CurrentMode = Mode; }
 
     /** 현재 Empowered 상태인지 반환 */
     UFUNCTION()
     FORCEINLINE bool IsEmpowered() const { return CurrentMode == ECharacterComboState::CCS_Empowered; }
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Empowered", meta = (ClampMin = "0.1", ClampMax = "30.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Empowered", meta = (ClampMin = "0.1", ClampMax = "30.0"))
     float MaxEmpoweredDuration = 30.f;
 
 protected:
     virtual void BeginPlay() override;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+    TObjectPtr<UNiagaraSystem> EmpoweredNiagaraEffect;
 
 private:
     /** 충전 완료 처리 */
@@ -126,19 +131,19 @@ private:
 
 public:
     /** 일반 콤보 데이터 */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combo")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combo")
     TObjectPtr<UAttackComboDataAsset> ComboDataAsset;
 
     /** Empowered 콤보 데이터 */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combo")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combo")
     TObjectPtr<UAttackComboDataAsset> EmpoweredComboDataAsset;
 
     /** Air Attack 콤보 데이터 */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combo")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combo")
     TObjectPtr<UAttackComboDataAsset> AirComboDataAsset;
 
     /** 충전 유지 시간 */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Charging", meta = (ClampMin = "0.1", ClampMax = "5.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Charging", meta = (ClampMin = "0.1", ClampMax = "5.0"))
     float ChargingDuration = 0.4f;
 
     /** Charging Widget Actor Blueprint Class */
