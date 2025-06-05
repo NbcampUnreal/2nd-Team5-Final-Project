@@ -4,6 +4,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
+#include "Character/DataAsset/AttackDataAsset.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -231,7 +232,6 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 
 	LastAttacker = Causer;
 	CurrentHealth -= Damage;
-	UE_LOG(LogTemp, Warning, TEXT("CurrentHealth [%f]"), CurrentHealth);
 
 	switch (AnimType)
 	{

@@ -1,6 +1,8 @@
 #include "SLMovementHandlerComponent.h"
 
+#include "AI/RealAI/MonsterAICharacter.h"
 #include "AI/RealAI/Controller/MonsterAIController.h"
+#include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/SLAnimNotify.h"
@@ -35,7 +37,8 @@ void UMovementHandlerComponent::BeginPlay()
 		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
 		CachedRadarComponent = OwnerCharacter->FindComponentByClass<UCollisionRadarComponent>();
 
-		CachedRadarComponent->OnActorDetectedEnhanced.AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
+		CachedRadarComponent->OnActorDetectedEnhanced.
+		                      AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
 
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 600.f;
 		BindIMCComponent();
@@ -86,17 +89,21 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 {
 	if (!OwnerCharacter->HasSecondaryState(TAG_Character_PrepareLockOn)) return;
 
-	if (Distance <= FocusMaxDistance && IsValid(DetectedActor))
+	// TODO::시체에 잡히는거 처리해야함
+	if (DetectedActor->IsA(AMonsterAICharacter::StaticClass()) || DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
 	{
-		if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn)) return;
-		CameraFocusTarget = DetectedActor;
-		OwnerCharacter->EnableLockOnMode();
-
-		if (const APawn* Pawn = Cast<APawn>(DetectedActor))
+		if (Distance <= FocusMaxDistance && IsValid(DetectedActor))
 		{
-			if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+			if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn)) return;
+			CameraFocusTarget = DetectedActor;
+			OwnerCharacter->EnableLockOnMode();
+
+			if (const APawn* Pawn = Cast<APawn>(DetectedActor))
 			{
-				AIController->ToggleLockOnWidget(true);
+				if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+				{
+					AIController->ToggleLockOnWidget(true);
+				}
 			}
 		}
 
@@ -189,9 +196,9 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 					BlockCount = 0;
 				}
 				CachedCombatComponent->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered);
-				
+
 				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
-				
+
 				// 전체 슬로우 (자기 자신 포함)
 				//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, nullptr, 0.2f, 0.15f, true, false);
 				// 자기 자신 제외한 모두 슬로우
@@ -326,12 +333,14 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	OwnerCharacter->AddSecondaryState(TAG_Character_Invulnerable);
 	OwnerCharacter->GetWorldTimerManager().PauseTimer(InvulnerabilityTimerHandle);
 	OwnerCharacter->GetWorldTimerManager().ClearTimer(InvulnerabilityTimerHandle);
-	OwnerCharacter->GetWorldTimerManager().SetTimer(InvulnerabilityTimerHandle, this, &UMovementHandlerComponent::RemoveInvulnerability, InvulnerableDuration, false);
+	OwnerCharacter->GetWorldTimerManager().SetTimer(InvulnerabilityTimerHandle, this,
+	                                                &UMovementHandlerComponent::RemoveInvulnerability,
+	                                                InvulnerableDuration, false);
 
 	// 피격
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable});
 	CachedMontageComponent->StopAllMontages(0.2f);
-	
+
 	float RemoveDelay = 1.0f;
 
 	switch (AnimType)
@@ -601,8 +610,6 @@ void UMovementHandlerComponent::Attack()
 
 void UMovementHandlerComponent::Execution() // 킬모션 분기필요
 {
-	USlowMotionHelper::ApplyZoomWithSlowMotion(this, 0.2f, 0.5f);
-
 	struct FExecutionData
 	{
 		EAttackAnimType AttackType;
@@ -611,9 +618,9 @@ void UMovementHandlerComponent::Execution() // 킬모션 분기필요
 	};
 
 	TArray<FExecutionData> ExecutionOptions = {
-		{ EAttackAnimType::AAT_FinalAttackA, FName("ExecutionA"), TAG_Character_Attack_ExecutionA },
-		{ EAttackAnimType::AAT_FinalAttackB, FName("ExecutionB"), TAG_Character_Attack_ExecutionB },
-		{ EAttackAnimType::AAT_FinalAttackC, FName("ExecutionC"), TAG_Character_Attack_ExecutionC }
+		{EAttackAnimType::AAT_FinalAttackA, FName("ExecutionA"), TAG_Character_Attack_ExecutionA},
+		{EAttackAnimType::AAT_FinalAttackB, FName("ExecutionB"), TAG_Character_Attack_ExecutionB},
+		{EAttackAnimType::AAT_FinalAttackC, FName("ExecutionC"), TAG_Character_Attack_ExecutionC}
 	};
 
 	const int32 RandomIndex = FMath::RandRange(0, ExecutionOptions.Num() - 1);
@@ -621,9 +628,12 @@ void UMovementHandlerComponent::Execution() // 킬모션 분기필요
 
 	UE_LOG(LogTemp, Warning, TEXT("RandomIndex [%d]"), RandomIndex);
 
-	CachedBattleComponent->DoSweep(ChosenExecution.AttackType);
-	CachedMontageComponent->PlayExecutionMontage(ChosenExecution.MontageName);
-	OwnerCharacter->AddSecondaryState(ChosenExecution.SecondaryTag);
+	if (CachedBattleComponent->DoSweep(ChosenExecution.AttackType))
+	{
+		USlowMotionHelper::ApplyZoomWithSlowMotion(this, 0.2f, 0.5f);
+		CachedMontageComponent->PlayExecutionMontage(ChosenExecution.MontageName);
+		OwnerCharacter->AddSecondaryState(ChosenExecution.SecondaryTag);
+	}
 }
 
 void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)
@@ -753,7 +763,7 @@ void UMovementHandlerComponent::DisableLock()
 			AIController->ToggleLockOnWidget(false);
 		}
 	}
-				
+
 	CameraFocusTarget = nullptr;
 	OwnerCharacter->DisableLockOnMode();
 }
@@ -769,11 +779,12 @@ void UMovementHandlerComponent::RotateCameraToTarget(const AActor* Target, float
 		if (DistanceToTarget < 100.0f) return;
 
 		FRotator DesiredRotation = UKismetMathLibrary::FindLookAtRotation(CameraLocation, TargetLocation);
+		DesiredRotation.Pitch += 10.0f;
 		DesiredRotation.Pitch = FMath::Clamp(DesiredRotation.Pitch, -30.0f, 30.0f);
 		DesiredRotation.Roll = 0.0f;
 
 		const FRotator CurrentRotation = PC->GetControlRotation();
-		const FRotator NewRotation = FMath::RInterpTo(CurrentRotation, DesiredRotation, DeltaTime, 2.0f);
+		const FRotator NewRotation = FMath::RInterpTo(CurrentRotation, DesiredRotation, DeltaTime, 4.0f);
 
 		PC->SetControlRotation(NewRotation);
 	}

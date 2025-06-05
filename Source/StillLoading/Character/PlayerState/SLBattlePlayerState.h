@@ -27,6 +27,9 @@ public:
 	UFUNCTION()
 	void IncreaseBurningGage(float Amount);
 
+	UFUNCTION()
+	FORCEINLINE float GetBurningGage() const { return BurningGage; }
+
 protected:
 	UFUNCTION()
 	void OnRep_Health();
