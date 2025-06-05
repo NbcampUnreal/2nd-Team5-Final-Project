@@ -1,8 +1,14 @@
 #include "BattleComponent.h"
 
 #include "MotionWarpingComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "AI/RealAI/MonsterAICharacter.h"
+#include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacter.h"
+#include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
+#include "Character/DataAsset/HitEffectDataAsset.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
+#include "Character/PlayerState/SLBattlePlayerState.h"
 #include "Kismet/KismetMathLibrary.h"
 
 DEFINE_LOG_CATEGORY(LogBattleComponent);
@@ -17,10 +23,18 @@ void UBattleComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitResult, EAttackAnimType AnimType)
+void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitResult, const EAttackAnimType AnimType)
 {
 	if (AActor* OwnerActor = GetOwner())
 	{
+		if (const ASLPlayerCharacter* APlayerCharacter = Cast<ASLPlayerCharacter>(OwnerActor))
+		{
+			if (ASLBattlePlayerState* PlayerState = APlayerCharacter->GetPlayerState<ASLBattlePlayerState>())
+			{
+				PlayerState->IncreaseBurningGage(5);
+			}
+		}
+		
 		if (HitTarget)
 		{
 			if (UBattleComponent* TargetBattleComp = HitTarget->FindComponentByClass<UBattleComponent>())
@@ -42,6 +56,13 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 {
 	if (const AActor* OwnerActor = GetOwner())
 	{
+		const bool bOwnerIsAI = OwnerActor->IsA(AMonsterAICharacter::StaticClass());
+		const bool bCauserIsAI = DamageCauser->IsA(AMonsterAICharacter::StaticClass());
+		if (bOwnerIsAI && bCauserIsAI)
+		{
+			return;
+		}
+
 		UE_LOG(LogBattleComponent, Warning,
 		       TEXT("피격 발생! 소유자: %s, 데미지: %.2f, 공격자: %s, 위치: %s, 뼈: %s, AnimType: %s"),
 		       *OwnerActor->GetName(),
@@ -53,6 +74,44 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 		);
 
 		OnCharacterHited.Broadcast(DamageCauser, GetDamageByType(AnimType), HitResult, AnimType);
+
+		if (AnimType == EAttackAnimType::AAT_FinalAttackA
+			|| AnimType == EAttackAnimType::AAT_FinalAttackB
+			|| AnimType == EAttackAnimType::AAT_FinalAttackC)
+		{
+			return;
+		}
+
+		if (OwnerActor->IsA(AMonsterAICharacter::StaticClass()) || OwnerActor->IsA(ASLAIBaseCharacter::StaticClass()))
+		{
+			if (HitEffectData)
+			{
+				UNiagaraSystem* EffectToSpawn = HitEffectData->DefaultEffect;
+
+				if (const UCombatHandlerComponent* CombatHandler = DamageCauser->FindComponentByClass<
+					UCombatHandlerComponent>())
+				{
+					if (CombatHandler->IsEmpowered())
+					{
+						EffectToSpawn = HitEffectData->EmpoweredEffect;
+					}
+				}
+
+				if (USkeletalMeshComponent* Mesh = OwnerActor->FindComponentByClass<USkeletalMeshComponent>())
+				{
+					const FName TargetBone = HitResult.BoneName.IsNone() ? TEXT("root") : HitResult.BoneName;
+					UNiagaraFunctionLibrary::SpawnSystemAttached(
+						EffectToSpawn,
+						Mesh,
+						TargetBone,
+						FVector::ZeroVector,
+						FRotator::ZeroRotator,
+						EAttachLocation::SnapToTarget,
+						true
+					);
+				}
+			}
+		}
 	}
 }
 
@@ -124,8 +183,10 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 	}
 }
 
-void UBattleComponent::DoSweep(EAttackAnimType AttackType)
+bool UBattleComponent::DoSweep(EAttackAnimType AttackType)
 {
+	bool bIsExistAvailTarget = false;
+	
 	if (AActor* OwnerActor = GetOwner())
 	{
 		const FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 100);
@@ -176,6 +237,8 @@ void UBattleComponent::DoSweep(EAttackAnimType AttackType)
 						{
 							WarpComp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("Warp"), TargetLoc, TargetRot);
 						}
+
+						bIsExistAvailTarget = true;
 					}
 
 					UE_LOG(LogBattleComponent, Warning, TEXT("DoSweep Hit Actor: %s"), *HitActor->GetName());
@@ -186,6 +249,8 @@ void UBattleComponent::DoSweep(EAttackAnimType AttackType)
 			}
 		}
 	}
+
+	return bIsExistAvailTarget;
 }
 
 void UBattleComponent::ClearHitTargets()

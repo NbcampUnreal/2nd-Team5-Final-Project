@@ -1,5 +1,6 @@
 #include "SLBattlePlayerState.h"
 
+#include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -49,7 +50,23 @@ void ASLBattlePlayerState::SetMaxSpeed(const float NewMaxSpeed)
 
 void ASLBattlePlayerState::IncreaseBurningGage(const float Amount)
 {
-	BurningGage = FMath::Clamp(Amount, 0.f, 100.f);
+	BurningGage = FMath::Clamp(BurningGage + Amount, 0.f, 100.f);
+
+	if (GetBurningGage() >= 100)
+	{
+		if (const AController* OwnerController = GetOwner<AController>())
+		{
+			if (const APawn* Pawn = OwnerController->GetPawn())
+			{
+				if (UCombatHandlerComponent* CombatHandler = Pawn->FindComponentByClass<UCombatHandlerComponent>())
+				{
+					CombatHandler->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered);
+				}
+			}
+		}
+
+		BurningGage = 0;
+	}
 }
 
 void ASLBattlePlayerState::OnRep_Health()
