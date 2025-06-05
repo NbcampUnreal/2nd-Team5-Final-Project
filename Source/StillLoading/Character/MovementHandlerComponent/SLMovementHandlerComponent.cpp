@@ -1,6 +1,5 @@
 #include "SLMovementHandlerComponent.h"
 
-#include "AIController.h"
 #include "AI/RealAI/Controller/MonsterAIController.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
@@ -61,44 +60,24 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick T
 		}
 	}
 
+	// Lock On
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn))
 	{
+		if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_LockOnBlock))
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Lock On Blocked"));
+			return;
+		}
 		if (CameraFocusTarget)
 		{
 			float Distance = FVector::Dist(OwnerCharacter->GetActorLocation(), CameraFocusTarget->GetActorLocation());
 			if (Distance > FocusMaxDistance)
 			{
-				if (const APawn* Pawn = Cast<APawn>(CameraFocusTarget))
-				{
-					if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
-					{
-						AIController->ToggleLockOnWidget(false);
-					}
-				}
-				
-				CameraFocusTarget = nullptr;
-				OwnerCharacter->DisableLockOnMode();
-				
+				DisableLock();
 				return;
 			}
 
-			if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
-			{
-				FVector CameraLocation = OwnerCharacter->CameraBoom->GetComponentLocation();
-				FVector TargetLocation = CameraFocusTarget->GetActorLocation();
-
-				float DistanceToTarget = FVector::Dist(CameraLocation, TargetLocation);
-				if (DistanceToTarget < 50.0f) return;
-
-				FRotator DesiredRotation = UKismetMathLibrary::FindLookAtRotation(CameraLocation, TargetLocation);
-				DesiredRotation.Pitch = FMath::Clamp(DesiredRotation.Pitch, -30.0f, 30.0f);
-				DesiredRotation.Roll = 0.0f;
-
-				FRotator CurrentRotation = PC->GetControlRotation();
-				FRotator NewRotation = FMath::RInterpTo(CurrentRotation, DesiredRotation, DeltaTime, 5.0f);
-
-				PC->SetControlRotation(NewRotation);
-			}
+			RotateCameraToTarget(CameraFocusTarget, DeltaTime);
 		}
 	}
 }
@@ -762,6 +741,41 @@ void UMovementHandlerComponent::ToggleLockState()
 	else
 	{
 		OwnerCharacter->AddSecondaryState(TAG_Character_PrepareLockOn);
+	}
+}
+
+void UMovementHandlerComponent::DisableLock()
+{
+	if (const APawn* Pawn = Cast<APawn>(CameraFocusTarget))
+	{
+		if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+		{
+			AIController->ToggleLockOnWidget(false);
+		}
+	}
+				
+	CameraFocusTarget = nullptr;
+	OwnerCharacter->DisableLockOnMode();
+}
+
+void UMovementHandlerComponent::RotateCameraToTarget(const AActor* Target, float DeltaTime)
+{
+	if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
+	{
+		const FVector CameraLocation = OwnerCharacter->CameraBoom->GetComponentLocation();
+		const FVector TargetLocation = Target->GetActorLocation();
+
+		float DistanceToTarget = FVector::Dist(CameraLocation, TargetLocation);
+		if (DistanceToTarget < 100.0f) return;
+
+		FRotator DesiredRotation = UKismetMathLibrary::FindLookAtRotation(CameraLocation, TargetLocation);
+		DesiredRotation.Pitch = FMath::Clamp(DesiredRotation.Pitch, -30.0f, 30.0f);
+		DesiredRotation.Roll = 0.0f;
+
+		const FRotator CurrentRotation = PC->GetControlRotation();
+		const FRotator NewRotation = FMath::RInterpTo(CurrentRotation, DesiredRotation, DeltaTime, 2.0f);
+
+		PC->SetControlRotation(NewRotation);
 	}
 }
 

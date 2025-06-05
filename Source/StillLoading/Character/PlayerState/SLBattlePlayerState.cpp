@@ -23,13 +23,19 @@ void ASLBattlePlayerState::SetHealth(const float NewHealth)
 	OnRep_Health();
 }
 
+void ASLBattlePlayerState::DecreaseHealth(const float Amount)
+{
+	Health = FMath::Clamp(Health - Amount, 0.f, Health);
+	OnRep_Health();
+}
+
 void ASLBattlePlayerState::SetWalking(const bool bNewWalking)
 {
 	bIsWalking = bNewWalking;
 	OnRep_IsWalking();
 }
 
-void ASLBattlePlayerState::SetMaxSpeed(float NewMaxSpeed)
+void ASLBattlePlayerState::SetMaxSpeed(const float NewMaxSpeed)
 {
 	MaxSpeed = NewMaxSpeed;
 	if (APawn* OwnerPawn = GetPawn())
@@ -39,6 +45,11 @@ void ASLBattlePlayerState::SetMaxSpeed(float NewMaxSpeed)
 			Movement->MaxWalkSpeed = MaxSpeed;
 		}
 	}
+}
+
+void ASLBattlePlayerState::IncreaseBurningGage(const float Amount)
+{
+	BurningGage = FMath::Clamp(Amount, 0.f, 100.f);
 }
 
 void ASLBattlePlayerState::OnRep_Health()
