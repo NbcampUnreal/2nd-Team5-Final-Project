@@ -1,12 +1,17 @@
 #pragma once
-#include "EnemyDeathReceiver.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBattleComponent, Log, All);
 
 #include "CoreMinimal.h"
-#include "Character/DataAsset/AttackDataAsset.h"
+#include "EnemyDeathReceiver.h"
 #include "Components/ActorComponent.h"
 #include "BattleComponent.generated.h"
+
+class UNiagaraSystem;
+class UAttackDataAsset;
+class UHitEffectDataAsset;
+
+enum class EAttackAnimType : uint8;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnCharacterHited, AActor*, DamageCauser, float, DamageAmount, const FHitResult&, HitResult, EAttackAnimType, AnimType);
 
@@ -27,9 +32,12 @@ public:
 	UFUNCTION()
 	virtual void DoAttackSweep(EAttackAnimType AttackType);
 	UFUNCTION()
-	virtual void DoSweep(EAttackAnimType AttackType);
+	virtual bool DoSweep(EAttackAnimType AttackType);
 	UFUNCTION()
 	void ClearHitTargets();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	TObjectPtr<UHitEffectDataAsset> HitEffectData;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool bShowDebugLine = false;
