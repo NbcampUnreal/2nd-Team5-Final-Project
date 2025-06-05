@@ -94,6 +94,12 @@ void UAnimationMontageComponent::PlayExecutionMontage(FName Section)
 		PlayMontage(MontageData->ExecutionMontage, Section);
 }
 
+void UAnimationMontageComponent::PlayTrickMontage(FName Section)
+{
+	if (MontageData)
+		PlayMontage(MontageData->TrickMontage, Section);
+}
+
 void UAnimationMontageComponent::StopAllMontages(float BlendOutTime)
 {
 	if (!AnimInstance) return;

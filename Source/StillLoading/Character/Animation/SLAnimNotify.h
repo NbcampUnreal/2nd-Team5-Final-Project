@@ -26,6 +26,10 @@ enum class ECharacterMontageState : uint8
 	ECS_Hit_Knockback UMETA(DisplayName = "Hit Knockback"),
 	ECS_Hit_Falling UMETA(DisplayName = "Hit Falling"),
 
+	// 공격 시작 모션
+	ECS_Attack_Begin UMETA(DisplayName = "Attack Begin"),
+	ECS_Attack_BeginAir UMETA(DisplayName = "Attack Begin Air"),
+
 	// 공격 모션
 	ECS_Attack_Basic1 UMETA(DisplayName = "Attack Basic 1"),
 	ECS_Attack_Basic2 UMETA(DisplayName = "Attack Basic 2"),
@@ -42,6 +46,10 @@ enum class ECharacterMontageState : uint8
 	ECS_Attack_Airborne UMETA(DisplayName = "Attack Airborne"),
 	ECS_Attack_Airup UMETA(DisplayName = "Attack Airup"),
 	ECS_Attack_Airdown UMETA(DisplayName = "Attack Airdown"),
+
+	// 버트 모션
+	ECS_Buff UMETA(DisplayName = "Buff"),
+	ECS_BuffAir UMETA(DisplayName = "Buff Air"),
 
 	// 방어 모션
 	ECS_Defense_Block UMETA(DisplayName = "Defense Block"),
