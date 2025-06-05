@@ -16,6 +16,7 @@ enum class EQueryType : uint8 // enum class 는 앞에 안붙이는게 더 낫�
 	EQT_AirBlock UMETA(DisplayName = "Air Block"),
 	EQT_InputBlock UMETA(DisplayName = "Input Block"),
 	EQT_DefenceBlock UMETA(DisplayName = "Defence Block"),
+	EQT_LockOnBlock UMETA(DisplayName = "LockOn Block"),
 };
 
 USTRUCT(BlueprintType)
@@ -34,6 +35,11 @@ class STILLLOADING_API ASLPlayerCharacter : public ASLPlayerCharacterBase
 
 public:
 	ASLPlayerCharacter();
+
+	UFUNCTION()
+	void EnableLockOnMode();
+	UFUNCTION()
+	void DisableLockOnMode();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
@@ -94,6 +100,10 @@ public:
 	// 전체 제거
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void ClearAllStateTags();
+
+	// 분류 제거
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	void ClearStateTags(const TArray<FGameplayTag>& PrimaryExceptTagList, const TArray<FGameplayTag>& SecondaryExceptTagList);
 
 	// 상태 태그 컨테이너
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")

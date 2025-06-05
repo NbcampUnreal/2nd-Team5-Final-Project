@@ -1,5 +1,6 @@
 #include "SLBattlePlayerState.h"
 
+#include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -23,13 +24,19 @@ void ASLBattlePlayerState::SetHealth(const float NewHealth)
 	OnRep_Health();
 }
 
+void ASLBattlePlayerState::DecreaseHealth(const float Amount)
+{
+	Health = FMath::Clamp(Health - Amount, 0.f, Health);
+	OnRep_Health();
+}
+
 void ASLBattlePlayerState::SetWalking(const bool bNewWalking)
 {
 	bIsWalking = bNewWalking;
 	OnRep_IsWalking();
 }
 
-void ASLBattlePlayerState::SetMaxSpeed(float NewMaxSpeed)
+void ASLBattlePlayerState::SetMaxSpeed(const float NewMaxSpeed)
 {
 	MaxSpeed = NewMaxSpeed;
 	if (APawn* OwnerPawn = GetPawn())
@@ -38,6 +45,27 @@ void ASLBattlePlayerState::SetMaxSpeed(float NewMaxSpeed)
 		{
 			Movement->MaxWalkSpeed = MaxSpeed;
 		}
+	}
+}
+
+void ASLBattlePlayerState::IncreaseBurningGage(const float Amount)
+{
+	BurningGage = FMath::Clamp(BurningGage + Amount, 0.f, 100.f);
+
+	if (GetBurningGage() >= 100)
+	{
+		if (const AController* OwnerController = GetOwner<AController>())
+		{
+			if (const APawn* Pawn = OwnerController->GetPawn())
+			{
+				if (UCombatHandlerComponent* CombatHandler = Pawn->FindComponentByClass<UCombatHandlerComponent>())
+				{
+					CombatHandler->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered);
+				}
+			}
+		}
+
+		BurningGage = 0;
 	}
 }
 

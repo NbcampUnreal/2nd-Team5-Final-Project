@@ -40,6 +40,13 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	QuitGameButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuit);
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
 
+	LanguageSetBt->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	GraphicSetBt->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	SoundSetBt->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	KeySettingButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	QuitGameButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	CloseButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+
 	LanguageSettingWidget->InitWidget(NewUISubsystem);
 	GraphicSettingWidget->InitWidget(NewUISubsystem);
 	SoundSettingWidget->InitWidget(NewUISubsystem);
@@ -93,7 +100,7 @@ void USLOptionWidget::ApplyTextData()
 	TArray<FSLUITextPoolDataRow*> TempArray;
 	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
 
-	TMap<FName, FSLUITextData> OptionTextMap;
+	TMap<FName, FText> OptionTextMap;
 
 	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
 	{
@@ -104,13 +111,13 @@ void USLOptionWidget::ApplyTextData()
 		}
 	}
 
-	TitleText->SetText(OptionTextMap[TitleTextIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	KeySettingText->SetText(OptionTextMap[KeySettingButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	LanguageSetText->SetText(OptionTextMap[LanguageSettingIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	GraphicSetText->SetText(OptionTextMap[GraphicSettingIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	SoundSetText->SetText(OptionTextMap[SoundSettingIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	QuitGameText->SetText(OptionTextMap[QuitGameButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	CloseText->SetText(OptionTextMap[CloseButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	TitleText->SetText(OptionTextMap[TitleTextIndex]);
+	KeySettingText->SetText(OptionTextMap[KeySettingButtonIndex]);
+	LanguageSetText->SetText(OptionTextMap[LanguageSettingIndex]);
+	GraphicSetText->SetText(OptionTextMap[GraphicSettingIndex]);
+	SoundSetText->SetText(OptionTextMap[SoundSettingIndex]);
+	QuitGameText->SetText(OptionTextMap[QuitGameButtonIndex]);
+	CloseText->SetText(OptionTextMap[CloseButtonIndex]);
 }
 
 bool USLOptionWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
@@ -145,24 +152,29 @@ bool USLOptionWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
 void USLOptionWidget::OnClickedLanguageSetting()
 {
 	LayerSwitcher->SetActiveWidgetIndex(0);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::OnClickedGraphicSetting()
 {
 	LayerSwitcher->SetActiveWidgetIndex(1);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::OnClickedSoundSetting()
 {
 	LayerSwitcher->SetActiveWidgetIndex(2);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::OnClickedKeySetting()
 {
 	LayerSwitcher->SetActiveWidgetIndex(3);
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLOptionWidget::OnClickedQuit()
 {
+	PlayUISound(ESLUISoundType::EUS_Click);
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
 }

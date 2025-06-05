@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "SLItem.generated.h"
 
+class UNiagaraSystem;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemOverlap, AActor*, OtherActor);
 
 UCLASS()
@@ -34,4 +35,7 @@ protected:
 
 	UPROPERTY()
 	TSet<TObjectPtr<AActor>> HitActors;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	TObjectPtr<UNiagaraSystem> EmpoweredNiagaraEffect;
 };

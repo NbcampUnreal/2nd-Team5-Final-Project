@@ -25,7 +25,7 @@ protected:
 	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush) override;
 
 private:
-	void UpdateNotifyText(ESLGameMapType MapType, ESLNotifyType NotiType);
+	void UpdateNotifyText(ESLGameMapType MapType, const FName& NotiName);
 
 private:
 	UPROPERTY(Meta = (BindWidget))

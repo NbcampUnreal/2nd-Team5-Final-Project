@@ -21,10 +21,6 @@ USLObjectiveBase* USLObjectiveHandlerBase::GetObjective()
 	}
 
 	USLObjectiveBase* Objective =  ObjectiveSubsystem->GetObjective(Chapter, ObjectiveName);
-	if (Objective == nullptr)
-	{
-		return nullptr;
-	}
 	return Objective;
 }
 
@@ -85,6 +81,10 @@ void USLObjectiveHandlerBase::OnObjectiveStandby_Implementation()
 void USLObjectiveHandlerBase::InitializeObjective()
 {
 	USLObjectiveBase* Objective = GetObjective();
+	if (Objective == nullptr)
+	{
+		return;
+	}
 	Objective->OnObjectiveStateChanged.AddDynamic(this, &USLObjectiveHandlerBase::OnObjectiveStateChanged);
 	Objective->OnObjectiveProgressChanged.AddDynamic(this, &USLObjectiveHandlerBase::OnObjectiveProgressUpdated);
 

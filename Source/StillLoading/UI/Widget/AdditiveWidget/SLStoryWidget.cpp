@@ -29,7 +29,7 @@ void USLStoryWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 void USLStoryWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	UpdateStoryState(WidgetActivateBuffer.CurrentChapter, WidgetActivateBuffer.TargetStory, WidgetActivateBuffer.TargetIndex);
+	UpdateStoryState(WidgetActivateBuffer.TargetStory, WidgetActivateBuffer.TalkName);
 	Super::ActivateWidget(WidgetActivateBuffer);
 }
 
@@ -42,7 +42,7 @@ void USLStoryWidget::DeactivateWidget()
 	OnEndedCloseAnim();
 }
 
-void USLStoryWidget::UpdateStoryState(ESLChapterType ChapterType, ESLStoryType TargetStoryType, int32 TargetIndex)
+void USLStoryWidget::UpdateStoryState(ESLStoryType TargetStoryType, const FName& StoryName)
 {
 	CheckValidOfTextPoolSubsystem();
 
@@ -53,13 +53,12 @@ void USLStoryWidget::UpdateStoryState(ESLChapterType ChapterType, ESLStoryType T
 
 	for (const FSLStoryTextPoolDataRow* TalkData : StoryDataArray)
 	{
-		if (TalkData->Chapter == ChapterType &&
-			TalkData->TextMap.Contains(TargetStoryType))
+		if (TalkData->TextMap.Contains(TargetStoryType))
 		{
 			TalkArray = TalkData->TextMap[TargetStoryType].TalkTextArray;
 			NameArray = TalkData->TextMap[TargetStoryType].TalkOwnArray;
 			CurrentStoryType = TargetStoryType;
-			CurrentStoryIndex = TargetIndex;
+			CurrentStoryName = StoryName;
 			break;
 		}
 	}
@@ -75,7 +74,7 @@ void USLStoryWidget::ApplyTextData()
 	}
 
 	GetWorld()->GetTimerManager().ClearTimer(TextPrintTimer);
-	UpdateStoryState(CurrentChapter, CurrentStoryType, CurrentStoryIndex);
+	UpdateStoryState(CurrentStoryType, CurrentStoryName);
 	ChangeTargetText();
 	PrintTalkText();
 }

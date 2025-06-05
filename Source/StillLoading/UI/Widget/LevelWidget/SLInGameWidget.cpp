@@ -10,6 +10,8 @@
 #include "Animation/WidgetAnimation.h"
 #include "UI/Widget/SLWidgetPrivateDataAsset.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
+#include "SubSystem/SLTextPoolSubsystem.h"
+#include "SubSystem/Struct/SLTextPoolDataRows.h"
 
 void USLInGameWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -37,9 +39,18 @@ void USLInGameWidget::SetIsPlayerStateActivate(bool bIsActived)
 	SetIsSubWidgetActivate(bIsActived, ActivePlayerStateAnim, DeactivePlayerStateAnim);
 }
 
-void USLInGameWidget::SetIsGameStateActivate(bool bIsActived)
+void USLInGameWidget::SetIsObjectiveActivate(bool bIsActived)
 {
-	SetIsSubWidgetActivate(bIsActived, ActiveGameStateAnim, DeactiveGameStateAnim);
+	if (bIsObjectiveVisible)
+	{
+		SetIsSubWidgetActivate(false, ActiveGameStateAnim, DeactiveGameStateAnim);
+	}
+	else
+	{
+		SetIsSubWidgetActivate(true, ActiveGameStateAnim, DeactiveGameStateAnim);
+	}
+
+	bIsObjectiveVisible = !bIsObjectiveVisible;
 }
 
 void USLInGameWidget::SetIsBossStateActivate(bool bIsActived)
@@ -81,9 +92,20 @@ void USLInGameWidget::SetBossHpValue(int32 MaxHp, int32 CurrentHp)
 	BossHpBar->SetPercent(PerHp);
 }
 
-void USLInGameWidget::SetGameStateText(const FText& StateText)
+void USLInGameWidget::SetObjectiveText(const FName& ObjectiveName)
 {
-	GameStateText->SetText(StateText);
+	CheckValidOfTextPoolSubsystem();
+	const UDataTable* ObjectiveTextPool = TextPoolSubsystem->GetObjectiveTextPool();
+	TArray<FSLObjectiveTextPoolDataRow*> TextPoolArray;
+	ObjectiveTextPool->GetAllRows(TEXT("Obejctive Text Pool Context"), TextPoolArray);
+
+	for (const FSLObjectiveTextPoolDataRow* ObjectiveText : TextPoolArray)
+	{
+		if (ObjectiveText->TextMap.Contains(ObjectiveName))
+		{
+			GameStateText->SetText(ObjectiveText->TextMap[ObjectiveName]);
+		}
+	}
 }
 
 void USLInGameWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)

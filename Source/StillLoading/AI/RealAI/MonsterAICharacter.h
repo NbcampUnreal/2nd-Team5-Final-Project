@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
+class UWidgetComponent;
 class USLMonsterStateTreeComponent;
 enum class EAttackAnimType : uint8;
 class UBattleComponent;
@@ -57,7 +58,7 @@ public:
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
 
 	UFUNCTION()
-	void Dead(bool bWithMontage);
+	void Dead(const AActor* Attacker);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster")
 	EMonsterType CurrentMonsterType = EMonsterType::MT_None;
@@ -86,6 +87,12 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UFUNCTION()
+	void OnHitByCharacter(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+						  FVector NormalImpulse, const FHitResult& Hit);
+	UFUNCTION()
+	void ResetPushFlag();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
@@ -108,8 +115,20 @@ private:
 	UFUNCTION()
 	void RotateToHitCauser(const AActor* Causer);
 
+	UPROPERTY()
+	TObjectPtr<AActor> LastAttacker;
+
+	UPROPERTY()
+	float MaxHealth;
+	UPROPERTY()
+	float CurrentHealth;
+
+	UPROPERTY()
+	FTimerHandle PushResetHandle;
+
 	bool bIsChasing = false;
 	bool bIsLeader = false;
+	bool bRecentlyPushed = false;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
@@ -117,4 +136,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	FORCEINLINE void SetFollower() { bIsLeader = false; }
+
+	UFUNCTION(BlueprintCallable, Category = "Stat")
+	FORCEINLINE void SetMonsterMaxHealth(const float Health) { MaxHealth = Health; }
 };

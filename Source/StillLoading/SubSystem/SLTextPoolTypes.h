@@ -14,7 +14,7 @@ enum class ESLTextDataType : uint8
 	ETD_Story,
 	ETD_Talk,
 	ETD_Notify,
-	ETD_Other
+	ETD_Objective
 };
 
 UENUM(BlueprintType)
@@ -23,7 +23,6 @@ enum class ESLTargetWidgetType : uint8
 	ETW_None = 0,
 	ETW_Title,
 	ETW_MapList,
-	ETW_InGame,
 	ETW_Option,
 	ETW_KeySetting,
 	ETW_Credit

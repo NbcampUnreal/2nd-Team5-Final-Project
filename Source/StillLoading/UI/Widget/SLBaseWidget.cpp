@@ -76,6 +76,11 @@ void USLBaseWidget::NotifyChangedLanguage()
 	ApplyTextData();
 }
 
+void USLBaseWidget::PlayHoverSound()
+{
+	PlayUISound(ESLUISoundType::EUS_Hover);
+}
+
 void USLBaseWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
 	const USLWidgetImageDataAsset* WidgetDataAsset = Cast<USLWidgetImageDataAsset>(WidgetActivateBuffer.WidgetPublicData);

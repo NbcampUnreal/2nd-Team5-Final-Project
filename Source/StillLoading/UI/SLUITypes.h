@@ -54,8 +54,9 @@ UENUM(BlueprintType)
 enum class ESLTalkTargetType : uint8
 {
 	ETT_None = 0,
-	ETT_Self,
-	ETT_Serena,
+	ETT_Hero,
+	ETT_Heroine,
+	ETT_Boss,
 	ETT_NPC,
 	ETT_Object
 };

@@ -15,13 +15,16 @@ class STILLLOADING_API ASLInGameHUD : public ASLBaseHUD
 	
 public:
 	UFUNCTION(BlueprintCallable)
+	void ApplyObjective(const FName& ObjectiveName);
+
+	UFUNCTION(BlueprintCallable)
 	void SetTimerVisibility(bool bIsVisible);
 
 	UFUNCTION(BlueprintCallable)
 	void SetPlayerStateVisibility(bool bIsVisible);
 
 	UFUNCTION(BlueprintCallable)
-	void SetGameStateVisibility(bool bIsVisible);
+	void SetObjectiveVisibility(bool bIsVisible);
 
 	UFUNCTION(BlueprintCallable)
 	void SetHitEffectVisibility(bool bIsVisible);
@@ -37,7 +40,7 @@ public:
 	void SetPlayerHpValue(int32 MaxHp, int32 CurrentHp);
 
 	UFUNCTION(BlueprintCallable)
-	void SetGameStateValue(int32 TargetState, const FText& NewText); // use enum
+	void SetObjectiveValue(const FName& ObjectiveName);
 
 	UFUNCTION(BlueprintCallable)
 	void SetBossHpValue(int32 MaxHp, int32 CurrentHp);

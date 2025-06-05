@@ -24,11 +24,11 @@ public:
 
 	void ActivateFade(bool bIsFadeIn, bool bIsMoveLevel = false);
 	UFUNCTION(BlueprintCallable)
-	void ActivateNotify(ESLGameMapType MapType, ESLNotifyType NotiType);
+	void ActivateNotify(ESLGameMapType MapType, const FName& NotiName);
 	UFUNCTION(BlueprintCallable)
-	void ActivateStory(ESLStoryType TargetStoryType, int32 TargetIndex);
+	void ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName);
 	UFUNCTION(BlueprintCallable)
-	void ActivateTalk(ESLTalkTargetType TalkTargetType, int32 TargetIndex);
+	void ActivateTalk(ESLTalkTargetType TalkTargetType, const FName& TargetName, const FName& TalkName);
 
 	UFUNCTION(BlueprintCallable)
 	void AddAdditiveWidget(ESLAdditiveWidgetType WidgetType);

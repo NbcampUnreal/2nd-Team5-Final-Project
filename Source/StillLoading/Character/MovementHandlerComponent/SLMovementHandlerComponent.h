@@ -7,6 +7,7 @@
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
+class UCollisionRadarComponent;
 class UCombatHandlerComponent;
 class UBattleComponent;
 class UAnimationMontageComponent;
@@ -50,6 +51,9 @@ public:
 	void OnLanded(const FHitResult& Hit);
 	UFUNCTION()
 	void StartKnockback(float Speed, float Duration);
+	// Lock on 용
+	UFUNCTION()
+	void DisableLock();
 
 	// Mouse 제어용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
@@ -77,6 +81,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
 	int AttackStateCount = 0;
 
+	// Lock on 용
+	UPROPERTY()
+	TObjectPtr<AActor> CameraFocusTarget;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -90,12 +98,22 @@ protected:
 	UFUNCTION()
 	void BindIMCComponent();
 	UFUNCTION()
+	void RemoveInvulnerability();
+	UFUNCTION()
 	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
 	UFUNCTION()
 	void HitDirection(AActor* Causer);
+	UFUNCTION()
+	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
 
 	UPROPERTY()
 	FVector2D MovementInputAxis = FVector2D::ZeroVector;
+
+	UPROPERTY(EditAnywhere, Category = "Camera Focus")
+	float FocusMaxDistance = 800.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Camera Focus")
+	int32 InvulnerableDuration = 5;
 
 private:
 	void Attack();
@@ -106,6 +124,8 @@ private:
 	void PointMove();
 	void ToggleWalk(const bool bNewWalking);
 	void ToggleMenu();
+	void ToggleLockState();
+	void RotateCameraToTarget(const AActor* Target, float DeltaTime);
 	void Dodge();
 	void Airborne();
 	void AirUp();
@@ -124,7 +144,11 @@ private:
 	UPROPERTY()
 	TObjectPtr<UBattleComponent> CachedBattleComponent;
 	UPROPERTY()
+	TObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
+	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;
+	UPROPERTY()
+	FTimerHandle InvulnerabilityTimerHandle;
 
 	// 넉백용
 	UPROPERTY()

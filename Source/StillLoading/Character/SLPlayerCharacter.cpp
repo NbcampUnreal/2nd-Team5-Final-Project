@@ -6,6 +6,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GamePlayTag/GamePlayTag.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
+#include "RadarComponent/CollisionRadarComponent.h"
 
 ASLPlayerCharacter::ASLPlayerCharacter()
 {
@@ -16,7 +17,7 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
-	//GetCharacterMovement()->RotationRate = FRotator(0.f, 80.f, 0.f);
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -75,6 +76,22 @@ void ASLPlayerCharacter::Tick(float DeltaTime)
 void ASLPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void ASLPlayerCharacter::EnableLockOnMode()
+{
+	bUseControllerRotationYaw = true;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 720.f, 0.f);
+	AddSecondaryState(TAG_Character_LockOn);
+}
+
+void ASLPlayerCharacter::DisableLockOnMode()
+{
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
+	RemoveSecondaryState(TAG_Character_LockOn);
 }
 
 void ASLPlayerCharacter::Landed(const FHitResult& Hit)
@@ -148,6 +165,39 @@ void ASLPlayerCharacter::ClearAllStateTags()
 	if (!SecondaryStateTags.IsEmpty())
 	{
 		SecondaryStateTags.Reset();
+	}
+}
+
+void ASLPlayerCharacter::ClearStateTags(const TArray<FGameplayTag>& PrimaryExceptTagList, const TArray<FGameplayTag>& SecondaryExceptTagList)
+{
+	FGameplayTagContainer PrimaryExceptTags;
+	for (const FGameplayTag& Tag : PrimaryExceptTagList)
+	{
+		if (PrimaryStateTags.HasTag(Tag))
+		{
+			PrimaryExceptTags.AddTag(Tag);
+		}
+	}
+
+	FGameplayTagContainer SecondaryExceptTags;
+	for (const FGameplayTag& Tag : SecondaryExceptTagList)
+	{
+		if (SecondaryStateTags.HasTag(Tag))
+		{
+			SecondaryExceptTags.AddTag(Tag);
+		}
+	}
+	
+	if (!PrimaryStateTags.IsEmpty())
+	{
+		PrimaryStateTags.Reset();
+		PrimaryStateTags = PrimaryExceptTags;
+	}
+
+	if (!SecondaryStateTags.IsEmpty())
+	{
+		SecondaryStateTags.Reset();
+		SecondaryStateTags = SecondaryExceptTags;
 	}
 }
 

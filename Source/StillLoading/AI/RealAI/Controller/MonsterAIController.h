@@ -5,6 +5,7 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "MonsterAIController.generated.h"
 
+class UWidgetComponent;
 class UAISenseConfig_Damage;
 class UAISenseConfig_Sight;
 class UBehaviorTreeComponent;
@@ -16,6 +17,18 @@ class STILLLOADING_API AMonsterAIController : public AAIController
 
 public:
 	AMonsterAIController();
+
+	UFUNCTION()
+	void ToggleLockOnWidget(bool bIsLockOnWidget);
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> LockOnWidgetClass;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UWidgetComponent> LockOnWidgetFront;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UWidgetComponent> LockOnWidgetBack;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UAIPerceptionComponent> AIPerception;

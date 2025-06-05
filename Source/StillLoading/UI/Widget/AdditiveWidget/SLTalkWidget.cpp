@@ -29,7 +29,7 @@ void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 void USLTalkWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
-	UpdateTalkState(WidgetActivateBuffer.TargetTalk, WidgetActivateBuffer.TargetIndex);
+	UpdateTalkState(WidgetActivateBuffer.TargetTalk, WidgetActivateBuffer.TargetName, WidgetActivateBuffer.TalkName);
 	Super::ActivateWidget(WidgetActivateBuffer);	
 }
 
@@ -42,7 +42,7 @@ void USLTalkWidget::DeactivateWidget()
 	OnEndedCloseAnim();
 }
 
-void USLTalkWidget::UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 TargetIndex)
+void USLTalkWidget::UpdateTalkState(ESLTalkTargetType TalkTargetType, const FName& TargetName, const FName& TalkName)
 {
 	CheckValidOfTextPoolSubsystem();
 
@@ -54,12 +54,14 @@ void USLTalkWidget::UpdateTalkState(ESLTalkTargetType TalkTargetType, int32 Targ
 	for (const FSLTalkTextPoolDataRow* TalkData : TalkDataArray)
 	{
 		if (TalkData->TalkTarget == TalkTargetType &&
-			TalkData->TalkMap.Contains(TargetIndex))
+			TalkData->TargetName == TargetName &&
+			TalkData->TalkMap.Contains(TalkName))
 		{
-			TalkArray = TalkData->TalkMap[TargetIndex].TalkTextArray;
-			NameArray = TalkData->TalkMap[TargetIndex].TalkOwnArray;
+			TalkArray = TalkData->TalkMap[TalkName].TalkTextArray;
+			NameArray = TalkData->TalkMap[TalkName].TalkOwnArray;
 			CurrentTalkType = TalkTargetType;
-			CurrentTalkIndex = TargetIndex;
+			CurrentTalkTarget = TargetName;
+			CurrentTalkName = TalkName;
 			break;
 		}
 	}
@@ -75,7 +77,7 @@ void USLTalkWidget::ApplyTextData()
 	}
 
 	GetWorld()->GetTimerManager().ClearTimer(TextPrintTimer);
-	UpdateTalkState(CurrentTalkType, CurrentTalkIndex);
+	UpdateTalkState(CurrentTalkType, CurrentTalkTarget, CurrentTalkName);
 	ChangeTargetText();
 	PrintTalkText();
 }

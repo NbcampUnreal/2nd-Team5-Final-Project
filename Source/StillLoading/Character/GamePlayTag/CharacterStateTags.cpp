@@ -4,6 +4,11 @@
 // Character
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character, "Character");
 
+// Side Effect
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_PrepareLockOn, "Character.PrepareLockOn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_LockOn, "Character.LockOn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Invulnerable, "Character.Invulnerable");
+
 // Hit Reactions
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction, "Character.HitReaction");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Weak, "Character.HitReaction.Weak");
@@ -80,3 +85,5 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_GROUPED_PATROL, "AI.Strategy.Grouped.Patr
 // 전략 - 조직적 행동
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_ORGANIZED_SQUAD, "AI.Strategy.Organized.Squad"); // 소규모 팀 단위로 움직이며 역할 분담
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_ORGANIZED_HOLDPOSITION, "AI.Strategy.Organized.HoldPosition"); // 지정 위치 방어 유지
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_ORGANIZED_ATTACK, "AI.Strategy.Organized.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_STRATEGY_ORGANIZED_MOVEPOSITION, "AI.Strategy.Organized.MovePosition");

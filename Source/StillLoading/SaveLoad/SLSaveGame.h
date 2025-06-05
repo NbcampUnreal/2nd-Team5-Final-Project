@@ -26,7 +26,7 @@ public:
 	int CurrentMiniGameLevel;
 
 	UPROPERTY()
-	ESLChapterType CurrentChapter = ESLChapterType::EC_Intro;
+	ESLChapterType CurrentChapter = ESLChapterType::EC_Chapter0;
 
 	UPROPERTY()
 	FWidgetSaveData WidgetSaveData;

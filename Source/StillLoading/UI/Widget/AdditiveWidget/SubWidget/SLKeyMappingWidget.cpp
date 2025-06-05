@@ -5,12 +5,14 @@
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
 #include "Components/TextBlock.h"
+#include "SubSystem/SLSoundSubsystem.h"
 
 
 void USLKeyMappingWidget::InitWidget(EInputActionType NewActionType, const FName& NewTagIndex, const FName& KeyText)
 {
 	ActionType = NewActionType;
 	ChangeButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedChangeKey);
+	ChangeButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
 
 	UpdateTextIndex(NewTagIndex);
 	UpdateKeyText(KeyText);
@@ -73,5 +75,16 @@ const EInputActionType USLKeyMappingWidget::GetActionType() const
 
 void USLKeyMappingWidget::OnClickedChangeKey()
 {
+	USLSoundSubsystem* SoundSubsystem = GetGameInstance()->GetSubsystem<USLSoundSubsystem>();
+	checkf(IsValid(SoundSubsystem), TEXT("Sound Subsystem is invalid"));
+	SoundSubsystem->PlayUISound(ESLUISoundType::EUS_Click);
+
 	KeyDelegate.Broadcast(ActionType);
+}
+
+void USLKeyMappingWidget::PlayHoverSound()
+{
+	USLSoundSubsystem* SoundSubsystem = GetGameInstance()->GetSubsystem<USLSoundSubsystem>();
+	checkf(IsValid(SoundSubsystem), TEXT("Sound Subsystem is invalid"));
+	SoundSubsystem->PlayUISound(ESLUISoundType::EUS_Hover);
 }
