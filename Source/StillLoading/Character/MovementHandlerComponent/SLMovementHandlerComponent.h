@@ -51,6 +51,9 @@ public:
 	void OnLanded(const FHitResult& Hit);
 	UFUNCTION()
 	void StartKnockback(float Speed, float Duration);
+	// Lock on 용
+	UFUNCTION()
+	void DisableLock();
 
 	// Mouse 제어용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
@@ -77,6 +80,10 @@ public:
 	// AttackState 카운트용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
 	int AttackStateCount = 0;
+
+	// Lock on 용
+	UPROPERTY()
+	TObjectPtr<AActor> CameraFocusTarget;
 
 protected:
 	virtual void BeginPlay() override;
@@ -107,9 +114,6 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Camera Focus")
 	int32 InvulnerableDuration = 5;
-	
-	UPROPERTY()
-	TObjectPtr<AActor> CameraFocusTarget;
 
 private:
 	void Attack();
@@ -121,6 +125,7 @@ private:
 	void ToggleWalk(const bool bNewWalking);
 	void ToggleMenu();
 	void ToggleLockState();
+	void RotateCameraToTarget(const AActor* Target, float DeltaTime);
 	void Dodge();
 	void Airborne();
 	void AirUp();

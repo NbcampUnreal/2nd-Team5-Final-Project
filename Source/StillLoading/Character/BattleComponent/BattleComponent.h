@@ -1,4 +1,5 @@
 #pragma once
+#include "EnemyDeathReceiver.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBattleComponent, Log, All);
 
@@ -10,7 +11,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogBattleComponent, Log, All);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnCharacterHited, AActor*, DamageCauser, float, DamageAmount, const FHitResult&, HitResult, EAttackAnimType, AnimType);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class STILLLOADING_API UBattleComponent : public UActorComponent
+class STILLLOADING_API UBattleComponent : public UActorComponent, public IEnemyDeathReceiver
 {
 	GENERATED_BODY()
 
@@ -21,8 +22,8 @@ public:
 	void SendHitResult(AActor* HitTarget, const FHitResult& HitResult, EAttackAnimType AnimType);
 
 	UFUNCTION(BlueprintCallable, Category = "Battle")
-	void ReceiveHitResult(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult,
-						  EAttackAnimType AnimType);
+	void ReceiveHitResult(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult, EAttackAnimType AnimType);
+	
 	UFUNCTION()
 	virtual void DoAttackSweep(EAttackAnimType AttackType);
 	UFUNCTION()
@@ -38,6 +39,7 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnEnemyDeath_Implementation(AActor* DeadAI) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DataAsset")
 	TObjectPtr<UAttackDataAsset> AttackData;
@@ -47,5 +49,4 @@ protected:
 private:
 	UFUNCTION(BlueprintCallable, Category = "Attack")
 	float GetDamageByType(EAttackAnimType InType) const;
-	
 };

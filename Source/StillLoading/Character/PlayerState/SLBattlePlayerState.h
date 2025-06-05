@@ -19,9 +19,13 @@ public:
 	UFUNCTION()
 	void SetHealth(float NewHealth);
 	UFUNCTION()
+	void DecreaseHealth(float Amount);
+	UFUNCTION()
 	void SetWalking(bool bNewWalking);
 	UFUNCTION()
 	void SetMaxSpeed(float NewMaxSpeed);
+	UFUNCTION()
+	void IncreaseBurningGage(float Amount);
 
 protected:
 	UFUNCTION()
@@ -44,4 +48,6 @@ protected:
 	float MaxSpeed = 600.f;
 	UPROPERTY()
 	float JumpZVelocity = 1000.f;
+	UPROPERTY()
+	float BurningGage = 0.f;
 };
