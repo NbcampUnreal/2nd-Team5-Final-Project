@@ -24,7 +24,7 @@ protected:
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
 
 private:
-	void UpdateStoryState(ESLChapterType ChapterType, ESLStoryType TargetStoryType, int32 TargetIndex);
+	void UpdateStoryState(ESLStoryType TargetStoryType, const FName& TargetIndex);
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -56,5 +56,5 @@ private:
 
 
 	ESLStoryType CurrentStoryType = ESLStoryType::ES_Start;
-	int32 CurrentStoryIndex = 0;
+	FName CurrentStoryName = "";
 };

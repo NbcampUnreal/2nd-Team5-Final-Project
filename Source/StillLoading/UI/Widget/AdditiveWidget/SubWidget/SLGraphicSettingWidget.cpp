@@ -32,6 +32,13 @@ void USLGraphicSettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 	BrightnessSlider->OnValueChanged.AddDynamic(this, &ThisClass::UpdateBrightness);
 
+	FullScreenButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	WindowScreenButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+
+	FirstResolutionButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	SecondResolutionButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	ThirdResolutionButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+
 	CheckValidOfUserDataSubsystem();
 
 	TPair<float, float> CurrentReolution = UserDataSubsystem->GetCurrentScreenSize();
@@ -59,7 +66,7 @@ void USLGraphicSettingWidget::ApplyTextData()
 	TArray<FSLUITextPoolDataRow*> TempArray;
 	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
 
-	TMap<FName, FSLUITextData> OptionTextMap;
+	TMap<FName, FText> OptionTextMap;
 
 	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
 	{
@@ -70,11 +77,30 @@ void USLGraphicSettingWidget::ApplyTextData()
 		}
 	}
 
-	WindowModeText->SetText(OptionTextMap[WindowModeTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	FullScreenText->SetText(OptionTextMap[FullScreenButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	WindowScreenText->SetText(OptionTextMap[WindowedButtonIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	ResolutionText->SetText(OptionTextMap[ResolutionTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
-	BrightnessText->SetText(OptionTextMap[BrigthnessTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	if (OptionTextMap.Contains(WindowModeTagIndex))
+	{
+		WindowModeText->SetText(OptionTextMap[WindowModeTagIndex]);
+	}
+
+	if (OptionTextMap.Contains(FullScreenButtonIndex))
+	{
+		FullScreenText->SetText(OptionTextMap[FullScreenButtonIndex]);
+	}
+
+	if (OptionTextMap.Contains(WindowedButtonIndex))
+	{
+		WindowScreenText->SetText(OptionTextMap[WindowedButtonIndex]);
+	}
+
+	if (OptionTextMap.Contains(ResolutionTagIndex))
+	{
+		ResolutionText->SetText(OptionTextMap[ResolutionTagIndex]);
+	}
+
+	if (OptionTextMap.Contains(BrigthnessTagIndex))
+	{
+		BrightnessText->SetText(OptionTextMap[BrigthnessTagIndex]);
+	}
 }
 
 bool USLGraphicSettingWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
@@ -130,16 +156,19 @@ void USLGraphicSettingWidget::OnClickedWindowScreen()
 
 void USLGraphicSettingWidget::OnClickedFirstResolution()
 {
+	PlayUISound(ESLUISoundType::EUS_Click);
 	UpdateResolution(0);
 }
 
 void USLGraphicSettingWidget::OnClickedSecondResolution()
 {
+	PlayUISound(ESLUISoundType::EUS_Click);
 	UpdateResolution(1);
 }
 
 void USLGraphicSettingWidget::OnClickedThirdResolution()
 {
+	PlayUISound(ESLUISoundType::EUS_Click);
 	UpdateResolution(2);
 }
 

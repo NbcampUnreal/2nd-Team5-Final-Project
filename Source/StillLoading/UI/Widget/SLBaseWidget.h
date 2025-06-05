@@ -41,6 +41,9 @@ protected:
 	UFUNCTION()
 	void NotifyChangedLanguage();
 
+	UFUNCTION()
+	void PlayHoverSound();
+
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
 	virtual void ApplyImageData();
 	virtual void ApplyFontData();

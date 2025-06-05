@@ -5,6 +5,7 @@
 
 #include "MotionWarpingComponent.h"
 #include "Character/SLPlayerCharacter.h"
+#include "Character/DataAsset/AttackDataAsset.h"
 #include "Kismet/KismetMathLibrary.h"
 
 class UMotionWarpingComponent;
@@ -54,8 +55,10 @@ void USL2DBattleComponenet::DoAttackSweep(EAttackAnimType AttackType)
 	}
 }
 
-void USL2DBattleComponenet::DoSweep(EAttackAnimType AttackType)
+bool USL2DBattleComponenet::DoSweep(EAttackAnimType AttackType)
 {
+	bool bIsExistAvailTarget = false;
+	
 	if (AActor* OwnerActor = GetOwner())
 	{
 		const FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 100);
@@ -103,6 +106,8 @@ void USL2DBattleComponenet::DoSweep(EAttackAnimType AttackType)
 						{
 							WarpComp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("Warp"), TargetLoc, TargetRot);
 						}
+
+						bIsExistAvailTarget = true;
 					}
 					
 					UE_LOG(LogBattleComponent, Warning, TEXT("DoSweep Hit Actor: %s"), *HitActor->GetName());
@@ -113,4 +118,6 @@ void USL2DBattleComponenet::DoSweep(EAttackAnimType AttackType)
 			}
 		}
 	}
+	
+	return bIsExistAvailTarget;
 }

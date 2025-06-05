@@ -17,6 +17,9 @@ void USLLanguageSettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 	LanguageLeftButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedLanguageLeftButton);
 	LanguageRightButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedLanguageRightButton);
+
+	LanguageLeftButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
+	LanguageRightButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
 }
 
 void USLLanguageSettingWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
@@ -36,7 +39,7 @@ void USLLanguageSettingWidget::ApplyTextData()
 	TArray<FSLUITextPoolDataRow*> TempArray;
 	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
 
-	TMap<FName, FSLUITextData> OptionTextMap;
+	TMap<FName, FText> OptionTextMap;
 
 	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
 	{
@@ -47,7 +50,7 @@ void USLLanguageSettingWidget::ApplyTextData()
 		}
 	}
 
-	LanguageModeText->SetText(OptionTextMap[LanguageTagIndex].ChapterTextMap[ESLChapterType::EC_Intro]);
+	LanguageModeText->SetText(OptionTextMap[LanguageTagIndex]);
 }
 
 bool USLLanguageSettingWidget::ApplyOtherImage()

@@ -38,7 +38,7 @@ void USLKeySettingWidget::ApplyTextData()
 	TArray<FSLUITextPoolDataRow*> TempArray;
 	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
 
-	TMap<FName, FSLUITextData> KeySettingTextMap;
+	TMap<FName, FText> KeySettingTextMap;
 
 	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
 	{
@@ -53,10 +53,9 @@ void USLKeySettingWidget::ApplyTextData()
 	{
 		FName Index = MappingWidget->GetTagIndex();
 
-		if (KeySettingTextMap.Contains(Index) &&
-			KeySettingTextMap[Index].ChapterTextMap.Contains(ESLChapterType::EC_Intro))
+		if (KeySettingTextMap.Contains(Index))
 		{
-			MappingWidget->UpdateTagText(KeySettingTextMap[Index].ChapterTextMap[ESLChapterType::EC_Intro]);
+			MappingWidget->UpdateTagText(KeySettingTextMap[Index]);
 		}
 	}
 }
