@@ -80,9 +80,13 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	bIsAttacking = false;
 	bShouldLookAtPlayer = false;
 	HitDirection = EHitDirection::EHD_Front;
-
+	IsInvincibility = false;
+	
 	bIsJumping = false;
 	bIsLanding = false;
+	HitReactionMode = EHitReactionMode::EHRM_Always;
+	HitDamageThreshold = 20.0f;
+	AccumulatedDamage = 0.0f;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -476,7 +480,7 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
             }
         }
     }
-    else if (DamageCauser && IsHitReaction)
+    else if (DamageCauser && ShouldPlayHitReaction(DamageAmount))
     {
     	// 애님 인스턴스에 설정하는 대신 캐릭터 멤버 변수에 직접 설정
     	FVector AttackerLocation = DamageCauser->GetActorLocation();
@@ -544,7 +548,7 @@ EChapter ASLAIBaseCharacter::GetChapter() const
 ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass,
 	FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType)
 {
-	
+	UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation called. ProjectileSpeed parameter: %f"), ProjectileSpeed);
 	if (!ProjectileClass)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No projectile class specified"));
@@ -567,12 +571,15 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
 		// 프로젝타일 설정
 		SpawnedProjectile->SetupSpawnedProjectile(AnimType, ProjectileSpeed);
 
+		PreparedProjectile = SpawnedProjectile;
 		// 프로젝타일 속도 설정
 		if (SpawnedProjectile->GetProjectileMovement())
 		{
 			// 타겟 방향으로 발사
 			FVector LaunchDirection = (TargetLocation - SpawnLocation).GetSafeNormal();
 			SpawnedProjectile->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
+
+			
 		}
 	}
 	else
@@ -587,6 +594,58 @@ FRotator ASLAIBaseCharacter::CalculateProjectileRotation(const FVector& StartLoc
 {
 	FVector Direction = (TargetLocation - StartLocation).GetSafeNormal();
 	return UKismetMathLibrary::MakeRotFromX(Direction);
+}
+
+ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileForLaunch(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType)
+{
+	if (!ProjectileClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileForLaunch: No projectile class specified"));
+		return nullptr;
+	}
+
+	// 스폰 위치 계산
+	FVector ForwardVector = GetActorForwardVector();
+	FVector SpawnLocation = GetMesh()->GetSocketLocation(SocketName) + ForwardVector * 50.0f;
+	FRotator SpawnRotation = CalculateProjectileRotation(SpawnLocation, TargetLocation);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	ASLAIProjectile* SpawnedProjectile = GetWorld()->SpawnActor<ASLAIProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+	if (SpawnedProjectile)
+	{
+		SpawnedProjectile->SetupSpawnedProjectile(AnimType, ProjectileSpeed);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile in SpawnProjectileForLaunch"));
+	}
+
+	return SpawnedProjectile;
+}
+
+void ASLAIBaseCharacter::LaunchSpawnedProjectile(ASLAIProjectile* ProjectileToLaunch, FVector TargetLocation, float ProjectileSpeed)
+{
+	if (!ProjectileToLaunch)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LaunchSpawnedProjectile: ProjectileToLaunch is null."));
+		return;
+	}
+
+	if (!ProjectileToLaunch->GetProjectileMovement())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LaunchSpawnedProjectile: Projectile has no ProjectileMovementComponent."));
+		return;
+	}
+
+	FVector ActualSpawnLocation = ProjectileToLaunch->GetActorLocation();
+
+	FVector LaunchDirection = (TargetLocation - ActualSpawnLocation).GetSafeNormal();
+	ProjectileToLaunch->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
 }
 
 TArray<ASLAIProjectile*> ASLAIBaseCharacter::SpawnProjectileFanAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass,FVector TargetLocation, FName SocketName, int32 ProjectileCount, float FanHalfAngle, float ProjectileSpeed,EAttackAnimType AnimType)
@@ -826,7 +885,7 @@ void ASLAIBaseCharacter::AIJump()
 		{
 			if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
 			{
-				BlackboardComponent->SetValueAsBool(FName("IsJumping"), true);
+				BlackboardComponent->SetValueAsBool(FName("IsJumping"), bIsJumping);
 			}
 		}
 	}
@@ -842,12 +901,36 @@ bool ASLAIBaseCharacter::CanAIJump() const
 	return GetCharacterMovement()->IsMovingOnGround() && !bIsJumping && !bIsLanding && !GetCharacterMovement()->IsFalling() &&!IsDead;
 }
 
-void ASLAIBaseCharacter::SetIsLoop(bool bNewLoop)
+void ASLAIBaseCharacter::SetIsLoop(bool NewLoop)
 {
-	bIsLoop = bNewLoop;
+	bIsLoop = NewLoop;
+
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("IsLoop"), bIsLoop);
+		}
+	}
+	
+}
+
+void ASLAIBaseCharacter::SetIsInvincibility(bool NewIsInvincibility)
+{
+	IsInvincibility = NewIsInvincibility;
+}
+
+void ASLAIBaseCharacter::SetPreparedProjectile(ASLAIProjectile* NewPreparedProjectile)
+{
+	PreparedProjectile = NewPreparedProjectile;
+}
+
+ASLAIProjectile* ASLAIBaseCharacter::GetPreparedProjectile()
+{
+	return PreparedProjectile;
 }
 #if WITH_EDITOR
-void ASLAIBaseCharacter::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+void ASLAIBaseCharacter::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(ThisClass, LeftHandCollisionBoxAttachBoneName))
@@ -922,3 +1005,40 @@ TArray<FVector> ASLAIBaseCharacter::GenerateHorizontalFanDirections(const FVecto
 	return Directions;
 }
 
+void ASLAIBaseCharacter::SetHitReactionMode(EHitReactionMode NewMode)
+{
+	HitReactionMode = NewMode;
+}
+
+void ASLAIBaseCharacter::SetHitDamageThreshold(float NewThreshold)
+{
+	HitDamageThreshold = FMath::Max(0.0f, NewThreshold);
+}
+
+void ASLAIBaseCharacter::ResetAccumulatedDamage()
+{
+	AccumulatedDamage = 0.0f;
+}
+
+bool ASLAIBaseCharacter::ShouldPlayHitReaction(float DamageAmount)
+{
+	switch (HitReactionMode)
+	{
+	case EHitReactionMode::EHRM_Always:
+		return true;
+	case EHitReactionMode::EHRM_Threshold:
+		
+		AccumulatedDamage += DamageAmount;
+		
+		if (AccumulatedDamage >= HitDamageThreshold)
+		{
+			AccumulatedDamage = 0.0f;
+			return true;
+		}
+		return false;
+
+	case EHitReactionMode::EHRM_Disabled:
+	default:
+		return false;
+	}
+}

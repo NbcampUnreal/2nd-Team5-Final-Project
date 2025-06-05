@@ -66,6 +66,12 @@ namespace SLAIGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Attack22, "Companion.Pattern.WZ.Attack22");
 	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Attack23, "Companion.Pattern.WZ.Attack23");
 
+	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Special_Patterns1, "Companion.Pattern.WZ.Special.Patterns1");
+	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Special_Patterns2, "Companion.Pattern.WZ.Special.Patterns2");
+	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Special_Patterns3, "Companion.Pattern.WZ.Special.Patterns3");
+	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Special_Patterns4, "Companion.Pattern.WZ.Special.Patterns4");
+	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Special_Patterns5, "Companion.Pattern.WZ.Special.Patterns5");
+	
 	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Aim_Attack01, "Companion.Pattern.WZ.Aim.Attack01");
 	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Aim_Attack02, "Companion.Pattern.WZ.Aim.Attack02");
 	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Aim_Attack03, "Companion.Pattern.WZ.Aim.Attack03");

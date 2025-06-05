@@ -75,6 +75,14 @@ enum class EChapter : uint8
 	EC_Chapter4      UMETA(DisplayName = "Chapter 4")
 };
 
+UENUM(BlueprintType)
+enum class EHitReactionMode : uint8
+{
+	EHRM_Always         UMETA(DisplayName = "Always React"),
+	EHRM_Threshold      UMETA(DisplayName = "Damage Threshold"),
+	EHRM_Disabled       UMETA(DisplayName = "Disabled")
+};
+
 UCLASS()
 class STILLLOADING_API ASLAIBaseCharacter : public ACharacter
 {
@@ -191,6 +199,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
 	FRotator CalculateProjectileRotation(const FVector& StartLocation, const FVector& TargetLocation) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	ASLAIProjectile* SpawnProjectileForLaunch(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType);
+
+	// 스폰된 프로젝타일 발사
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void LaunchSpawnedProjectile(ASLAIProjectile* ProjectileToLaunch, FVector TargetLocation, float ProjectileSpeed);
+	
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
 	TArray<ASLAIProjectile*> SpawnProjectileFanAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName = NAME_None, int32 ProjectileCount = 5, float FanHalfAngle = 30.0f, float ProjectileSpeed = 2000.0f, EAttackAnimType AnimType = EAttackAnimType::AAT_Attack_01);
 
@@ -223,11 +238,45 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "combat")
 	void SetIsLoop(bool bNewLoop);
+
+	UFUNCTION(BlueprintCallable, Category = "combat")
+	FORCEINLINE bool GetIsInvincibility() const { return IsInvincibility; }
+
+	UFUNCTION(BlueprintCallable, Category = "combat")
+	void SetIsInvincibility(bool NewIsInvincibility);
+	
+	UFUNCTION(BlueprintCallable, Category = "combat")
+	void SetPreparedProjectile(ASLAIProjectile* NewPreparedProjectile);
+
+	UFUNCTION(BlueprintCallable, Category = "combat")
+	ASLAIProjectile* GetPreparedProjectile();
+
+	UFUNCTION(BlueprintCallable)
+	void SetHitReactionMode(EHitReactionMode NewMode);
+
+	UFUNCTION(BlueprintCallable)
+	void SetHitDamageThreshold(float NewThreshold);
+
+	UFUNCTION(BlueprintCallable)
+	void ResetAccumulatedDamage();
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE EHitReactionMode GetHitReactionMode() const { return HitReactionMode; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE float GetHitDamageThreshold() const { return HitDamageThreshold; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE float GetAccumulatedDamage() const { return AccumulatedDamage; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsDebugMode() const { return IsDebugMode; }
+	
 protected:
 	
 #if WITH_EDITOR
 	//~ Begin UObject Interface.
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	//~ End UObject Interface
 #endif
 	
@@ -238,6 +287,8 @@ protected:
 	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
 
 	virtual void OnLanded(const FHitResult& Hit);
+
+	bool ShouldPlayHitReaction(float DamageAmount);
 	
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -254,7 +305,7 @@ protected:
 	float CurrentHealth; // 현재 체력
 
 	// --- State Flags ---
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
 	bool IsHitReaction; // 피격 반응을 할건지 여부
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
@@ -262,6 +313,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Debug")
 	bool IsDebugMode;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
+	bool IsInvincibility;
 	
 	// --- Chapter Info ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Chapter", meta = (AllowPrivateAccess = "true"))
@@ -361,6 +415,18 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool bIsLoop;
+
+	UPROPERTY(Transient)
+	TObjectPtr<ASLAIProjectile> PreparedProjectile;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|HitReaction")
+	EHitReactionMode HitReactionMode;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|HitReaction")
+	float HitDamageThreshold;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|HitReaction")
+	float AccumulatedDamage;
 };
 
 

@@ -3,6 +3,7 @@
 
 #include "SLCompanionAnimInstance.h"
 
+#include "AI/Components/SLCompanionFlyingComponent.h"
 #include "AI/GamePlayTag/AIGamePlayTag.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -20,12 +21,24 @@ USLCompanionAnimInstance::USLCompanionAnimInstance()
 	SpeedLength = 0.0f;
 	bIsRunning = false;
 	bIsAccelerating = false;
+
+	VerticalVelocity = 0.0f;
+	bIsAscending = false;
+	bIsDescending = false;
+	VerticalLeanAngle = 0.0f;
+	PreviousLocation = FVector::ZeroVector;
+	VerticalVelocityThreshold = 20.0f;
 }
 
 void USLCompanionAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-	OwningCompanionCharacter = Cast<ASLCompanionCharacter>(OwningCharacter);
+
+	if (OwningCharacter)
+	{
+		OwningCompanionCharacter = Cast<ASLCompanionCharacter>(OwningCharacter);
+		PreviousLocation = OwningCharacter->GetActorLocation();
+	}
 }
 
 void USLCompanionAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
@@ -50,9 +63,18 @@ void USLCompanionAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSecond
 	const float RunSpeedThreshold = 200.0f;
 	bIsRunning = GroundSpeed > RunSpeedThreshold && !IsAttacking && !bIsHit;
 	
+	
 	// 공격 블렌드 업데이트
 	UpdateAttackBlend(DeltaSeconds);
-	
+
+	if (USLCompanionFlyingComponent* FlyingComponent = OwningCompanionCharacter->GetFlyingComponent())
+	{
+		bIsFlying = FlyingComponent->IsFlying();
+
+		UE_LOG(LogTemp, Warning, TEXT("bIsFlying = FlyingComponent->IsFlying() : %d"), bIsFlying);
+	}
+
+	UpdateVerticalMovement(DeltaSeconds);
 }
 
 void USLCompanionAnimInstance::UpdateSpeedComponents()
@@ -126,4 +148,61 @@ ECompanionActionPattern USLCompanionAnimInstance::GetCompanionPattern() const
 void USLCompanionAnimInstance::SetCompanionPattern(const ECompanionActionPattern NewCompanionPattern)
 {
 	CompanionPattern = NewCompanionPattern;
+}
+
+void USLCompanionAnimInstance::UpdateVerticalMovement(float DeltaSeconds)
+{
+	if (!OwningCharacter || DeltaSeconds <= 0.0f)
+	{
+		return;
+	}
+    
+	// 현재 위치 가져오기
+	FVector CurrentLocation = OwningCharacter->GetActorLocation();
+    
+	// 위치 변화량으로 수직 속도 계산
+	float DeltaZ = CurrentLocation.Z - PreviousLocation.Z;
+	VerticalVelocity = DeltaZ / DeltaSeconds;
+    
+	// 상태 판단
+	if (FMath::Abs(VerticalVelocity) < VerticalVelocityThreshold)
+	{
+		// 거의 움직이지 않음
+		bIsAscending = false;
+		bIsDescending = false;
+	}
+	else if (VerticalVelocity > VerticalVelocityThreshold)
+	{
+		// 상승 중
+		bIsAscending = true;
+		bIsDescending = false;
+	}
+	else if (VerticalVelocity < -VerticalVelocityThreshold)
+	{
+		// 하강 중
+		bIsAscending = false;
+		bIsDescending = true;
+	}
+    
+	// 기울기 각도 계산
+	float TargetLeanAngle = 0.0f;
+	if (bIsAscending || bIsDescending)
+	{
+		// 속도에 비례한 기울기 (최대 ±30도)
+		float NormalizedVelocity = FMath::Clamp(VerticalVelocity / 500.0f, -1.0f, 1.0f);
+		TargetLeanAngle = NormalizedVelocity * 30.0f;
+	}
+	VerticalLeanAngle = FMath::FInterpTo(VerticalLeanAngle, TargetLeanAngle, DeltaSeconds, 4.0f);
+    
+	// 현재 위치 저장
+	PreviousLocation = CurrentLocation;
+    
+	// 디버그 출력
+	if (OwningCharacter->GetIsDebugMode())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Vertical Velocity: %.2f, Ascending: %s, Descending: %s"), 
+			VerticalVelocity,
+			bIsAscending ? TEXT("true") : TEXT("false"),
+			bIsDescending ? TEXT("true") : TEXT("false"));
+	}
 }

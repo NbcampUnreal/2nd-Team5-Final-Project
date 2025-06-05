@@ -6,6 +6,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "AI/SLAIFunctionLibrary.h"
 #include "AI/SLCompanionPatternData.h"
+#include "AI/Components/SLCompanionFlyingComponent.h"
 #include "AI/GamePlayTag/AIGamePlayTag.h"
 #include "AI/Projectile/SLAIProjectile.h"
 #include "AI/Projectile/SLHomingProjectile.h"
@@ -15,6 +16,7 @@
 #include "Controller/SLBaseAIController.h"
 #include "Controller/SLCompanionNormalAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Perception/AISense_Damage.h"
 
 FSLCompanionActionPatternMappingRow::FSLCompanionActionPatternMappingRow()
 {
@@ -60,11 +62,25 @@ ASLCompanionCharacter::ASLCompanionCharacter()
     PatternData = nullptr;
     CurrentActionPattern = ECompanionActionPattern::ECAP_None;
     bIsTeleporting = false;
+
+    FlyingComponent = CreateDefaultSubobject<USLCompanionFlyingComponent>(TEXT("FlyingComponent"));
+    GetCharacterMovement()->NavAgentProps.bCanFly = true;
+    GetCharacterMovement()->bCanWalkOffLedges = true;
+    GetCharacterMovement()->bCanWalkOffLedgesWhenCrouching = true;
 }
 
 void ASLCompanionCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (FlyingComponent)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[ASLCompanionCharacter::BeginPlay] : FlyingComponent is valid"));
+        FlyingComponent->OnFlyingStateChanged.AddDynamic(this, &ASLCompanionCharacter::OnFlyingStateChanged);
+    }else
+    {
+        UE_LOG(LogTemp, Error, TEXT("[ASLCompanionCharacter::BeginPlay] : FlyingComponent is NULL!"));
+    }
 }
 
 void ASLCompanionCharacter::Tick(float DeltaTime)
@@ -101,32 +117,6 @@ void ASLCompanionCharacter::SetCombatMode(bool bInCombat)
 bool ASLCompanionCharacter::HasGameplayTag(const FGameplayTag& TagToCheck) const
 {
     return CurrentGameplayTags.HasTag(TagToCheck);
-}
-
-void ASLCompanionCharacter::FireProjectile(EAttackAnimType AttackAnimType)
-{
-    if (!ProjectileClass || !AIController) return;
-    
-    UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
-    if (!BlackboardComponent) return;
-    
-    AActor* Target = Cast<AActor>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
-    if (!Target) return;
-    
-    FVector SpawnLocation = GetMesh()->GetSocketLocation(ProjectileSocketName);
-    FRotator SpawnRotation = (Target->GetActorLocation() - SpawnLocation).Rotation();
-    
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-    SpawnParams.Owner = this;
-    SpawnParams.Instigator = this;
-    
-    if (ASLHomingProjectile* Projectile = GetWorld()->SpawnActor<ASLHomingProjectile>(
-        ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams))
-    {
-        Projectile->SetHomingTarget(Target);
-        Projectile->SetupSpawnedProjectile(AttackAnimType, 1500.0f);
-    }
 }
 
 bool ASLCompanionCharacter::GetIsBattleMage()
@@ -335,7 +325,14 @@ void ASLCompanionCharacter::SetIsTeleporting(bool NewIsTeleporting)
     bIsTeleporting = NewIsTeleporting;
 }
 
-void ASLCompanionCharacter::PerformGroundExplosion(const FNiagaraSpawnParams& InWarningParams, const FNiagaraSpawnParams& InExplosionParams, float ExplosionRadius, EAttackAnimType AttackAnimType, float WarningDuration)
+void ASLCompanionCharacter::PerformGroundExplosion(
+    const FNiagaraSpawnParams& InWarningParams,
+    const FNiagaraSpawnParams& InExplosionParams,
+    float ExplosionRadius,
+    EAttackAnimType AttackAnimType,
+    float WarningDuration,
+    int32 HitCount,
+    float HitInterval)
 {
     if (!GetWorld())
     {
@@ -345,6 +342,7 @@ void ASLCompanionCharacter::PerformGroundExplosion(const FNiagaraSpawnParams& In
     FNiagaraSpawnParams WarningParams = InWarningParams;
     FNiagaraSpawnParams ExplosionParams = InExplosionParams;
 
+    // 지면 위치 찾기
     WarningParams.Location = USLAIFunctionLibrary::FindGroundLocation(
         GetWorld(), 
         ExplosionParams.Location, 
@@ -359,38 +357,94 @@ void ASLCompanionCharacter::PerformGroundExplosion(const FNiagaraSpawnParams& In
         IsDebugMode 
     ) + ExplosionParams.Offset;
     
-    // 경고 이펙트가 있는 경우
+    auto ExecuteExplosion = [this, ExplosionParams, ExplosionRadius, AttackAnimType, HitCount, HitInterval]()
+    {
+        // 폭발 이펙트 재생
+        SpawnNiagaraEffect(ExplosionParams);
+        
+        if (HitCount <= 1)
+        {
+            // 단일 히트
+            ApplyExplosionDamage(ExplosionParams.Location, ExplosionRadius, AttackAnimType, true);
+        }
+        else
+        {
+            // 다단 히트 설정
+            FMultiHitData MultiHitData;
+            MultiHitData.Location = ExplosionParams.Location;
+            MultiHitData.Radius = ExplosionRadius;
+            MultiHitData.AttackType = AttackAnimType;
+            MultiHitData.RemainingHits = HitCount;
+            MultiHitData.HitInterval = HitInterval;
+            
+            ProcessMultiHit(MultiHitData);
+        }
+    };
+    
+    // 경고가 있으면 지연 실행, 없으면 즉시 실행
     if (WarningParams.NiagaraSystem)
     {
         SpawnNiagaraEffect(WarningParams);
         
-        // 타이머로 지연 폭발
         FTimerHandle ExplosionTimer;
-        FTimerDelegate TimerDelegate;
-        TimerDelegate.BindLambda([this, ExplosionParams, ExplosionRadius, AttackAnimType]()
-        {
-            // 폭발 이펙트 재생
-            SpawnNiagaraEffect(ExplosionParams);
-            
-            // 데미지 적용
-            ApplyExplosionDamage(ExplosionParams.Location, ExplosionRadius, AttackAnimType);
-        });
-        
-        GetWorld()->GetTimerManager().SetTimer(ExplosionTimer, TimerDelegate, WarningDuration, false);
+        GetWorld()->GetTimerManager().SetTimer(
+            ExplosionTimer, 
+            ExecuteExplosion, 
+            WarningDuration, 
+            false
+        );
     }
     else
     {
-        // 즉시 폭발
-        SpawnNiagaraEffect(ExplosionParams);
-        
-        // 데미지 적용
-        ApplyExplosionDamage(ExplosionParams.Location, ExplosionRadius, AttackAnimType);
+        ExecuteExplosion();
     }
 }
 
 void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
 {
-    if (DamageCauser && IsHitReaction && AnimInstancePtr)
+    if (!IsInvincibility)
+    {
+        CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+
+        if (DamageCauser)
+        {
+            UAISense_Damage::ReportDamageEvent(
+                GetWorld(),
+                this,           // 데미지 받은 액터
+                DamageCauser,   // 데미지 준 액터
+                DamageAmount,   // 데미지 양
+                GetActorLocation(), // 데미지 받은 위치
+                HitResult.Location  // 히트 위치
+            );
+        }
+
+        if (CurrentHealth <= 0.0f)
+        {
+            if (!IsDead)
+            {
+                IsDead = true;
+        	
+                // 충돌 비활성화
+                GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
+
+                // 이동 중지
+                GetCharacterMovement()->StopMovementImmediately();
+                GetCharacterMovement()->DisableMovement();
+            
+                // AI 컨트롤러 중지
+                if (AIController)
+                {
+                    if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+                    {
+                        BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
+                    }
+                }
+            }
+        }
+    }
+    
+    if (DamageCauser && ShouldPlayHitReaction(DamageAmount) && !IsDead)
     {
         FVector AttackerLocation = DamageCauser->GetActorLocation();
         FVector DirectionVector = AttackerLocation - GetActorLocation();
@@ -412,9 +466,10 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
         }
         HitDirection = HitDir;
         HitDirectionVector = LocalHitDirection;
+        bIsHit = true;
     }
 
-    if (HitEffectComponent)
+    if (HitEffectComponent && DamageCauser && !IsDead)
     {
         FVector EffectLocation = HitResult.bBlockingHit ? HitResult.ImpactPoint : HitResult.Location;
         
@@ -429,7 +484,7 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
     }
 }
 
-void ASLCompanionCharacter::ApplyExplosionDamage(FVector ExplosionLocation, float ExplosionRadius, EAttackAnimType AttackAnimType)
+void ASLCompanionCharacter::ApplyExplosionDamage(FVector ExplosionLocation, float ExplosionRadius, EAttackAnimType AttackAnimType, bool bIsFirstHit)
 {
     if (!GetWorld())
     {
@@ -452,13 +507,21 @@ void ASLCompanionCharacter::ApplyExplosionDamage(FVector ExplosionLocation, floa
         QueryParams
     );
     
+    // 히트된 액터들 처리
+    TSet<AActor*> HitActors;
     for (const FHitResult& Hit : HitResults)
     {
         if (AActor* HitActor = Hit.GetActor())
         {
-            if (ASLAIBaseCharacter* OwnerCharacter = Cast<ASLAIBaseCharacter>(GetInstigator()))
+            // 중복 히트 방지 (같은 프레임 내)
+            if (!HitActors.Contains(HitActor))
             {
-                OwnerCharacter->GetBattleComponent()->SendHitResult(HitActor, Hit, AttackAnimType);
+                HitActors.Add(HitActor);
+                
+                if (ASLAIBaseCharacter* OwnerCharacter = Cast<ASLAIBaseCharacter>(GetInstigator()))
+                {
+                    OwnerCharacter->GetBattleComponent()->SendHitResult(HitActor, Hit, AttackAnimType);
+                }
             }
         }
     }
@@ -466,15 +529,29 @@ void ASLCompanionCharacter::ApplyExplosionDamage(FVector ExplosionLocation, floa
     // 디버그 표시
     if (IsDebugMode)
     {
+        FColor DebugColor = bIsFirstHit ? FColor::Red : FColor::Orange;
         DrawDebugSphere(
             GetWorld(),
             ExplosionLocation,
             ExplosionRadius,
             32,
-            FColor::Red,
+            DebugColor,
             false,
-            2.0f
+            0.5f
         );
+        
+        // 히트 카운트 표시
+        if (!bIsFirstHit)
+        {
+            DrawDebugString(
+                GetWorld(),
+                ExplosionLocation + FVector(0, 0, ExplosionRadius),
+                TEXT("Multi-Hit!"),
+                nullptr,
+                FColor::Yellow,
+                0.5f
+            );
+        }
     }
 }
 
@@ -522,4 +599,64 @@ UNiagaraComponent* ASLCompanionCharacter::SpawnNiagaraEffect(const FNiagaraSpawn
     }
     
     return SpawnedComponent;
+}
+
+void ASLCompanionCharacter::OnFlyingStateChanged(bool bIsFlying)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Companion flying state changed: %s"), 
+        bIsFlying ? TEXT("Flying") : TEXT("Grounded"));
+}
+
+void ASLCompanionCharacter::ProcessMultiHit(const FMultiHitData& MultiHitData)
+{
+    // 첫 히트 즉시 적용
+    ApplyExplosionDamage(MultiHitData.Location, MultiHitData.Radius, 
+        MultiHitData.AttackType, true);
+    
+    if (MultiHitData.RemainingHits <= 1)
+    {
+        return;
+    }
+    
+    // 나머지 히트 처리
+    FTimerHandle MultiHitTimer;
+    FMultiHitData UpdatedData = MultiHitData;
+    UpdatedData.RemainingHits--;
+    
+    ActiveMultiHits.Add(MultiHitTimer, UpdatedData);
+    
+    GetWorld()->GetTimerManager().SetTimer(
+        MultiHitTimer,
+        [this, MultiHitTimer]() mutable  // mutable 추가
+        {
+            if (FMultiHitData* Data = ActiveMultiHits.Find(MultiHitTimer))
+            {
+                ApplyExplosionDamage(Data->Location, Data->Radius, 
+                    Data->AttackType, false);
+                Data->RemainingHits--;
+                
+                if (Data->RemainingHits <= 0)
+                {
+                    GetWorld()->GetTimerManager().ClearTimer(MultiHitTimer);
+                    ActiveMultiHits.Remove(MultiHitTimer);
+                }
+            }
+        },
+        MultiHitData.HitInterval,
+        true
+    );
+}
+
+void ASLCompanionCharacter::BeginDestroy()
+{
+    for (auto& Pair : ActiveMultiHits)
+    {
+        if (GetWorld())
+        {
+            GetWorld()->GetTimerManager().ClearTimer(Pair.Key);
+        }
+    }
+    ActiveMultiHits.Empty();
+    
+    Super::BeginDestroy();
 }
