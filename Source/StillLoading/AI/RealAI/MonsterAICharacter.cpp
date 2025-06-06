@@ -15,7 +15,7 @@ AMonsterAICharacter::AMonsterAICharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	MaxHealth = 10.0f;
+	MaxHealth = 30.0f;
 	CurrentHealth = MaxHealth;
 
 	bUseControllerRotationYaw = false;
@@ -46,7 +46,6 @@ void AMonsterAICharacter::Tick(float DeltaSeconds)
 	{
 		FVector Location = GetActorLocation();
 
-		// 머리 위에 텍스트 표시
 		FVector TextLocation = Location + FVector(0, 0, 120);
 		DrawDebugString(
 			GetWorld(),
@@ -54,8 +53,8 @@ void AMonsterAICharacter::Tick(float DeltaSeconds)
 			TEXT("Leader"),
 			nullptr,
 			FColor::White,
-			0.f, // 지속 시간
-			true // 카메라 고정 여부
+			0.f,
+			true
 		);
 	}
 }
@@ -142,13 +141,6 @@ void AMonsterAICharacter::RotateToHitCauser(const AActor* Causer)
 	TargetRotation.Roll = 0.f;
 
 	SetActorRotation(TargetRotation);
-
-	if (Dot >= -0.7f) // 뒤쪽 아님
-	{
-	}
-	else
-	{
-	}
 }
 
 void AMonsterAICharacter::HitDirection(AActor* Causer)
