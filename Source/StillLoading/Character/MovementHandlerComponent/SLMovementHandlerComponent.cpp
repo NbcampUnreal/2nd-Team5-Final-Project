@@ -602,7 +602,7 @@ void UMovementHandlerComponent::Attack()
 			const FVector ToOwner = (OwnerCharacter->GetActorLocation() - CameraFocusTarget->GetActorLocation()).GetSafeNormal();
 
 			const float Dot = FVector::DotProduct(TargetForward, ToOwner);
-			if (Dot < -0.9f)
+			if (Dot < -0.94f)
 			{
 				Execution();
 				return;
@@ -689,9 +689,7 @@ void UMovementHandlerComponent::Execution()
 
 	const FVector TargetForward = CameraFocusTarget->GetActorForwardVector();
 	const FVector TargetLoc = CameraFocusTarget->GetActorLocation() + -TargetForward * 80.f;
-
-	const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(
-		TargetLoc, CameraFocusTarget->GetActorLocation());
+	const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(TargetLoc, CameraFocusTarget->GetActorLocation());
 
 	if (UMotionWarpingComponent* WarpComp = Cast<UMotionWarpingComponent>(
 		OwnerCharacter->GetComponentByClass(UMotionWarpingComponent::StaticClass())))
