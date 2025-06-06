@@ -42,6 +42,7 @@ void USLUISubsystem::SetInputModeAndCursor()
 	}
 
 	CurrentPC->SetShowMouseCursor(bIsVisibleTargetCursor);
+	CurrentPC->FlushPressedKeys();
 }
 
 void USLUISubsystem::SetChapterToUI(ESLChapterType ChapterType)

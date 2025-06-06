@@ -15,6 +15,7 @@
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/HUD/SLBaseHUD.h"
 
 const FName USLOptionWidget::TitleTextIndex = "TitleText";
 const FName USLOptionWidget::KeySettingButtonIndex = "KeySettingButton";
@@ -147,6 +148,19 @@ bool USLOptionWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
 	OptionPanelBack->SetBrush(SlateBrush);
 
 	return true;
+}
+
+void USLOptionWidget::OnEndedCloseAnim()
+{
+	Super::OnEndedCloseAnim();
+
+	APlayerController* PC = GetWorld()->GetPlayerControllerIterator()->Get();
+	checkf(IsValid(PC), TEXT("PlayerController is invalid"));
+
+	ASLBaseHUD* HUD = Cast<ASLBaseHUD>(PC->GetHUD());
+	checkf(IsValid(HUD), TEXT("HUD is invalid"));
+
+	HUD->OnUnpause();
 }
 
 void USLOptionWidget::OnClickedLanguageSetting()
