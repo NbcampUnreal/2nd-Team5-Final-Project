@@ -6,6 +6,10 @@
 #include "DataAsset/TagQueryDataAsset.h"
 #include "SLPlayerCharacter.generated.h"
 
+class ASLItem;
+enum class EItemType : uint8;
+enum class EOrbitDirection : uint8;
+
 UENUM(BlueprintType)
 enum class EQueryType : uint8 // enum class 는 앞에 안붙이는게 더 낫다
 {
@@ -40,16 +44,18 @@ public:
 	void EnableLockOnMode();
 	UFUNCTION()
 	void DisableLockOnMode();
+	UFUNCTION()
+	void BeginBlast(const EItemType ItemType);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	TSubclassOf<AActor> SwordClass;
+	TSubclassOf<ASLItem> SwordClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	TSubclassOf<AActor> ShieldClass;
+	TSubclassOf<ASLItem> ShieldClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	TObjectPtr<AActor> Sword;
+	TObjectPtr<ASLItem> Sword;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	TObjectPtr<AActor> Shield;
+	TObjectPtr<ASLItem> Shield;
 
 protected:
 	virtual void BeginPlay() override;
@@ -69,11 +75,14 @@ private:
 	void AttachItemToHand(AActor* ItemActor, const FName SocketName) const;
 
 	UFUNCTION()
-	void StartOrbitWithClone(const TSubclassOf<AActor>& InSwordClass);
+	void StartOrbitWithClone(const TSubclassOf<AActor>& ObjectClass, const EItemType ItemType, const EOrbitDirection OrbitDirection);
 
 	// Debug용 함수
 	UFUNCTION(BlueprintCallable, Category = "Debug")
 	void PrintPrimaryStateTags() const;
+
+	UFUNCTION()
+	void OnItemSweeped(AActor* OverlappedActor, FHitResult Hit);
 	
 public:
 	// 상태 태그 추가/제거 함수

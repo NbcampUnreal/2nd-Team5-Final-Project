@@ -280,7 +280,7 @@ void UMovementHandlerComponent::BindIMCComponent()
 	CachedBattleComponent->OnCharacterHited.AddDynamic(this, &UMovementHandlerComponent::OnHitReceived);
 }
 
-void UMovementHandlerComponent::RemoveInvulnerability()
+void UMovementHandlerComponent::RemoveInvulnerability() const
 {
 	OwnerCharacter->SecondaryStateTags.RemoveTag(TAG_Character_Invulnerable);
 }
@@ -340,7 +340,7 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	                                                InvulnerableDuration, false);
 
 	// 피격
-	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable});
+	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable, TAG_Character_Empowered});
 	CachedMontageComponent->StopAllMontages(0.2f);
 
 	float RemoveDelay = 1.0f;
@@ -583,7 +583,7 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
-	
+	BeginBuff();
 }
 
 void UMovementHandlerComponent::Attack()
@@ -702,6 +702,28 @@ void UMovementHandlerComponent::Execution()
 	OwnerCharacter->AddSecondaryState(ChosenExecution.SecondaryTag);
 }
 
+void UMovementHandlerComponent::Blast(const EItemType ItemType)
+{
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AirBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Blast Blocked"));
+		return;
+	}
+	
+	switch (ItemType)
+	{
+	case EItemType::IT_Sword:
+		CachedMontageComponent->PlaySkillMontage(FName("BlastSword"));
+		break;
+	case EItemType::IT_Shield:
+		CachedMontageComponent->PlaySkillMontage(FName("BlastShield"));
+		break;
+	}
+
+	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Blast);
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
+}
+
 void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)
 {
 	if (bIsFalling && AttackStateCount != 3)
@@ -797,6 +819,8 @@ void UMovementHandlerComponent::ToggleMenu()
 {
 	UE_LOG(LogTemp, Log, TEXT("Menu opened or closed"));
 	// TODO: UI 호출 / Input 모드 변경 등 처리
+
+	// HUD에 OnPose
 }
 
 void UMovementHandlerComponent::ToggleLockState()
@@ -840,7 +864,7 @@ void UMovementHandlerComponent::BeginBuff()
 {
 	const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
 
-	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn});
+	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_OnBuff);
 	CachedMontageComponent->StopAllMontages(0.2f);
 
@@ -1042,7 +1066,13 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		break;
 	case ECharacterMontageState::ECS_Buff:
 	case ECharacterMontageState::ECS_BuffAir:
-		CachedCombatComponent->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered, 10);
+		CachedCombatComponent->SetEmpoweredCombatMode(10);
+		break;
+	case ECharacterMontageState::ECS_Attack_BlastSword:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Blast);
+		break;
+	case ECharacterMontageState::ECS_Attack_BlastShield:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Blast);
 		break;
 	default:
 		break;
@@ -1076,6 +1106,12 @@ void UMovementHandlerComponent::HandleBufferedInput(ESkillType Action)
 		break;
 	case ESkillType::ST_PointMove:
 		PointMove();
+		break;
+	case ESkillType::ST_BlastSword:
+		Blast(EItemType::IT_Sword);
+		break;
+	case ESkillType::ST_BlastShield:
+		Blast(EItemType::IT_Shield);
 		break;
 	default:
 		break;

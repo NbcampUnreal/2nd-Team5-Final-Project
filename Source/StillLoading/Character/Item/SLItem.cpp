@@ -1,8 +1,9 @@
 #include "SLItem.h"
 
+#include "AI/RealAI/MonsterAICharacter.h"
+#include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacter.h"
-#include "Character/BattleComponent/BattleComponent.h"
-#include "Character/DataAsset/AttackDataAsset.h"
+#include "Character/Animation/SLAnimNotify.h"
 #include "GameFramework/Character.h"
 
 ASLItem::ASLItem()
@@ -27,13 +28,32 @@ void ASLItem::BeginPlay()
 void ASLItem::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	
+
 	if (bIsOrbiting && OrbitCenter)
 	{
 		// 공전
-		OrbitAngle += DeltaSeconds * OrbitSpeed;
-		OrbitRadius += DeltaSeconds * RadiusExpandSpeed;
-		
+		const float DirectionMultiplier = (SelectedOrbitDirection == EOrbitDirection::Clockwise) ? 1.f : -1.f;
+		OrbitAngle += DeltaSeconds * OrbitSpeed * DirectionMultiplier;
+
+		if (bExpandingRadius)
+		{
+			OrbitRadius += DeltaSeconds * RadiusExpandSpeed;
+
+			if (OrbitRadius >= MaxOrbitRadius)
+			{
+				bExpandingRadius = false;
+			}
+		}
+		else
+		{
+			OrbitRadius -= DeltaSeconds * RadiusExpandSpeed;
+
+			if (OrbitRadius <= 0.f)
+			{
+				OrbitRadius = 0.f;
+			}
+		}
+
 		const float Radians = FMath::DegreesToRadians(OrbitAngle);
 		const FVector Offset = FVector(FMath::Cos(Radians) * OrbitRadius, FMath::Sin(Radians) * OrbitRadius, 0.f);
 
@@ -49,7 +69,7 @@ void ASLItem::Tick(float DeltaSeconds)
 			ItemMesh->AddRelativeRotation(FRotator(0.f, RotationSpeed * DeltaSeconds, 0.f));
 		}
 
-		if (OrbitAngle >= 1080.f)
+		if (FMath::Abs(OrbitAngle) >= MaxOrbitRadius)
 		{
 			EndOrbit();
 		}
@@ -60,7 +80,8 @@ void ASLItem::Tick(float DeltaSeconds)
 
 void ASLItem::BindOverlap(UPrimitiveComponent* OverlapComponent)
 {
-	if (OverlapComponent) {
+	if (OverlapComponent)
+	{
 		// 오버랩 연결시에 사용, 지금은 스윕으로 사용
 		//OverlapComponent->OnComponentBeginOverlap.AddDynamic(this, &ASLItem::HandleOverlap);
 	}
@@ -75,14 +96,14 @@ void ASLItem::BeginSweep()
 
 		FCollisionQueryParams QueryParams;
 		QueryParams.AddIgnoredActor(this);
-		
+
 		if (OwningCharacter)
 		{
 			QueryParams.AddIgnoredActor(OwningCharacter);
 		}
 
 		TArray<FHitResult> HitResults;
-		
+
 		const bool bHit = GetWorld()->SweepMultiByChannel(
 			HitResults,
 			StartLocation,
@@ -103,10 +124,12 @@ void ASLItem::BeginSweep()
 				AActor* HitActor = Hit.GetActor();
 				if (HitActor && !HitActors.Contains(HitActor))
 				{
-					if (UBattleComponent* TargetBattleComp = HitActor->FindComponentByClass<UBattleComponent>())
+					if (HitActor->IsA(AMonsterAICharacter::StaticClass())
+						|| HitActor->IsA(ASLAIBaseCharacter::StaticClass()))
 					{
+						//UE_LOG(LogTemp, Warning, TEXT("Hit Actor[%s]"), *HitActor->GetName());
 						HitActors.Add(HitActor);
-						TargetBattleComp->SendHitResult(HitActor, Hit, EAttackAnimType::AAT_SpecialAttack1);
+						OnItemOverlap.Broadcast(HitActor, Hit);
 					}
 				}
 			}
@@ -114,18 +137,39 @@ void ASLItem::BeginSweep()
 	}
 }
 
-void ASLItem::StartOrbit(ACharacter* InOwner)
+void ASLItem::StartOrbit(ACharacter* InOwner, const EItemType ItemType, const EOrbitDirection OrbitDirection)
 {
 	OwningCharacter = InOwner;
+	CurrentItemType = ItemType;
+	SelectedOrbitDirection = OrbitDirection;
 
-	ItemMesh->SetRelativeRotation(FRotator(90.f, 180.f, -90.f));
-
-	if (OrbitCenter && InOwner)
+	switch (ItemType)
 	{
-		OrbitCenter->AttachToComponent(InOwner->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-		OrbitCenter->SetRelativeLocation(FVector(0.f, 0.f, 20.f));
-	}
+	case EItemType::IT_Sword:
+		ItemMesh->SetRelativeRotation(FRotator(-90.f, 180.f, -90.f));
 
+		if (OrbitCenter && InOwner)
+		{
+			OrbitCenter->AttachToComponent(InOwner->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+			OrbitCenter->SetRelativeLocation(FVector(-20.f, 0.f, 20.f));
+		}
+		break;
+	case EItemType::IT_Shield:
+		ItemMesh->SetRelativeRotation(FRotator(0.f, 90.f, -90.f));
+
+		if (OrbitCenter && InOwner)
+		{
+			OrbitCenter->AttachToComponent(InOwner->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+
+			const FVector ForwardOffset = InOwner->GetActorForwardVector() * 50.f;
+			const FVector RightOffset   = InOwner->GetActorRightVector() * 30.f;
+			const FVector UpOffset      = FVector::UpVector * 20.f;      
+
+			OrbitCenter->SetRelativeLocation(ForwardOffset + RightOffset + UpOffset);
+		}
+		break;
+	}
+	
 	ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	ItemMesh->SetCollisionObjectType(ECC_WorldDynamic);
 	ItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -141,26 +185,36 @@ void ASLItem::EndOrbit()
 	bIsOrbiting = false;
 	SetActorTickEnabled(false);
 	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			
+
 	if (const ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(OwningCharacter))
 	{
-		if (PlayerCharacter->Sword)
+		if (CurrentItemType == EItemType::IT_Shield)
 		{
-			PlayerCharacter->Sword->SetActorHiddenInGame(false);
+			if (PlayerCharacter->Shield)
+			{
+				PlayerCharacter->Shield->SetActorHiddenInGame(false);
+			}
+		}
+		else
+		{
+			if (PlayerCharacter->Sword)
+			{
+				PlayerCharacter->Sword->SetActorHiddenInGame(false);
+			}
 		}
 	}
-			
+
 	Destroy();
 }
 
 void ASLItem::HandleOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-                            UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                            UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+                            const FHitResult& SweepResult)
 {
 	if (!OtherActor || OtherActor == this || OtherActor == GetOwner() || HitActors.Contains(OtherActor)) return;
 
 	UE_LOG(LogTemp, Log, TEXT("[%s] Overlapped with: %s"), *GetName(), *OtherActor->GetName());
-	
-	HitActors.Add(OtherActor);
-	OnItemOverlap.Broadcast(OtherActor);
-}
 
+	HitActors.Add(OtherActor);
+	OnItemOverlap.Broadcast(OtherActor, SweepResult);
+}

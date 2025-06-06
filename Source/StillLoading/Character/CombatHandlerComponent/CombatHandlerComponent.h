@@ -61,12 +61,9 @@ public:
         return ComboDataAsset ? ComboDataAsset->ComboChain.Num() : 0;
     }
 
-    /** Empowered 상태 설정 */
+    /** Empowered 설정 */
     UFUNCTION()
-    void SetEmpoweredCombatMode(const ECharacterComboState Mode, float Duration = 7.0f);
-    
-    UFUNCTION()
-    void SetCombatMode(const ECharacterComboState Mode) { CurrentMode = Mode; }
+    void SetEmpoweredCombatMode(const float Duration = 7.0f);
 
     /** 현재 Empowered 상태인지 반환 */
     UFUNCTION()
@@ -79,6 +76,9 @@ protected:
     virtual void BeginPlay() override;
 
 private:
+    UFUNCTION()
+    void SetCombatMode(const ECharacterComboState Mode) { CurrentMode = Mode; }
+    
     /** 충전 완료 처리 */
     UFUNCTION()
     void FinishCharging();

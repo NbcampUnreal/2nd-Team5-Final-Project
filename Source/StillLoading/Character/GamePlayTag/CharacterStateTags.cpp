@@ -10,6 +10,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_LockOn, "Character.LockOn");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Invulnerable, "Character.Invulnerable");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_OnBuff, "Character.OnBuff");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Dead, "Character.Dead");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Empowered, "Character.Empowered");
 
 // Hit Reactions
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction, "Character.HitReaction");
@@ -39,6 +40,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_ExecutionC, "Character.Attack.Execut
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airborne, "Character.Attack.Airborne");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airup, "Character.Attack.Airup");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airdown, "Character.Attack.Airdown");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Blast, "Character.Attack.Blast");
 
 // Charge
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Charge, "Character.Charge");
