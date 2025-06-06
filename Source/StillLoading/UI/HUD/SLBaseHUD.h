@@ -18,6 +18,12 @@ class STILLLOADING_API ASLBaseHUD : public AHUD
 {
 	GENERATED_BODY()
 
+public:
+	UFUNCTION(BlueprintCallable)
+	void OnPause();
+
+	void OnUnpause();
+
 protected:
 	UFUNCTION()
 	void OnChangedCurrentChapter(ESLChapterType ChapterType);

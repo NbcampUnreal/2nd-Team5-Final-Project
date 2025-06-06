@@ -1,5 +1,6 @@
 #include "SLMovementHandlerComponent.h"
 
+#include "MotionWarpingComponent.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "AI/RealAI/Controller/MonsterAIController.h"
 #include "Character/SLAIBaseCharacter.h"
@@ -195,8 +196,8 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 					OwnerCharacter->AddSecondaryState(TAG_Character_Defense_Parry);
 					BlockCount = 0;
 				}
-				CachedCombatComponent->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered);
-
+				
+				BeginBuff();
 				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
 
 				// 전체 슬로우 (자기 자신 포함)
@@ -287,7 +288,8 @@ void UMovementHandlerComponent::RemoveInvulnerability()
 void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                               EAttackAnimType AnimType)
 {
-	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)) return;
+	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)
+		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)) return;
 	OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
 
 	bool bIsFromBack = false;
@@ -581,13 +583,39 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
-	Execution();
+	
 }
 
 void UMovementHandlerComponent::Attack()
 {
 	UAnimMontage* Montage = nullptr;
 	FName SectionName;
+
+	if (CameraFocusTarget && !CameraFocusTarget->IsA(ASLAIBaseCharacter::StaticClass()))
+	{
+		const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
+		const float Distance = FVector::Dist(OwnerCharacter->GetActorLocation(), CameraFocusTarget->GetActorLocation());
+
+		if (!bIsFalling && OwnerCharacter->HasSecondaryState(TAG_Character_LockOn) && Distance < ExecuteDistanceThreshold)
+		{
+			const FVector TargetForward = CameraFocusTarget->GetActorForwardVector();
+			const FVector ToOwner = (OwnerCharacter->GetActorLocation() - CameraFocusTarget->GetActorLocation()).GetSafeNormal();
+
+			const float Dot = FVector::DotProduct(TargetForward, ToOwner);
+			if (Dot < -0.9f)
+			{
+				Execution();
+				return;
+			}
+		}
+	}
+
+	if (CameraFocusTarget && !bDidBeginAttack)
+	{
+		BeginAttack();
+		bDidBeginAttack = true;
+		return;
+	}
 
 	if (!CachedCombatComponent->GetCurrentComboInfo(Montage, SectionName))
 	{
@@ -608,7 +636,40 @@ void UMovementHandlerComponent::Attack()
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
 }
 
-void UMovementHandlerComponent::Execution() // 킬모션 분기필요
+void UMovementHandlerComponent::BeginAttack()
+{
+	const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
+	const float Distance = FVector::Dist(OwnerCharacter->GetActorLocation(), CameraFocusTarget->GetActorLocation());
+
+	// Lock On 상태일때 분기
+	if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn) && Distance > WarpDistanceThreshold)
+	{
+		const FVector TargetForward = CameraFocusTarget->GetActorForwardVector();
+		const FVector TargetLoc = CameraFocusTarget->GetActorLocation() + TargetForward * 120.f;
+
+		const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(
+			TargetLoc, CameraFocusTarget->GetActorLocation());
+
+		if (UMotionWarpingComponent* WarpComp = Cast<UMotionWarpingComponent>(
+			OwnerCharacter->GetComponentByClass(UMotionWarpingComponent::StaticClass())))
+		{
+			WarpComp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("Warp"), TargetLoc, TargetRot);
+		}
+
+		if (bIsFalling)
+		{
+			CachedMontageComponent->PlayTrickMontage("BeginAir");
+		}
+		else
+		{
+			CachedMontageComponent->PlayTrickMontage("Begin");
+		}
+
+		OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
+	}
+}
+
+void UMovementHandlerComponent::Execution()
 {
 	struct FExecutionData
 	{
@@ -626,14 +687,21 @@ void UMovementHandlerComponent::Execution() // 킬모션 분기필요
 	const int32 RandomIndex = FMath::RandRange(0, ExecutionOptions.Num() - 1);
 	const FExecutionData& ChosenExecution = ExecutionOptions[RandomIndex];
 
-	UE_LOG(LogTemp, Warning, TEXT("RandomIndex [%d]"), RandomIndex);
+	const FVector TargetForward = CameraFocusTarget->GetActorForwardVector();
+	const FVector TargetLoc = CameraFocusTarget->GetActorLocation() + -TargetForward * 80.f;
 
-	if (CachedBattleComponent->DoSweep(ChosenExecution.AttackType))
+	const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(
+		TargetLoc, CameraFocusTarget->GetActorLocation());
+
+	if (UMotionWarpingComponent* WarpComp = Cast<UMotionWarpingComponent>(
+		OwnerCharacter->GetComponentByClass(UMotionWarpingComponent::StaticClass())))
 	{
-		USlowMotionHelper::ApplyZoomWithSlowMotion(this, 0.2f, 0.5f);
-		CachedMontageComponent->PlayExecutionMontage(ChosenExecution.MontageName);
-		OwnerCharacter->AddSecondaryState(ChosenExecution.SecondaryTag);
+		WarpComp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("Warp"), TargetLoc, TargetRot);
 	}
+
+	USlowMotionHelper::ApplyZoomWithSlowMotion(this, 0.2f, 0.3f, 80.0f);
+	CachedMontageComponent->PlayExecutionMontage(ChosenExecution.MontageName);
+	OwnerCharacter->AddSecondaryState(ChosenExecution.SecondaryTag);
 }
 
 void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)
@@ -747,6 +815,7 @@ void UMovementHandlerComponent::ToggleLockState()
 			}
 		}
 		CameraFocusTarget = nullptr;
+		bDidBeginAttack = false;
 	}
 	else
 	{
@@ -766,6 +835,25 @@ void UMovementHandlerComponent::DisableLock()
 
 	CameraFocusTarget = nullptr;
 	OwnerCharacter->DisableLockOnMode();
+	bDidBeginAttack = false;
+}
+
+void UMovementHandlerComponent::BeginBuff()
+{
+	const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
+
+	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn});
+	OwnerCharacter->SetPrimaryState(TAG_Character_OnBuff);
+	CachedMontageComponent->StopAllMontages(0.2f);
+
+	if (bIsFalling)
+	{
+		CachedMontageComponent->PlayTrickMontage("BuffAir");
+	}
+	else
+	{
+		CachedMontageComponent->PlayTrickMontage("Buff");
+	}
 }
 
 void UMovementHandlerComponent::RotateCameraToTarget(const AActor* Target, float DeltaTime)
@@ -949,6 +1037,14 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 	case ECharacterMontageState::ECS_Charge_Basic:
 		break;
 	case ECharacterMontageState::ECS_Charge_Special:
+		break;
+	case ECharacterMontageState::ECS_Attack_Begin:
+		break;
+	case ECharacterMontageState::ECS_Attack_BeginAir:
+		break;
+	case ECharacterMontageState::ECS_Buff:
+	case ECharacterMontageState::ECS_BuffAir:
+		CachedCombatComponent->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered, 10);
 		break;
 	default:
 		break;

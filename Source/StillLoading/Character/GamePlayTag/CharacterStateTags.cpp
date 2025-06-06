@@ -8,6 +8,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character, "Character");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_PrepareLockOn, "Character.PrepareLockOn");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_LockOn, "Character.LockOn");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Invulnerable, "Character.Invulnerable");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_OnBuff, "Character.OnBuff");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Dead, "Character.Dead");
 
 // Hit Reactions
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction, "Character.HitReaction");

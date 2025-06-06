@@ -30,6 +30,8 @@ protected:
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
 	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush) override;
 
+	virtual void OnEndedCloseAnim() override;
+
 private:
 	// Layer Switch Function
 	UFUNCTION()

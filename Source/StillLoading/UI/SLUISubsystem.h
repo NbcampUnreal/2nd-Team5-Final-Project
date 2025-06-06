@@ -28,7 +28,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName);
 	UFUNCTION(BlueprintCallable)
-	void ActivateTalk(ESLTalkTargetType TalkTargetType, const FName& TargetName, const FName& TalkName);
+	void ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName);
 
 	UFUNCTION(BlueprintCallable)
 	void AddAdditiveWidget(ESLAdditiveWidgetType WidgetType);

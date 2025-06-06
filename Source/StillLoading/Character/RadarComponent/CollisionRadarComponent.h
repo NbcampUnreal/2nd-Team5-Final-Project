@@ -78,10 +78,10 @@ private:
     USphereComponent* DetectionZone = nullptr;
 
     UPROPERTY(EditAnywhere, Category = "Radar|Settings", meta = (ClampMin = "0.0"))
-    float DetectionRadius = 500.0f;
+    float DetectionRadius = 1000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Radar|Settings", meta = (ClampMin = "0.0", ClampMax = "180.0"))
-    float FieldOfView = 120.0f;
+    float FieldOfView = 100.0f;
 
     UPROPERTY(EditAnywhere, Category = "Radar|Settings", meta = (ClampMin = "0.01"))
     float UpdateInterval = 0.2f; // 추가: Timer 간격 (초)

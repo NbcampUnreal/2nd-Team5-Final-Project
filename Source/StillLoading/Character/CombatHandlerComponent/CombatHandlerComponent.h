@@ -78,9 +78,6 @@ public:
 protected:
     virtual void BeginPlay() override;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-    TObjectPtr<UNiagaraSystem> EmpoweredNiagaraEffect;
-
 private:
     /** 충전 완료 처리 */
     UFUNCTION()

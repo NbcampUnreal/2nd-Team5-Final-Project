@@ -6,6 +6,17 @@
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/SLLevelTransferSubsystem.h"
 
+void ASLBaseHUD::OnPause()
+{
+	GetOwningPlayerController()->SetPause(true);
+	CheckValidOfUISubsystem();
+	UISubsystem->AddAdditiveWidget(ESLAdditiveWidgetType::EAW_OptionWidget);
+}
+
+void ASLBaseHUD::OnUnpause()
+{
+	GetOwningPlayerController()->SetPause(false);
+}
 
 void ASLBaseHUD::OnChangedCurrentChapter(ESLChapterType ChapterType)
 {
