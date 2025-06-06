@@ -11,6 +11,7 @@ ASLBattlePlayerState::ASLBattlePlayerState()
 
 	Health = MaxHealth;
 	bIsWalking = false;
+	BurningGage = 0;
 }
 
 void ASLBattlePlayerState::BeginPlay()
@@ -77,7 +78,7 @@ void ASLBattlePlayerState::IncreaseBurningGage(const float Amount)
 		}
 	}
 	
-	BurningGage = FMath::Clamp(BurningGage + Amount, 0.f, 100.f);
+	BurningGage += Amount;
 }
 
 void ASLBattlePlayerState::OnRep_Health()
