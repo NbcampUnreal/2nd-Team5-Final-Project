@@ -76,6 +76,8 @@ enum class ECompanionActionPattern : uint8
 	ECAP_WZ_Attack22             UMETA(DisplayName = "WZ Attack 22"),
 	ECAP_WZ_Attack23             UMETA(DisplayName = "WZ Attack 23"),
 
+	ECAP_WZ_Loop_Attack04        UMETA(DisplayName = "WZ Loop Attack 04"),
+	
 	ECAP_WZ_Special_Patterns1    UMETA(DisplayName = "WZ Special Patterns1"),
 	ECAP_WZ_Special_Patterns2    UMETA(DisplayName = "WZ Special Patterns2"),
 	ECAP_WZ_Special_Patterns3    UMETA(DisplayName = "WZ Special Patterns3"),

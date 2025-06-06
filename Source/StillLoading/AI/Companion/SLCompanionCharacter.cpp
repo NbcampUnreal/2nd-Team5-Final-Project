@@ -35,7 +35,7 @@ FNiagaraSpawnParams::FNiagaraSpawnParams()
     Scale = FVector(1.0f);
     bAutoDestroy = true;
     bAutoActivate = true;
-    PoolingMethod = ENCPoolMethod::None;
+    PoolingMethod = ENCPoolMethod::None;  
     bPreCullCheck = true;
     EffectDuration = 3.0f;
 }
@@ -75,11 +75,8 @@ void ASLCompanionCharacter::BeginPlay()
 
     if (FlyingComponent)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[ASLCompanionCharacter::BeginPlay] : FlyingComponent is valid"));
+        
         FlyingComponent->OnFlyingStateChanged.AddDynamic(this, &ASLCompanionCharacter::OnFlyingStateChanged);
-    }else
-    {
-        UE_LOG(LogTemp, Error, TEXT("[ASLCompanionCharacter::BeginPlay] : FlyingComponent is NULL!"));
     }
 }
 
@@ -574,10 +571,9 @@ UNiagaraComponent* ASLCompanionCharacter::SpawnNiagaraEffect(const FNiagaraSpawn
         SpawnParams.bPreCullCheck
     );
     
-    // 이펙트 제거 타이머 설정
     if (SpawnedComponent)
     {
-        //사용자 파라미터
+        //사용자 파라미터 설정
         SpawnedComponent->SetVariableFloat(FName("_ColorHue"), SpawnParams.UserParams._ColorHue);
         SpawnedComponent->SetVariableFloat(FName("_Size"), SpawnParams.UserParams._Size);
         SpawnedComponent->SetVariableFloat(FName("Z_Threashold"), SpawnParams.UserParams.Z_Threashold);
@@ -585,16 +581,34 @@ UNiagaraComponent* ASLCompanionCharacter::SpawnNiagaraEffect(const FNiagaraSpawn
         // 이펙트 제거 타이머 설정
         if (SpawnParams.EffectDuration > 0.0f)
         {
-            FTimerHandle RemovalTimer;
-            GetWorld()->GetTimerManager().SetTimer(RemovalTimer, 
-                [SpawnedComponent]()
-                {
-                    if (IsValid(SpawnedComponent))
+            if (SpawnParams.PoolingMethod == ENCPoolMethod::None)
+            {
+                // 풀링을 사용하지 않는 경우에만 DestroyComponent 사용
+                FTimerHandle RemovalTimer;
+                GetWorld()->GetTimerManager().SetTimer(RemovalTimer, 
+                    [SpawnedComponent]()
                     {
-                        SpawnedComponent->DestroyComponent();
-                    }
-                }, 
-                SpawnParams.EffectDuration, false);
+                        if (IsValid(SpawnedComponent))
+                        {
+                            SpawnedComponent->DestroyComponent();
+                        }
+                    }, 
+                    SpawnParams.EffectDuration, false);
+            }
+            else
+            {
+                // 풀링을 사용하는 경우 Deactivate만 수행
+                FTimerHandle RemovalTimer;
+                GetWorld()->GetTimerManager().SetTimer(RemovalTimer, 
+                    [SpawnedComponent]()
+                    {
+                        if (IsValid(SpawnedComponent))
+                        {
+                            SpawnedComponent->Deactivate();
+                        }
+                    }, 
+                    SpawnParams.EffectDuration, false);
+            }
         }
     }
     
@@ -603,8 +617,7 @@ UNiagaraComponent* ASLCompanionCharacter::SpawnNiagaraEffect(const FNiagaraSpawn
 
 void ASLCompanionCharacter::OnFlyingStateChanged(bool bIsFlying)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Companion flying state changed: %s"), 
-        bIsFlying ? TEXT("Flying") : TEXT("Grounded"));
+    
 }
 
 void ASLCompanionCharacter::ProcessMultiHit(const FMultiHitData& MultiHitData)

@@ -30,12 +30,12 @@ void USLCompanionFlyingComponent::StartFlying()
     {
         return;
     }
-    
+    SetFlyingState(true);
     TargetHeight = DefaultHeight;
     CurrentHeight = 0.0f;  // 현재 높이를 0으로 초기화
     
     // 그 다음 비행 상태 설정
-    SetFlyingState(true);
+    //SetFlyingState(true);
     
     // 타이머 시작
     GetWorld()->GetTimerManager().ClearTimer(FlyingUpdateTimer);
@@ -139,9 +139,6 @@ void USLCompanionFlyingComponent::UpdateFlyingPosition()
     // 캐릭터 이동
     OwnerCharacter->SetActorLocation(NewLocation, true);
     
-    // 디버그
-    UE_LOG(LogTemp, Warning, TEXT("Flying Update - Current: %.1f, Target: %.1f, Delta: %.1f"), 
-        CurrentHeight, TargetHeight, CurrentHeight - PreviousHeight);
 }
 
 void USLCompanionFlyingComponent::SetFlyingState(bool bNewFlyingState)

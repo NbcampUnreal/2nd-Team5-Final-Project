@@ -70,8 +70,6 @@ void USLCompanionAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSecond
 	if (USLCompanionFlyingComponent* FlyingComponent = OwningCompanionCharacter->GetFlyingComponent())
 	{
 		bIsFlying = FlyingComponent->IsFlying();
-
-		UE_LOG(LogTemp, Warning, TEXT("bIsFlying = FlyingComponent->IsFlying() : %d"), bIsFlying);
 	}
 
 	UpdateVerticalMovement(DeltaSeconds);
@@ -196,13 +194,4 @@ void USLCompanionAnimInstance::UpdateVerticalMovement(float DeltaSeconds)
     
 	// 현재 위치 저장
 	PreviousLocation = CurrentLocation;
-    
-	// 디버그 출력
-	if (OwningCharacter->GetIsDebugMode())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Vertical Velocity: %.2f, Ascending: %s, Descending: %s"), 
-			VerticalVelocity,
-			bIsAscending ? TEXT("true") : TEXT("false"),
-			bIsDescending ? TEXT("true") : TEXT("false"));
-	}
 }

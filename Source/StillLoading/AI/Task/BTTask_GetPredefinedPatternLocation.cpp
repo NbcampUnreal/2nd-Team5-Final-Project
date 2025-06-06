@@ -22,12 +22,18 @@ UBTTask_GetPredefinedPatternLocation::UBTTask_GetPredefinedPatternLocation()
 void UBTTask_GetPredefinedPatternLocation::GenerateRelativePatternLocations(TArray<FVector>& OutLocations) const
 {
     OutLocations.Reset();
-
+    FVector FirstPointOffsetForOrigin = FVector::ZeroVector;
+    
     switch (PatternType)
     {
         case EPredefinedPatternType::Line:
         {
-            if (NumPointsOnLine < 1) return;
+            if (NumPointsOnLine < 1) 
+            {
+                UE_LOG(LogBehaviorTree, Warning, TEXT("GenerateRelativePatternLocations: Line pattern requires at least 1 point"));
+                return;
+            }
+            
             FVector Dir = LineDirection.GetSafeNormal();
             if (Dir.IsNearlyZero()) Dir = FVector(1,0,0);
 
@@ -40,119 +46,143 @@ void UBTTask_GetPredefinedPatternLocation::GenerateRelativePatternLocations(TArr
             for (int32 i = 0; i < NumPointsOnLine; ++i)
             {
                 float LerpAlpha = static_cast<float>(i) / (NumPointsOnLine - 1);
-                if (bFirstPointIsOrigin && i == 0)
-                {
-                    OutLocations.Add(FVector::ZeroVector);
-                }
-                else
-                {
-                    OutLocations.Add(Dir * LerpAlpha * LineLength);
-                }
+                OutLocations.Add(Dir * LerpAlpha * LineLength);
+            }
+            
+            if (bFirstPointIsOrigin && OutLocations.Num() > 0)
+            {
+                FirstPointOffsetForOrigin = OutLocations[0];
             }
             break;
         }
+        
         case EPredefinedPatternType::Square:
         {
-            if (NumPointsOnSquarePerimeter < 4) return;
+            if (NumPointsOnSquarePerimeter < 4) 
+            {
+                UE_LOG(LogBehaviorTree, Warning, TEXT("GenerateRelativePatternLocations: Square pattern requires at least 4 points"));
+                return;
+            }
 
             float HalfSide = SquareSideLength / 2.0f;
-            TArray<FVector> Corners;
-            Corners.Add(FVector(-HalfSide, -HalfSide, 0));
-            Corners.Add(FVector( HalfSide, -HalfSide, 0));
-            Corners.Add(FVector( HalfSide,  HalfSide, 0));
-            Corners.Add(FVector(-HalfSide,  HalfSide, 0));
-            
             float Perimeter = 4.0f * SquareSideLength;
-            if (Perimeter <= 0.f || NumPointsOnSquarePerimeter == 0) return;
+            
+            if (Perimeter <= 0.f || NumPointsOnSquarePerimeter == 0) 
+            {
+                UE_LOG(LogBehaviorTree, Warning, TEXT("GenerateRelativePatternLocations: Invalid square parameters"));
+                return;
+            }
+            
             float DistBetweenPoints = Perimeter / static_cast<float>(NumPointsOnSquarePerimeter);
 
             for (int32 i = 0; i < NumPointsOnSquarePerimeter; ++i)
             {
                 float TargetDist = i * DistBetweenPoints;
-                if (TargetDist <= SquareSideLength) 
+                
+                if (TargetDist < SquareSideLength) // Bottom edge
                 {
                     OutLocations.Add(FVector(-HalfSide + TargetDist, -HalfSide, 0));
                 }
-                else if (TargetDist <= SquareSideLength * 2.0f) 
+                else if (TargetDist < SquareSideLength * 2.0f) // Right edge
                 {
                     OutLocations.Add(FVector(HalfSide, -HalfSide + (TargetDist - SquareSideLength), 0));
                 }
-                else if (TargetDist <= SquareSideLength * 3.0f) 
+                else if (TargetDist < SquareSideLength * 3.0f) // Top edge
                 {
                     OutLocations.Add(FVector(HalfSide - (TargetDist - (SquareSideLength * 2.0f)), HalfSide, 0));
                 }
-                else 
+                else // Left edge
                 {
-                     OutLocations.Add(FVector(-HalfSide, HalfSide - (TargetDist - (SquareSideLength * 3.0f)), 0));
+                    OutLocations.Add(FVector(-HalfSide, HalfSide - (TargetDist - (SquareSideLength * 3.0f)), 0));
                 }
             }
+            
             if (bFirstPointIsOrigin && OutLocations.Num() > 0)
             {
-                FVector FirstOffset = OutLocations[0];
-                for(FVector& Loc : OutLocations) { Loc -= FirstOffset; }
+                FirstPointOffsetForOrigin = OutLocations[0];
             }
             break;
         }
+        
         case EPredefinedPatternType::Rectangle:
         {
-            if (NumPointsOnRectanglePerimeter < 4) return;
+            if (NumPointsOnRectanglePerimeter < 4) 
+            {
+                UE_LOG(LogBehaviorTree, Warning, TEXT("GenerateRelativePatternLocations: Rectangle pattern requires at least 4 points"));
+                return;
+            }
 
             float HalfWidth = RectangleWidth / 2.0f;
             float HalfHeight = RectangleHeight / 2.0f;
-            
             float Perimeter = 2.0f * (RectangleWidth + RectangleHeight);
-            if (Perimeter <= 0.f || NumPointsOnRectanglePerimeter == 0) return;
+            
+            if (Perimeter <= 0.f || NumPointsOnRectanglePerimeter == 0) 
+            {
+                UE_LOG(LogBehaviorTree, Warning, TEXT("GenerateRelativePatternLocations: Invalid rectangle parameters"));
+                return;
+            }
 
             float DistBetweenPoints = Perimeter / static_cast<float>(NumPointsOnRectanglePerimeter);
 
             for (int32 i = 0; i < NumPointsOnRectanglePerimeter; ++i)
             {
                 float TargetDist = i * DistBetweenPoints;
-                if (TargetDist <= RectangleWidth) 
+                
+                if (TargetDist < RectangleWidth) // Bottom edge
                 {
                     OutLocations.Add(FVector(-HalfWidth + TargetDist, -HalfHeight, 0));
                 }
-                else if (TargetDist <= RectangleWidth + RectangleHeight) 
+                else if (TargetDist < RectangleWidth + RectangleHeight) // Right edge
                 {
                     OutLocations.Add(FVector(HalfWidth, -HalfHeight + (TargetDist - RectangleWidth), 0));
                 }
-                else if (TargetDist <= RectangleWidth * 2.0f + RectangleHeight) 
+                else if (TargetDist < RectangleWidth * 2.0f + RectangleHeight) // Top edge
                 {
                     OutLocations.Add(FVector(HalfWidth - (TargetDist - (RectangleWidth + RectangleHeight)), HalfHeight, 0));
                 }
-                else 
+                else // Left edge
                 {
-                     OutLocations.Add(FVector(-HalfWidth, HalfHeight - (TargetDist - (RectangleWidth * 2.0f + RectangleHeight)), 0));
+                    OutLocations.Add(FVector(-HalfWidth, HalfHeight - (TargetDist - (RectangleWidth * 2.0f + RectangleHeight)), 0));
                 }
             }
+            
             if (bFirstPointIsOrigin && OutLocations.Num() > 0)
             {
-                FVector FirstOffset = OutLocations[0];
-                for(FVector& Loc : OutLocations) { Loc -= FirstOffset; }
+                FirstPointOffsetForOrigin = OutLocations[0];
             }
             break;
         }
+        
         case EPredefinedPatternType::Circle:
         {
-            if (NumPointsOnCircle < 1) return;
+            if (NumPointsOnCircle < 1) 
+            {
+                UE_LOG(LogBehaviorTree, Warning, TEXT("GenerateRelativePatternLocations: Circle pattern requires at least 1 point"));
+                return;
+            }
+            
             float AngleStep = (2.0f * PI) / FMath::Max(1, NumPointsOnCircle);
+            
             for (int32 i = 0; i < NumPointsOnCircle; ++i)
             {
                 float Angle = i * AngleStep;
-                if (bFirstPointIsOrigin && i == 0)
-                {
-                     OutLocations.Add(FVector::ZeroVector);
-                }
-                else
-                {
-                    OutLocations.Add(FVector(FMath::Cos(Angle) * CircleRadius, FMath::Sin(Angle) * CircleRadius, 0));
-                }
+                OutLocations.Add(FVector(FMath::Cos(Angle) * CircleRadius, FMath::Sin(Angle) * CircleRadius, 0));
+            }
+            
+            if (bFirstPointIsOrigin && OutLocations.Num() > 0)
+            {
+                FirstPointOffsetForOrigin = OutLocations[0];
             }
             break;
         }
+        
         case EPredefinedPatternType::Grid:
         {
-            if (GridNumXPoints < 1 || GridNumYPoints < 1) return;
+            if (GridNumXPoints < 1 || GridNumYPoints < 1) 
+            {
+                UE_LOG(LogBehaviorTree, Warning, TEXT("GenerateRelativePatternLocations: Grid pattern requires at least 1x1 points"));
+                return;
+            }
 
             float StartX = 0, StartY = 0;
             if (bCenterGrid)
@@ -161,38 +191,82 @@ void UBTTask_GetPredefinedPatternLocation::GenerateRelativePatternLocations(TArr
                 StartY = - (static_cast<float>(GridNumYPoints - 1) * GridSpacingY) / 2.0f;
             }
 
-            FVector FirstPointOffset = FVector::ZeroVector;
-            if (bFirstPointIsOrigin)
-            {
-                FirstPointOffset = FVector(StartX, StartY, 0);
-            }
-
             for (int32 y = 0; y < GridNumYPoints; ++y)
             {
                 for (int32 x = 0; x < GridNumXPoints; ++x)
                 {
                     FVector Point = FVector(StartX + x * GridSpacingX, StartY + y * GridSpacingY, 0);
-                    OutLocations.Add(Point - FirstPointOffset);
+                    OutLocations.Add(Point);
                 }
+            }
+            
+            if (bFirstPointIsOrigin && OutLocations.Num() > 0)
+            {
+                FirstPointOffsetForOrigin = OutLocations[0];
             }
             break;
         }
-        case EPredefinedPatternType::Custom:
-        default:
-            if (bFirstPointIsOrigin && CustomRelativePatternLocations.Num() > 0)
+        
+        case EPredefinedPatternType::Star:
+        {
+            if (NumStarPoints < 3) 
             {
-                FVector FirstOffset = CustomRelativePatternLocations[0];
-                OutLocations.Add(FVector::ZeroVector); 
-                for(int i = 1; i < CustomRelativePatternLocations.Num(); ++i) 
-                {
-                    OutLocations.Add(CustomRelativePatternLocations[i] - FirstOffset);
-                }
+                UE_LOG(LogBehaviorTree, Warning, TEXT("GenerateRelativePatternLocations: Star pattern requires at least 3 points"));
+                return;
             }
-            else
+            
+            if (StarOuterRadius <= 0.f || StarInnerRadius < 0.f || StarInnerRadius >= StarOuterRadius)
             {
-                 OutLocations = CustomRelativePatternLocations;
+                UE_LOG(LogBehaviorTree, Warning, TEXT("GenerateRelativePatternLocations: Invalid star parameters. Ensure OuterRadius > 0, InnerRadius >= 0, and InnerRadius < OuterRadius."));
+                return;
+            }
+
+            if (bStarIncludeCenterPoint)
+            {
+                OutLocations.Add(FVector::ZeroVector);
+            }
+
+            // 총 생성할 점의 개수는 첨점과 골짜기를 합한 것이므로 NumStarPoints * 2
+            int32 TotalPointsForStarShape = NumStarPoints * 2;
+            float AngleIncrement = (2.0f * PI) / static_cast<float>(TotalPointsForStarShape);
+            float CurrentAngle = FMath::DegreesToRadians(StarStartAngleOffsetDegrees);
+
+            int32 FirstStarPointIndex = bStarIncludeCenterPoint ? 1 : 0;
+
+            for (int32 i = 0; i < TotalPointsForStarShape; ++i)
+            {
+                float RadiusToUse = (i % 2 == 0) ? StarOuterRadius : StarInnerRadius;
+                float X = FMath::Cos(CurrentAngle) * RadiusToUse;
+                float Y = FMath::Sin(CurrentAngle) * RadiusToUse;
+                OutLocations.Add(FVector(X, Y, 0));
+                CurrentAngle += AngleIncrement;
+            }
+
+            // bFirstPointIsOrigin 처리
+            if (bFirstPointIsOrigin && OutLocations.Num() > FirstStarPointIndex)
+            {
+                FirstPointOffsetForOrigin = OutLocations[FirstStarPointIndex];
             }
             break;
+        }
+        
+        case EPredefinedPatternType::Custom:
+        default:
+            OutLocations = CustomRelativePatternLocations;
+            if (bFirstPointIsOrigin && OutLocations.Num() > 0)
+            {
+                FirstPointOffsetForOrigin = OutLocations[0];
+            }
+            break;
+    }
+
+    // 첫 점을 원점으로 이동
+    if (bFirstPointIsOrigin && !FirstPointOffsetForOrigin.IsNearlyZero() && OutLocations.Num() > 0)
+    {
+        for (FVector& Loc : OutLocations)
+        {
+            Loc -= FirstPointOffsetForOrigin;
+        }
     }
 }
 
@@ -235,6 +309,13 @@ uint32 UBTTask_GetPredefinedPatternLocation::CalculateParameterHash() const
             Hash = FCrc::MemCrc32(&GridSpacingY, sizeof(GridSpacingY), Hash);
             Hash = FCrc::MemCrc32(&bCenterGrid, sizeof(bCenterGrid), Hash);
             break;
+        case EPredefinedPatternType::Star:
+            Hash = FCrc::MemCrc32(&NumStarPoints, sizeof(NumStarPoints), Hash);
+            Hash = FCrc::MemCrc32(&StarOuterRadius, sizeof(StarOuterRadius), Hash);
+            Hash = FCrc::MemCrc32(&StarInnerRadius, sizeof(StarInnerRadius), Hash);
+            Hash = FCrc::MemCrc32(&StarStartAngleOffsetDegrees, sizeof(StarStartAngleOffsetDegrees), Hash);
+            Hash = FCrc::MemCrc32(&bStarIncludeCenterPoint, sizeof(bStarIncludeCenterPoint), Hash);
+            break;
     }
     return Hash;
 }
@@ -257,6 +338,8 @@ void UBTTask_GetPredefinedPatternLocation::PostEditChangeProperty(FPropertyChang
     if (PropertyChangedEvent.Property != nullptr)
     {
         const FName PropertyName = PropertyChangedEvent.Property->GetFName();
+        
+        // 모든 패턴 관련 속성을 체크
         if (PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, PatternType) ||
             PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, CustomRelativePatternLocations) ||
             PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, LineLength) ||
@@ -274,10 +357,15 @@ void UBTTask_GetPredefinedPatternLocation::PostEditChangeProperty(FPropertyChang
             PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, GridSpacingX) ||
             PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, GridSpacingY) ||
             PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, bCenterGrid) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, NumStarPoints) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, StarOuterRadius) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, StarInnerRadius) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, StarStartAngleOffsetDegrees) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, bStarIncludeCenterPoint) ||
             PropertyName == GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, bFirstPointIsOrigin))
         {
             uint32 CurrentHash = CalculateParameterHash();
-            if (CurrentHash != LastGeneratedHash || CachedRelativePatternLocations.Num() == 0 )
+            if (CurrentHash != LastGeneratedHash || CachedRelativePatternLocations.Num() == 0)
             {
                 GenerateRelativePatternLocations(CachedRelativePatternLocations);
                 LastGeneratedHash = CurrentHash;
@@ -292,71 +380,69 @@ EBTNodeResult::Type UBTTask_GetPredefinedPatternLocation::ExecuteTask(UBehaviorT
     UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
     if (!BlackboardComp)
     {
+        UE_LOG(LogBehaviorTree, Error, TEXT("UBTTask_GetPredefinedPatternLocation: BlackboardComponent is null"));
         return EBTNodeResult::Failed;
     }
 
-    if (CachedRelativePatternLocations.Num() == 0 && PatternType != EPredefinedPatternType::Custom)
+    // 캐시 확인 및 재생성
+    uint32 CurrentHash = CalculateParameterHash();
+    if (CurrentHash != LastGeneratedHash || CachedRelativePatternLocations.Num() == 0)
     {
-        uint32 CurrentHash = CalculateParameterHash();
         GenerateRelativePatternLocations(CachedRelativePatternLocations);
         LastGeneratedHash = CurrentHash;
-        if (CachedRelativePatternLocations.Num() == 0 && PatternType != EPredefinedPatternType::Custom)
-        {
-            return EBTNodeResult::Failed;
-        }
     }
-    else if (PatternType == EPredefinedPatternType::Custom && CustomRelativePatternLocations.Num() == 0 && !bFirstPointIsOrigin)
-    {
-         return EBTNodeResult::Failed;
-    }
-     else if (PatternType == EPredefinedPatternType::Custom && CustomRelativePatternLocations.Num() == 0 && bFirstPointIsOrigin)
-    {
-        if(CachedRelativePatternLocations.Num() != 1 || CachedRelativePatternLocations[0] != FVector::ZeroVector)
-        {
-            GenerateRelativePatternLocations(CachedRelativePatternLocations);
-        }
-    }
-    
-    const TArray<FVector>& ActivePatternLocations = CachedRelativePatternLocations;
 
-    if (ActivePatternLocations.Num() == 0)
+    if (CachedRelativePatternLocations.Num() == 0)
     {
+        UE_LOG(LogBehaviorTree, Warning, TEXT("UBTTask_GetPredefinedPatternLocation: No pattern locations generated"));
         return EBTNodeResult::Failed;
     }
 
+    // 현재 인덱스 가져오기
     int32 CurrentIndex = 0;
     if (CurrentIndexKey.SelectedKeyName != NAME_None)
     {
-       CurrentIndex = BlackboardComp->GetValueAsInt(CurrentIndexKey.SelectedKeyName);
+        CurrentIndex = BlackboardComp->GetValueAsInt(CurrentIndexKey.SelectedKeyName);
     }
 
-    if (CurrentIndex >= ActivePatternLocations.Num())
+    // 패턴 완료 확인
+    bool bPatternComplete = CurrentIndex >= CachedRelativePatternLocations.Num();
+    
+    if (bPatternComplete)
     {
         if (bLoopPattern)
         {
             CurrentIndex = 0;
+            if (CurrentIndexKey.SelectedKeyName != NAME_None)
+            {
+                BlackboardComp->SetValueAsInt(CurrentIndexKey.SelectedKeyName, 0);
+            }
             if (IsCompleteKey.SelectedKeyName != NAME_None)
             {
-                 BlackboardComp->SetValueAsBool(IsCompleteKey.SelectedKeyName, false); 
+                BlackboardComp->SetValueAsBool(IsCompleteKey.SelectedKeyName, false);
             }
         }
         else
         {
             if (IsCompleteKey.SelectedKeyName != NAME_None)
             {
-                BlackboardComp->SetValueAsBool(IsCompleteKey.SelectedKeyName, true); 
+                BlackboardComp->SetValueAsBool(IsCompleteKey.SelectedKeyName, true);
             }
+            UE_LOG(LogBehaviorTree, Verbose, TEXT("UBTTask_GetPredefinedPatternLocation: Pattern completed (non-looping)"));
             return EBTNodeResult::Failed;
         }
     }
-    else 
+    else
     {
+        // 마지막 포인트 확인
+        bool bIsLastPoint = (CurrentIndex == CachedRelativePatternLocations.Num() - 1);
         if (IsCompleteKey.SelectedKeyName != NAME_None)
         {
-            BlackboardComp->SetValueAsBool(IsCompleteKey.SelectedKeyName, false);
+            BlackboardComp->SetValueAsBool(IsCompleteKey.SelectedKeyName, !bLoopPattern && bIsLastPoint);
         }
     }
 
+    // 패턴 원점 결정
     FVector PatternOrigin = FVector::ZeroVector;
     if (bUseActorLocationAsOrigin)
     {
@@ -364,13 +450,14 @@ EBTNodeResult::Type UBTTask_GetPredefinedPatternLocation::ExecuteTask(UBehaviorT
         APawn* Pawn = AIController ? AIController->GetPawn() : nullptr;
         if (!Pawn)
         {
+            UE_LOG(LogBehaviorTree, Error, TEXT("UBTTask_GetPredefinedPatternLocation: Pawn is null"));
             return EBTNodeResult::Failed;
         }
         PatternOrigin = Pawn->GetActorLocation();
     }
     else
     {
-        if (OriginLocationKey.SelectedKeyName != NAME_None && OriginLocationKey.GetSelectedKeyID() != FBlackboard::InvalidKey && BlackboardComp->GetValueAsObject(OriginLocationKey.SelectedKeyName) != nullptr)
+        if (OriginLocationKey.SelectedKeyName != NAME_None)
         {
             PatternOrigin = BlackboardComp->GetValueAsVector(OriginLocationKey.SelectedKeyName);
         }
@@ -380,21 +467,21 @@ EBTNodeResult::Type UBTTask_GetPredefinedPatternLocation::ExecuteTask(UBehaviorT
         }
     }
 
-    if (CurrentIndex < 0 || CurrentIndex >= ActivePatternLocations.Num())
-    {
-        return EBTNodeResult::Failed;
-    }
-    FVector AbsoluteTargetLocation = PatternOrigin + ActivePatternLocations[CurrentIndex];
+    // 절대 위치 계산
+    FVector AbsoluteTargetLocation = PatternOrigin + CachedRelativePatternLocations[CurrentIndex];
 
+    // 타겟 위치 설정
     if (TargetLocationKey.SelectedKeyName != NAME_None)
     {
         BlackboardComp->SetValueAsVector(TargetLocationKey.SelectedKeyName, AbsoluteTargetLocation);
     }
     else
     {
-        return EBTNodeResult::Failed; 
+        UE_LOG(LogBehaviorTree, Error, TEXT("UBTTask_GetPredefinedPatternLocation: TargetLocationKey is not set"));
+        return EBTNodeResult::Failed;
     }
     
+    // 다음 인덱스로 업데이트
     if (CurrentIndexKey.SelectedKeyName != NAME_None)
     {
         BlackboardComp->SetValueAsInt(CurrentIndexKey.SelectedKeyName, CurrentIndex + 1);
@@ -424,10 +511,15 @@ FString UBTTask_GetPredefinedPatternLocation::GetStaticDescription() const
             break;
         case EPredefinedPatternType::Grid:
             Description += FString::Printf(TEXT("\n%dx%d Grid, SpX:%.0f SpY:%.0f"), GridNumXPoints, GridNumYPoints, GridSpacingX, GridSpacingY);
+            if (bCenterGrid) Description += TEXT(" (Centered)");
+            break;
+        case EPredefinedPatternType::Star:
+            Description += FString::Printf(TEXT("\nPts:%d, OR:%.0f, IR:%.0f"), NumStarPoints, StarOuterRadius, StarInnerRadius);
+            if (bStarIncludeCenterPoint) Description += TEXT(" (w/Center)");
             break;
         case EPredefinedPatternType::Custom:
-             Description += FString::Printf(TEXT("\nPts: %d (Custom)"), CachedRelativePatternLocations.Num());
-             break;
+            Description += FString::Printf(TEXT("\nPts: %d (Custom)"), CachedRelativePatternLocations.Num());
+            break;
     }
     
     if (bLoopPattern) Description += TEXT(" (Looping)");
@@ -436,9 +528,10 @@ FString UBTTask_GetPredefinedPatternLocation::GetStaticDescription() const
     {
         Description += FString::Printf(TEXT("\nTarget: %s"), *TargetLocationKey.SelectedKeyName.ToString());
     }
-     if (CurrentIndexKey.SelectedKeyName != NAME_None)
+    if (CurrentIndexKey.SelectedKeyName != NAME_None)
     {
         Description += FString::Printf(TEXT("\nIndex: %s"), *CurrentIndexKey.SelectedKeyName.ToString());
     }
+    
     return Description;
 }

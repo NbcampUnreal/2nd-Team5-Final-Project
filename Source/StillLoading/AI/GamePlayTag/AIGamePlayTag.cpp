@@ -80,4 +80,6 @@ namespace SLAIGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Loop_Aim_Attack01, "Companion.Pattern.WZ.Loop.Aim.Attack01");
 	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Loop_Aim_Attack02, "Companion.Pattern.WZ.Loop.Aim.Attack02");
 
+	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Loop_Attack04, "Companion.Pattern.WZ.Loop.Attack04");
+
 }

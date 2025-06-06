@@ -12,7 +12,8 @@ enum class EPredefinedPatternType : uint8
     Square UMETA(DisplayName = "Square (Centered)"),
     Rectangle UMETA(DisplayName = "Rectangle (Centered)"),
     Circle UMETA(DisplayName = "Circle"),
-    Grid UMETA(DisplayName = "Grid")
+    Grid UMETA(DisplayName = "Grid"),
+    Star UMETA(DisplayName = "Star")
 };
 
 UCLASS(DisplayName="Get Predefined Pattern Location")
@@ -98,6 +99,21 @@ public:
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Grid", meta = (EditCondition = "PatternType == EPredefinedPatternType::Grid", ToolTip = "If true, centers the grid around the origin. Otherwise, origin is effectively the first point (bottom-left or equivalent)."))
     bool bCenterGrid = true;
 
+    // --- Star 패턴 설정 ---
+    UPROPERTY(EditAnywhere, Category = "Pattern Definition|Star", meta = (EditCondition = "PatternType == EPredefinedPatternType::Star", ClampMin = "3", ToolTip = "Number of points/peaks the star will have."))
+    int32 NumStarPoints = 5;
+
+    UPROPERTY(EditAnywhere, Category = "Pattern Definition|Star", meta = (EditCondition = "PatternType == EPredefinedPatternType::Star", ToolTip = "Outer radius of the star (distance from center to peaks)."))
+    float StarOuterRadius = 500.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Pattern Definition|Star", meta = (EditCondition = "PatternType == EPredefinedPatternType::Star", ToolTip = "Inner radius of the star (distance from center to valleys). Should be less than OuterRadius."))
+    float StarInnerRadius = 250.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Pattern Definition|Star", meta = (EditCondition = "PatternType == EPredefinedPatternType::Star", ToolTip = "Starting angle offset for the first peak of the star (in degrees)."))
+    float StarStartAngleOffsetDegrees = 0.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Pattern Definition|Star", meta = (EditCondition = "PatternType == EPredefinedPatternType::Star", ToolTip = "If true, includes points at the center of the star as the very first point."))
+    bool bStarIncludeCenterPoint = false;
 protected:
     virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
     virtual FString GetStaticDescription() const override;
