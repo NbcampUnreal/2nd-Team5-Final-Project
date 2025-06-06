@@ -546,49 +546,81 @@ EChapter ASLAIBaseCharacter::GetChapter() const
 }
 
 ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass,
-	FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType)
+    FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType, bool bHorizontalOnly)
 {
-	UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation called. ProjectileSpeed parameter: %f"), ProjectileSpeed);
-	if (!ProjectileClass)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No projectile class specified"));
-		return nullptr;
-	}
+    UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation called. ProjectileSpeed parameter: %f"), ProjectileSpeed);
+    if (!ProjectileClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No projectile class specified"));
+        return nullptr;
+    }
 
-	// 스폰 위치 계산
-	FVector SpawnLocation = GetMesh()->GetSocketLocation(SocketName);
-	FRotator SpawnRotation = CalculateProjectileRotation(SpawnLocation, TargetLocation);
-	
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	SpawnParams.Owner = this;
-	SpawnParams.Instigator = this;
+    FVector SpawnLocation = GetMesh()->GetSocketLocation(SocketName);
+    
+    if (TargetLocation.IsZero() || TargetLocation.IsNearlyZero())
+    {
+        TargetLocation = SpawnLocation + GetActorForwardVector() * 1000.0f;
+        
+        UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No target location, using socket forward direction"));
+    }
+    
+    FRotator SpawnRotation;
+    FVector LaunchDirection;
+    
+    if (bHorizontalOnly)
+    {
+        // 수평 방향으로만 회전 및 발사
+        FVector DirectionToTarget = (TargetLocation - SpawnLocation).GetSafeNormal();
+        FVector HorizontalDirection = FVector(DirectionToTarget.X, DirectionToTarget.Y, 0).GetSafeNormal();
+        
+        // 현재 액터의 회전값을 기본으로 사용
+        FRotator CurrentRotation = GetActorRotation();
+        
+        // 수평 방향에 대한 Yaw 값만 계산
+        FRotator HorizontalRotation = HorizontalDirection.Rotation();
+        
+        // 최종 회전값: 현재 Pitch와 Roll 유지, Yaw만 타겟 방향으로 설정
+        SpawnRotation = FRotator(CurrentRotation.Pitch, HorizontalRotation.Yaw, CurrentRotation.Roll);
+        
+        // 발사 방향도 수평으로만 설정
+        LaunchDirection = HorizontalDirection;
+    }
+    else
+    {
+        // 기존 방식: 완전히 타겟을 향한 회전 및 발사
+        SpawnRotation = CalculateProjectileRotation(SpawnLocation, TargetLocation);
+        LaunchDirection = (TargetLocation - SpawnLocation).GetSafeNormal();
+    }
+    
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    SpawnParams.Owner = this;
+    SpawnParams.Instigator = this;
 
-	ASLAIProjectile* SpawnedProjectile = GetWorld()->SpawnActor<ASLAIProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+    ASLAIProjectile* SpawnedProjectile = GetWorld()->SpawnActor<ASLAIProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
 
-	if (SpawnedProjectile)
-	{
-		// 프로젝타일 설정
-		SpawnedProjectile->SetupSpawnedProjectile(AnimType, ProjectileSpeed);
+    if (SpawnedProjectile)
+    {
+        // 프로젝타일 설정
+        SpawnedProjectile->SetupSpawnedProjectile(AnimType, ProjectileSpeed);
 
-		PreparedProjectile = SpawnedProjectile;
-		// 프로젝타일 속도 설정
-		if (SpawnedProjectile->GetProjectileMovement())
-		{
-			// 타겟 방향으로 발사
-			FVector LaunchDirection = (TargetLocation - SpawnLocation).GetSafeNormal();
-			SpawnedProjectile->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
+        PreparedProjectile = SpawnedProjectile;
+        // 프로젝타일 속도 설정
+        if (SpawnedProjectile->GetProjectileMovement())
+        {
+            // 계산된 발사 방향으로 발사
+            SpawnedProjectile->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
+    }
 
-			
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
-	}
-
-	return SpawnedProjectile;
+    return SpawnedProjectile;
 }
+
+
 
 FRotator ASLAIBaseCharacter::CalculateProjectileRotation(const FVector& StartLocation, const FVector& TargetLocation) const
 {
