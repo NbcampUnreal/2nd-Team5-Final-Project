@@ -71,10 +71,16 @@ public:
 	// BT연동 다중
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StrategyStateTags;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> ShieldClass;
+
+	UPROPERTY()
+	TObjectPtr<AActor> Sword;
+	UPROPERTY()
+	TObjectPtr<AActor> Shield;
 
 	// 피격시 BlendSpace 용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
@@ -99,11 +105,6 @@ protected:
 	TObjectPtr<UBattleComponent> BattleComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Formation")
 	TObjectPtr<UFormationComponent> FormationComponent;
-	
-	UPROPERTY()
-	TObjectPtr<AActor> Sword;
-	UPROPERTY()
-	TObjectPtr<AActor> Shield;
 
 private:
 	UFUNCTION()

@@ -68,6 +68,9 @@ private:
 	UFUNCTION()
 	void AttachItemToHand(AActor* ItemActor, const FName SocketName) const;
 
+	UFUNCTION()
+	void StartOrbitWithClone(const TSubclassOf<AActor>& InSwordClass);
+
 	// Debug용 함수
 	UFUNCTION(BlueprintCallable, Category = "Debug")
 	void PrintPrimaryStateTags() const;

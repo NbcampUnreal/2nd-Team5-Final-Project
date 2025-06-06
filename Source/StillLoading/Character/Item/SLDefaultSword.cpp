@@ -4,7 +4,7 @@
 
 ASLDefaultSword::ASLDefaultSword()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionSphere"));
 	BoxComponent->SetupAttachment(ItemMesh);
@@ -37,5 +37,31 @@ void ASLDefaultSword::BeginPlay()
 {
 	Super::BeginPlay();
 
+	/*
+	if (EmpoweredNiagaraEffect)
+	{
+		EmpoweredEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			EmpoweredNiagaraEffect,
+			GetRootComponent(),
+			NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::SnapToTargetIncludingScale,
+			true
+		);
+
+		if (EmpoweredEffectComponent)
+		{
+			float ChargingRatio = 0.5f;
+			EmpoweredEffectComponent->SetVariableFloat(FName("ChargingPower"), ChargingRatio);
+		}
+	}
+	*/
 	//BindOverlap(BoxComponent);
+}
+
+void ASLDefaultSword::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
 }
