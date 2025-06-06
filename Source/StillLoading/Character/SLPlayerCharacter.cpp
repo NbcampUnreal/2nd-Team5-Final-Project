@@ -5,8 +5,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GamePlayTag/GamePlayTag.h"
+#include "Item/SLItem.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
-#include "RadarComponent/CollisionRadarComponent.h"
 
 ASLPlayerCharacter::ASLPlayerCharacter()
 {
@@ -63,12 +63,10 @@ void ASLPlayerCharacter::Tick(float DeltaTime)
 
 	if (GetMovementComponent()->IsFalling())
 	{
-		// 점프 중: AI와 충돌 무시
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	}
 	else
 	{
-		// 착지 후: AI와 충돌 활성화
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 	}
 }
@@ -98,6 +96,16 @@ void ASLPlayerCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
+	if (SwordClass)
+	{
+		if (Sword)
+		{
+			Sword->SetActorHiddenInGame(true);
+		}
+		
+		StartOrbitWithClone(SwordClass);
+	}
+
 	if (UMovementHandlerComponent* MoveComp = FindComponentByClass<UMovementHandlerComponent>())
 	{
 		MoveComp->OnLanded(Hit);
@@ -116,6 +124,24 @@ void ASLPlayerCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketN
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		SocketName
 	);
+}
+
+void ASLPlayerCharacter::StartOrbitWithClone(const TSubclassOf<AActor>& InSwordClass)
+{
+	if (!InSwordClass) return;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+
+	FRotator SpawnRot = GetActorRotation();
+	//SpawnRot.Pitch += 90.f;
+
+	AActor* OrbitSword = GetWorld()->SpawnActor<AActor>(InSwordClass, GetActorLocation(), SpawnRot, SpawnParams);
+
+	if (ASLItem* OrbitItem = Cast<ASLItem>(OrbitSword))
+	{
+		OrbitItem->StartOrbit(this);
+	}
 }
 
 bool ASLPlayerCharacter::IsBlocking() const
