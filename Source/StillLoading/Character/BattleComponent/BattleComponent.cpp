@@ -31,7 +31,7 @@ void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitRes
 		{
 			if (ASLBattlePlayerState* PlayerState = APlayerCharacter->GetPlayerState<ASLBattlePlayerState>())
 			{
-				PlayerState->IncreaseBurningGage(5);
+				PlayerState->IncreaseBurningGage(2);
 			}
 		}
 		
@@ -75,13 +75,6 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 
 		OnCharacterHited.Broadcast(DamageCauser, GetDamageByType(AnimType), HitResult, AnimType);
 
-		if (AnimType == EAttackAnimType::AAT_FinalAttackA
-			|| AnimType == EAttackAnimType::AAT_FinalAttackB
-			|| AnimType == EAttackAnimType::AAT_FinalAttackC)
-		{
-			return;
-		}
-
 		if (OwnerActor->IsA(AMonsterAICharacter::StaticClass()) || OwnerActor->IsA(ASLAIBaseCharacter::StaticClass()))
 		{
 			if (HitEffectData)
@@ -94,6 +87,13 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 					{
 						EffectToSpawn = HitEffectData->EmpoweredEffect;
 					}
+				}
+
+				if (AnimType == EAttackAnimType::AAT_FinalAttackA
+					|| AnimType == EAttackAnimType::AAT_FinalAttackB
+					|| AnimType == EAttackAnimType::AAT_FinalAttackC)
+				{
+					EffectToSpawn = HitEffectData->KillMotionEffect;
 				}
 
 				if (USkeletalMeshComponent* Mesh = OwnerActor->FindComponentByClass<USkeletalMeshComponent>())
@@ -175,6 +175,17 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 		for (const FHitResult& Hit : HitResults)
 		{
 			AActor* HitActor = Hit.GetActor();
+
+			if (AttackType == EAttackAnimType::AAT_FinalAttackA
+						|| AttackType == EAttackAnimType::AAT_FinalAttackB
+						|| AttackType == EAttackAnimType::AAT_FinalAttackC)
+			{
+				if (UBattleComponent* TargetBattleComp = HitActor->FindComponentByClass<UBattleComponent>())
+				{
+					SendHitResult(HitActor, Hit, AttackType);
+					return;
+				}
+			}
 
 			if (HitActor && HitActor != OwnerActor && !AlreadyHitActors.Contains(HitActor))
 			{

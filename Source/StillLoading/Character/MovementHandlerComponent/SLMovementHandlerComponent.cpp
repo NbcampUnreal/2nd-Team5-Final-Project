@@ -583,13 +583,32 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
-	Execution();
+	
 }
 
 void UMovementHandlerComponent::Attack()
 {
 	UAnimMontage* Montage = nullptr;
 	FName SectionName;
+
+	if (CameraFocusTarget && !CameraFocusTarget->IsA(ASLAIBaseCharacter::StaticClass()))
+	{
+		const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
+		const float Distance = FVector::Dist(OwnerCharacter->GetActorLocation(), CameraFocusTarget->GetActorLocation());
+
+		if (!bIsFalling && OwnerCharacter->HasSecondaryState(TAG_Character_LockOn) && Distance < ExecuteDistanceThreshold)
+		{
+			const FVector TargetForward = CameraFocusTarget->GetActorForwardVector();
+			const FVector ToOwner = (OwnerCharacter->GetActorLocation() - CameraFocusTarget->GetActorLocation()).GetSafeNormal();
+
+			const float Dot = FVector::DotProduct(TargetForward, ToOwner);
+			if (Dot < -0.9f)
+			{
+				Execution();
+				return;
+			}
+		}
+	}
 
 	if (CameraFocusTarget && !bDidBeginAttack)
 	{
@@ -650,7 +669,7 @@ void UMovementHandlerComponent::BeginAttack()
 	}
 }
 
-void UMovementHandlerComponent::Execution() // 킬모션 분기필요
+void UMovementHandlerComponent::Execution()
 {
 	struct FExecutionData
 	{
@@ -668,14 +687,21 @@ void UMovementHandlerComponent::Execution() // 킬모션 분기필요
 	const int32 RandomIndex = FMath::RandRange(0, ExecutionOptions.Num() - 1);
 	const FExecutionData& ChosenExecution = ExecutionOptions[RandomIndex];
 
-	UE_LOG(LogTemp, Warning, TEXT("RandomIndex [%d]"), RandomIndex);
+	const FVector TargetForward = CameraFocusTarget->GetActorForwardVector();
+	const FVector TargetLoc = CameraFocusTarget->GetActorLocation() + -TargetForward * 80.f;
 
-	if (CachedBattleComponent->DoSweep(ChosenExecution.AttackType))
+	const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(
+		TargetLoc, CameraFocusTarget->GetActorLocation());
+
+	if (UMotionWarpingComponent* WarpComp = Cast<UMotionWarpingComponent>(
+		OwnerCharacter->GetComponentByClass(UMotionWarpingComponent::StaticClass())))
 	{
-		USlowMotionHelper::ApplyZoomWithSlowMotion(this, 0.2f, 0.5f);
-		CachedMontageComponent->PlayExecutionMontage(ChosenExecution.MontageName);
-		OwnerCharacter->AddSecondaryState(ChosenExecution.SecondaryTag);
+		WarpComp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("Warp"), TargetLoc, TargetRot);
 	}
+
+	USlowMotionHelper::ApplyZoomWithSlowMotion(this, 0.2f, 0.3f, 80.0f);
+	CachedMontageComponent->PlayExecutionMontage(ChosenExecution.MontageName);
+	OwnerCharacter->AddSecondaryState(ChosenExecution.SecondaryTag);
 }
 
 void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)

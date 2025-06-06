@@ -119,7 +119,10 @@ protected:
 	int32 InvulnerableDuration = 0.5;
 
 	UPROPERTY(EditAnywhere, Category = "Warp")
-	float WarpDistanceThreshold = 500.f;
+	float WarpDistanceThreshold = 600.f;
+
+	UPROPERTY(EditAnywhere, Category = "Warp")
+	float ExecuteDistanceThreshold = 200.f;
 
 private:
 	void Attack();
