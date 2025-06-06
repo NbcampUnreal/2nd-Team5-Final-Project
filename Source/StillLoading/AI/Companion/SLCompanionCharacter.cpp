@@ -414,7 +414,7 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
                 HitResult.Location  // 히트 위치
             );
         }
-
+    
         if (CurrentHealth <= 0.0f)
         {
             if (!IsDead)
@@ -464,6 +464,18 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
         HitDirection = HitDir;
         HitDirectionVector = LocalHitDirection;
         bIsHit = true;
+
+        FTimerHandle HitResetTimer;
+        GetWorld()->GetTimerManager().SetTimer(
+            HitResetTimer,
+            [this]()
+            {
+                bIsHit = false;
+            },
+            1.0f,
+            false
+        );
+        
     }
 
     if (HitEffectComponent && DamageCauser && !IsDead)

@@ -212,7 +212,7 @@ public:
 	// AI 태스크에서 사용할 랜덤 패턴 선택 함수들
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	ECompanionActionPattern SelectRandomPatternFromTags(const FGameplayTagContainer& PatternTags);
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	ECompanionActionPattern SelectRandomPatternFromTagsWithDistance(const FGameplayTagContainer& PatternTags, float DistanceToTarget);
 
@@ -224,7 +224,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Teleport")
 	bool GetIsTeleporting() const;
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Teleport")
 	void SetIsTeleporting(bool NewIsTeleporting);
 

@@ -7,7 +7,7 @@
 USLAIFixingAxisComponent::USLAIFixingAxisComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
-
+    
 }
 
 void USLAIFixingAxisComponent::BeginPlay()
@@ -27,7 +27,7 @@ void USLAIFixingAxisComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
     const FVector& Velocity = MovementComponent->GetVelocityForNavMovement();
-    if (Velocity.IsNearlyZero())
+    if (Velocity.Length() < VelocityThreshold)
     {
         return;
     }

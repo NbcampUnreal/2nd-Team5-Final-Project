@@ -16,7 +16,7 @@ class STILLLOADING_API USLAIFixingAxisComponent : public UActorComponent
 
 public:
     USLAIFixingAxisComponent();
-
+    
     // Called every frame
     virtual void TickComponent(float DeltaTime, ELevelTick TickType,FActorComponentTickFunction* ThisTickFunction) override;
 protected:
@@ -28,6 +28,9 @@ private:
     TObjectPtr<UCharacterMovementComponent> MovementComponent;
 
     UPROPERTY()
-    TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent; 
+    TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fixing Axis", meta = (AllowPrivateAccess = "true"))
+    float VelocityThreshold = 300.f;
     
 };
