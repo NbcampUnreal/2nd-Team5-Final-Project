@@ -9,6 +9,7 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "Misc/Crc.h"
 
+
 UBTTask_GetPredefinedPatternLocation::UBTTask_GetPredefinedPatternLocation()
 {
     NodeName = "Get Predefined Pattern Location";
@@ -17,6 +18,48 @@ UBTTask_GetPredefinedPatternLocation::UBTTask_GetPredefinedPatternLocation()
     TargetLocationKey.AddVectorFilter(this, GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, TargetLocationKey));
     IsCompleteKey.AddBoolFilter(this, GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, IsCompleteKey));
     OriginLocationKey.AddVectorFilter(this, GET_MEMBER_NAME_CHECKED(UBTTask_GetPredefinedPatternLocation, OriginLocationKey));
+
+    // 기본값 설정
+    bUseActorLocationAsOrigin = true;
+    FixedPatternOrigin = FVector::ZeroVector;
+    bLoopPattern = false;
+    bFirstPointIsOrigin = false;
+    PatternType = EPredefinedPatternType::Line;
+    
+    // Line 패턴 기본값
+    LineLength = 500.0f;
+    NumPointsOnLine = 5;
+    LineDirection = FVector(1.0f, 0.0f, 0.0f);
+    
+    // Square 패턴 기본값
+    SquareSideLength = 400.0f;
+    NumPointsOnSquarePerimeter = 4;
+    
+    // Rectangle 패턴 기본값
+    RectangleWidth = 600.0f;
+    RectangleHeight = 300.0f;
+    NumPointsOnRectanglePerimeter = 4;
+    
+    // Circle 패턴 기본값
+    CircleRadius = 300.0f;
+    NumPointsOnCircle = 8;
+    
+    // Grid 패턴 기본값
+    GridNumXPoints = 3;
+    GridNumYPoints = 3;
+    GridSpacingX = 200.0f;
+    GridSpacingY = 200.0f;
+    bCenterGrid = true;
+    
+    // Star 패턴 기본값
+    NumStarPoints = 5;
+    StarOuterRadius = 500.0f;
+    StarInnerRadius = 250.0f;
+    StarStartAngleOffsetDegrees = 0.0f;
+    bStarIncludeCenterPoint = false;
+    
+    // 캐시 관련 초기화
+    LastGeneratedHash = 0;
 }
 
 void UBTTask_GetPredefinedPatternLocation::GenerateRelativePatternLocations(TArray<FVector>& OutLocations) const

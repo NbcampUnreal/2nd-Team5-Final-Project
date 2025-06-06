@@ -24,6 +24,14 @@ class STILLLOADING_API UBTTask_GetPredefinedPatternLocation : public UBTTaskNode
 public:
     UBTTask_GetPredefinedPatternLocation();
 
+    virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+    virtual FString GetStaticDescription() const override;
+    virtual void InitializeFromAsset(UBehaviorTree& Asset) override;
+
+#if WITH_EDITOR
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
     UPROPERTY(EditAnywhere, Category = "Blackboard", meta = (ToolTip = "Blackboard key to store/read the current pattern index."))
     FBlackboardKeySelector CurrentIndexKey;
 
@@ -34,101 +42,92 @@ public:
     FBlackboardKeySelector IsCompleteKey;
 
     UPROPERTY(EditAnywhere, Category = "Origin", meta = (ToolTip = "If true, AI's current location will be used as the pattern origin."))
-    bool bUseActorLocationAsOrigin = true;
+    bool bUseActorLocationAsOrigin;
 
     UPROPERTY(EditAnywhere, Category = "Origin", meta = (EditCondition = "!bUseActorLocationAsOrigin", ToolTip = "Fixed origin for the pattern if bUseActorLocationAsOrigin is false."))
-    FVector FixedPatternOrigin = FVector::ZeroVector;
+    FVector FixedPatternOrigin;
 
     UPROPERTY(EditAnywhere, Category = "Origin", meta = (EditCondition = "!bUseActorLocationAsOrigin", ToolTip = "Optional blackboard key to read the pattern origin. Overrides FixedPatternOrigin if set."))
     FBlackboardKeySelector OriginLocationKey;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Behavior", meta = (ToolTip = "If true, the index will reset to 0 after completing the pattern, allowing infinite looping."))
-    bool bLoopPattern = false;
+    bool bLoopPattern;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Behavior", meta = (ToolTip = "If true, the first point of the pattern IS the origin. If false, the first point is offset from the origin like other points."))
-    bool bFirstPointIsOrigin = false;
+    bool bFirstPointIsOrigin;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition")
-    EPredefinedPatternType PatternType = EPredefinedPatternType::Line;
+    EPredefinedPatternType PatternType;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Custom", meta = (EditCondition = "PatternType == EPredefinedPatternType::Custom", ToolTip = "Origin-relative locations for the custom pattern."))
     TArray<FVector> CustomRelativePatternLocations;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Line", meta = (EditCondition = "PatternType == EPredefinedPatternType::Line"))
-    float LineLength = 500.0f;
+    float LineLength;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Line", meta = (EditCondition = "PatternType == EPredefinedPatternType::Line", ClampMin = "1", ToolTip = "Minimum 1 point. If 1, it's at LineLength or Origin if bFirstPointIsOrigin."))
-    int32 NumPointsOnLine = 5;
+    int32 NumPointsOnLine;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Line", meta = (EditCondition = "PatternType == EPredefinedPatternType::Line", ToolTip = "Direction of the line from the origin. Will be normalized."))
-    FVector LineDirection = FVector(1.0f, 0.0f, 0.0f);
+    FVector LineDirection;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Square", meta = (EditCondition = "PatternType == EPredefinedPatternType::Square"))
-    float SquareSideLength = 400.0f;
+    float SquareSideLength;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Square", meta = (EditCondition = "PatternType == EPredefinedPatternType::Square", ClampMin = "4", ToolTip = "Number of points along the perimeter (e.g., 4 for corners, 8 for corners and midpoints). Will be distributed along perimeter."))
-    int32 NumPointsOnSquarePerimeter = 4;
+    int32 NumPointsOnSquarePerimeter;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Rectangle", meta = (EditCondition = "PatternType == EPredefinedPatternType::Rectangle"))
-    float RectangleWidth = 600.0f;
+    float RectangleWidth;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Rectangle", meta = (EditCondition = "PatternType == EPredefinedPatternType::Rectangle"))
-    float RectangleHeight = 300.0f;
+    float RectangleHeight;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Rectangle", meta = (EditCondition = "PatternType == EPredefinedPatternType::Rectangle", ClampMin = "4", ToolTip = "Number of points along the perimeter. e.g., 4 for corners. More points will be distributed along edges."))
-    int32 NumPointsOnRectanglePerimeter = 4;
+    int32 NumPointsOnRectanglePerimeter;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Circle", meta = (EditCondition = "PatternType == EPredefinedPatternType::Circle"))
-    float CircleRadius = 300.0f;
+    float CircleRadius;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Circle", meta = (EditCondition = "PatternType == EPredefinedPatternType::Circle", ClampMin = "1", ToolTip = "Minimum 1 point."))
-    int32 NumPointsOnCircle = 8;
+    int32 NumPointsOnCircle;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Grid", meta = (EditCondition = "PatternType == EPredefinedPatternType::Grid", ClampMin = "1"))
-    int32 GridNumXPoints = 3;
+    int32 GridNumXPoints;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Grid", meta = (EditCondition = "PatternType == EPredefinedPatternType::Grid", ClampMin = "1"))
-    int32 GridNumYPoints = 3;
+    int32 GridNumYPoints;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Grid", meta = (EditCondition = "PatternType == EPredefinedPatternType::Grid"))
-    float GridSpacingX = 200.0f;
+    float GridSpacingX;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Grid", meta = (EditCondition = "PatternType == EPredefinedPatternType::Grid"))
-    float GridSpacingY = 200.0f;
+    float GridSpacingY;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Grid", meta = (EditCondition = "PatternType == EPredefinedPatternType::Grid", ToolTip = "If true, centers the grid around the origin. Otherwise, origin is effectively the first point (bottom-left or equivalent)."))
-    bool bCenterGrid = true;
+    bool bCenterGrid;
 
-    // --- Star 패턴 설정 ---
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Star", meta = (EditCondition = "PatternType == EPredefinedPatternType::Star", ClampMin = "3", ToolTip = "Number of points/peaks the star will have."))
-    int32 NumStarPoints = 5;
+    int32 NumStarPoints;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Star", meta = (EditCondition = "PatternType == EPredefinedPatternType::Star", ToolTip = "Outer radius of the star (distance from center to peaks)."))
-    float StarOuterRadius = 500.0f;
+    float StarOuterRadius;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Star", meta = (EditCondition = "PatternType == EPredefinedPatternType::Star", ToolTip = "Inner radius of the star (distance from center to valleys). Should be less than OuterRadius."))
-    float StarInnerRadius = 250.0f;
+    float StarInnerRadius;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Star", meta = (EditCondition = "PatternType == EPredefinedPatternType::Star", ToolTip = "Starting angle offset for the first peak of the star (in degrees)."))
-    float StarStartAngleOffsetDegrees = 0.0f;
+    float StarStartAngleOffsetDegrees;
 
     UPROPERTY(EditAnywhere, Category = "Pattern Definition|Star", meta = (EditCondition = "PatternType == EPredefinedPatternType::Star", ToolTip = "If true, includes points at the center of the star as the very first point."))
-    bool bStarIncludeCenterPoint = false;
-protected:
-    virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-    virtual FString GetStaticDescription() const override;
-    virtual void InitializeFromAsset(UBehaviorTree& Asset) override;
-
-#if WITH_EDITOR
-    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
+    bool bStarIncludeCenterPoint;
 
 private:
     void GenerateRelativePatternLocations(TArray<FVector>& OutLocations) const;
+    uint32 CalculateParameterHash() const;
 
     UPROPERTY(Transient)
     TArray<FVector> CachedRelativePatternLocations;
 
-    uint32 LastGeneratedHash = 0;
-    uint32 CalculateParameterHash() const;
+    uint32 LastGeneratedHash;
 };

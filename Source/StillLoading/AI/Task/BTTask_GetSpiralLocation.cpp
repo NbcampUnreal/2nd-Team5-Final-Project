@@ -17,6 +17,14 @@ UBTTask_GetSpiralLocation::UBTTask_GetSpiralLocation()
     CurrentIndexKey.AddIntFilter(this, GET_MEMBER_NAME_CHECKED(UBTTask_GetSpiralLocation, CurrentIndexKey));
     TargetLocationKey.AddVectorFilter(this, GET_MEMBER_NAME_CHECKED(UBTTask_GetSpiralLocation, TargetLocationKey));
     IsCompleteKey.AddBoolFilter(this, GET_MEMBER_NAME_CHECKED(UBTTask_GetSpiralLocation, IsCompleteKey));
+    
+    // 기본값 설정
+    NumberOfTurns = 3.0f;
+    TotalPoints = 20;
+    MinRadius = 100.0f;
+    MaxRadius = 800.0f;
+    bUseActorLocation = true;
+    FixedCenterLocation = FVector::ZeroVector;
 }
 
 EBTNodeResult::Type UBTTask_GetSpiralLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

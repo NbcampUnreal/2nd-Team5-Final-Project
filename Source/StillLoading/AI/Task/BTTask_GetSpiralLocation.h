@@ -13,24 +13,27 @@ UCLASS()
 class STILLLOADING_API UBTTask_GetSpiralLocation : public UBTTaskNode
 {
 	GENERATED_BODY()
+
 public:
 	UBTTask_GetSpiralLocation();
 
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+
 	/** 나선의 회전 수 */
 	UPROPERTY(EditAnywhere, Category = "Spiral")
-	float NumberOfTurns = 3.0f;
+	float NumberOfTurns;
 
 	/** 총 생성할 점의 개수 */
 	UPROPERTY(EditAnywhere, Category = "Spiral")
-	int32 TotalPoints = 20;
+	int32 TotalPoints;
 
 	/** 최소 반지름 */
 	UPROPERTY(EditAnywhere, Category = "Spiral")
-	float MinRadius = 100.0f;
+	float MinRadius;
 
 	/** 최대 반지름 */
 	UPROPERTY(EditAnywhere, Category = "Spiral")
-	float MaxRadius = 800.0f;
+	float MaxRadius;
 
 	/** 현재 인덱스를 저장/읽을 블랙보드 키 */
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
@@ -46,14 +49,11 @@ public:
 
 	/** 나선 중심점 (기본값: AI 위치) */
 	UPROPERTY(EditAnywhere, Category = "Spiral")
-	bool bUseActorLocation = true;
+	bool bUseActorLocation;
 
 	/** 고정 중심점 (bUseActorLocation이 false일 때) */
 	UPROPERTY(EditAnywhere, Category = "Spiral", meta = (EditCondition = "!bUseActorLocation"))
-	FVector FixedCenterLocation = FVector::ZeroVector;
-
-protected:
-	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	FVector FixedCenterLocation;
 
 private:
 	/** 주어진 인덱스에 해당하는 나선형 위치 계산 */
