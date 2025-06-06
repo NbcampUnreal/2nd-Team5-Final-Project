@@ -6,5 +6,5 @@
 const TSoftObjectPtr<UWorld> USLLevelDataAsset::GetLevelRef(ESLLevelNameType LevelNameType)
 {
 	checkf(LevelURLMap.Contains(LevelNameType), TEXT("Level Data Not Contains Level Type"));
-	return LevelURLMap[LevelNameType];
+	return LevelURLMap.FindRef(LevelNameType);
 }
