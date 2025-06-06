@@ -90,8 +90,8 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 {
 	if (!OwnerCharacter->HasSecondaryState(TAG_Character_PrepareLockOn)) return;
 
-	// TODO::시체에 잡히는거 처리해야함
-	if (DetectedActor->IsA(AMonsterAICharacter::StaticClass()) || DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
+	if (DetectedActor->IsA(AMonsterAICharacter::StaticClass())
+			|| DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
 	{
 		if (Distance <= FocusMaxDistance && IsValid(DetectedActor))
 		{
@@ -134,6 +134,14 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 		}
 		*/
 	}
+}
+
+void UMovementHandlerComponent::FixCharacterVelocity()
+{
+	FVector Velocity = OwnerCharacter->GetCharacterMovement()->Velocity;
+	Velocity.Z = 0.f;
+	OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
+	OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f;
 }
 
 void UMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
@@ -289,7 +297,9 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
                                               EAttackAnimType AnimType)
 {
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)
-		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)) return;
+		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)
+		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast)) return;
+	
 	OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
 
 	bool bIsFromBack = false;
@@ -728,10 +738,7 @@ void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool 
 {
 	if (bIsFalling && AttackStateCount != 3)
 	{
-		FVector Velocity = OwnerCharacter->GetCharacterMovement()->Velocity;
-		Velocity.Z = 0.f;
-		OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
-		OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f;
+		FixCharacterVelocity();
 		OwnerCharacter->AddSecondaryState(TAG_Character_Movement_OnAir);
 		++AttackStateCount;
 	}
@@ -871,6 +878,7 @@ void UMovementHandlerComponent::BeginBuff()
 	if (bIsFalling)
 	{
 		CachedMontageComponent->PlayTrickMontage("BuffAir");
+		FixCharacterVelocity();
 	}
 	else
 	{
@@ -1067,6 +1075,7 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 	case ECharacterMontageState::ECS_Buff:
 	case ECharacterMontageState::ECS_BuffAir:
 		CachedCombatComponent->SetEmpoweredCombatMode(10);
+		OwnerCharacter->GetCharacterMovement()->GravityScale = 1.f;
 		break;
 	case ECharacterMontageState::ECS_Attack_BlastSword:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Blast);

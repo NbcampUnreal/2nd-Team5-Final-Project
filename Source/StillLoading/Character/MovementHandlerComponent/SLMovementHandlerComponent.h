@@ -108,6 +108,8 @@ protected:
 	void HitDirection(AActor* Causer);
 	UFUNCTION()
 	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
+	UFUNCTION()
+	void FixCharacterVelocity();
 
 	UPROPERTY()
 	FVector2D MovementInputAxis = FVector2D::ZeroVector;
