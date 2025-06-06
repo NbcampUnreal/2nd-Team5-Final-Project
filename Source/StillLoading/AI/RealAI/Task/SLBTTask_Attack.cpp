@@ -5,6 +5,7 @@
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/BattleComponent/BattleComponent.h"
+#include "Character/DataAsset/AttackDataAsset.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 

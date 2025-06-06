@@ -78,7 +78,7 @@ void AMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
-	SetStrategyState(TAG_AI_STRATEGY_SINGLE_SNEAKY);
+	SetStrategyState(TAG_AI_STRATEGY_ORGANIZED_HOLDPOSITION);
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 
@@ -86,8 +86,7 @@ void AMonsterAICharacter::BeginPlay()
 	GetCharacterMovement()->AvoidanceConsiderationRadius = 150.f;
 }
 
-void AMonsterAICharacter::OnHitByCharacter(UPrimitiveComponent* HitComp, AActor* OtherActor,
-                                           UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AMonsterAICharacter::OnHitByCharacter(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (OtherActor && OtherActor->IsA(AMonsterAICharacter::StaticClass()) || OtherActor->IsA(ASLPlayerCharacter::StaticClass()))
 	{
