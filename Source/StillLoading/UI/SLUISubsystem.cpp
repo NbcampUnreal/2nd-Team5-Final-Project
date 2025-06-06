@@ -42,6 +42,7 @@ void USLUISubsystem::SetInputModeAndCursor()
 	}
 
 	CurrentPC->SetShowMouseCursor(bIsVisibleTargetCursor);
+	CurrentPC->FlushPressedKeys();
 }
 
 void USLUISubsystem::SetChapterToUI(ESLChapterType ChapterType)
@@ -89,7 +90,7 @@ void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, const FName& St
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
 }
 
-void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, const FName& TargetName, const FName& TalkName)
+void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName)
 {
 	WidgetActivateBuffer.TargetTalk = TalkTargetType;
 	WidgetActivateBuffer.TargetName = TargetName;
