@@ -29,6 +29,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	FORCEINLINE void SetAttackAnimType(EAttackAnimType NewAnimType) { AttackAnimType = NewAnimType; }
 
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	void SetupSpawnedProjectile(EAttackAnimType AnimType, float Speed);
 protected:
 	// --- Components ---
