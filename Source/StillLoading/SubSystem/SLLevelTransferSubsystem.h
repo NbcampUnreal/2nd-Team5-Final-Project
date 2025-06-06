@@ -20,12 +20,14 @@ class STILLLOADING_API USLLevelTransferSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "LevelTransfer")
 	void SetCurrentChapter(ESLChapterType ChapterType);
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-	void OpenLevelByNameType(ESLLevelNameType LevelNameType, bool bIsFadeOut = true, const FString& Option = ((FString)(L"")));
+	UFUNCTION(BlueprintCallable, Category = "LevelTransfer")
+	void OpenLevelByNameType(ESLLevelNameType LevelNameType, bool bIsFadeOut = true, const FString Option = "");
+	
 	void PostFadeOut();
 
 	const ESLLevelNameType GetCurrentLevelType() const;

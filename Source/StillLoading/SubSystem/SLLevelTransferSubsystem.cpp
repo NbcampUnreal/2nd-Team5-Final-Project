@@ -17,7 +17,7 @@ void USLLevelTransferSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	// TODO : OpenLevelByNameType(ESLLevelNameType::Intro);
 }
 
-void USLLevelTransferSubsystem::OpenLevelByNameType(ESLLevelNameType LevelNameType, bool bIsFadeOut, const FString& Option)
+void USLLevelTransferSubsystem::OpenLevelByNameType(ESLLevelNameType LevelNameType, bool bIsFadeOut, const FString Option)
 {
 	CurrentLevel = LevelNameType;
 	OptionString = Option;
