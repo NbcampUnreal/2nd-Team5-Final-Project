@@ -54,6 +54,9 @@ public:
 	// Lock on 용
 	UFUNCTION()
 	void DisableLock();
+	// 버프용
+	UFUNCTION()
+	void BeginBuff();
 
 	// Mouse 제어용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
@@ -113,10 +116,17 @@ protected:
 	float FocusMaxDistance = 800.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Camera Focus")
-	int32 InvulnerableDuration = 5;
+	int32 InvulnerableDuration = 0.5;
+
+	UPROPERTY(EditAnywhere, Category = "Warp")
+	float WarpDistanceThreshold = 600.f;
+
+	UPROPERTY(EditAnywhere, Category = "Warp")
+	float ExecuteDistanceThreshold = 200.f;
 
 private:
 	void Attack();
+	void BeginAttack();
 	void Look(const FVector2D& Value);
 	void Jump();
 	void Move(const float AxisValue, const EInputActionType ActionType);
@@ -169,5 +179,9 @@ private:
 	float LastBlockTime = 0.f;
 	UPROPERTY()
 	FTimerHandle DelayTimerHandle;
+
+	// Begin Attack 용
+	UPROPERTY()
+	bool bDidBeginAttack = false;
 	
 };

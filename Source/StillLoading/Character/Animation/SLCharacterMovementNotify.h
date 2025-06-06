@@ -9,6 +9,7 @@ enum class ECharacterMovementAction : uint8
 {
 	CMA_LaunchUp		UMETA(DisplayName = "Launch Up"),
 	CMA_LaunchBack		UMETA(DisplayName = "Launch Back"),
+	CMA_LaunchOff		UMETA(DisplayName = "Launch Off"),
 };
 
 UCLASS()
