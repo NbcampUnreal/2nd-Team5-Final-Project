@@ -7,7 +7,7 @@
 USLAIFixingAxisComponent::USLAIFixingAxisComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
-
+    
 }
 
 void USLAIFixingAxisComponent::BeginPlay()
@@ -27,7 +27,7 @@ void USLAIFixingAxisComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
     const FVector& Velocity = MovementComponent->GetVelocityForNavMovement();
-    if (Velocity.IsNearlyZero())
+    if (Velocity.Length() < VelocityThreshold)
     {
         return;
     }
@@ -37,7 +37,6 @@ void USLAIFixingAxisComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
     const float XRotation = FMath::RadiansToDegrees(FMath::Atan2(UnitVelocity.Z, FMath::Sqrt(FMath::Square(UnitVelocity.X) + FMath::Square(UnitVelocity.Y))));
     const float YRotation = FMath::RadiansToDegrees(FMath::Atan2(UnitVelocity.Y, UnitVelocity.X)) - 90.0f;
 
-    UE_LOG(LogTemp, Warning, TEXT("[USLAIFixingAxisComponent::TickComponent] : X  %f, Y : %f "), XRotation, YRotation );
 
     
     const float RoundedYRotation = FMath::RoundToFloat(YRotation / 90.0f) * 90.0f;
