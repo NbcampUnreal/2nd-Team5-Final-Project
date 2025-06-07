@@ -15,7 +15,7 @@ AMonsterAICharacter::AMonsterAICharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	MaxHealth = 30.0f;
+	MaxHealth = 10.0f;
 	CurrentHealth = MaxHealth;
 
 	bUseControllerRotationYaw = false;
@@ -78,18 +78,33 @@ void AMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
-	SetStrategyState(TAG_AI_STRATEGY_SINGLE_SNEAKY);
+	SetStrategyState(TAG_AI_STRATEGY_ORGANIZED_HOLDPOSITION);
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 
 	GetCharacterMovement()->bUseRVOAvoidance = true;
 	GetCharacterMovement()->AvoidanceConsiderationRadius = 150.f;
+
+	if (!bOriginalMaterialsInitialized)
+	{
+		USkeletalMeshComponent* MeshComp = GetMesh();
+		int32 MaterialCount = MeshComp->GetNumMaterials();
+
+		OriginalMaterials.Empty();
+		for (int32 i = 0; i < MaterialCount; ++i)
+		{
+			OriginalMaterials.Add(MeshComp->GetMaterial(i));
+		}
+
+		bOriginalMaterialsInitialized = true;
+	}
 }
 
 void AMonsterAICharacter::OnHitByCharacter(UPrimitiveComponent* HitComp, AActor* OtherActor,
                                            UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherActor && OtherActor->IsA(AMonsterAICharacter::StaticClass()) || OtherActor->IsA(ASLPlayerCharacter::StaticClass()))
+	if (OtherActor && OtherActor->IsA(AMonsterAICharacter::StaticClass()) || OtherActor->IsA(
+		ASLPlayerCharacter::StaticClass()))
 	{
 		if (!bRecentlyPushed)
 		{
@@ -221,6 +236,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 {
 	AnimationComponent->StopAllMontages(0.2f);
 	HitDirection(Causer);
+	ChangeMeshTemporarily();
 
 	LastAttacker = Causer;
 	CurrentHealth -= Damage;
@@ -236,33 +252,45 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	case EAttackAnimType::AAT_AirAttack1:
 	case EAttackAnimType::AAT_AirAttack2:
 	case EAttackAnimType::AAT_AirAttack3:
-		if (GetCharacterMovement()->IsFalling())
 		{
-			AnimationComponent->PlayAIHitMontage("HitAir");
-			FVector Velocity = GetCharacterMovement()->Velocity;
-			Velocity.Z = 0.f;
-			GetCharacterMovement()->Velocity = Velocity;
+			const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
+			if (GetCharacterMovement()->IsFalling() && GroundDistance > 50.0f)
+			{
+				AnimationComponent->PlayAIHitMontage("HitAir");
+				FVector Velocity = GetCharacterMovement()->Velocity;
+				Velocity.Z = 0.f;
+				GetCharacterMovement()->Velocity = Velocity;
+			}
+			SetBattleState(TAG_AI_Hit);
+
+			FVector PushDirection = GetActorLocation() - Causer->GetActorLocation();
+			PushDirection.Z = 0.0f;
+			PushDirection.Normalize();
+
+			LaunchCharacter(PushDirection * 500.0f, true, true);
+
+			if (CurrentHealth < 0.f)
+			{
+				if (DeathMaterial)
+				{
+					if (GetWorld()->GetTimerManager().IsTimerActive(MaterialResetTimerHandle))
+					{
+						GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
+					}
+					
+					GetMesh()->SetMaterial(0, DeathMaterial);
+				}
+				AnimationComponent->PlayAIHitMontage("Dead");
+			}
+			break;
 		}
-		SetBattleState(TAG_AI_Hit);
-
-		FVector PushDirection = GetActorLocation() - Causer->GetActorLocation();
-		PushDirection.Z = 0.0f;
-		PushDirection.Normalize();
-
-		LaunchCharacter(PushDirection * 500.0f, true, true);
-
-		if (CurrentHealth < 0.f)
-		{
-			AnimationComponent->PlayAIHitMontage("Dead");
-		}
-		break;
 
 	case EAttackAnimType::AAT_Airborn:
 		AnimationComponent->PlayAIHitMontage("Airborne");
 		SetBattleState(TAG_AI_Hit);
 		if (CurrentHealth < 0.f)
 		{
-			Dead(Causer);
+			Dead(Causer, true);
 		}
 		break;
 	case EAttackAnimType::AAT_Skill1:
@@ -270,7 +298,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		SetBattleState(TAG_AI_Hit);
 		if (CurrentHealth < 0.f)
 		{
-			Dead(Causer);
+			Dead(Causer, true);
 		}
 		break;
 	case EAttackAnimType::AAT_Skill2:
@@ -279,7 +307,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		SetBattleState(TAG_AI_Hit);
 		if (CurrentHealth < 0.f)
 		{
-			Dead(Causer);
+			Dead(Causer, true);
 		}
 		break;
 	case EAttackAnimType::AAT_FinalAttackA:
@@ -300,6 +328,41 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	}
 }
 
+void AMonsterAICharacter::ChangeMeshTemporarily()
+{
+	if (!HitMaterial || !bOriginalMaterialsInitialized)
+		return;
+
+	USkeletalMeshComponent* MeshComp = GetMesh();
+
+	if (GetWorld()->GetTimerManager().IsTimerActive(MaterialResetTimerHandle))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
+	}
+
+	for (int32 i = 0; i < OriginalMaterials.Num(); ++i)
+	{
+		MeshComp->SetMaterial(i, HitMaterial);
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(
+		MaterialResetTimerHandle,
+		this,
+		&AMonsterAICharacter::ResetMaterial,
+		0.3f,
+		false
+	);
+}
+
+void AMonsterAICharacter::ResetMaterial()
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	for (int32 i = 0; i < OriginalMaterials.Num(); ++i)
+	{
+		MeshComp->SetMaterial(i, OriginalMaterials[i]);
+	}
+}
+
 void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 {
 	switch (MonsterMontageStage)
@@ -311,7 +374,7 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	case EAttackAnimType::AAT_FinalAttackB:
 	case EAttackAnimType::AAT_FinalAttackC:
 	case EAttackAnimType::AAT_Dead:
-		Dead(LastAttacker);
+		Dead(LastAttacker, false);
 		break;
 	case EAttackAnimType::AAT_ParryAttack:
 		break;
@@ -321,9 +384,21 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	SetBattleState(TAG_AI_Idle);
 }
 
-void AMonsterAICharacter::Dead(const AActor* Attacker)
+void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
 	SetBattleState(TAG_AI_Dead);
+
+	FixCharacterVelocity();
+
+	if (DeathMaterial && bIsChangeMaterial)
+	{
+		if (GetWorld()->GetTimerManager().IsTimerActive(MaterialResetTimerHandle))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
+		}
+		
+		GetMesh()->SetMaterial(0, DeathMaterial);
+	}
 
 	// AI 중지
 	if (AMonsterAIController* AICon = Cast<AMonsterAIController>(GetController()))
@@ -360,4 +435,11 @@ void AMonsterAICharacter::Dead(const AActor* Attacker)
 			IEnemyDeathReceiver::Execute_OnEnemyDeath(AttackerBattleComp, this);
 		}
 	}
+}
+
+void AMonsterAICharacter::FixCharacterVelocity()
+{
+	FVector Velocity = GetCharacterMovement()->Velocity;
+	Velocity.Z = 0.f;
+	GetCharacterMovement()->Velocity = Velocity;
 }
