@@ -388,6 +388,8 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 {
 	SetBattleState(TAG_AI_Dead);
 
+	FixCharacterVelocity();
+
 	if (DeathMaterial && bIsChangeMaterial)
 	{
 		if (GetWorld()->GetTimerManager().IsTimerActive(MaterialResetTimerHandle))
@@ -433,4 +435,11 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 			IEnemyDeathReceiver::Execute_OnEnemyDeath(AttackerBattleComp, this);
 		}
 	}
+}
+
+void AMonsterAICharacter::FixCharacterVelocity()
+{
+	FVector Velocity = GetCharacterMovement()->Velocity;
+	Velocity.Z = 0.f;
+	GetCharacterMovement()->Velocity = Velocity;
 }

@@ -35,10 +35,20 @@ void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 		break;
 
 	case ECharacterMovementAction::CMA_LaunchActionSword:
+		if (UMovementHandlerComponent* MoveComp = Character->FindComponentByClass<UMovementHandlerComponent>())
+		{
+			MoveComp->ToggleCameraZoom(false);
+		}
+		
 		Character->BeginBlast(EItemType::IT_Sword);
 		break;
 
 	case ECharacterMovementAction::CMA_LaunchActionShield:
+		if (UMovementHandlerComponent* MoveComp = Character->FindComponentByClass<UMovementHandlerComponent>())
+		{
+			MoveComp->ToggleCameraZoom(false);
+		}
+		
 		Character->BeginBlast(EItemType::IT_Shield);
 		break;
 
