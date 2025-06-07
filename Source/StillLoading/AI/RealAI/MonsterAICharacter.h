@@ -124,6 +124,8 @@ private:
 	void HitDirection(AActor* Causer);
 	UFUNCTION()
 	void RotateToHitCauser(const AActor* Causer);
+	UFUNCTION()
+	void FixCharacterVelocity();
 
 	UPROPERTY()
 	TObjectPtr<AActor> LastAttacker;
