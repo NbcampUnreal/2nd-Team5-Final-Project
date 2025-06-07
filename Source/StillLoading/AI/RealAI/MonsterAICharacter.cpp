@@ -333,6 +333,18 @@ void AMonsterAICharacter::Dead(const AActor* Attacker)
 		AICon->ToggleLockOnWidget(false);
 	}
 
+	if (Sword)
+	{
+		Sword->Destroy();
+		Sword = nullptr;
+	}
+
+	if (Shield)
+	{
+		Shield->Destroy();
+		Shield = nullptr;
+	}
+
 	// 콜리전 비활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);

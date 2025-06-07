@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "SLBaseAIController.h"
-#include "SLCompanionAIController.generated.h"
+#include "SLCompanionNormalAIController.generated.h"
 
 
 UCLASS()
-class STILLLOADING_API ASLCompanionAIController : public ASLBaseAIController
+class STILLLOADING_API ASLCompanionNormalAIController : public ASLBaseAIController
 {
 	GENERATED_BODY()
 
 public:
-	ASLCompanionAIController();
+	ASLCompanionNormalAIController();
 
 	// 플레이어 캐릭터 설정
 	UFUNCTION(BlueprintCallable, Category = "AI")

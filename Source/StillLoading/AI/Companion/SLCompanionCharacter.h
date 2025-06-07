@@ -5,8 +5,11 @@
 #include "NiagaraSystem.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "GameplayTagContainer.h"
+#include "AI/DataTypes/SLCompanionDataTypes.h"
 #include "SLCompanionCharacter.generated.h"
 
+
+class USLCompanionFlyingComponent;
 // Companion의 행동 패턴
 UENUM(BlueprintType)
 enum class ECompanionActionPattern : uint8
@@ -72,6 +75,19 @@ enum class ECompanionActionPattern : uint8
 	ECAP_WZ_Attack21             UMETA(DisplayName = "WZ Attack 21"),
 	ECAP_WZ_Attack22             UMETA(DisplayName = "WZ Attack 22"),
 	ECAP_WZ_Attack23             UMETA(DisplayName = "WZ Attack 23"),
+
+	ECAP_WZ_Loop_Attack04        UMETA(DisplayName = "WZ Loop Attack 04"),
+	
+	ECAP_WZ_Special_Patterns1    UMETA(DisplayName = "WZ Special Patterns1"),
+	ECAP_WZ_Special_Patterns2    UMETA(DisplayName = "WZ Special Patterns2"),
+	ECAP_WZ_Special_Patterns3    UMETA(DisplayName = "WZ Special Patterns3"),
+	ECAP_WZ_Special_Patterns4    UMETA(DisplayName = "WZ Special Patterns4"),
+	ECAP_WZ_Special_Patterns5    UMETA(DisplayName = "WZ Special Patterns5"),
+	
+	ECAP_WZ_Attack_Aim01             UMETA(DisplayName = "WZ Attack Aim 01"),
+	ECAP_WZ_Attack_Aim02             UMETA(DisplayName = "WZ Attack Aim 02"),
+	ECAP_WZ_Attack_Aim03             UMETA(DisplayName = "WZ Attack Aim 03"),
+	ECAP_WZ_Attack_Aim04             UMETA(DisplayName = "WZ Attack Aim 04"),
 };
 
 UENUM(BlueprintType)
@@ -104,8 +120,69 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mapping")
 	int32 Priority;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mapping")
+	bool bIsLoop;
+	
 	FSLCompanionActionPatternMappingRow();
 };
+
+USTRUCT(BlueprintType)
+struct FNiagaraUserParams
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _ColorHue;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _Size;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float  Z_Threashold;
+};
+
+USTRUCT(BlueprintType)
+struct FNiagaraSpawnParams
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UNiagaraSystem> NiagaraSystem;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Location;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FRotator Rotation;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Scale;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bAutoDestroy;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bAutoActivate;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ENCPoolMethod PoolingMethod;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bPreCullCheck;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float EffectDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FNiagaraUserParams UserParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Offset;
+	FNiagaraSpawnParams();
+};
+
 
 class USLCompanionPatternData;
 
@@ -123,9 +200,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|GameplayTags")
 	bool HasGameplayTag(const FGameplayTag& TagToCheck) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void FireProjectile(EAttackAnimType AttackAnimType);
-
 	UFUNCTION(BlueprintCallable, Category = "State")
 	bool GetIsBattleMage();
 
@@ -138,7 +212,7 @@ public:
 	// AI 태스크에서 사용할 랜덤 패턴 선택 함수들
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	ECompanionActionPattern SelectRandomPatternFromTags(const FGameplayTagContainer& PatternTags);
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	ECompanionActionPattern SelectRandomPatternFromTagsWithDistance(const FGameplayTagContainer& PatternTags, float DistanceToTarget);
 
@@ -150,14 +224,37 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Teleport")
 	bool GetIsTeleporting() const;
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Teleport")
 	void SetIsTeleporting(bool NewIsTeleporting);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PerformGroundExplosion(const FNiagaraSpawnParams& InWarningParams, const FNiagaraSpawnParams& InExplosionParams, float ExplosionRadius, EAttackAnimType AttackAnimType, 
+		float WarningDuration = 1.0f, int32 HitCount = 1, float HitInterval = 0.2f);
+	
+	UFUNCTION(BlueprintCallable, Category = "Components")
+	FORCEINLINE USLCompanionFlyingComponent* GetFlyingComponent() const { return FlyingComponent; }
+
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	FORCEINLINE ASLBaseAIController* GetAIController() const { return AIController; }
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType) override;
+	virtual void BeginDestroy() override;
+	
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ApplyExplosionDamage(FVector ExplosionLocation, float ExplosionRadius, EAttackAnimType AttackAnimType, bool bIsFirstHit = true);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	UNiagaraComponent* SpawnNiagaraEffect(const FNiagaraSpawnParams& SpawnParams);
+
+	void ProcessMultiHit(const FMultiHitData& MultiHitData);
+
+	UFUNCTION()
+	void OnFlyingStateChanged(bool bIsFlying);
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	TSubclassOf<ASLAIProjectile> ProjectileClass;
 
@@ -191,11 +288,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	ECompanionActionPattern CurrentActionPattern;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<USLCompanionFlyingComponent> FlyingComponent;
 private:
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	bool bIsInCombat;
 
 	UPROPERTY()
 	bool bIsTeleporting;
+
+	UPROPERTY()
+	TMap<FTimerHandle, FMultiHitData> ActiveMultiHits;
 };

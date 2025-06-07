@@ -150,7 +150,15 @@ bool UInputBufferComponent::TryConsumeComboInput()
 {
 	if (!ComboDataTable || InputBuffer.IsEmpty()) return false;
 
-	for (const auto& RowName : ComboDataTable->GetRowNames())
+	TArray<FName> SortedRowNames = ComboDataTable->GetRowNames();
+	SortedRowNames.Sort([&](const FName& A, const FName& B)
+	{
+		const auto* RowA = ComboDataTable->FindRow<FInputComboRow>(A, TEXT("Sort"));
+		const auto* RowB = ComboDataTable->FindRow<FInputComboRow>(B, TEXT("Sort"));
+		return RowA && RowB ? RowB->InputSequence.Num() < RowA->InputSequence.Num() : false;
+	});
+
+	for (const auto& RowName : SortedRowNames)
 	{
 		const FInputComboRow* ComboRow = ComboDataTable->FindRow<FInputComboRow>(RowName, TEXT("ComboCheck"));
 		if (!ComboRow || ComboRow->InputSequence.Num() > InputBuffer.Num()) continue;
@@ -173,13 +181,19 @@ bool UInputBufferComponent::TryConsumeComboInput()
 		if (bMatch)
 		{
 			// 테그 확인
-			if (const bool bTagValid = ComboRow->RequiredTag.IsValid())
+			if (const bool bTagValid = ComboRow->RequiredPrimaryTag.IsValid())
 			{
-				if (!OwnerCharacter->IsInPrimaryState(ComboRow->RequiredTag)) continue;
+				if (!OwnerCharacter->IsInPrimaryState(ComboRow->RequiredPrimaryTag)) continue;
 			}
 
-			float StartTime = RecentInputs[0].Timestamp;
-			float EndTime = RecentInputs.Last().Timestamp;
+			if (const bool bTagValid = ComboRow->RequiredSecondaryTag.IsValid())
+			{
+				if (!OwnerCharacter->HasSecondaryState(ComboRow->RequiredSecondaryTag)) continue;
+			}
+
+			const float StartTime = RecentInputs[0].Timestamp;
+			const float EndTime = RecentInputs.Last().Timestamp;
+			
 			if ((EndTime - StartTime) <= ComboRow->MaxTotalDuration)
 			{
 				if (CanConsumeInput(ComboRow->ResultSkill))
@@ -194,11 +208,11 @@ bool UInputBufferComponent::TryConsumeComboInput()
 						ComboString += UEnum::GetValueAsString(Skill) + TEXT(" ");
 					}
 					
-					FString TagString = ComboRow->RequiredTag.IsValid()
-						                    ? ComboRow->RequiredTag.ToString()
+					FString TagString = ComboRow->RequiredSecondaryTag.IsValid()
+						                    ? ComboRow->RequiredSecondaryTag.ToString()
 						                    : TEXT("None");
 
-					UE_LOG(InputBufferComponent, Log, TEXT("[Combo Matched] %s→ %s (%.2f초, RequiredTag: %s)"),
+					UE_LOG(InputBufferComponent, Log, TEXT("[Combo Matched] %s→ %s (%.2f초, RequiredSecondaryTag: %s)"),
 					       *ComboString,
 					       *UEnum::GetValueAsString(ComboRow->ResultSkill),
 					       EndTime - StartTime,
@@ -261,7 +275,7 @@ bool UInputBufferComponent::CanConsumeInput(ESkillType NextInput) const
 	return true;
 }
 
-void UInputBufferComponent::ExecuteInput(ESkillType Action)
+void UInputBufferComponent::ExecuteInput(const ESkillType Action)
 {
 	if (LastExecutedSkill == ESkillType::ST_AirUp && Action == ESkillType::ST_AirUp) return;
 	
