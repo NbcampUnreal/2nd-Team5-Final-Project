@@ -101,7 +101,7 @@ protected:
 	UFUNCTION()
 	void BindIMCComponent();
 	UFUNCTION()
-	void RemoveInvulnerability();
+	void RemoveInvulnerability() const;
 	UFUNCTION()
 	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
 	UFUNCTION()
@@ -141,6 +141,7 @@ private:
 	void AirUp();
 	void AirDown();
 	void Execution();
+	void Blast(const EItemType ItemType);
 	void Block(const bool bIsBlocking);
 	void RotateToHitCauser(const AActor* Causer, FRotator &TargetRotation, bool &bIsHitFromBack);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);

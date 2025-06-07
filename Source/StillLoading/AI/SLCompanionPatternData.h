@@ -29,6 +29,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "GameplayTags|Filter")
 	FGameplayTagContainer FilterPatternsByCharacterType(const FGameplayTagContainer& InputPatterns, bool bIsBattleMage) const;
 
+	UFUNCTION(BlueprintPure, Category = "GameplayTags|Loop")
+	bool IsPatternLoop(FGameplayTag Tag) const;
+
 protected:
 	virtual void PostLoad() override;
 
@@ -38,14 +41,17 @@ protected:
 
 	void BuildMappingMap();
 
-	UPROPERTY(EditDefaultsOnly, Category = "Mapping")
-	TObjectPtr<UDataTable> MappingDataTable;
-
 private:
 	FGameplayTag FindTagForPattern(ECompanionActionPattern Pattern) const;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Mapping")
+	TObjectPtr<UDataTable> MappingDataTable;
+
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, ECompanionActionPattern> TagToPatternMap;
+
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, bool> TagToLoopMap;
 
 	TMap<ECompanionDistanceType, TArray<FGameplayTag>> BM_PatternsByDistance;
 	TMap<ECompanionDistanceType, TArray<FGameplayTag>> WZ_PatternsByDistance;

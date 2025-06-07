@@ -33,7 +33,15 @@ void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 		Character->GetCharacterMovement()->StopMovementImmediately();
 		Character->GetCharacterMovement()->Velocity = FVector::ZeroVector;
 		break;
-		
+
+	case ECharacterMovementAction::CMA_LaunchActionSword:
+		Character->BeginBlast(EItemType::IT_Sword);
+		break;
+
+	case ECharacterMovementAction::CMA_LaunchActionShield:
+		Character->BeginBlast(EItemType::IT_Shield);
+		break;
+
 	default: break;
 	}
 }

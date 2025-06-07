@@ -38,8 +38,8 @@ ASLAIProjectile::ASLAIProjectile()
 	// 발사체 이동 컴포넌트 설정
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileComp"));
 	ProjectileMovement->UpdatedComponent = CollisionComp;
-	ProjectileMovement->InitialSpeed = 2000.f;
-	ProjectileMovement->MaxSpeed = 2000.f;
+	ProjectileMovement->InitialSpeed = 0.f;
+	ProjectileMovement->MaxSpeed = 2500.f;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = false;
 	ProjectileMovement->ProjectileGravityScale = 0.0f; // 중력 없음
@@ -99,7 +99,7 @@ void ASLAIProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
 void ASLAIProjectile::SetupSpawnedProjectile(EAttackAnimType AnimType, float Speed)
 {
 	AttackAnimType = AnimType;
-	ProjectileMovement->InitialSpeed = Speed;
+	//ProjectileMovement->InitialSpeed = Speed;
 	ProjectileMovement->MaxSpeed = Speed;
 }
 
