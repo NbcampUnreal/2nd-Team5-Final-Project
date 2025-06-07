@@ -58,7 +58,7 @@ public:
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
 
 	UFUNCTION()
-	void Dead(const AActor* Attacker);
+	void Dead(const AActor* Attacker, bool bIsChangeMaterial);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster")
 	EMonsterType CurrentMonsterType = EMonsterType::MT_None;
@@ -106,11 +106,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Formation")
 	TObjectPtr<UFormationComponent> FormationComponent;
 
+	UPROPERTY(EditAnywhere, Category="Mesh")
+	TObjectPtr<UMaterialInterface> HitMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Materials")
+	TObjectPtr<UMaterialInterface> DeathMaterial;
+
 private:
 	UFUNCTION()
 	void AttachItemToHand(AActor* ItemActor, FName SocketName) const;
 	UFUNCTION()
 	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
+	UFUNCTION()
+	void ChangeMeshTemporarily();
+	UFUNCTION()
+	void ResetMaterial();
 	UFUNCTION()
 	void HitDirection(AActor* Causer);
 	UFUNCTION()
@@ -126,10 +135,16 @@ private:
 
 	UPROPERTY()
 	FTimerHandle PushResetHandle;
+	UPROPERTY()
+	FTimerHandle MaterialResetTimerHandle;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UMaterialInterface>> OriginalMaterials;
 
 	bool bIsChasing = false;
 	bool bIsLeader = false;
 	bool bRecentlyPushed = false;
+	bool bOriginalMaterialsInitialized = false;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
