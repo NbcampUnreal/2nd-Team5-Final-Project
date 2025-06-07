@@ -601,7 +601,9 @@ void UMovementHandlerComponent::Attack()
 	UAnimMontage* Montage = nullptr;
 	FName SectionName;
 
-	if (CameraFocusTarget && !CameraFocusTarget->IsA(ASLAIBaseCharacter::StaticClass()))
+	if (CameraFocusTarget
+		&& !CameraFocusTarget->IsA(ASLAIBaseCharacter::StaticClass())
+		&& !OwnerCharacter->IsInPrimaryState(TAG_Character_HitReaction))
 	{
 		const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
 		const float Distance = FVector::Dist(OwnerCharacter->GetActorLocation(), CameraFocusTarget->GetActorLocation());

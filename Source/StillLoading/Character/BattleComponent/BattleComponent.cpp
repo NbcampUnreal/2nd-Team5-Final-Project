@@ -1,5 +1,6 @@
 #include "BattleComponent.h"
 
+#include "GenericTeamAgentInterface.h"
 #include "MotionWarpingComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "AI/RealAI/MonsterAICharacter.h"
@@ -27,6 +28,24 @@ void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitRes
 {
 	if (AActor* OwnerActor = GetOwner())
 	{
+		const IGenericTeamAgentInterface* OwnerGenericTeamID = nullptr;
+
+		// 때린자가 pawn일때 팀 ID 추출
+		if (const APawn* OwnerPawn = Cast<APawn>(OwnerActor))
+		{
+			OwnerGenericTeamID = Cast<IGenericTeamAgentInterface>(OwnerPawn->GetController());
+			if (!OwnerGenericTeamID) return;
+		}
+
+		// 맞은자가 Pawn일때 TeamID 비교
+		if (const APawn* HitTargetPawn = Cast<APawn>(HitTarget))
+		{
+			if (const IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(HitTargetPawn->GetController()))
+			{
+				if (TeamAgentInterface->GetGenericTeamId() == OwnerGenericTeamID->GetGenericTeamId()) return;
+			}
+		}
+		
 		if (const ASLPlayerCharacter* APlayerCharacter = Cast<ASLPlayerCharacter>(OwnerActor))
 		{
 			if (ASLBattlePlayerState* PlayerState = APlayerCharacter->GetPlayerState<ASLBattlePlayerState>())
@@ -56,13 +75,6 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 {
 	if (const AActor* OwnerActor = GetOwner())
 	{
-		const bool bOwnerIsAI = OwnerActor->IsA(AMonsterAICharacter::StaticClass());
-		const bool bCauserIsAI = DamageCauser->IsA(AMonsterAICharacter::StaticClass());
-		if (bOwnerIsAI && bCauserIsAI)
-		{
-			return;
-		}
-
 		UE_LOG(LogBattleComponent, Warning,
 		       TEXT("피격 발생! 소유자: %s, 데미지: %.2f, 공격자: %s, 위치: %s, 뼈: %s, AnimType: %s"),
 		       *OwnerActor->GetName(),

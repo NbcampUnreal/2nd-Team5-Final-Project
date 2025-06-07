@@ -130,6 +130,7 @@ void ASLPlayerCharacter::BeginBlast(const EItemType ItemType)
 			}
 
 			StartOrbitWithClone(SwordClass, EItemType::IT_Sword, EOrbitDirection::CounterClockwise);
+			StartOrbitWithClone(SwordClass, EItemType::IT_Sword, EOrbitDirection::CounterClockwise);
 		}
 		break;
 	case EItemType::IT_Shield:
@@ -140,6 +141,7 @@ void ASLPlayerCharacter::BeginBlast(const EItemType ItemType)
 				Shield->SetActorHiddenInGame(true);
 			}
 
+			StartOrbitWithClone(ShieldClass, EItemType::IT_Shield, EOrbitDirection::Clockwise);
 			StartOrbitWithClone(ShieldClass, EItemType::IT_Shield, EOrbitDirection::Clockwise);
 		}
 		break;
