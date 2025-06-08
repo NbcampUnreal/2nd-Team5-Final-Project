@@ -79,7 +79,7 @@ EBTNodeResult::Type USLBTTaskRotateToFaceTarget::ExecuteTask(UBehaviorTreeCompon
 		Memory->Reset();
 		//완료
 		return EBTNodeResult::Succeeded;
-	}
+	} 
 	//진행중
 	return EBTNodeResult::InProgress;
 }
@@ -130,6 +130,9 @@ void USLBTTaskRotateToFaceTarget::TickTask(UBehaviorTreeComponent& OwnerComp, ui
 	// 위아래 회전(Pitch)은 그대로 유지하도록 현재 값으로 설정
 	TargetRot.Pitch = CurrentRot.Pitch;
 
+	UE_LOG(LogTemp, Warning, TEXT("Current: %s, Target: %s, Setting: %s"), 
+		   *CurrentRot.ToString(), *LookAtRot.ToString(), *TargetRot.ToString());
+	
 	Memory->OwningPawn->SetActorRotation(TargetRot);
 }
 
