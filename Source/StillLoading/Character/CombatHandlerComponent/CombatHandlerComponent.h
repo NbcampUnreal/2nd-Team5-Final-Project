@@ -22,6 +22,8 @@ enum class ECharacterComboState : uint8
  * - 충전 상태 관리
  * - ChargingWidgetActor 관리
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEmpoweredStateChanged, bool, bIsEmpowered);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UCombatHandlerComponent : public UActorComponent
 {
@@ -71,6 +73,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Empowered", meta = (ClampMin = "0.1", ClampMax = "30.0"))
     float MaxEmpoweredDuration = 30.f;
+
+    UPROPERTY(BlueprintAssignable, Category = "Combat")
+    FOnEmpoweredStateChanged OnEmpoweredStateChanged;
 
 protected:
     virtual void BeginPlay() override;

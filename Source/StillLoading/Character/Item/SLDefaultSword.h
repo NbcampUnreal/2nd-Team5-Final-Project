@@ -26,7 +26,7 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Material", meta = (AllowPrivateAccess = "true"))
-	TArray<UMaterialInterface*> SwordMaterials;
+	TArray<TObjectPtr<UMaterialInterface>> SwordMaterials;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> BoxComponent;
