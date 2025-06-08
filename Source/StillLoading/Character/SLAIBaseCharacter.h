@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
 #include "GameplayEffectTypes.h"
+#include "NiagaraSystem.h"
 #include "SLPlayerCharacterBase.h"
 #include "DataAsset/AttackDataAsset.h"
 #include "SLAIBaseCharacter.generated.h"
@@ -107,7 +108,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE float GetCurrentHealth() const { return CurrentHealth; }
-
+	
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool GetIsDead() const { return IsDead;}
 
@@ -271,6 +272,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool GetIsDebugMode() const { return IsDebugMode; }
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Death")
+	void OnDeath();
+    
+	UFUNCTION(BlueprintCallable, Category = "Death")
+	void HandleDeath();
 	
 protected:
 	
@@ -289,7 +296,9 @@ protected:
 	virtual void OnLanded(const FHitResult& Hit);
 
 	bool ShouldPlayHitReaction(float DamageAmount);
-	
+
+	virtual void ProcessDeath();
+
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<ASLBaseAIController> AIController;
@@ -427,6 +436,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|HitReaction")
 	float AccumulatedDamage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|HitReaction")
+	TObjectPtr<UNiagaraSystem> DissolveEffect;
 };
-
-

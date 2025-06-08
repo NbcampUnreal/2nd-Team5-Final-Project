@@ -44,9 +44,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	EBossAttackPattern SelectRandomPattern(float DistanceToTarget, const TArray<EBossAttackPattern>& CloseRangePatterns, const TArray<EBossAttackPattern>& LongRangePatterns,float DistanceThreshold = 500.0f);
+
+	
+
 protected:
 	virtual void BeginPlay() override;
 
+	virtual void ProcessDeath() override;
+	
+	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
 private:
 	// --- Combat Data ---
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
