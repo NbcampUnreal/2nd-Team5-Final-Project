@@ -65,3 +65,21 @@ void ASLDefaultSword::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	
 }
+
+int32 ASLDefaultSword::GetMaterialIndexFromGauge(const float Gauge) const
+{
+	const int32 Step = FMath::Clamp(static_cast<int32>(Gauge / 20.f), 0, 4);
+	return Step;
+}
+
+void ASLDefaultSword::UpdateMaterialByGauge(const float Gauge)
+{
+	const int32 Index = GetMaterialIndexFromGauge(Gauge);
+
+	UE_LOG(LogTemp, Warning, TEXT("Index [%d]"), Index);
+
+	if (SwordMaterials.IsValidIndex(Index) && ItemMesh)
+	{
+		ItemMesh->SetMaterial(0, SwordMaterials[Index]);
+	}
+}

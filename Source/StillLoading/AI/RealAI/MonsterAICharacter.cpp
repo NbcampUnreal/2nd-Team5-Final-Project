@@ -78,6 +78,7 @@ void AMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
+	SetStrategyState(TAG_AI_STRATEGY_ORGANIZED_HOLDPOSITION);
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 
