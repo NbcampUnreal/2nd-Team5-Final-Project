@@ -52,6 +52,10 @@ void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 		Character->BeginBlast(EItemType::IT_Shield);
 		break;
 
+	case ECharacterMovementAction::CMA_EmpowerSword:
+		Character->OnEmpoweredStateChanged(true);
+		break;
+
 	default: break;
 	}
 }
