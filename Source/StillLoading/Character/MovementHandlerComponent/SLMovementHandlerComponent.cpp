@@ -18,6 +18,7 @@
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr), CameraFocusTarget(nullptr)

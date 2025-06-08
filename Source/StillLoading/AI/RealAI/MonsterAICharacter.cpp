@@ -78,7 +78,6 @@ void AMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
-	SetStrategyState(TAG_AI_STRATEGY_ORGANIZED_HOLDPOSITION);
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 
@@ -231,6 +230,11 @@ bool AMonsterAICharacter::HasStrategyState(const FGameplayTag StateToCheck) cons
 	return StrategyStateTags.HasTag(StateToCheck);
 }
 
+void AMonsterAICharacter::RemoveStrategyState()
+{
+	StrategyStateTags.Reset();
+}
+
 void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                         EAttackAnimType AnimType)
 {
@@ -277,7 +281,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 					{
 						GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
 					}
-					
+
 					GetMesh()->SetMaterial(0, DeathMaterial);
 				}
 				AnimationComponent->PlayAIHitMontage("Dead");
@@ -386,9 +390,8 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 
 void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
+	OnDeath();
 	SetBattleState(TAG_AI_Dead);
-
-	FixCharacterVelocity();
 
 	if (DeathMaterial && bIsChangeMaterial)
 	{
@@ -396,7 +399,7 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 		{
 			GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
 		}
-		
+
 		GetMesh()->SetMaterial(0, DeathMaterial);
 	}
 
@@ -423,6 +426,8 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 	// 콜리전 비활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	FixCharacterVelocity();
 
 	// 나중에 Destroy 또는 사라짐 처리
 	SetLifeSpan(1.f);
