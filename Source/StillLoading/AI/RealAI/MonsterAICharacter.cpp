@@ -430,7 +430,7 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 	FixCharacterVelocity();
 
 	// 나중에 Destroy 또는 사라짐 처리
-	SetLifeSpan(1.f);
+	//SetLifeSpan(1.f);
 
 	// BattleComponent에 전달
 	if (Attacker)
