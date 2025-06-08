@@ -1,5 +1,7 @@
 #include "SLDefaultSword.h"
 
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Components/BoxComponent.h"
 
 ASLDefaultSword::ASLDefaultSword()
@@ -36,28 +38,6 @@ void ASLDefaultSword::DisableOverlap()
 void ASLDefaultSword::BeginPlay()
 {
 	Super::BeginPlay();
-
-	/*
-	if (EmpoweredNiagaraEffect)
-	{
-		EmpoweredEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			EmpoweredNiagaraEffect,
-			GetRootComponent(),
-			NAME_None,
-			FVector::ZeroVector,
-			FRotator::ZeroRotator,
-			EAttachLocation::SnapToTargetIncludingScale,
-			true
-		);
-
-		if (EmpoweredEffectComponent)
-		{
-			float ChargingRatio = 0.5f;
-			EmpoweredEffectComponent->SetVariableFloat(FName("ChargingPower"), ChargingRatio);
-		}
-	}
-	*/
-	//BindOverlap(BoxComponent);
 }
 
 void ASLDefaultSword::Tick(float DeltaSeconds)
@@ -76,7 +56,7 @@ void ASLDefaultSword::UpdateMaterialByGauge(const float Gauge)
 {
 	const int32 Index = GetMaterialIndexFromGauge(Gauge);
 
-	UE_LOG(LogTemp, Warning, TEXT("Index [%d]"), Index);
+	UE_LOG(LogTemp, Warning, TEXT("Index: [%d], Gauge: [%f]"), Index, Gauge);
 
 	if (SwordMaterials.IsValidIndex(Index) && ItemMesh)
 	{
