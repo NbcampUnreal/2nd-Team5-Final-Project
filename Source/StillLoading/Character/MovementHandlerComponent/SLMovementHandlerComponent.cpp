@@ -18,6 +18,7 @@
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr), CameraFocusTarget(nullptr)
@@ -90,8 +91,8 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 {
 	if (!OwnerCharacter->HasSecondaryState(TAG_Character_PrepareLockOn)) return;
 
-	// TODO::시체에 잡히는거 처리해야함
-	if (DetectedActor->IsA(AMonsterAICharacter::StaticClass()) || DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
+	if (DetectedActor->IsA(AMonsterAICharacter::StaticClass())
+			|| DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
 	{
 		if (Distance <= FocusMaxDistance && IsValid(DetectedActor))
 		{
@@ -134,6 +135,14 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 		}
 		*/
 	}
+}
+
+void UMovementHandlerComponent::FixCharacterVelocity()
+{
+	FVector Velocity = OwnerCharacter->GetCharacterMovement()->Velocity;
+	Velocity.Z = 0.f;
+	OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
+	OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f;
 }
 
 void UMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
@@ -280,7 +289,7 @@ void UMovementHandlerComponent::BindIMCComponent()
 	CachedBattleComponent->OnCharacterHited.AddDynamic(this, &UMovementHandlerComponent::OnHitReceived);
 }
 
-void UMovementHandlerComponent::RemoveInvulnerability()
+void UMovementHandlerComponent::RemoveInvulnerability() const
 {
 	OwnerCharacter->SecondaryStateTags.RemoveTag(TAG_Character_Invulnerable);
 }
@@ -289,7 +298,9 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
                                               EAttackAnimType AnimType)
 {
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)
-		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)) return;
+		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)
+		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast)) return;
+	
 	OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
 
 	bool bIsFromBack = false;
@@ -340,7 +351,7 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	                                                InvulnerableDuration, false);
 
 	// 피격
-	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable});
+	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable, TAG_Character_Empowered});
 	CachedMontageComponent->StopAllMontages(0.2f);
 
 	float RemoveDelay = 1.0f;
@@ -352,6 +363,7 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	case EAttackAnimType::AAT_Attack_04:
 	case EAttackAnimType::AAT_DashAttack:
 	case EAttackAnimType::AAT_ThrowStone: // 날라가는거
+		ToggleCameraZoom(false);
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
 			OwnerCharacter->SetActorRotation(TargetRotation);
@@ -583,7 +595,7 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
-	
+	BeginBuff();
 }
 
 void UMovementHandlerComponent::Attack()
@@ -591,7 +603,9 @@ void UMovementHandlerComponent::Attack()
 	UAnimMontage* Montage = nullptr;
 	FName SectionName;
 
-	if (CameraFocusTarget && !CameraFocusTarget->IsA(ASLAIBaseCharacter::StaticClass()))
+	if (CameraFocusTarget
+		&& !CameraFocusTarget->IsA(ASLAIBaseCharacter::StaticClass())
+		&& !OwnerCharacter->IsInPrimaryState(TAG_Character_HitReaction))
 	{
 		const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
 		const float Distance = FVector::Dist(OwnerCharacter->GetActorLocation(), CameraFocusTarget->GetActorLocation());
@@ -602,7 +616,7 @@ void UMovementHandlerComponent::Attack()
 			const FVector ToOwner = (OwnerCharacter->GetActorLocation() - CameraFocusTarget->GetActorLocation()).GetSafeNormal();
 
 			const float Dot = FVector::DotProduct(TargetForward, ToOwner);
-			if (Dot < -0.9f)
+			if (Dot < -0.94f)
 			{
 				Execution();
 				return;
@@ -658,10 +672,12 @@ void UMovementHandlerComponent::BeginAttack()
 
 		if (bIsFalling)
 		{
+			ToggleCameraZoom(false);
 			CachedMontageComponent->PlayTrickMontage("BeginAir");
 		}
 		else
 		{
+			ToggleCameraZoom(false);
 			CachedMontageComponent->PlayTrickMontage("Begin");
 		}
 
@@ -689,9 +705,7 @@ void UMovementHandlerComponent::Execution()
 
 	const FVector TargetForward = CameraFocusTarget->GetActorForwardVector();
 	const FVector TargetLoc = CameraFocusTarget->GetActorLocation() + -TargetForward * 80.f;
-
-	const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(
-		TargetLoc, CameraFocusTarget->GetActorLocation());
+	const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(TargetLoc, CameraFocusTarget->GetActorLocation());
 
 	if (UMotionWarpingComponent* WarpComp = Cast<UMotionWarpingComponent>(
 		OwnerCharacter->GetComponentByClass(UMotionWarpingComponent::StaticClass())))
@@ -704,14 +718,33 @@ void UMovementHandlerComponent::Execution()
 	OwnerCharacter->AddSecondaryState(ChosenExecution.SecondaryTag);
 }
 
+void UMovementHandlerComponent::Blast(const EItemType ItemType)
+{
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AirBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Blast Blocked"));
+		return;
+	}
+	
+	switch (ItemType)
+	{
+	case EItemType::IT_Sword:
+		CachedMontageComponent->PlaySkillMontage(FName("BlastSword"));
+		break;
+	case EItemType::IT_Shield:
+		CachedMontageComponent->PlaySkillMontage(FName("BlastShield"));
+		break;
+	}
+
+	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Blast);
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
+}
+
 void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)
 {
 	if (bIsFalling && AttackStateCount != 3)
 	{
-		FVector Velocity = OwnerCharacter->GetCharacterMovement()->Velocity;
-		Velocity.Z = 0.f;
-		OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
-		OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f;
+		FixCharacterVelocity();
 		OwnerCharacter->AddSecondaryState(TAG_Character_Movement_OnAir);
 		++AttackStateCount;
 	}
@@ -799,6 +832,8 @@ void UMovementHandlerComponent::ToggleMenu()
 {
 	UE_LOG(LogTemp, Log, TEXT("Menu opened or closed"));
 	// TODO: UI 호출 / Input 모드 변경 등 처리
+
+	// HUD에 OnPose
 }
 
 void UMovementHandlerComponent::ToggleLockState()
@@ -840,15 +875,17 @@ void UMovementHandlerComponent::DisableLock()
 
 void UMovementHandlerComponent::BeginBuff()
 {
+	ToggleCameraZoom(false);
 	const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
 
-	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn});
+	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_OnBuff);
 	CachedMontageComponent->StopAllMontages(0.2f);
 
 	if (bIsFalling)
 	{
 		CachedMontageComponent->PlayTrickMontage("BuffAir");
+		FixCharacterVelocity();
 	}
 	else
 	{
@@ -878,6 +915,21 @@ void UMovementHandlerComponent::RotateCameraToTarget(const AActor* Target, float
 	}
 }
 
+void UMovementHandlerComponent::ToggleCameraZoom(const bool bIsZoomedOut, const float ZoomedOutArmLength)
+{
+	if (!OwnerCharacter->CameraBoom && OwnerCharacter->HasSecondaryState(TAG_Character_LockOn))
+		return;
+
+	if (bIsZoomedOut)
+	{
+		OwnerCharacter->CameraBoom->TargetArmLength = DefaultArmLength;
+	}
+	else
+	{
+		OwnerCharacter->CameraBoom->TargetArmLength = ZoomedOutArmLength;
+	}
+}
+
 void UMovementHandlerComponent::Dodge()
 {
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AirBlock) || OwnerCharacter->GetMovementComponent()->
@@ -886,6 +938,8 @@ void UMovementHandlerComponent::Dodge()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
 		return;
 	}
+
+	ToggleCameraZoom(false);
 	CachedMontageComponent->PlaySkillMontage(FName("Dodge"));
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
 }
@@ -897,6 +951,8 @@ void UMovementHandlerComponent::Airborne()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
 		return;
 	}
+	
+	ToggleCameraZoom(false);
 	CachedMontageComponent->PlaySkillMontage(FName("Airborne"));
 
 	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Airborne);
@@ -910,6 +966,8 @@ void UMovementHandlerComponent::AirUp()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
 		return;
 	}
+
+	ToggleCameraZoom(false);
 	CachedMontageComponent->PlaySkillMontage(FName("AirUp"));
 
 	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Airup);
@@ -918,6 +976,7 @@ void UMovementHandlerComponent::AirUp()
 
 void UMovementHandlerComponent::AirDown()
 {
+	ToggleCameraZoom(false);
 	CachedMontageComponent->PlaySkillMontage(FName("AirDown"));
 
 	OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Airdown);
@@ -931,7 +990,7 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Defence Blocked"));
 		return;
 	}
-
+	
 	if (bIsBlocking && !OwnerCharacter->GetCharacterMovement()->IsFalling())
 	{
 		OwnerCharacter->SetPrimaryState(TAG_Character_Defense_Block);
@@ -1044,12 +1103,20 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		break;
 	case ECharacterMontageState::ECS_Buff:
 	case ECharacterMontageState::ECS_BuffAir:
-		CachedCombatComponent->SetEmpoweredCombatMode(ECharacterComboState::CCS_Empowered, 10);
+		CachedCombatComponent->SetEmpoweredCombatMode(10);
+		OwnerCharacter->GetCharacterMovement()->GravityScale = 1.f;
+		break;
+	case ECharacterMontageState::ECS_Attack_BlastSword:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Blast);
+		break;
+	case ECharacterMontageState::ECS_Attack_BlastShield:
+		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Blast);
 		break;
 	default:
 		break;
 	}
 
+	ToggleCameraZoom(true);
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Idle);
 }
 
@@ -1078,6 +1145,12 @@ void UMovementHandlerComponent::HandleBufferedInput(ESkillType Action)
 		break;
 	case ESkillType::ST_PointMove:
 		PointMove();
+		break;
+	case ESkillType::ST_BlastSword:
+		Blast(EItemType::IT_Sword);
+		break;
+	case ESkillType::ST_BlastShield:
+		Blast(EItemType::IT_Shield);
 		break;
 	default:
 		break;
