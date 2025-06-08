@@ -18,10 +18,20 @@ public:
 	virtual void EnableOverlap() override;
 	virtual void DisableOverlap() override;
 
+	UFUNCTION()
+	void UpdateMaterialByGauge(float Gauge);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Material", meta = (AllowPrivateAccess = "true"))
+	TArray<UMaterialInterface*> SwordMaterials;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> BoxComponent;
+
+private:
+	UFUNCTION()
+	int32 GetMaterialIndexFromGauge(float Gauge) const;
 };

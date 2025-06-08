@@ -206,7 +206,6 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 					BlockCount = 0;
 				}
 				
-				BeginBuff();
 				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
 
 				// 전체 슬로우 (자기 자신 포함)
@@ -1086,6 +1085,7 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		break;
 	case ECharacterMontageState::ECS_Defense_Parry:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Defense_Parry);
+		BeginBuff();
 		break;
 	case ECharacterMontageState::ECS_Cinematic:
 		break;
