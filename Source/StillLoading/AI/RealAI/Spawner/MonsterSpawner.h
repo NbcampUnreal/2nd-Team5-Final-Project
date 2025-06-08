@@ -18,7 +18,7 @@ struct FMonsterSpawnInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AMonsterAICharacter> Monster;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1", ClampMax = "100"))
 	int32 Count = 1;
 };
 

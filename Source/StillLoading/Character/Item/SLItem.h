@@ -76,6 +76,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> EmpoweredNiagaraEffect;
 
+	UPROPERTY(VisibleAnywhere, Category = "Effect")
+	USceneComponent* BladeEffectPoint;
+
 private:
 	UPROPERTY()
 	TObjectPtr<USceneComponent> OrbitCenter;

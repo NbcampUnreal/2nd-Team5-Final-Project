@@ -26,6 +26,8 @@ void UCombatHandlerComponent::SetEmpoweredCombatMode(const float Duration)
 {
 	OwnerCharacter->AddSecondaryState(TAG_Character_Empowered);
 
+	OnEmpoweredStateChanged.Broadcast(true);
+
 	float TotalDuration = Duration;
 	TotalDuration = FMath::Min(TotalDuration, MaxEmpoweredDuration);
 
@@ -52,6 +54,7 @@ void UCombatHandlerComponent::ResetCombatMode()
 	SetCombatMode(ECharacterComboState::CCS_Normal);
 	GetWorld()->GetTimerManager().ClearTimer(CombatModeResetTimer);
 	OwnerCharacter->RemoveSecondaryState(TAG_Character_Empowered);
+	OnEmpoweredStateChanged.Broadcast(false);
 }
 
 void UCombatHandlerComponent::GenerateChargingWidget()
