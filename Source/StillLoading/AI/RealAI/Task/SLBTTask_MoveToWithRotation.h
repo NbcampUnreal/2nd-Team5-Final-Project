@@ -14,13 +14,16 @@ public:
 
 protected:
 	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
-	EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory);
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	
 	UPROPERTY(EditAnywhere, Category = "Rotation")
 	float RotationSpeed = 5.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Move")
 	float MaxMoveDuration = 1.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Leader")
+	bool bLeaderOnly = false;
 
 private:
 	float TimeElapsed = 0.f;
