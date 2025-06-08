@@ -17,6 +17,9 @@ ASLBossCharacter::ASLBossCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	BossAttackPattern = EBossAttackPattern::EBAP_None;
 
+	MaxHealth = 50.0f;
+	CurrentHealth = MaxHealth;
+	
 	//처형 안되게 수정해야함
 	bCanBeExecuted = true;
 }
@@ -81,8 +84,20 @@ void ASLBossCharacter::BeginPlay()
 	FindTargetPoint();
 	SetTargetPointToBlackboard();
 
-	MaxHealth = 500.0f;
 	CurrentHealth = MaxHealth;
+	
+}
+
+void ASLBossCharacter::ProcessDeath()
+{
+	Super::ProcessDeath();
+	SetBossAttackPattern(EBossAttackPattern::EBAP_None);
+}
+
+void ASLBossCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult,
+	EAttackAnimType AnimType)
+{
+	Super::CharacterHit(DamageCauser, DamageAmount, HitResult, AnimType);
 }
 
 EBossAttackPattern ASLBossCharacter::SelectRandomPattern(float DistanceToTarget, const TArray<EBossAttackPattern>& CloseRangePatterns, const TArray<EBossAttackPattern>& LongRangePatterns, float DistanceThreshold)

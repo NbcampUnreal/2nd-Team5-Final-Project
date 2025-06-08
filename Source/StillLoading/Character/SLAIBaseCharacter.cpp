@@ -134,7 +134,6 @@ void ASLAIBaseCharacter::BeginPlay()
 	
 	IsHitReaction = false;
 	IsDead = false;
-	MaxHealth = 100.0f;
 	CurrentHealth = MaxHealth;
 	CombatPhase = ECombatPhase::ECP_Phase_None;
 	bCanBeExecuted = false;
@@ -456,29 +455,8 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
 	
     if (CurrentHealth <= 0.0f)
     {
-        if (!IsDead)
-        {
-            IsDead = true;
-        	
-            // 충돌 비활성화
-            GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-            GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
-
-            // 이동 중지
-            GetCharacterMovement()->StopMovementImmediately();
-            GetCharacterMovement()->DisableMovement();
-            
-            // AI 컨트롤러 중지
-            if (AIController)
-            {
-                //AIController->GetBrainComponent()->StopLogic("Character Died");
-
-            	if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
-            	{
-            		BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
-            	}
-            }
-        }
+    	ProcessDeath();
+    	return;
     }
     else if (DamageCauser && ShouldPlayHitReaction(DamageAmount))
     {
@@ -1073,4 +1051,47 @@ bool ASLAIBaseCharacter::ShouldPlayHitReaction(float DamageAmount)
 	default:
 		return false;
 	}
+}
+
+void ASLAIBaseCharacter::HandleDeath()
+{
+	if (!IsDead)
+	{
+		ProcessDeath();
+	}
+}
+
+void ASLAIBaseCharacter::ProcessDeath()
+{
+	if (IsDead)
+	{
+		return;
+	}
+    
+	IsDead = true;
+    
+	// 충돌 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
+
+	// 이동 중지
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+    
+	// AI 컨트롤러 중지 및 죽음 알림
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
+		}
+        
+		if (ASLBaseAIController* BaseAIController = Cast<ASLBaseAIController>(AIController))
+		{
+			BaseAIController->OnTargetDeath(this);
+		}
+	}
+    
+	// 블루프린트 이벤트 호출
+	OnDeath();
 }

@@ -57,6 +57,8 @@ public:
 	// 버프용
 	UFUNCTION()
 	void BeginBuff();
+	UFUNCTION()
+	void ToggleCameraZoom(bool bIsZoomedOut, float ZoomedOutArmLength = 500.f);
 
 	// Mouse 제어용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
@@ -108,6 +110,8 @@ protected:
 	void HitDirection(AActor* Causer);
 	UFUNCTION()
 	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
+	UFUNCTION()
+	void FixCharacterVelocity();
 
 	UPROPERTY()
 	FVector2D MovementInputAxis = FVector2D::ZeroVector;
@@ -119,10 +123,13 @@ protected:
 	int32 InvulnerableDuration = 0.5;
 
 	UPROPERTY(EditAnywhere, Category = "Warp")
-	float WarpDistanceThreshold = 600.f;
+	float WarpDistanceThreshold = 500.f;
 
 	UPROPERTY(EditAnywhere, Category = "Warp")
 	float ExecuteDistanceThreshold = 200.f;
+
+	UPROPERTY(EditAnywhere, Category="Camera")
+	float DefaultArmLength = 300.f;
 
 private:
 	void Attack();

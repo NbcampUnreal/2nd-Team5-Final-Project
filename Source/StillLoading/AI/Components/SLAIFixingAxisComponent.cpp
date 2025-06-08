@@ -40,6 +40,7 @@ void USLAIFixingAxisComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
     
     const float RoundedYRotation = FMath::RoundToFloat(YRotation / 90.0f) * 90.0f;
+    /*GetOwner()->SetActorRotation(FRotator(0.0f, RoundedYRotation, 0.0f));*/
     SkeletalMeshComponent->SetRelativeRotation(FRotator(0.0f, RoundedYRotation, 0.0f));
 }
 

@@ -53,12 +53,17 @@ public:
 	void SetStrategyState(const FGameplayTag NewState);
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	bool HasStrategyState(const FGameplayTag StateToCheck) const;
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	void RemoveStrategyState();
 	
 	UFUNCTION()
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
 
 	UFUNCTION()
-	void Dead(const AActor* Attacker);
+	void Dead(const AActor* Attacker, bool bIsChangeMaterial);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "On Death")
+	void OnDeath();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster")
 	EMonsterType CurrentMonsterType = EMonsterType::MT_None;
@@ -87,7 +92,9 @@ public:
 	float ForwardDot = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	float RightDot = 0.0f;
-	
+
+	FTimerHandle TestTimerHandle;
+	FTimerHandle TestTimerHandle2;
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -106,15 +113,26 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Formation")
 	TObjectPtr<UFormationComponent> FormationComponent;
 
+	UPROPERTY(EditAnywhere, Category="Mesh")
+	TObjectPtr<UMaterialInterface> HitMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Materials")
+	TObjectPtr<UMaterialInterface> DeathMaterial;
+
 private:
 	UFUNCTION()
 	void AttachItemToHand(AActor* ItemActor, FName SocketName) const;
 	UFUNCTION()
 	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
 	UFUNCTION()
+	void ChangeMeshTemporarily();
+	UFUNCTION()
+	void ResetMaterial();
+	UFUNCTION()
 	void HitDirection(AActor* Causer);
 	UFUNCTION()
 	void RotateToHitCauser(const AActor* Causer);
+	UFUNCTION()
+	void FixCharacterVelocity();
 
 	UPROPERTY()
 	TObjectPtr<AActor> LastAttacker;
@@ -126,14 +144,23 @@ private:
 
 	UPROPERTY()
 	FTimerHandle PushResetHandle;
+	UPROPERTY()
+	FTimerHandle MaterialResetTimerHandle;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UMaterialInterface>> OriginalMaterials;
 
 	bool bIsChasing = false;
 	bool bIsLeader = false;
 	bool bRecentlyPushed = false;
+	bool bOriginalMaterialsInitialized = false;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	void SetLeader();
+
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
+	FORCEINLINE bool IsLeader() const { return bIsLeader; }
 	
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	FORCEINLINE void SetFollower() { bIsLeader = false; }

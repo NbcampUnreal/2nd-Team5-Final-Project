@@ -2,6 +2,7 @@
 
 #include "AIController.h"
 #include "AI/RealAI/Blackboardkeys.h"
+#include "AI/RealAI/MonsterAICharacter.h"
 #include "Navigation/PathFollowingComponent.h"
 
 USLBTTask_MoveToWithRotation::USLBTTask_MoveToWithRotation()
@@ -17,16 +18,26 @@ EBTNodeResult::Type USLBTTask_MoveToWithRotation::ExecuteTask(UBehaviorTreeCompo
 	AAIController* AICon = OwnerComp.GetAIOwner();
 	if (!AICon) return EBTNodeResult::Failed;
 
-	UBlackboardComponent* BBComp = OwnerComp.GetBlackboardComponent();
-	if (!BBComp) return EBTNodeResult::Failed;
+	AMonsterAICharacter* ControlledPawn = Cast<AMonsterAICharacter>(AICon->GetPawn());
+	if (!ControlledPawn) return EBTNodeResult::Failed;
+	
+	if (ControlledPawn->IsLeader() && bLeaderOnly)
+	{
+		UBlackboardComponent* BBComp = OwnerComp.GetBlackboardComponent();
+		if (!BBComp) return EBTNodeResult::Failed;
 
-	AActor* Target = Cast<AActor>(BBComp->GetValueAsObject(BlackboardKeys::TargetActor));
-	if (!Target) return EBTNodeResult::Failed;
+		AActor* Target = Cast<AActor>(BBComp->GetValueAsObject(BlackboardKeys::TargetActor));
+		if (!Target) return EBTNodeResult::Failed;
 
-	FAIMoveRequest MoveReq;
-	MoveReq.SetGoalActor(Target);
-	MoveReq.SetAcceptanceRadius(10.0f);
-	AICon->MoveTo(MoveReq);
+		FAIMoveRequest MoveReq;
+		MoveReq.SetGoalActor(Target);
+		MoveReq.SetAcceptanceRadius(10.0f);
+		AICon->MoveTo(MoveReq);
+	}
+	else
+	{
+		return EBTNodeResult::Succeeded;
+	}
 
 	return EBTNodeResult::InProgress;
 }
@@ -35,30 +46,33 @@ void USLBTTask_MoveToWithRotation::TickTask(UBehaviorTreeComponent& OwnerComp, u
 {
 	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
 
-	TimeElapsed += DeltaSeconds;
-
-	AAIController* AICon = OwnerComp.GetAIOwner();
-	APawn* Pawn = AICon ? AICon->GetPawn() : nullptr;
-
-	if (!Pawn || !AICon)
+	if (bLeaderOnly)
 	{
-		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
-		return;
-	}
+		TimeElapsed += DeltaSeconds;
 
-	FVector MoveDirection = AICon->GetImmediateMoveDestination() - Pawn->GetActorLocation();
-	MoveDirection.Z = 0.f;
+		AAIController* AICon = OwnerComp.GetAIOwner();
+		APawn* Pawn = AICon ? AICon->GetPawn() : nullptr;
 
-	if (!MoveDirection.IsNearlyZero())
-	{
-		FRotator TargetRotation = MoveDirection.Rotation();
-		FRotator NewRotation = FMath::RInterpTo(Pawn->GetActorRotation(), TargetRotation, DeltaSeconds, RotationSpeed);
-		Pawn->SetActorRotation(NewRotation);
-	}
+		if (!Pawn || !AICon)
+		{
+			FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+			return;
+		}
 
-	if (TimeElapsed >= MaxMoveDuration)
-	{
-		AICon->StopMovement();
-		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+		FVector MoveDirection = AICon->GetImmediateMoveDestination() - Pawn->GetActorLocation();
+		MoveDirection.Z = 0.f;
+
+		if (!MoveDirection.IsNearlyZero())
+		{
+			FRotator TargetRotation = MoveDirection.Rotation();
+			FRotator NewRotation = FMath::RInterpTo(Pawn->GetActorRotation(), TargetRotation, DeltaSeconds, RotationSpeed);
+			Pawn->SetActorRotation(NewRotation);
+		}
+
+		if (TimeElapsed >= MaxMoveDuration)
+		{
+			AICon->StopMovement();
+			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+		}
 	}
 }

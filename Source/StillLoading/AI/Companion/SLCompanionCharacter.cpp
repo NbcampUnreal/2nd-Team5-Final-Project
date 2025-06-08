@@ -67,6 +67,14 @@ ASLCompanionCharacter::ASLCompanionCharacter()
     GetCharacterMovement()->NavAgentProps.bCanFly = true;
     GetCharacterMovement()->bCanWalkOffLedges = true;
     GetCharacterMovement()->bCanWalkOffLedgesWhenCrouching = true;
+
+    /*GetCharacterMovement()->bOrientRotationToMovement = false;  // 이동 방향으로 자동 회전 비활성화
+    GetCharacterMovement()->bUseControllerDesiredRotation = true;  // 컨트롤러가 원하는 회전 사용
+    GetCharacterMovement()->RotationRate = FRotator(0.0f, 360.0f, 0.0f);
+
+    bUseControllerRotationYaw = true;
+    bUseControllerRotationPitch = false;
+    bUseControllerRotationRoll = false;*/
 }
 
 void ASLCompanionCharacter::BeginPlay()
@@ -78,6 +86,7 @@ void ASLCompanionCharacter::BeginPlay()
         
         FlyingComponent->OnFlyingStateChanged.AddDynamic(this, &ASLCompanionCharacter::OnFlyingStateChanged);
     }
+    CurrentHealth = MaxHealth;
 }
 
 void ASLCompanionCharacter::Tick(float DeltaTime)
@@ -417,27 +426,7 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
     
         if (CurrentHealth <= 0.0f)
         {
-            if (!IsDead)
-            {
-                IsDead = true;
-        	
-                // 충돌 비활성화
-                GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-                GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
-
-                // 이동 중지
-                GetCharacterMovement()->StopMovementImmediately();
-                GetCharacterMovement()->DisableMovement();
-            
-                // AI 컨트롤러 중지
-                if (AIController)
-                {
-                    if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
-                    {
-                        BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
-                    }
-                }
-            }
+            ProcessDeath(); // 기존 죽음 처리 로직을 이 한 줄로 대체
         }
     }
     
@@ -629,7 +618,10 @@ UNiagaraComponent* ASLCompanionCharacter::SpawnNiagaraEffect(const FNiagaraSpawn
 
 void ASLCompanionCharacter::OnFlyingStateChanged(bool bIsFlying)
 {
-    
+    if (bIsFlying)
+    {
+        GetCharacterMovement()->bOrientRotationToMovement = false;
+    }
 }
 
 void ASLCompanionCharacter::ProcessMultiHit(const FMultiHitData& MultiHitData)
@@ -674,6 +666,21 @@ void ASLCompanionCharacter::ProcessMultiHit(const FMultiHitData& MultiHitData)
 
 void ASLCompanionCharacter::BeginDestroy()
 {
+    Super::BeginDestroy();
+}
+
+void ASLCompanionCharacter::ProcessDeath()
+{
+    // 부모 클래스의 공통 죽음 처리 호출
+    Super::ProcessDeath();
+    
+    // Companion 특유의 추가 처리
+    if (FlyingComponent && FlyingComponent->IsFlying())
+    {
+        FlyingComponent->StopFlying();
+    }
+    
+    // 멀티 히트 타이머들 정리
     for (auto& Pair : ActiveMultiHits)
     {
         if (GetWorld())
@@ -682,6 +689,4 @@ void ASLCompanionCharacter::BeginDestroy()
         }
     }
     ActiveMultiHits.Empty();
-    
-    Super::BeginDestroy();
 }

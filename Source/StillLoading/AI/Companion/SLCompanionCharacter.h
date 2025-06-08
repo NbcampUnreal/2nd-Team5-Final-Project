@@ -254,6 +254,8 @@ protected:
 
 	UFUNCTION()
 	void OnFlyingStateChanged(bool bIsFlying);
+
+	virtual void ProcessDeath() override;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	TSubclassOf<ASLAIProjectile> ProjectileClass;
