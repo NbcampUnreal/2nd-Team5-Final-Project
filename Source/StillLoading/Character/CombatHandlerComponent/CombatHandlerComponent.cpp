@@ -2,8 +2,8 @@
 
 #include "ChargingWidget.h"
 #include "ChargingWidgetActor.h"
-#include "NiagaraFunctionLibrary.h"
 #include "Character/SLPlayerCharacter.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -22,37 +22,39 @@ void UCombatHandlerComponent::BeginPlay()
 	GenerateChargingWidget();
 }
 
-void UCombatHandlerComponent::SetEmpoweredCombatMode(ECharacterComboState Mode, float AdditionalDuration)
+void UCombatHandlerComponent::SetEmpoweredCombatMode(const float Duration)
 {
-	CurrentMode = Mode;
-	
-	float TotalDuration = AdditionalDuration;
+	OwnerCharacter->AddSecondaryState(TAG_Character_Empowered);
+
+	OnEmpoweredStateChanged.Broadcast(true);
+
+	float TotalDuration = Duration;
 	TotalDuration = FMath::Min(TotalDuration, MaxEmpoweredDuration);
 
-	if (Mode == ECharacterComboState::CCS_Empowered && GetWorld()->GetTimerManager().IsTimerActive(CombatModeResetTimer))
+	if (CurrentMode == ECharacterComboState::CCS_Empowered && GetWorld()->GetTimerManager().IsTimerActive(CombatModeResetTimer))
 	{
-		float Remaining = GetWorld()->GetTimerManager().GetTimerRemaining(CombatModeResetTimer);
+		const float Remaining = GetWorld()->GetTimerManager().GetTimerRemaining(CombatModeResetTimer);
 		TotalDuration += Remaining;
 	}
 
-	GetWorld()->GetTimerManager().ClearTimer(CombatModeResetTimer);
+	CurrentMode = ECharacterComboState::CCS_Empowered;
 
-	if (Mode != ECharacterComboState::CCS_Normal)
-	{
-		GetWorld()->GetTimerManager().SetTimer(
-			CombatModeResetTimer,
-			this,
-			&UCombatHandlerComponent::ResetCombatMode,
-			TotalDuration,
-			false
-		);
-	}
+	GetWorld()->GetTimerManager().ClearTimer(CombatModeResetTimer);
+	GetWorld()->GetTimerManager().SetTimer(
+		CombatModeResetTimer,
+		this,
+		&UCombatHandlerComponent::ResetCombatMode,
+		TotalDuration,
+		false
+	);
 }
 
 void UCombatHandlerComponent::ResetCombatMode()
 {
 	SetCombatMode(ECharacterComboState::CCS_Normal);
 	GetWorld()->GetTimerManager().ClearTimer(CombatModeResetTimer);
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_Empowered);
+	OnEmpoweredStateChanged.Broadcast(false);
 }
 
 void UCombatHandlerComponent::GenerateChargingWidget()
@@ -131,7 +133,6 @@ void UCombatHandlerComponent::CancelCharging()
 	{
 		ChargingWidgetActor->GetWidgetComponent()->SetVisibility(false);
 	}
-
 }
 
 // Combo

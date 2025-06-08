@@ -7,9 +7,12 @@
 UENUM(BlueprintType)
 enum class ECharacterMovementAction : uint8
 {
-	CMA_LaunchUp		UMETA(DisplayName = "Launch Up"),
-	CMA_LaunchBack		UMETA(DisplayName = "Launch Back"),
-	CMA_LaunchOff		UMETA(DisplayName = "Launch Off"),
+	CMA_LaunchUp			UMETA(DisplayName = "Launch Up"),
+	CMA_LaunchBack			UMETA(DisplayName = "Launch Back"),
+	CMA_LaunchOff			UMETA(DisplayName = "Launch Off"),
+	CMA_LaunchActionSword	UMETA(DisplayName = "Launch Action Sword"),
+	CMA_LaunchActionShield	UMETA(DisplayName = "Launch Action Shield"),
+	CMA_EmpowerSword		UMETA(DisplayName = "EmpowerSword"),
 };
 
 UCLASS()

@@ -79,7 +79,7 @@ EBTNodeResult::Type USLBTTaskRotateToFaceTarget::ExecuteTask(UBehaviorTreeCompon
 		Memory->Reset();
 		//완료
 		return EBTNodeResult::Succeeded;
-	}
+	} 
 	//진행중
 	return EBTNodeResult::InProgress;
 }
@@ -130,6 +130,9 @@ void USLBTTaskRotateToFaceTarget::TickTask(UBehaviorTreeComponent& OwnerComp, ui
 	// 위아래 회전(Pitch)은 그대로 유지하도록 현재 값으로 설정
 	TargetRot.Pitch = CurrentRot.Pitch;
 
+	UE_LOG(LogTemp, Warning, TEXT("Current: %s, Target: %s, Setting: %s"), 
+		   *CurrentRot.ToString(), *LookAtRot.ToString(), *TargetRot.ToString());
+	
 	Memory->OwningPawn->SetActorRotation(TargetRot);
 }
 
@@ -140,23 +143,33 @@ bool USLBTTaskRotateToFaceTarget::HasReachedAnglePrecision(APawn* QueryPawn, AAc
 		UE_LOG(LogTemp, Warning, TEXT("QueryPawn 또는 TargetActor가 nullptr입니다."));
 		return false;
 	}
-	
-	const FVector OwnerForward = QueryPawn->GetActorForwardVector();
-	const FVector ToTarget = TargetActor->GetActorLocation() - QueryPawn->GetActorLocation();
-	
-	if (ToTarget.IsNearlyZero())
+    
+	// Yaw 회전만 체크하도록 수정
+	const FVector PawnLocation = QueryPawn->GetActorLocation();
+	const FVector TargetLocation = TargetActor->GetActorLocation();
+    
+	// Z축을 무시하고 2D 평면에서의 방향 벡터 계산
+	FVector ToTarget2D = TargetLocation - PawnLocation;
+	ToTarget2D.Z = 0.0f;
+    
+	if (ToTarget2D.IsNearlyZero())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("QueryPawn과 TargetActor의 위치 차이가 0입니다."));
-		return false;
+		return true;
 	}
-	
-	const FVector OwnerToTargetNormalized = ToTarget.GetSafeNormal();
-	
-	//두 벡터 사이의 내적(Dot Product)을 계산
-	const float DotResult = FMath::Clamp(FVector::DotProduct(OwnerForward, OwnerToTargetNormalized), -1.0f, 1.0f);
-
-	//내적 값을 통해 두 벡터 사이의 각도를 계산
+    
+	// 정규화
+	ToTarget2D.Normalize();
+    
+	// 폰의 전방 벡터도 2D로 변환
+	FVector OwnerForward2D = QueryPawn->GetActorForwardVector();
+	OwnerForward2D.Z = 0.0f;
+	OwnerForward2D.Normalize();
+    
+	// 내적 계산
+	const float DotResult = FMath::Clamp(FVector::DotProduct(OwnerForward2D, ToTarget2D), -1.0f, 1.0f);
+    
+	// 각도 계산
 	const float AngleDiff = UKismetMathLibrary::DegAcos(DotResult);
-
+    
 	return AngleDiff <= AnglePrecision;
 }

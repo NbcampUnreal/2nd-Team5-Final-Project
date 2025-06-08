@@ -4,7 +4,7 @@
 
 ASLDefaultShield::ASLDefaultShield()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionSphere"));
 	BoxComponent->SetupAttachment(ItemMesh);
@@ -37,5 +37,10 @@ void ASLDefaultShield::BeginPlay()
 	Super::BeginPlay();
 
 	//BindOverlap(BoxComponent);
+}
+
+void ASLDefaultShield::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
 }
 

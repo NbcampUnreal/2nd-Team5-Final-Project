@@ -33,7 +33,29 @@ void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 		Character->GetCharacterMovement()->StopMovementImmediately();
 		Character->GetCharacterMovement()->Velocity = FVector::ZeroVector;
 		break;
+
+	case ECharacterMovementAction::CMA_LaunchActionSword:
+		if (UMovementHandlerComponent* MoveComp = Character->FindComponentByClass<UMovementHandlerComponent>())
+		{
+			MoveComp->ToggleCameraZoom(false);
+		}
 		
+		Character->BeginBlast(EItemType::IT_Sword);
+		break;
+
+	case ECharacterMovementAction::CMA_LaunchActionShield:
+		if (UMovementHandlerComponent* MoveComp = Character->FindComponentByClass<UMovementHandlerComponent>())
+		{
+			MoveComp->ToggleCameraZoom(false);
+		}
+		
+		Character->BeginBlast(EItemType::IT_Shield);
+		break;
+
+	case ECharacterMovementAction::CMA_EmpowerSword:
+		Character->OnEmpoweredStateChanged(true);
+		break;
+
 	default: break;
 	}
 }

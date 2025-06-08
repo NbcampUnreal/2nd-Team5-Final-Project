@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// SLBossCharacter.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -44,8 +43,28 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	EBossAttackPattern SelectRandomPattern(float DistanceToTarget, const TArray<EBossAttackPattern>& CloseRangePatterns, const TArray<EBossAttackPattern>& LongRangePatterns,float DistanceThreshold = 500.0f);
+
+	// 하위 스켈레탈 메시 머티리얼 관련 함수
+	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Setup Child Meshes Materials"))
+	void SetupChildMeshesMaterials(const TArray<USkeletalMeshComponent*>& ChildMeshes, int32 MaterialIndex = 0);
+
+	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Set All Meshes Alpha"))
+	void SetAllMeshesAlpha(float AlphaValue);
+
+	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Fade All Meshes"))
+	void FadeAllMeshes(float TargetAlpha, float Duration);
+
+	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Set Mesh Alpha By Index"))
+	void SetMeshAlphaByIndex(int32 MeshIndex, float AlphaValue);
+
+	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Fade Mesh By Index"))
+	void FadeMeshByIndex(int32 MeshIndex, float TargetAlpha, float Duration);
+
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void UpdateAllMeshesFade();
 
 private:
 	// --- Combat Data ---
@@ -56,5 +75,33 @@ private:
 	TObjectPtr<AActor> TargetPoint;
 
 	UPROPERTY()
-	EBossAttackPattern LastLongRangePattern = EBossAttackPattern::EBAP_None;
+	EBossAttackPattern LastLongRangePattern;
+
+	// --- Material Data ---
+	UPROPERTY()
+	TArray<TObjectPtr<UMaterialInstanceDynamic>> ChildMeshesDynamicMaterials;
+
+	UPROPERTY()
+	TArray<TObjectPtr<USkeletalMeshComponent>> ChildMeshComponents;
+
+	UPROPERTY()
+	TArray<float> ChildMeshesCurrentAlpha;
+
+	UPROPERTY()
+	TArray<float> ChildMeshesStartAlpha;
+
+	UPROPERTY()
+	FTimerHandle AllMeshesFadeTimerHandle;
+
+	UPROPERTY()
+	TMap<int32, FTimerHandle> IndividualFadeTimers;
+
+	UPROPERTY()
+	float AllMeshesTargetAlpha;
+
+	UPROPERTY()
+	float AllMeshesFadeStartTime;
+
+	UPROPERTY()
+	float AllMeshesFadeDuration;
 };

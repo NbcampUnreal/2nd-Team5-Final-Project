@@ -1,12 +1,15 @@
 #include "SLPlayerCharacter.h"
 
+#include "BattleComponent/BattleComponent.h"
 #include "Camera/CameraComponent.h"
+#include "CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GamePlayTag/GamePlayTag.h"
+#include "Item/SLDefaultSword.h"
+#include "Item/SLItem.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
-#include "RadarComponent/CollisionRadarComponent.h"
 
 ASLPlayerCharacter::ASLPlayerCharacter()
 {
@@ -18,7 +21,7 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
-	
+
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.f;
@@ -29,7 +32,7 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 	// Spring Arm Collision
 	CameraBoom->bDoCollisionTest = true;
 	CameraBoom->ProbeChannel = ECC_Camera;
-	
+
 	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
 	ThirdPersonCamera->SetupAttachment(CameraBoom);
 }
@@ -40,21 +43,34 @@ void ASLPlayerCharacter::BeginPlay()
 
 	if (SwordClass)
 	{
-		Sword = GetWorld()->SpawnActor<AActor>(SwordClass, GetActorLocation(), GetActorRotation());
+		Sword = GetWorld()->SpawnActor<ASLItem>(SwordClass, GetActorLocation(), GetActorRotation());
 		AttachItemToHand(Sword, TEXT("r_weapon_socket"));
 		Sword->SetOwner(this);
 	}
 
 	if (ShieldClass)
 	{
-		Shield = GetWorld()->SpawnActor<AActor>(ShieldClass, GetActorLocation(), GetActorRotation());
+		Shield = GetWorld()->SpawnActor<ASLItem>(ShieldClass, GetActorLocation(), GetActorRotation());
 		AttachItemToHand(Shield, TEXT("l_weapon_socket"));
 		Shield->SetOwner(this);
 	}
-	
+
 	SetPrimaryState(TAG_Character_Movement_Idle);
 
 	PrintPrimaryStateTags();
+
+	if (UCombatHandlerComponent* CombatHandler = FindComponentByClass<UCombatHandlerComponent>())
+	{
+		CombatHandler->OnEmpoweredStateChanged.AddDynamic(this, &ASLPlayerCharacter::OnEmpoweredStateChanged);
+	}
+}
+
+void ASLPlayerCharacter::OnEmpoweredStateChanged(const bool bIsEmpowered)
+{
+	if (ASLDefaultSword* PlayerSword = Cast<ASLDefaultSword>(Sword))
+	{
+		PlayerSword->UpdateMaterialByGauge(bIsEmpowered ? 100 : 0);
+	}
 }
 
 void ASLPlayerCharacter::Tick(float DeltaTime)
@@ -63,12 +79,10 @@ void ASLPlayerCharacter::Tick(float DeltaTime)
 
 	if (GetMovementComponent()->IsFalling())
 	{
-		// 점프 중: AI와 충돌 무시
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	}
 	else
 	{
-		// 착지 후: AI와 충돌 활성화
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 	}
 }
@@ -116,6 +130,65 @@ void ASLPlayerCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketN
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		SocketName
 	);
+}
+
+void ASLPlayerCharacter::BeginBlast(const EItemType ItemType)
+{
+	switch (ItemType)
+	{
+	case EItemType::IT_Sword:
+		if (SwordClass)
+		{
+			if (Sword)
+			{
+				Sword->SetActorHiddenInGame(true);
+			}
+
+			StartOrbitWithClone(SwordClass, EItemType::IT_Sword, EOrbitDirection::CounterClockwise);
+			StartOrbitWithClone(SwordClass, EItemType::IT_Sword, EOrbitDirection::CounterClockwise);
+		}
+		break;
+	case EItemType::IT_Shield:
+		if (ShieldClass)
+		{
+			if (Shield)
+			{
+				Shield->SetActorHiddenInGame(true);
+			}
+
+			StartOrbitWithClone(ShieldClass, EItemType::IT_Shield, EOrbitDirection::Clockwise);
+			StartOrbitWithClone(ShieldClass, EItemType::IT_Shield, EOrbitDirection::Clockwise);
+		}
+		break;
+	}
+}
+
+void ASLPlayerCharacter::StartOrbitWithClone(const TSubclassOf<AActor>& ObjectClass, const EItemType ItemType, const EOrbitDirection OrbitDirection)
+{
+	if (!ObjectClass) return;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+
+	FRotator SpawnRot = GetActorRotation();
+	//SpawnRot.Pitch += 90.f;
+
+	AActor* OrbitObject = nullptr;
+	switch (ItemType)
+	{
+	case EItemType::IT_Sword:
+		OrbitObject = GetWorld()->SpawnActor<AActor>(ObjectClass, GetActorLocation(), SpawnRot, SpawnParams);
+		break;
+	case EItemType::IT_Shield:
+		OrbitObject = GetWorld()->SpawnActor<AActor>(ObjectClass, GetActorLocation(), SpawnRot, SpawnParams);
+		break;
+	}
+
+	if (ASLItem* OrbitItem = Cast<ASLItem>(OrbitObject))
+	{
+		OrbitItem->OnItemOverlap.AddDynamic(this, &ASLPlayerCharacter::OnItemSweeped);
+		OrbitItem->StartOrbit(this, ItemType, OrbitDirection);
+	}
 }
 
 bool ASLPlayerCharacter::IsBlocking() const
@@ -168,7 +241,8 @@ void ASLPlayerCharacter::ClearAllStateTags()
 	}
 }
 
-void ASLPlayerCharacter::ClearStateTags(const TArray<FGameplayTag>& PrimaryExceptTagList, const TArray<FGameplayTag>& SecondaryExceptTagList)
+void ASLPlayerCharacter::ClearStateTags(const TArray<FGameplayTag>& PrimaryExceptTagList,
+                                        const TArray<FGameplayTag>& SecondaryExceptTagList)
 {
 	FGameplayTagContainer PrimaryExceptTags;
 	for (const FGameplayTag& Tag : PrimaryExceptTagList)
@@ -187,7 +261,7 @@ void ASLPlayerCharacter::ClearStateTags(const TArray<FGameplayTag>& PrimaryExcep
 			SecondaryExceptTags.AddTag(Tag);
 		}
 	}
-	
+
 	if (!PrimaryStateTags.IsEmpty())
 	{
 		PrimaryStateTags.Reset();
@@ -226,5 +300,14 @@ void ASLPlayerCharacter::PrintPrimaryStateTags() const
 	for (const FGameplayTag& Tag : PrimaryStateTags.GetGameplayTagArray())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[PrimaryState] %s"), *Tag.ToString());
+	}
+}
+
+void ASLPlayerCharacter::OnItemSweeped(AActor* OverlappedActor, FHitResult Hit)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("OverlappedActor [%s]"), *OverlappedActor->GetName());
+	if (UBattleComponent* BattleComp = this->FindComponentByClass<UBattleComponent>())
+	{
+		BattleComp->SendHitResult(OverlappedActor, Hit, EAttackAnimType::AAT_Skill2);
 	}
 }

@@ -89,8 +89,9 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 	ShouldLookAtPlayer = OwningCharacter->GetShouldLookAtPlayer();
 	DamagePosition = OwningCharacter->GetHitDirectionVector();
 	bIsJump = OwningCharacter->IsJumping();
+	IsLoop = OwningCharacter->GetIsLoop();
 	// 현재 속도 계산
-	FVector CurrentVelocity = OwningCharacter->GetVelocity();
+	FVector CurrentVelocity = OwningCharacter->GetMovementComponent()->GetVelocityForNavMovement();
 	GroundSpeed = CurrentVelocity.Size2D();
     
 	// AI 캐릭터를 위한 가속도 감지

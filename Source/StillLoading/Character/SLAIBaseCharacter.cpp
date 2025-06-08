@@ -80,9 +80,13 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	bIsAttacking = false;
 	bShouldLookAtPlayer = false;
 	HitDirection = EHitDirection::EHD_Front;
-
+	IsInvincibility = false;
+	
 	bIsJumping = false;
 	bIsLanding = false;
+	HitReactionMode = EHitReactionMode::EHRM_Always;
+	HitDamageThreshold = 20.0f;
+	AccumulatedDamage = 0.0f;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -130,7 +134,6 @@ void ASLAIBaseCharacter::BeginPlay()
 	
 	IsHitReaction = false;
 	IsDead = false;
-	MaxHealth = 100.0f;
 	CurrentHealth = MaxHealth;
 	CombatPhase = ECombatPhase::ECP_Phase_None;
 	bCanBeExecuted = false;
@@ -452,31 +455,10 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
 	
     if (CurrentHealth <= 0.0f)
     {
-        if (!IsDead)
-        {
-            IsDead = true;
-        	
-            // 충돌 비활성화
-            GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-            GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
-
-            // 이동 중지
-            GetCharacterMovement()->StopMovementImmediately();
-            GetCharacterMovement()->DisableMovement();
-            
-            // AI 컨트롤러 중지
-            if (AIController)
-            {
-                //AIController->GetBrainComponent()->StopLogic("Character Died");
-
-            	if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
-            	{
-            		BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
-            	}
-            }
-        }
+    	ProcessDeath();
+    	return;
     }
-    else if (DamageCauser && IsHitReaction)
+    else if (DamageCauser && ShouldPlayHitReaction(DamageAmount))
     {
     	// 애님 인스턴스에 설정하는 대신 캐릭터 멤버 변수에 직접 설정
     	FVector AttackerLocation = DamageCauser->GetActorLocation();
@@ -542,19 +524,101 @@ EChapter ASLAIBaseCharacter::GetChapter() const
 }
 
 ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass,
-	FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType)
+    FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType, bool bHorizontalOnly)
 {
-	
+    UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation called. ProjectileSpeed parameter: %f"), ProjectileSpeed);
+    if (!ProjectileClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No projectile class specified"));
+        return nullptr;
+    }
+
+    FVector SpawnLocation = GetMesh()->GetSocketLocation(SocketName);
+    
+    if (TargetLocation.IsZero() || TargetLocation.IsNearlyZero())
+    {
+        TargetLocation = SpawnLocation + GetActorForwardVector() * 1000.0f;
+        
+        UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No target location, using socket forward direction"));
+    }
+    
+    FRotator SpawnRotation;
+    FVector LaunchDirection;
+    
+    if (bHorizontalOnly)
+    {
+        // 수평 방향으로만 회전 및 발사
+        FVector DirectionToTarget = (TargetLocation - SpawnLocation).GetSafeNormal();
+        FVector HorizontalDirection = FVector(DirectionToTarget.X, DirectionToTarget.Y, 0).GetSafeNormal();
+        
+        // 현재 액터의 회전값을 기본으로 사용
+        FRotator CurrentRotation = GetActorRotation();
+        
+        // 수평 방향에 대한 Yaw 값만 계산
+        FRotator HorizontalRotation = HorizontalDirection.Rotation();
+        
+        // 최종 회전값: 현재 Pitch와 Roll 유지, Yaw만 타겟 방향으로 설정
+        SpawnRotation = FRotator(CurrentRotation.Pitch, HorizontalRotation.Yaw, CurrentRotation.Roll);
+        
+        // 발사 방향도 수평으로만 설정
+        LaunchDirection = HorizontalDirection;
+    }
+    else
+    {
+        // 기존 방식: 완전히 타겟을 향한 회전 및 발사
+        SpawnRotation = CalculateProjectileRotation(SpawnLocation, TargetLocation);
+        LaunchDirection = (TargetLocation - SpawnLocation).GetSafeNormal();
+    }
+    
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    SpawnParams.Owner = this;
+    SpawnParams.Instigator = this;
+
+    ASLAIProjectile* SpawnedProjectile = GetWorld()->SpawnActor<ASLAIProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+    if (SpawnedProjectile)
+    {
+        // 프로젝타일 설정
+        SpawnedProjectile->SetupSpawnedProjectile(AnimType, ProjectileSpeed);
+
+        PreparedProjectile = SpawnedProjectile;
+        // 프로젝타일 속도 설정
+        if (SpawnedProjectile->GetProjectileMovement())
+        {
+            // 계산된 발사 방향으로 발사
+            SpawnedProjectile->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
+    }
+
+    return SpawnedProjectile;
+}
+
+
+
+FRotator ASLAIBaseCharacter::CalculateProjectileRotation(const FVector& StartLocation, const FVector& TargetLocation) const
+{
+	FVector Direction = (TargetLocation - StartLocation).GetSafeNormal();
+	return UKismetMathLibrary::MakeRotFromX(Direction);
+}
+
+ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileForLaunch(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType)
+{
 	if (!ProjectileClass)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No projectile class specified"));
+		UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileForLaunch: No projectile class specified"));
 		return nullptr;
 	}
 
 	// 스폰 위치 계산
-	FVector SpawnLocation = GetMesh()->GetSocketLocation(SocketName);
+	FVector ForwardVector = GetActorForwardVector();
+	FVector SpawnLocation = GetMesh()->GetSocketLocation(SocketName) + ForwardVector * 50.0f;
 	FRotator SpawnRotation = CalculateProjectileRotation(SpawnLocation, TargetLocation);
-	
+
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	SpawnParams.Owner = this;
@@ -564,29 +628,34 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
 
 	if (SpawnedProjectile)
 	{
-		// 프로젝타일 설정
 		SpawnedProjectile->SetupSpawnedProjectile(AnimType, ProjectileSpeed);
-
-		// 프로젝타일 속도 설정
-		if (SpawnedProjectile->GetProjectileMovement())
-		{
-			// 타겟 방향으로 발사
-			FVector LaunchDirection = (TargetLocation - SpawnLocation).GetSafeNormal();
-			SpawnedProjectile->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
-		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
+		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile in SpawnProjectileForLaunch"));
 	}
 
 	return SpawnedProjectile;
 }
 
-FRotator ASLAIBaseCharacter::CalculateProjectileRotation(const FVector& StartLocation, const FVector& TargetLocation) const
+void ASLAIBaseCharacter::LaunchSpawnedProjectile(ASLAIProjectile* ProjectileToLaunch, FVector TargetLocation, float ProjectileSpeed)
 {
-	FVector Direction = (TargetLocation - StartLocation).GetSafeNormal();
-	return UKismetMathLibrary::MakeRotFromX(Direction);
+	if (!ProjectileToLaunch)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LaunchSpawnedProjectile: ProjectileToLaunch is null."));
+		return;
+	}
+
+	if (!ProjectileToLaunch->GetProjectileMovement())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LaunchSpawnedProjectile: Projectile has no ProjectileMovementComponent."));
+		return;
+	}
+
+	FVector ActualSpawnLocation = ProjectileToLaunch->GetActorLocation();
+
+	FVector LaunchDirection = (TargetLocation - ActualSpawnLocation).GetSafeNormal();
+	ProjectileToLaunch->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
 }
 
 TArray<ASLAIProjectile*> ASLAIBaseCharacter::SpawnProjectileFanAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass,FVector TargetLocation, FName SocketName, int32 ProjectileCount, float FanHalfAngle, float ProjectileSpeed,EAttackAnimType AnimType)
@@ -826,7 +895,7 @@ void ASLAIBaseCharacter::AIJump()
 		{
 			if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
 			{
-				BlackboardComponent->SetValueAsBool(FName("IsJumping"), true);
+				BlackboardComponent->SetValueAsBool(FName("IsJumping"), bIsJumping);
 			}
 		}
 	}
@@ -842,8 +911,36 @@ bool ASLAIBaseCharacter::CanAIJump() const
 	return GetCharacterMovement()->IsMovingOnGround() && !bIsJumping && !bIsLanding && !GetCharacterMovement()->IsFalling() &&!IsDead;
 }
 
+void ASLAIBaseCharacter::SetIsLoop(bool NewLoop)
+{
+	bIsLoop = NewLoop;
+
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("IsLoop"), bIsLoop);
+		}
+	}
+	
+}
+
+void ASLAIBaseCharacter::SetIsInvincibility(bool NewIsInvincibility)
+{
+	IsInvincibility = NewIsInvincibility;
+}
+
+void ASLAIBaseCharacter::SetPreparedProjectile(ASLAIProjectile* NewPreparedProjectile)
+{
+	PreparedProjectile = NewPreparedProjectile;
+}
+
+ASLAIProjectile* ASLAIBaseCharacter::GetPreparedProjectile()
+{
+	return PreparedProjectile;
+}
 #if WITH_EDITOR
-void ASLAIBaseCharacter::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+void ASLAIBaseCharacter::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(ThisClass, LeftHandCollisionBoxAttachBoneName))
@@ -918,3 +1015,83 @@ TArray<FVector> ASLAIBaseCharacter::GenerateHorizontalFanDirections(const FVecto
 	return Directions;
 }
 
+void ASLAIBaseCharacter::SetHitReactionMode(EHitReactionMode NewMode)
+{
+	HitReactionMode = NewMode;
+}
+
+void ASLAIBaseCharacter::SetHitDamageThreshold(float NewThreshold)
+{
+	HitDamageThreshold = FMath::Max(0.0f, NewThreshold);
+}
+
+void ASLAIBaseCharacter::ResetAccumulatedDamage()
+{
+	AccumulatedDamage = 0.0f;
+}
+
+bool ASLAIBaseCharacter::ShouldPlayHitReaction(float DamageAmount)
+{
+	switch (HitReactionMode)
+	{
+	case EHitReactionMode::EHRM_Always:
+		return true;
+	case EHitReactionMode::EHRM_Threshold:
+		
+		AccumulatedDamage += DamageAmount;
+		
+		if (AccumulatedDamage >= HitDamageThreshold)
+		{
+			AccumulatedDamage = 0.0f;
+			return true;
+		}
+		return false;
+
+	case EHitReactionMode::EHRM_Disabled:
+	default:
+		return false;
+	}
+}
+
+void ASLAIBaseCharacter::HandleDeath()
+{
+	if (!IsDead)
+	{
+		ProcessDeath();
+	}
+}
+
+void ASLAIBaseCharacter::ProcessDeath()
+{
+	if (IsDead)
+	{
+		return;
+	}
+    
+	IsDead = true;
+    
+	// 충돌 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
+
+	// 이동 중지
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+    
+	// AI 컨트롤러 중지 및 죽음 알림
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
+		}
+        
+		if (ASLBaseAIController* BaseAIController = Cast<ASLBaseAIController>(AIController))
+		{
+			BaseAIController->OnTargetDeath(this);
+		}
+	}
+    
+	// 블루프린트 이벤트 호출
+	OnDeath();
+}

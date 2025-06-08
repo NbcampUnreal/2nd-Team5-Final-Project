@@ -44,6 +44,9 @@ protected:
 	
 	UFUNCTION()
 	void UpdateAcceleratingBlend(float DeltaTime);
+
+	UFUNCTION()
+	void UpdateVerticalMovement(float DeltaSeconds);
 	
 	// 공격 관련
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Combat")
@@ -86,14 +89,35 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|State")
 	bool bIsTeleporting;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
+	bool bIsFlying;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|GameplayTags")
 	FGameplayTagContainer ActiveTags;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
+	float VerticalVelocity;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
+	bool bIsAscending;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
+	bool bIsDescending;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
+	float VerticalLeanAngle;
+
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat", meta = (AllowPrivateAccess = "true"))
 	ECompanionActionPattern CompanionPattern;
 
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<ASLCompanionCharacter> OwningCompanionCharacter;
+
+	UPROPERTY()
+	FVector PreviousLocation;
+
+	UPROPERTY()
+	float VerticalVelocityThreshold;
 };

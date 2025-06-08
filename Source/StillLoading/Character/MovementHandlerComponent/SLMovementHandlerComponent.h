@@ -57,6 +57,8 @@ public:
 	// 버프용
 	UFUNCTION()
 	void BeginBuff();
+	UFUNCTION()
+	void ToggleCameraZoom(bool bIsZoomedOut, float ZoomedOutArmLength = 500.f);
 
 	// Mouse 제어용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Rotation")
@@ -101,13 +103,15 @@ protected:
 	UFUNCTION()
 	void BindIMCComponent();
 	UFUNCTION()
-	void RemoveInvulnerability();
+	void RemoveInvulnerability() const;
 	UFUNCTION()
 	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
 	UFUNCTION()
 	void HitDirection(AActor* Causer);
 	UFUNCTION()
 	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
+	UFUNCTION()
+	void FixCharacterVelocity();
 
 	UPROPERTY()
 	FVector2D MovementInputAxis = FVector2D::ZeroVector;
@@ -119,10 +123,13 @@ protected:
 	int32 InvulnerableDuration = 0.5;
 
 	UPROPERTY(EditAnywhere, Category = "Warp")
-	float WarpDistanceThreshold = 600.f;
+	float WarpDistanceThreshold = 500.f;
 
 	UPROPERTY(EditAnywhere, Category = "Warp")
 	float ExecuteDistanceThreshold = 200.f;
+
+	UPROPERTY(EditAnywhere, Category="Camera")
+	float DefaultArmLength = 300.f;
 
 private:
 	void Attack();
@@ -141,6 +148,7 @@ private:
 	void AirUp();
 	void AirDown();
 	void Execution();
+	void Blast(const EItemType ItemType);
 	void Block(const bool bIsBlocking);
 	void RotateToHitCauser(const AActor* Causer, FRotator &TargetRotation, bool &bIsHitFromBack);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);

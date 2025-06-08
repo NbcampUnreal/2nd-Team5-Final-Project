@@ -16,7 +16,8 @@ enum class ESkillType : uint8
 	ST_Dodge UMETA(DisplayName = "Dodge"),
 	ST_Block UMETA(DisplayName = "Block"),
 	ST_PointMove UMETA(DisplayName = "PointMove"),
-	ST_FinalAttack UMETA(DisplayName = "FinalAttack"),
+	ST_BlastSword UMETA(DisplayName = "BlastSword"),
+	ST_BlastShield UMETA(DisplayName = "BlastShield"),
 };
 
 USTRUCT(BlueprintType)
@@ -46,5 +47,8 @@ struct FInputComboRow : public FTableRowBase
 	float MaxTotalDuration = 0.5f;
 
 	UPROPERTY(EditAnywhere)
-	FGameplayTag RequiredTag;
+	FGameplayTag RequiredPrimaryTag;
+
+	UPROPERTY(EditAnywhere)
+	FGameplayTag RequiredSecondaryTag;
 };

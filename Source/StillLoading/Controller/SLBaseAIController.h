@@ -59,13 +59,21 @@ protected:
 	
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintCallable, Category = "AI")
 	virtual void SetAITeamId(const FGenericTeamId& NewTeamID);
-	
+
+	UFUNCTION(BlueprintCallable, Category = "AI")
 	void UpdateTargetEvaluation();
+	UFUNCTION(BlueprintCallable, Category = "AI")
 	void AddOrUpdateTarget(AActor* Actor);
+	UFUNCTION(BlueprintCallable, Category = "AI")
 	void RemoveTarget(AActor* Actor);
+	UFUNCTION(BlueprintCallable, Category = "AI")
 	float CalculateThreatLevel(AActor* Actor) const;
+	UFUNCTION(BlueprintCallable, Category = "AI")
 	bool IsActorAlive(AActor* Actor) const;
+	UFUNCTION(BlueprintCallable, Category = "AI")
 	void CleanupDeadTargets();
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
