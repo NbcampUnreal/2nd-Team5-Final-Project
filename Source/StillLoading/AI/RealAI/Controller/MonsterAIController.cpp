@@ -19,8 +19,8 @@ AMonsterAIController::AMonsterAIController()
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 
 	// Sight 구성
-	SightConfig->SightRadius = 1500.0f;
-	SightConfig->LoseSightRadius = 1700.0f;
+	SightConfig->SightRadius = 3500.0f;
+	SightConfig->LoseSightRadius = 3700.0f;
 	SightConfig->PeripheralVisionAngleDegrees = 120.0f;
 	SightConfig->SetMaxAge(5.0f);
 

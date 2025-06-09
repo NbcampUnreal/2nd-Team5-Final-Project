@@ -134,15 +134,15 @@ private:
 public:
     /** 일반 콤보 데이터 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combo")
-    TObjectPtr<UAttackComboDataAsset> ComboDataAsset;
+    TSoftObjectPtr<UAttackComboDataAsset> ComboDataAsset;
 
     /** Empowered 콤보 데이터 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combo")
-    TObjectPtr<UAttackComboDataAsset> EmpoweredComboDataAsset;
+    TSoftObjectPtr<UAttackComboDataAsset> EmpoweredComboDataAsset;
 
     /** Air Attack 콤보 데이터 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combo")
-    TObjectPtr<UAttackComboDataAsset> AirComboDataAsset;
+    TSoftObjectPtr<UAttackComboDataAsset> AirComboDataAsset;
 
     /** 충전 유지 시간 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Charging", meta = (ClampMin = "0.1", ClampMax = "5.0"))

@@ -1,7 +1,5 @@
 #include "SLDefaultSword.h"
 
-#include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
 #include "Components/BoxComponent.h"
 
 ASLDefaultSword::ASLDefaultSword()
