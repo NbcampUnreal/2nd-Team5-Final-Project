@@ -50,6 +50,10 @@ class STILLLOADING_API UDynamicIMCComponent : public UActorComponent
 public:
 	UDynamicIMCComponent();
 
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void BindDefaultSetting();
+	
 	UFUNCTION()
 	void SetKeyForAction(EInputActionType ActionType, const FKey& NewKey);
 	UFUNCTION()
@@ -81,8 +85,6 @@ private:
 	UFUNCTION()
 	void HandleActionCompleted(const FInputActionInstance& Instance);
 
-	UFUNCTION()
-	void BindDefaultSetting();
 
 	UPROPERTY()
 	TMap<EInputActionType, UInputAction*> ActionMap;

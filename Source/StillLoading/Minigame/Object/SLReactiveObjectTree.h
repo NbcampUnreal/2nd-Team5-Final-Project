@@ -13,18 +13,23 @@ class STILLLOADING_API ASLReactiveObjectTree : public ASLBaseReactiveObject
 public:
 	ASLReactiveObjectTree();
 
+	UFUNCTION()
+	void SetStaticMesh(UStaticMesh* StaticMesh);
 protected:
-	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType);
-
-	virtual void Tick(float DeltaTime);
-	
-	virtual void BeginOverlapCollision(
+	UFUNCTION()
+	void BeginOverlapCharacter(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex,
 		bool bFromSweep,
 		const FHitResult& SweepResult);
+
+	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType);
+	
+	virtual void Tick(float DeltaTime);
+	
+	virtual void BeginPlay() override;
 private:
 	FORCEINLINE void Move(float DeltaTime);
 
