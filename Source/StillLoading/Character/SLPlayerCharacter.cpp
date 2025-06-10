@@ -76,15 +76,6 @@ void ASLPlayerCharacter::OnEmpoweredStateChanged(const bool bIsEmpowered)
 void ASLPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (GetMovementComponent()->IsFalling())
-	{
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-	}
-	else
-	{
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-	}
 }
 
 void ASLPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

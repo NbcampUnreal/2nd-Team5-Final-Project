@@ -18,7 +18,6 @@
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr), CameraFocusTarget(nullptr)
@@ -42,7 +41,7 @@ void UMovementHandlerComponent::BeginPlay()
 		CachedRadarComponent->OnActorDetectedEnhanced.
 		                      AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
 
-		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 600.f;
+		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
 		BindIMCComponent();
 	}
 }
