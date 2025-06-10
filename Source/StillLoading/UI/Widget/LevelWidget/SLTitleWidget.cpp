@@ -8,6 +8,7 @@
 #include "Components/CanvasPanel.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/SLUISubsystem.h"
+#include "UI/Widget/SLButtonWidget.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "NiagaraSystemWidget.h"
@@ -16,6 +17,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include <Blueprint/WidgetLayoutLibrary.h>
 #include "Components/CanvasPanelSlot.h"
+#include "Components/RetainerBox.h"
 
 const FName USLTitleWidget::TitleTextIndex = "TitleText";
 const FName USLTitleWidget::StartButtonIndex = "StartButton";
@@ -29,6 +31,9 @@ void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	
 	Super::InitWidget(NewUISubsystem);
 
+	StartButtonWidget->OnClicked.AddDynamic(this, &ThisClass::OnClickedStartButton);
+	StartButtonWidget->InitButton();
+
 	StartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedStartButton);
 	OptionButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedOptionButton);
 	QuitButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuitButton);
@@ -41,19 +46,10 @@ void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	QuitButton->OnUnhovered.AddDynamic(this, &ThisClass::OnUnhorveredButton);
 
 	UNiagaraComponent* NiagaraComponent = BackgroundEffect->GetNiagaraComponent();
-	
-	//FNiagaraDataSetIterator<FVector> ParticlePos;
-	//NiagaraComponent->GetNiagaraDataInterface("PositionData")->GetDataSet()->GetFloatData(ParticlePos);
 
-	//UNiagaraComponent* NiagaraComponent = BackgroundEffect->GetNiagaraComponent();
-	//
-	//UNiagaraFunctionLibrary::GetNiagaraParticle
-
-	//for (int i = 0; i < ParticlePos.Num(); ++i)
-	//{
-	//	FVector2D Pos2D = ProjectToWidgetSpace(ParticlePos[i]); // 필요 시 Viewport 변환
-	//	// Pos2D 값을 저장
-	//}
+	StartRetainer->SetRetainRendering(false);
+	OptionRetainer->SetRetainRendering(false);
+	QuitRetainer->SetRetainRendering(false);
 }
 
 void USLTitleWidget::DeactivateWidget()
@@ -84,6 +80,8 @@ void USLTitleWidget::ApplyTextData()
 		}
 	}
 
+	StartButtonWidget->SetButtonText(OptionTextMap[StartButtonIndex]);
+
 	TitleText->SetText(OptionTextMap[TitleTextIndex]);
 	StartText->SetText(OptionTextMap[StartButtonIndex]);
 	OptionText->SetText(OptionTextMap[OptionButtonIndex]);
@@ -113,6 +111,8 @@ bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 
 		if (IsValid(Niagara))
 		{
+			StartButtonWidget->SetNiagaraWidget(Niagara);
+
 			StartButtonEffect->UpdateNiagaraSystemReference(Niagara);
 			OptionButtonEffect->UpdateNiagaraSystemReference(Niagara);
 			QuitButtonEffect->UpdateNiagaraSystemReference(Niagara);
@@ -124,9 +124,28 @@ bool USLTitleWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 		bIsContainEffect = false;
 	}
 
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonRetainer) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonRetainer]))
+	{
+		UMaterialInterface* EffectMat = Cast<UMaterialInterface>(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonRetainer]);
+
+		if (IsValid(EffectMat))
+		{
+			StartButtonWidget->SetRetainerMat(EffectMat);
+
+			StartRetainer->SetEffectMaterial(EffectMat);
+			OptionRetainer->SetEffectMaterial(EffectMat);
+			QuitRetainer->SetEffectMaterial(EffectMat);
+		}
+	}
+
+	StartButtonWidget->SetButtonStyle(ButtonStyle);
+
 	StartButton->SetStyle(ButtonStyle);
 	OptionButton->SetStyle(ButtonStyle);
 	QuitButton->SetStyle(ButtonStyle);
+
+	MappingButtonMaterial();
 
 	return true;
 }
@@ -168,6 +187,13 @@ void USLTitleWidget::OnClickedQuitButton()
 void USLTitleWidget::OnHoveredStartButton()
 {
 	PlayHoverSound();
+	StartRetainer->SetRetainRendering(true);
+
+	if (ButtonDMIMap.Contains(StartButton) &&
+		IsValid(ButtonDMIMap[StartButton]))
+	{
+		CheckButtonMaterial(ButtonDMIMap[StartButton]);
+	}
 
 	if (!bIsContainEffect)
 	{
@@ -181,6 +207,13 @@ void USLTitleWidget::OnHoveredStartButton()
 void USLTitleWidget::OnHoveredOptionButton()
 {
 	PlayHoverSound();
+	OptionRetainer->SetRetainRendering(true);
+
+	if (ButtonDMIMap.Contains(OptionButton) &&
+		IsValid(ButtonDMIMap[OptionButton]))
+	{
+		CheckButtonMaterial(ButtonDMIMap[OptionButton]);
+	}
 
 	if (!bIsContainEffect)
 	{
@@ -194,6 +227,13 @@ void USLTitleWidget::OnHoveredOptionButton()
 void USLTitleWidget::OnHoveredQuitButton()
 {
 	PlayHoverSound();
+	QuitRetainer->SetRetainRendering(true);
+
+	if (ButtonDMIMap.Contains(QuitButton) &&
+		IsValid(ButtonDMIMap[QuitButton]))
+	{
+		CheckButtonMaterial(ButtonDMIMap[QuitButton]);
+	}
 
 	if (!bIsContainEffect)
 	{
@@ -206,6 +246,11 @@ void USLTitleWidget::OnHoveredQuitButton()
 
 void USLTitleWidget::OnUnhorveredButton()
 {
+	GetWorld()->GetTimerManager().ClearTimer(HoverTimer);
+	StartRetainer->SetRetainRendering(false);
+	OptionRetainer->SetRetainRendering(false);
+	QuitRetainer->SetRetainRendering(false);
+
 	if (!bIsContainEffect)
 	{
 		return;
@@ -219,4 +264,93 @@ void USLTitleWidget::OnUnhorveredButton()
 
 	QuitButtonEffect->GetNiagaraComponent()->DeactivateImmediate();
 	QuitButtonEffect->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void USLTitleWidget::MappingButtonMaterial()
+{
+	ButtonDMIMap.Empty();
+
+	UMaterialInterface* ButtonMaterial = Cast<UMaterialInterface>(StartButton->GetStyle().Hovered.GetResourceObject());
+	UMaterialInstanceDynamic* ButtonDynamicMat = nullptr;
+	FButtonStyle ButtonStyle;
+
+	if (IsValid(ButtonMaterial))
+	{
+		ButtonDynamicMat = UMaterialInstanceDynamic::Create(ButtonMaterial, this);
+		ButtonStyle = StartButton->GetStyle();
+		ButtonStyle.Hovered.SetResourceObject(ButtonDynamicMat);
+		StartButton->SetStyle(ButtonStyle);
+		ButtonDMIMap.Add(StartButton, ButtonDynamicMat);
+	}
+
+	ButtonMaterial = Cast<UMaterialInterface>(OptionButton->GetStyle().Hovered.GetResourceObject());
+
+	if (IsValid(ButtonMaterial))
+	{
+		ButtonDynamicMat = UMaterialInstanceDynamic::Create(ButtonMaterial, this);
+		ButtonStyle = OptionButton->GetStyle();
+		ButtonStyle.Hovered.SetResourceObject(ButtonDynamicMat);
+		OptionButton->SetStyle(ButtonStyle);
+		ButtonDMIMap.Add(OptionButton, ButtonDynamicMat);
+	}
+
+	ButtonMaterial = Cast<UMaterialInterface>(QuitButton->GetStyle().Hovered.GetResourceObject());
+
+	if (IsValid(ButtonMaterial))
+	{
+		ButtonDynamicMat = UMaterialInstanceDynamic::Create(ButtonMaterial, this);
+		ButtonStyle = QuitButton->GetStyle();
+		ButtonStyle.Hovered.SetResourceObject(ButtonDynamicMat);
+		QuitButton->SetStyle(ButtonStyle);
+		ButtonDMIMap.Add(QuitButton, ButtonDynamicMat);
+	}
+}
+
+void USLTitleWidget::CheckButtonMaterial(UMaterialInstanceDynamic* ButtonMaterial)
+{
+	DynamicMat = ButtonMaterial;
+
+	if (IsValid(DynamicMat))
+	{
+		TArray<FMaterialParameterInfo> ParameterInfos;
+		TArray<FGuid> ParameterIds;
+
+		DynamicMat->GetAllScalarParameterInfo(ParameterInfos, ParameterIds);
+
+		bool bIsContain = false;
+
+		for (const FMaterialParameterInfo& ParameterInfo : ParameterInfos)
+		{
+			if (ParameterInfo.Name == ProgressName)
+			{
+				bIsContain = true;
+				break;
+			}
+		}
+
+		if (bIsContain)
+		{
+			PlayHoverEvent();
+		}
+	}
+}
+
+void USLTitleWidget::PlayHoverEvent()
+{
+	CurrentProgress = 0.0f;
+	DynamicMat->SetScalarParameterValue(ProgressName, CurrentProgress);
+	SetHoverTimer();
+}
+
+void USLTitleWidget::SetHoverTimer()
+{
+	DynamicMat->GetScalarParameterValue(ProgressName, CurrentProgress);
+
+	if (CurrentProgress < 1.0f)
+	{
+		CurrentProgress += ProgressValue;
+		DynamicMat->SetScalarParameterValue(ProgressName, CurrentProgress);
+
+		GetWorld()->GetTimerManager().SetTimer(HoverTimer, this, &ThisClass::SetHoverTimer, ProgressDuration, false);
+	}
 }

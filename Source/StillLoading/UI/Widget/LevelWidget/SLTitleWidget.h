@@ -10,6 +10,8 @@ class UButton;
 class UTextBlock;
 class UImage;
 class UNiagaraSystemWidget;
+class URetainerBox;
+class USLButtonWidget;
 
 UCLASS()
 class STILLLOADING_API USLTitleWidget : public USLLevelWidget
@@ -48,7 +50,22 @@ private:
 	UFUNCTION()
 	void OnUnhorveredButton();
 
+	void MappingButtonMaterial();
+	void CheckButtonMaterial(UMaterialInstanceDynamic* ButtonMaterial);
+	void PlayHoverEvent();
+	void SetHoverTimer();
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Option")
+	float ProgressValue = 0.1f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Option")
+	float ProgressDuration = 0.1f;
+
 private:
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> StartButtonWidget = nullptr;
+
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UButton> StartButton = nullptr;
 
@@ -86,12 +103,30 @@ private:
 	TObjectPtr<UNiagaraSystemWidget> QuitButtonEffect = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<URetainerBox> StartRetainer = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<URetainerBox> OptionRetainer = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<URetainerBox> QuitRetainer = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UNiagaraSystemWidget> BackgroundEffect = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> DynamicMat = nullptr;
+
+	UPROPERTY()
+	TMap<UButton*, UMaterialInstanceDynamic*> ButtonDMIMap;
 
 	static const FName TitleTextIndex;
 	static const FName StartButtonIndex;
 	static const FName OptionButtonIndex;
 	static const FName QuitButtonIndex;
 
+	FTimerHandle HoverTimer;
+	FName ProgressName = "Progress";
+	float CurrentProgress = 0.0f;
 	bool bIsContainEffect = false;
 };
