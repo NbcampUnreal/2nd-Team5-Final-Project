@@ -12,7 +12,7 @@ ASLInteractableCharacter::ASLInteractableCharacter()
 
 void ASLInteractableCharacter::Interaction()
 {
-	ActivateCurrentTalk();
+	UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, CurrentTargetName, CurrentTalkNames[CurrentTalkIndex]);
 }
 
 void ASLInteractableCharacter::BeginPlay()
@@ -21,9 +21,3 @@ void ASLInteractableCharacter::BeginPlay()
 	UISubsystem = GetGameInstance()->GetSubsystem<USLUISubsystem>();
 	check(UISubsystem)
 }
-
-void ASLInteractableCharacter::ActivateCurrentTalk()
-{
-	UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, CurrentTargetName, CurrentTalkName);
-}
-

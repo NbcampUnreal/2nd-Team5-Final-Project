@@ -22,8 +22,6 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	void ActivateCurrentTalk();
-	
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC", meta = (AllowPrivateAccess = "true"))
@@ -32,5 +30,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC", meta = (AllowPrivateAccess = "true"))
 	FName CurrentTargetName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC", meta = (AllowPrivateAccess = "true"))
-	FName CurrentTalkName;
+	int32 CurrentTalkIndex;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC", meta = (AllowPrivateAccess = "true"))
+	TArray<FName> CurrentTalkNames;
 };
