@@ -19,10 +19,20 @@ class STILLLOADING_API USL25DMovementHandlerComponent : public UActorComponent
 public:
 	USL25DMovementHandlerComponent();
 
+	UFUNCTION()
+	void OnAttackStageFinished(ECharacterMontageState AttackStage);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Movement|Rotation")
+	void StartFacingMouse();
+
+	/** 호출되면, Tick에서 마우스를 향한 회전을 중지합니다. */
+	UFUNCTION(BlueprintCallable, Category = "Movement|Rotation")
+	void StopFacingMouse();
 
 	UFUNCTION()
 	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
@@ -57,7 +67,7 @@ protected:
 	UFUNCTION()
 	void Move(float AxisValue, EInputActionType ActionType);
 	UFUNCTION()
-	void OnAttackStageFinished(ECharacterMontageState AttackStage);
+	void FaceToMouse();
 
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
@@ -90,6 +100,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Parry")
 	float ParryDuration = 0.2f;
 
+	bool bShouldFaceMouse = false;
+
+	UPROPERTY(EditAnywhere, Category = "Movement|Rotation")
+	float RotationSpeed = 15.0f;
+	
 	UPROPERTY()
 	int BlockCount = 0;
 	UPROPERTY()

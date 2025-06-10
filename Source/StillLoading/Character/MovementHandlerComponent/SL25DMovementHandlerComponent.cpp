@@ -38,6 +38,8 @@ void USL25DMovementHandlerComponent::BeginPlay()
 		OwnerCharacter->bUseControllerRotationYaw = false;
 		OwnerCharacter->CameraBoom->bEnableCameraLag = false;
 		OwnerCharacter->CameraBoom->bEnableCameraRotationLag = false;
+
+		OwnerCharacter->CameraBoom->bDoCollisionTest = false;
 		
 		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
 		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
@@ -48,6 +50,19 @@ void USL25DMovementHandlerComponent::BeginPlay()
 		CachedSkeletalMesh = OwnerCharacter->GetMesh();
 
 		BindIMCComponent();
+
+		APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+
+		if (PlayerController)
+		{
+			PlayerController->bShowMouseCursor = true;
+
+			FInputModeGameAndUI InputModeData;
+			InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			InputModeData.SetHideCursorDuringCapture(false);
+            
+			PlayerController->SetInputMode(InputModeData);
+		}
 	}
 }
 
@@ -55,6 +70,51 @@ void USL25DMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick T
                                                    FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (!bShouldFaceMouse)
+	{
+		return;
+	}
+
+	if (!OwnerCharacter || !CachedSkeletalMesh) return;
+    
+	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+	if (!PlayerController) return;
+
+	FHitResult HitResult;
+	if (PlayerController->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+	{
+		const FVector Direction = HitResult.Location - OwnerCharacter->GetActorLocation();
+		const FVector FlattenedDirection = FVector(Direction.X, Direction.Y, 0.0f);
+		const FRotator TargetRotation = FlattenedDirection.Rotation();
+
+		const FRotator CorrectedTargetRotation = FRotator(0.0f, TargetRotation.Yaw - 90.0f, 0.0f);
+		const FRotator CurrentRotation = CachedSkeletalMesh->GetRelativeRotation();
+       
+		const FRotator SmoothedRotation = FMath::RInterpTo(
+		   CurrentRotation,
+		   CorrectedTargetRotation,
+		   DeltaTime,
+		   RotationSpeed
+		);
+
+		CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, SmoothedRotation.Yaw, 0.0f));
+	}
+}
+
+void USL25DMovementHandlerComponent::StartFacingMouse()
+{
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_FacingBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
+		return;
+	}
+	bShouldFaceMouse = true;
+}
+
+void USL25DMovementHandlerComponent::StopFacingMouse()
+{
+	bShouldFaceMouse = false;
 }
 
 void USL25DMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
@@ -141,16 +201,21 @@ void USL25DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType
 
 				return;
 			}
+			//FaceToMouse();
+			StartFacingMouse();
 			Attack();
 			break;
 		}
 	case EInputActionType::EIAT_PointMove:
+		break;
 	case EInputActionType::EIAT_Block:
 		if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
 		{
 			//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
 			return;
 		}
+		//FaceToMouse();
+		StartFacingMouse();
 		Block(true);
 		break;
 	case EInputActionType::EIAT_Walk:
@@ -190,6 +255,7 @@ void USL25DMovementHandlerComponent::OnActionCompleted(EInputActionType ActionTy
 	case EInputActionType::EIAT_Menu:
 		break;
 	case EInputActionType::EIAT_Block:
+		StopFacingMouse();
 		Block(false);
 		break;
 
@@ -422,7 +488,7 @@ void USL25DMovementHandlerComponent::Block(const bool bIsBlocking)
 void USL25DMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
-	
+	CachedCombatComponent->SetEmpoweredCombatMode(10);
 }
 
 void USL25DMovementHandlerComponent::Attack()
@@ -468,7 +534,6 @@ void USL25DMovementHandlerComponent::ApplyAttackState(const FName& SectionName, 
 		else
 		{
 			OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic3);
-			CachedCombatComponent->StartCharging();
 		}
 	}
 	else if (SectionName == "Attack2")
@@ -565,8 +630,33 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 	}
 }
 
+void USL25DMovementHandlerComponent::FaceToMouse()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+	if (!PlayerController)
+	{
+		return;
+	}
+
+	FHitResult HitResult;
+	if (PlayerController->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+	{
+		if (CachedSkeletalMesh)
+		{
+			const FVector Direction = HitResult.Location - OwnerCharacter->GetActorLocation();
+			const FVector FlattenedDirection = FVector(Direction.X, Direction.Y, 0.0f);
+			const FRotator TargetRotation = FlattenedDirection.Rotation();
+
+			if (CachedSkeletalMesh)
+			{
+				CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, TargetRotation.Yaw, 0.0f));
+			}
+		}
+	}
+}
+
 // 애니매이션 노티용
-void USL25DMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState AttackStage)
+void USL25DMovementHandlerComponent::OnAttackStageFinished(const ECharacterMontageState AttackStage)
 {
 	if (!OwnerCharacter) return;
 
@@ -648,5 +738,6 @@ void USL25DMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageStat
 		break;
 	}
 
+	StopFacingMouse();
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Idle);
 }
