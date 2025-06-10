@@ -35,9 +35,6 @@ protected:
 	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetCompanionPattern(const ECompanionActionPattern CompanionPattern);
-
-	UFUNCTION()
-	void UpdateSpeedComponents();
 	
 	UFUNCTION()
 	void UpdateAttackBlend(float DeltaTime);
@@ -57,23 +54,6 @@ protected:
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Combat")
 	bool bIsMovableAttack;
-    
-	// 이전 속도 기록 (부드러운 애니메이션 전환용)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
-	float LastSpeedDegree;
-	
-	// 속도 컴포넌트
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
-	float Speed_X;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
-	float Speed_Y;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
-	float SpeedDegree;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
-	float SpeedLength;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
 	float AcceleratingBlend;

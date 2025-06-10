@@ -276,3 +276,32 @@ float USLAICharacterAnimInstance::GetDistanceToGround() const
 	// 히트되지 않았으면 큰 값 반환
 	return 5000.0f;
 }
+
+void USLAICharacterAnimInstance::UpdateSpeedComponents()
+{
+	if (!OwningCharacter)
+	{
+		return;
+	}
+	
+	FVector Velocity = OwningCharacter->GetVelocity();
+	FVector ForwardVector = OwningCharacter->GetActorForwardVector();
+	FVector RightVector = OwningCharacter->GetActorRightVector();
+	
+	// 속도를 캐릭터의 로컬 좌표계로 변환
+	Speed_X = FVector::DotProduct(Velocity, ForwardVector);
+	Speed_Y = FVector::DotProduct(Velocity, RightVector);
+	
+	// 속도 각도 계산
+	SpeedDegree = UKismetMathLibrary::DegAtan2(Speed_Y, Speed_X);
+	
+	// 속도 크기 계산 (보간 적용)
+	float TargetSpeedLength = Velocity.Size();
+	SpeedLength = FMath::FInterpTo(SpeedLength, TargetSpeedLength, GetWorld()->GetDeltaSeconds(), 20.0f);
+	
+	// 이동 중이고 가속 중일 때만 마지막 속도 각도 업데이트
+	if (bHasAcceleration && SpeedLength > 200.0f)
+	{
+		LastSpeedDegree = SpeedDegree;
+	}
+}
