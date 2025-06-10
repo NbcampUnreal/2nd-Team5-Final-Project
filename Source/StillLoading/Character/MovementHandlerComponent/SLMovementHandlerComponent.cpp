@@ -18,7 +18,6 @@
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr), CameraFocusTarget(nullptr)
@@ -42,7 +41,7 @@ void UMovementHandlerComponent::BeginPlay()
 		CachedRadarComponent->OnActorDetectedEnhanced.
 		                      AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
 
-		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 600.f;
+		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
 		BindIMCComponent();
 	}
 }
@@ -206,7 +205,6 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 					BlockCount = 0;
 				}
 				
-				BeginBuff();
 				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
 
 				// 전체 슬로우 (자기 자신 포함)
@@ -1086,6 +1084,7 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		break;
 	case ECharacterMontageState::ECS_Defense_Parry:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Defense_Parry);
+		BeginBuff();
 		break;
 	case ECharacterMontageState::ECS_Cinematic:
 		break;

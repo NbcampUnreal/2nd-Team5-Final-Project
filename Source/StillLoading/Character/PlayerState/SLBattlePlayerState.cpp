@@ -1,12 +1,15 @@
 #include "SLBattlePlayerState.h"
 
+#include "Character/SLPlayerCharacter.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
+#include "Character/Item/SLDefaultSword.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
 ASLBattlePlayerState::ASLBattlePlayerState()
 {
+	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
 	Health = MaxHealth;
@@ -17,7 +20,25 @@ ASLBattlePlayerState::ASLBattlePlayerState()
 void ASLBattlePlayerState::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	GetWorld()->GetTimerManager().SetTimer(
+	   GaugeUpdateTimerHandle,
+	   this,
+	   &ASLBattlePlayerState::UpdateGauge,
+	   5.0f,
+	   true
+   );
+}
+
+void ASLBattlePlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	GetWorld()->GetTimerManager().ClearTimer(GaugeUpdateTimerHandle);
+}
+
+void ASLBattlePlayerState::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
 }
 
 void ASLBattlePlayerState::SetHealth(const float NewHealth)
@@ -52,33 +73,31 @@ void ASLBattlePlayerState::SetMaxSpeed(const float NewMaxSpeed)
 
 void ASLBattlePlayerState::IncreaseBurningGage(const float Amount)
 {
-	if (const AController* OwnerController = GetOwner<AController>())
+	if (!HasAuthority()) return;
+	
+	const AController* OwnerController = GetOwner<AController>();
+	if (!OwnerController) return;
+
+	const APawn* Pawn = OwnerController->GetPawn();
+	if (!Pawn) return;
+
+	const UCombatHandlerComponent* CombatHandler = Pawn->FindComponentByClass<UCombatHandlerComponent>();
+	if (!CombatHandler || CombatHandler->IsEmpowered()) return;
+
+	BurningGage += Amount;
+
+	if (BurningGage >= 100.f)
 	{
-		if (const APawn* Pawn = OwnerController->GetPawn())
+		BurningGage = 0.f;
+
+		if (UMovementHandlerComponent* MoveComp = Pawn->FindComponentByClass<UMovementHandlerComponent>())
 		{
-			if (const UCombatHandlerComponent* CombatHandler = Pawn->FindComponentByClass<UCombatHandlerComponent>())
-			{
-				if (CombatHandler->IsEmpowered())
-				{
-					return;
-				}
-				else
-				{
-					if (BurningGage >= 100)
-					{
-						BurningGage = 0;
-		
-						if (UMovementHandlerComponent* MoveComp = Pawn->FindComponentByClass<UMovementHandlerComponent>())
-						{
-							MoveComp->BeginBuff();
-						}
-					}
-				}
-			}
+			MoveComp->BeginBuff();
 		}
 	}
-	
-	BurningGage += Amount;
+
+	// 싱글에선 직접 호출
+	OnRep_BurningGage();
 }
 
 void ASLBattlePlayerState::OnRep_Health()
@@ -101,10 +120,37 @@ void ASLBattlePlayerState::OnRep_IsWalking()
 	}
 }
 
+void ASLBattlePlayerState::OnRep_BurningGage()
+{
+	const AController* OwnerController = GetOwner<AController>();
+	if (!OwnerController) return;
+
+	const APawn* Pawn = OwnerController->GetPawn();
+	if (!Pawn) return;
+
+	const ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(Pawn);
+	if (!PlayerCharacter) return;
+
+	if (ASLDefaultSword* SwordActor = Cast<ASLDefaultSword>(PlayerCharacter->Sword))
+	{
+		SwordActor->UpdateMaterialByGauge(BurningGage);
+	}
+}
+
+void ASLBattlePlayerState::UpdateGauge()
+{
+	if (BurningGage <= 0) return;
+	BurningGage = FMath::Clamp(BurningGage - 1.f, 0.f, 100.f);
+	UE_LOG(LogTemp, Warning, TEXT("UpdateGauge [%f]"), BurningGage);
+	// 싱글에선 직접 호출
+	OnRep_BurningGage();
+}
+
 void ASLBattlePlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ASLBattlePlayerState, Health);
 	DOREPLIFETIME(ASLBattlePlayerState, bIsWalking);
+	DOREPLIFETIME(ASLBattlePlayerState, BurningGage);
 }

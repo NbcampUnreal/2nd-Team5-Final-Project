@@ -46,6 +46,8 @@ public:
 	void DisableLockOnMode();
 	UFUNCTION()
 	void BeginBlast(const EItemType ItemType);
+	UFUNCTION()
+	void OnEmpoweredStateChanged(bool bIsEmpowered);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<ASLItem> SwordClass;
@@ -61,7 +63,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 	virtual void Landed(const FHitResult& Hit) override;
 
 	UFUNCTION(BlueprintCallable, Category = "State")

@@ -78,6 +78,7 @@ void AMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
+	SetStrategyState(TAG_AI_STRATEGY_ORGANIZED_HOLDPOSITION);
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 
@@ -430,7 +431,7 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 	FixCharacterVelocity();
 
 	// 나중에 Destroy 또는 사라짐 처리
-	SetLifeSpan(1.f);
+	//SetLifeSpan(1.f);
 
 	// BattleComponent에 전달
 	if (Attacker)

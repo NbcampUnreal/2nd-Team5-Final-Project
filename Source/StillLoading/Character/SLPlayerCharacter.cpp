@@ -2,10 +2,12 @@
 
 #include "BattleComponent/BattleComponent.h"
 #include "Camera/CameraComponent.h"
+#include "CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GamePlayTag/GamePlayTag.h"
+#include "Item/SLDefaultSword.h"
 #include "Item/SLItem.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
 
@@ -56,20 +58,24 @@ void ASLPlayerCharacter::BeginPlay()
 	SetPrimaryState(TAG_Character_Movement_Idle);
 
 	PrintPrimaryStateTags();
+
+	if (UCombatHandlerComponent* CombatHandler = FindComponentByClass<UCombatHandlerComponent>())
+	{
+		CombatHandler->OnEmpoweredStateChanged.AddDynamic(this, &ASLPlayerCharacter::OnEmpoweredStateChanged);
+	}
+}
+
+void ASLPlayerCharacter::OnEmpoweredStateChanged(const bool bIsEmpowered)
+{
+	if (ASLDefaultSword* PlayerSword = Cast<ASLDefaultSword>(Sword))
+	{
+		PlayerSword->UpdateMaterialByGauge(bIsEmpowered ? 100 : 0);
+	}
 }
 
 void ASLPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (GetMovementComponent()->IsFalling())
-	{
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-	}
-	else
-	{
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-	}
 }
 
 void ASLPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
