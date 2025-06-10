@@ -15,6 +15,8 @@ public:
 	ASLBattlePlayerState();
 
 	virtual void BeginPlay() override;
+	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
+	virtual void Tick(float DeltaSeconds) override;
 	
 	UFUNCTION()
 	void SetHealth(float NewHealth);
@@ -35,6 +37,8 @@ protected:
 	void OnRep_Health();
 	UFUNCTION()
 	void OnRep_IsWalking();
+	UFUNCTION()
+	void OnRep_BurningGage();
 
 	UPROPERTY(ReplicatedUsing = OnRep_Health, BlueprintReadOnly, Category = "Stat")
 	float Health;
@@ -51,6 +55,15 @@ protected:
 	float MaxSpeed = 600.f;
 	UPROPERTY()
 	float JumpZVelocity = 1000.f;
-	UPROPERTY()
+	
+	UPROPERTY(ReplicatedUsing = OnRep_BurningGage, BlueprintReadOnly, Category = "Stat")
 	float BurningGage = 0.f;
+
+private:
+	UFUNCTION()
+	void UpdateGauge();
+
+	FTimerHandle GaugeUpdateTimerHandle;
+
+	
 };
