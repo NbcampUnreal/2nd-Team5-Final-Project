@@ -1,9 +1,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputActionValue.h"
+#include "SL2DMovementHandlerComponent.h"
+#include "Character/DataAsset/AttackDataAsset.h"
+#include "Character/DataAsset/InputComboRow.h"
 #include "Components/ActorComponent.h"
 #include "SL25DMovementHandlerComponent.generated.h"
 
+
+class UCollisionRadarComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API USL25DMovementHandlerComponent : public UActorComponent
@@ -18,6 +24,74 @@ protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
+	UFUNCTION()
+	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
+	UFUNCTION()
+	void BindIMCComponent();
+	UFUNCTION()
+	void OnActionTriggered(EInputActionType ActionType, FInputActionValue Value);
+	UFUNCTION()
+	void OnActionStarted(EInputActionType ActionType);
+	UFUNCTION()
+	void OnActionCompleted(EInputActionType ActionType);
+	UFUNCTION()
+	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
+	UFUNCTION()
+	void OnDelayedAction();
+	UFUNCTION()
+	void RemoveInvulnerability() const;
+	UFUNCTION()
+	void HitDirection(AActor* Causer);
+	UFUNCTION()
+	void RotateToHitCauser(const AActor* Causer, FRotator& TargetRotation, bool& bIsHitFromBack);
+	UFUNCTION()
+	void ToggleMenu();
+	UFUNCTION()
+	void Block(bool bIsBlocking);
+	UFUNCTION()
+	void Interact();
+	UFUNCTION()
+	void Attack();
+	UFUNCTION()
+	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
+	UFUNCTION()
+	void Move(float AxisValue, EInputActionType ActionType);
+	UFUNCTION()
+	void OnAttackStageFinished(ECharacterMontageState AttackStage);
 
+	UPROPERTY()
+	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
 	
+	UPROPERTY()
+	TSoftObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
+	UPROPERTY()
+	TSoftObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
+	UPROPERTY()
+	TSoftObjectPtr<UBattleComponent> CachedBattleComponent;
+	UPROPERTY()
+	TSoftObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
+	UPROPERTY()
+	TObjectPtr<USkeletalMeshComponent> CachedSkeletalMesh;
+
+	UPROPERTY()
+	FTimerHandle ReactionResetTimerHandle;
+	UPROPERTY()
+	FTimerHandle InvulnerabilityTimerHandle;
+	UPROPERTY()
+	FTimerHandle DelayTimerHandle;
+
+	UPROPERTY(EditAnywhere, Category = "Camera Focus")
+	int32 InvulnerableDuration = 0.5;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
+	float ForwardDot = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
+	float RightDot = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Parry")
+	float ParryDuration = 0.2f;
+
+	UPROPERTY()
+	int BlockCount = 0;
+	UPROPERTY()
+	float LastBlockTime = 0.f;
 };
