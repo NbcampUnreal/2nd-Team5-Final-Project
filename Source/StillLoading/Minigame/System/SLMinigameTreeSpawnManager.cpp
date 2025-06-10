@@ -45,11 +45,11 @@ void ASLMinigameTreeSpawnManager::SpawnTree()
 	auto It = TreeSet.CreateIterator();
 	ASLReactiveObjectTree* Tree = *It;
 	It.RemoveCurrent();
-
-	int RandIndex = FMath::RandRange(0, LineIndex);
-	if (!SpawnLocationArray.IsValidIndex(RandIndex)) return;
-	Tree->SetActorLocation(SpawnLocationArray[RandIndex]);
-
+	
+	int RandLineIndex = FMath::RandRange(0, LineIndex - 1);
+	Tree->SetActorLocation(SpawnLocationArray[RandLineIndex]);
+	int RandMeshIndex = FMath::RandRange(0, MeshComponents.Num() - 1);
+	Tree->SetStaticMesh(MeshComponents[RandMeshIndex]);
 	Tree->SetActorHiddenInGame(false);
 	Tree->SetActorTickEnabled(true);
 	Tree->SetActorEnableCollision(true);

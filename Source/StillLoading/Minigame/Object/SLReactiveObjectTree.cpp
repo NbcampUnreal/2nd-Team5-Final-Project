@@ -5,10 +5,26 @@
 #include "SLReactiveObjectTree.h"
 #include "Kismet\GameplayStatics.h"
 #include "StillLoading\Character\SLPlayerCharacterBase.h"
+#include "StillLoading/Character/SLPlayerRidingCharacter.h"
+#include "Components/SphereComponent.h"
 
 ASLReactiveObjectTree::ASLReactiveObjectTree()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &ASLReactiveObjectTree::BeginOverlapCharacter);
+}
+
+void ASLReactiveObjectTree::SetStaticMesh(UStaticMesh* StaticMesh)
+{
+	StaticMeshComp->SetStaticMesh(StaticMesh);
+}
+
+void ASLReactiveObjectTree::BeginPlay()
+{
+	Super::BeginPlay();
+
+	
 }
 
 void ASLReactiveObjectTree::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
@@ -21,14 +37,13 @@ void ASLReactiveObjectTree::Tick(float DeltaTime)
 	Move(DeltaTime);
 }
 
-void ASLReactiveObjectTree::BeginOverlapCollision(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ASLReactiveObjectTree::BeginOverlapCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor->ActorHasTag("Character"))
+	if (OtherActor && OtherActor->ActorHasTag("RidingCharacter"))
 	{
-		if (ASLPlayerCharacterBase* Character = Cast<ASLPlayerCharacterBase>(OtherActor))
+		if (ASLPlayerRidingCharacter* Character = Cast<ASLPlayerRidingCharacter>(OtherActor))
 		{
-			//5분의 1씩 깎아서 5대 맞으면 죽게 설계해야함
-			//Character->TakeDamage()
+			UGameplayStatics::ApplyDamage(Character, 1, nullptr, this, UDamageType::StaticClass());
 		}
 	}
 }

@@ -66,4 +66,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TSet<TObjectPtr<ASLReactiveObjectTree>> TreeSet;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TObjectPtr<UStaticMesh>> MeshComponents;
 };
