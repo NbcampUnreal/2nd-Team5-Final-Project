@@ -87,4 +87,26 @@ namespace SLAIGameplayTags
 	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Companion_Pattern_WZ_Loop_Aim_Attack02);
 
 	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Companion_Pattern_WZ_Loop_Attack04);
+
+
+	// Doppelganger 행동 패턴
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_None);
+
+	// Doppelganger 콤보 공격
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Combo_Attack_01);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Combo_Attack_02);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Combo_Attack_03);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Combo_Attack_04);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Combo_Attack_Air);
+
+	// Doppelganger 특수 공격
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Attack_Up_01);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Attack_Up_Floor_To_Air_02);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Run_Attack_02);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Dash_Air_Attack);
+
+	// Doppelganger 방어 및 지원
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Guard);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Parry);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Buff_Cast);
 }

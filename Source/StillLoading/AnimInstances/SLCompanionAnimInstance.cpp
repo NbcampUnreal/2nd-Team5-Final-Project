@@ -75,35 +75,11 @@ void USLCompanionAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSecond
 	UpdateVerticalMovement(DeltaSeconds);
 }
 
-void USLCompanionAnimInstance::UpdateSpeedComponents()
-{
-	if (!OwningCharacter)
-	{
-		return;
-	}
-	
-	FVector Velocity = OwningCharacter->GetVelocity();
-	FVector ForwardVector = OwningCharacter->GetActorForwardVector();
-	FVector RightVector = OwningCharacter->GetActorRightVector();
-	
-	// 속도를 캐릭터의 로컬 좌표계로 변환
-	Speed_X = FVector::DotProduct(Velocity, ForwardVector);
-	Speed_Y = FVector::DotProduct(Velocity, RightVector);
-	
-	// 속도 각도 계산
-	SpeedDegree = UKismetMathLibrary::DegAtan2(Speed_Y, Speed_X);
-	
-	// 속도 크기 계산 (보간 적용)
-	float TargetSpeedLength = Velocity.Size();
-	SpeedLength = FMath::FInterpTo(SpeedLength, TargetSpeedLength, GetWorld()->GetDeltaSeconds(), 20.0f);
-	
-	// 이동 중이고 가속 중일 때만 마지막 속도 각도 업데이트
-	if (bIsAccelerating && SpeedLength > 200.0f)
-	{
-		LastSpeedDegree = SpeedDegree;
-	}
-}
-
+/**
+ * 공격 상태에 따른 블렌드 값을 업데이트합니다.
+ *
+ * @param DeltaTime 프레임 간 경과 시간. 블렌드 값을 보간하는 데 사용됩니다.
+ */
 void USLCompanionAnimInstance::UpdateAttackBlend(float DeltaTime)
 {
 	// 공격 블렌드는 SetMovableAttack 상태에 따라 업데이트

@@ -25,6 +25,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
     bUseControllerRotationRoll = false;
     bUseControllerRotationYaw = false;
 
+
     GetCharacterMovement()->bUseControllerDesiredRotation = false;
     GetCharacterMovement()->bOrientRotationToMovement = true;
     GetCharacterMovement()->RotationRate = FRotator(0.f, 180.f, 0.f);
@@ -87,6 +88,8 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	HitReactionMode = EHitReactionMode::EHRM_Always;
 	HitDamageThreshold = 20.0f;
 	AccumulatedDamage = 0.0f;
+	MaxHealth = 100.f;
+	CurrentHealth = MaxHealth;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
