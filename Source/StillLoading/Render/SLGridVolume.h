@@ -66,6 +66,9 @@ private:
     TObjectPtr<UCameraComponent> CameraComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridVolume", meta = (AllowPrivateAccess = "true"))
+    bool bShowGridDebugLine = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridVolume", meta = (AllowPrivateAccess = "true"))
     float CameraPitch = -40.0f;
     
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridVolume", meta = (AllowPrivateAccess = "true"))

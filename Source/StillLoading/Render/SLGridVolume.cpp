@@ -73,8 +73,11 @@ void ASLGridVolume::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
     
 #if WITH_EDITOR
-    DrawGridBound();
-    DrawNodeConnection();
+    if (bShowGridDebugLine)
+    {
+        DrawGridBound();
+        DrawNodeConnection();
+    }
 #endif
 }
 
