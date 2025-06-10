@@ -250,6 +250,9 @@ void USL2DMovementHandlerComponent::Interaction()
 	
 	if (ISLInteractableObjectBase* Interface = Cast<ISLInteractableObjectBase>(DetectedInteractableObject))
 	{
-		Interface->Interaction();
+		if (CachedRadarComponent->IsInFieldOfView(Cast<AActor>(DetectedInteractableObject)))
+		{
+			Interface->Interaction();
+		}
 	}
 }

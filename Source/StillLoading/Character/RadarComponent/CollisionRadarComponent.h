@@ -57,11 +57,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<class UMotionWarpingComponent> MotionWarpComponent;
 
+    bool IsInFieldOfView(const AActor* TargetActor) const;
+    
 protected:
     virtual void BeginPlay() override;
 
 private:
-    bool IsInFieldOfView(const AActor* TargetActor) const;
     void DrawDebugVisualization();
 
     UFUNCTION()
