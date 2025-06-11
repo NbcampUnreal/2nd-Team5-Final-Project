@@ -4,7 +4,9 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLAIBaseCharacter.h"
+#include "Character/SLPlayerCharacter.h"
 #include "Character/SLPlayerCharacterBase.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/CrowdFollowingComponent.h"
@@ -425,4 +427,38 @@ void ASLBaseAIController::BeginPlay()
 void ASLBaseAIController::SetAITeamId(const FGenericTeamId& NewTeamID)
 {
 	AAIController::SetGenericTeamId(NewTeamID);
+}
+
+bool ASLBaseAIController::IsPlayerAttacking() const
+{
+	ASLPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	if (!PlayerCharacter)
+	{
+		return false;
+	}
+    
+	// TAG_Character_Attack은 모든 공격 태그의 부모 태그이므로
+	// 이를 확인하면 모든 공격 관련 태그를 포함하여 확인됩니다
+	return PlayerCharacter->PrimaryStateTags.HasTag(TAG_Character_Attack);
+}
+
+bool ASLBaseAIController::IsPlayerPerformingSpecificAttack(FGameplayTag AttackTag) const
+{
+	ASLPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	if (!PlayerCharacter)
+	{
+		return false;
+	}
+    
+	return PlayerCharacter->PrimaryStateTags.HasTag(AttackTag);
+}
+
+ASLPlayerCharacter* ASLBaseAIController::GetPlayerCharacter() const
+{
+	if (!GetBlackboardComponent())
+	{
+		return nullptr;
+	}
+    
+	return Cast<ASLPlayerCharacter>(GetBlackboardComponent()->GetValueAsObject(FName("TargetActor")));
 }
