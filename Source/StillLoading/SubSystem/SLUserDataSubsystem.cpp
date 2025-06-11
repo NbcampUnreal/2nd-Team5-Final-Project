@@ -248,56 +248,16 @@ void USLUserDataSubsystem::LoadKeyMapFromIMC()
 void USLUserDataSubsystem::AddMappingDataToKeyMap(const FEnhancedActionKeyMapping& ActionKeyMapping)
 {
 	EInputActionType ActionType = EInputActionType::EIAT_None;
+	TSoftObjectPtr<UInputAction> TargetAction = ActionKeyMapping.Action;
 
-	if (ActionKeyMapping.Action->GetName().Contains(TEXT("MoveUp")))
+	CheckValidOfUserDataSettings();
+	
+	if (!UserDataSettings->InputActionMap.Contains(TargetAction))
 	{
-		ActionType = EInputActionType::EIAT_MoveUp;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("MoveDown")))
-	{
-		ActionType = EInputActionType::EIAT_MoveDown;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("MoveLeft")))
-	{
-		ActionType = EInputActionType::EIAT_MoveLeft;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("MoveRight")))
-	{
-		ActionType = EInputActionType::EIAT_MoveRight;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("Walk")))
-	{
-		ActionType = EInputActionType::EIAT_Walk;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("Jump")))
-	{
-		ActionType = EInputActionType::EIAT_Jump;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("Attack")))
-	{
-		ActionType = EInputActionType::EIAT_Attack;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("Interation")))
-	{
-		ActionType = EInputActionType::EIAT_Interaction;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("PointMove")))
-	{
-		ActionType = EInputActionType::EIAT_PointMove;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("Menu")))
-	{
-		ActionType = EInputActionType::EIAT_Menu;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("Look")))
-	{
-		ActionType = EInputActionType::EIAT_Look;
-	}
-	else if (ActionKeyMapping.Action->GetName().Contains(TEXT("Block")))
-	{
-		ActionType = EInputActionType::EIAT_Block;
+		return;
 	}
 
+	ActionType = UserDataSettings->InputActionMap[TargetAction];
 	KeySet.Add(ActionKeyMapping.Key);
 	ActionKeyMap.Add(ActionType, ActionKeyMapping);
 }

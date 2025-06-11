@@ -6,10 +6,10 @@
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
 #include "SLOptionWidget.generated.h"
 
-class UButton;
 class UTextBlock;
 class UImage;
 class UWidgetSwitcher;
+class USLButtonWidget;
 class USLLanguageSettingWidget;
 class USLGraphicSettingWidget;
 class USLSoundSettingWidget;
@@ -27,7 +27,6 @@ public:
 
 protected:
 	virtual void ApplyTextData() override;
-	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
 	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush) override;
 
 	virtual void OnEndedCloseAnim() override;
@@ -66,28 +65,16 @@ private:
 	TObjectPtr<UWidgetSwitcher> LayerSwitcher = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> LanguageSetBt = nullptr;
+	TObjectPtr<USLButtonWidget> LanguageSetBt = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> GraphicSetBt = nullptr;
+	TObjectPtr<USLButtonWidget> GraphicSetBt = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> SoundSetBt = nullptr;
+	TObjectPtr<USLButtonWidget> SoundSetBt = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> KeySettingButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> LanguageSetText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> GraphicSetText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> SoundSetText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> KeySettingText = nullptr;
+	TObjectPtr<USLButtonWidget> KeySettingButton = nullptr;
 	//
 
 	// Layer Widget
@@ -106,16 +93,10 @@ private:
 
 	// Widget Handle
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> QuitGameButton = nullptr;
+	TObjectPtr<USLButtonWidget> QuitGameButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> QuitGameText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> CloseButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> CloseText = nullptr;
+	TObjectPtr<USLButtonWidget> CloseButton = nullptr;
 	//
 
 	static const FName TitleTextIndex;

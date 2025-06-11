@@ -28,8 +28,10 @@ public:
 
 	void SetTimerText(int32 TimeSeconds);
 	void SetHpValue(int32 MaxHp, int32 CurrentHp);
+	void SetSpecialBalue(int32 MaxValue, int32 CurrentValue);
 	void SetBossHpValue(int32 MaxHp, int32 CurrentHp);
 	void SetObjectiveText(const FName& ObjectiveName);
+	void SetObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount, int32 CurrentCount);
 
 protected:
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
@@ -62,6 +64,9 @@ protected:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UProgressBar> HpBar = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UProgressBar> SpecialBar = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UProgressBar> BossHpBar = nullptr;

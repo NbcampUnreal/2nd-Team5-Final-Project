@@ -41,7 +41,7 @@ void USLSaveGameSubsystem::LoadGame()
         CurrentSaveGame = Cast<USLSaveGame>(Loaded);
         UE_LOG(LogTemp, Warning, TEXT("Data Load Succeed"));
         
-        SendWidgetData();
+        SendWidgetData(false);
         SendChapterData();
     }
     else
@@ -49,6 +49,7 @@ void USLSaveGameSubsystem::LoadGame()
         UE_LOG(LogTemp, Warning, TEXT("Save file does not exist created a new one"));
         CurrentSaveGame = NewObject<USLSaveGame>();
         UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
+        SendWidgetData(true);
     }
 }
 
@@ -95,13 +96,21 @@ void USLSaveGameSubsystem::SaveWidgetData()
     UE_LOG(LogTemp, Warning, TEXT("Save Widget Data"));
 }
 
-void USLSaveGameSubsystem::SendWidgetData()
+void USLSaveGameSubsystem::SendWidgetData(bool bIsFirstGame)
 {
     USLUserDataSubsystem* UserDataSubsystem = GetGameInstance()->GetSubsystem<USLUserDataSubsystem>();
     checkf(IsValid(UserDataSubsystem), TEXT("User Data Subsystem is invalid"));
 
     checkf(IsValid(CurrentSaveGame), TEXT("Current Save Game is invalid"));
-    UserDataSubsystem->ApplyLoadedUserData(CurrentSaveGame->WidgetSaveData);
+
+    if (bIsFirstGame)
+    {
+        UserDataSubsystem->ApplyDefaultUserData();
+    }
+    else
+    {
+        UserDataSubsystem->ApplyLoadedUserData(CurrentSaveGame->WidgetSaveData);
+    }
 }
 
 void USLSaveGameSubsystem::SaveChapterData()

@@ -16,12 +16,22 @@ void USLButtonWidget::InitButton()
 	Button->OnClicked.AddDynamic(this, &ThisClass::OnClickedButton);
 	Button->OnHovered.AddDynamic(this, &ThisClass::OnHoveredButton);
 	Button->OnUnhovered.AddDynamic(this, &ThisClass::OnUnhoveredButton);
-
-	RetainerBox->SetRetainRendering(false);
 }
 
-void USLButtonWidget::SetButtonStyle(const FButtonStyle& NewStyle)
+void USLButtonWidget::SetButtonStyle(FButtonStyle NewStyle)
 {
+	UMaterialInterface* ButtonMaterial = Cast<UMaterialInterface>(NewStyle.Hovered.GetResourceObject());
+
+	if (IsValid(ButtonMaterial))
+	{
+		ButtonDynamicMat = UMaterialInstanceDynamic::Create(ButtonMaterial, this);
+		NewStyle.Hovered.SetResourceObject(ButtonDynamicMat);
+	}
+	else
+	{
+		ButtonDynamicMat = nullptr;
+	}
+
 	Button->SetStyle(NewStyle);
 }
 
@@ -54,6 +64,13 @@ void USLButtonWidget::SetNiagaraWidget(UNiagaraSystem* NewNiagara)
 	}
 }
 
+void USLButtonWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	RetainerBox->SetRetainRendering(false);
+}
+
 void USLButtonWidget::OnClickedButton()
 {
 	PlayButtonSound(ESLUISoundType::EUS_Click);
@@ -65,6 +82,7 @@ void USLButtonWidget::OnHoveredButton()
 	PlayButtonSound(ESLUISoundType::EUS_Hover);
 
 	RetainerBox->SetRetainRendering(true);
+	PlayAnimation(AddProgress);
 
 	if (bIsContainNiagara)
 	{
