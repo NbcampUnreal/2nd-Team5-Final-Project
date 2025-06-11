@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/SLSoundSubsystem.h"
+#include "UI/HUD/SLBaseHUD.h"
 
 void USLLevelTransferSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -34,6 +35,7 @@ void USLLevelTransferSubsystem::OpenLevelByNameType(ESLLevelNameType LevelNameTy
 
 void USLLevelTransferSubsystem::PostFadeOut()
 {
+	DeactiveHudWidget();
 	CheckValidOfLevelDataAsset();
 
 	if (!LevelDataAsset->GetLevelRef(CurrentLevel).IsNull())
@@ -72,6 +74,17 @@ void USLLevelTransferSubsystem::PostOpenLevel(UWorld* LoadedWorld)
 	{
 		SoundSubsystem->PlayBgmSound(LevelSettings->LevelBgmMap[CurrentLevel]);
 	}
+}
+
+void USLLevelTransferSubsystem::DeactiveHudWidget()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	checkf(PC, TEXT("Player Controller is invalid"));
+
+	ASLBaseHUD* HUD = Cast<ASLBaseHUD>(PC->GetHUD());
+	checkf(HUD, TEXT("HUD is invalid"));
+
+	HUD->DeactiveLevelWidget();
 }
 
 void USLLevelTransferSubsystem::CheckValidOfLevelDataAsset()

@@ -22,7 +22,7 @@ void USLBaseTextPrintWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 	if (IsValid(ParentNextButton))
 	{
-		ParentFastButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedFaseButton);
+		ParentFastButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedFastButton);
 	}
 }
 
@@ -57,6 +57,7 @@ void USLBaseTextPrintWidget::OnClickedNextButton()
 	{
 		TalkArray.Empty();
 		CloseWidget();
+		OnTalkEnded.Broadcast();
 		return;
 	}
 
@@ -71,7 +72,7 @@ void USLBaseTextPrintWidget::OnClickedSkipButton()
 	CloseWidget();
 }
 
-void USLBaseTextPrintWidget::OnClickedFaseButton()
+void USLBaseTextPrintWidget::OnClickedFastButton()
 {
 	bIsFasted = !bIsFasted;
 }

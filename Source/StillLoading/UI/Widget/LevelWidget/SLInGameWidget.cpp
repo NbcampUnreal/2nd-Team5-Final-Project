@@ -85,6 +85,13 @@ void USLInGameWidget::SetHpValue(int32 MaxHp, int32 CurrentHp)
 	HpBar->SetPercent(PerHp);
 }
 
+void USLInGameWidget::SetSpecialBalue(int32 MaxValue, int32 CurrentValue)
+{
+	float PerHp = (float)CurrentValue / (float)MaxValue;
+
+	SpecialBar->SetPercent(PerHp);
+}
+
 void USLInGameWidget::SetBossHpValue(int32 MaxHp, int32 CurrentHp)
 {
 	float PerHp = (float)CurrentHp / (float)MaxHp;
@@ -106,6 +113,16 @@ void USLInGameWidget::SetObjectiveText(const FName& ObjectiveName)
 			GameStateText->SetText(ObjectiveText->TextMap[ObjectiveName]);
 		}
 	}
+}
+
+void USLInGameWidget::SetObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount, int32 CurrentCount)
+{
+	SetObjectiveText(ObjectiveName);
+
+	FText CurrentText = GameStateText->GetText();
+	FString TargetString = FString::Printf(TEXT("%s (%d / %d)"), *CurrentText.ToString(), CurrentCount, MaxCount);
+
+	GameStateText->SetText(FText::FromString(TargetString));
 }
 
 void USLInGameWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
