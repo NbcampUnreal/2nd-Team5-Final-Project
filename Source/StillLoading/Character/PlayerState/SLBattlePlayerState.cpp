@@ -3,6 +3,7 @@
 #include "Character/SLPlayerCharacter.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/Item/SLDefaultSword.h"
+#include "Character/MovementHandlerComponent/SL25DMovementHandlerComponent.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -88,12 +89,16 @@ void ASLBattlePlayerState::IncreaseBurningGage(const float Amount)
 
 	if (BurningGage >= 100.f)
 	{
-		BurningGage = 0.f;
-
 		if (UMovementHandlerComponent* MoveComp = Pawn->FindComponentByClass<UMovementHandlerComponent>())
 		{
 			MoveComp->BeginBuff();
 		}
+		else if (USL25DMovementHandlerComponent* D25MoveComp = Pawn->FindComponentByClass<USL25DMovementHandlerComponent>())
+		{
+			D25MoveComp->BeginBuff();
+		}
+
+		BurningGage = 0.f;
 	}
 
 	// 싱글에선 직접 호출

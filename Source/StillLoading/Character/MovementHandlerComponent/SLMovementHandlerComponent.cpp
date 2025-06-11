@@ -44,6 +44,12 @@ void UMovementHandlerComponent::BeginPlay()
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
 		BindIMCComponent();
 	}
+
+	if (OwnerCharacter && OwnerCharacter->CameraBoom)
+	{
+		DefaultArmLength = OwnerCharacter->CameraBoom->TargetArmLength;
+		DesiredArmLength = DefaultArmLength;
+	}
 }
 
 void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
@@ -83,6 +89,21 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick T
 
 			RotateCameraToTarget(CameraFocusTarget, DeltaTime);
 		}
+	}
+
+	if (OwnerCharacter && OwnerCharacter->CameraBoom)
+	{
+		if (FMath::IsNearlyEqual(OwnerCharacter->CameraBoom->TargetArmLength, DesiredArmLength))
+		{
+			return;
+		}
+		
+		OwnerCharacter->CameraBoom->TargetArmLength = FMath::FInterpTo(
+			OwnerCharacter->CameraBoom->TargetArmLength, // 현재 값
+			DesiredArmLength,                            // 목표 값
+			DeltaTime,                                   // 프레임 시간
+			CameraZoomInterpSpeed                        // 보간 속도
+		);
 	}
 }
 
@@ -228,7 +249,7 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 		}
 		break;
 	case EInputActionType::EIAT_Walk:
-		ToggleWalk(true);
+		DodgeLoco();
 		break;
 	case EInputActionType::EIAT_Menu:
 		ToggleMenu();
@@ -256,7 +277,7 @@ void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 	case EInputActionType::EIAT_MoveRight:
 		break;
 	case EInputActionType::EIAT_Walk:
-		ToggleWalk(false);
+		
 		break;
 	case EInputActionType::EIAT_Jump:
 		break;
@@ -817,13 +838,89 @@ void UMovementHandlerComponent::PointMove()
 	}
 }
 
-void UMovementHandlerComponent::ToggleWalk(const bool bNewWalking)
+void UMovementHandlerComponent::DodgeLoco()
 {
-	if (!OwnerCharacter) return;
-	if (ASLBattlePlayerState* PS = Cast<ASLBattlePlayerState>(OwnerCharacter->GetPlayerState()))
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_DogeBlock))
 	{
-		PS->SetWalking(bNewWalking);
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
+		return;
 	}
+
+	ToggleCameraZoom(false);
+	
+	FVector DesiredDodgeDirection;
+	const FVector InputDirection = OwnerCharacter->GetCharacterMovement()->GetCurrentAcceleration().GetSafeNormal();
+	if (!InputDirection.IsNearlyZero())
+	{
+		DesiredDodgeDirection = InputDirection;
+	}
+	else
+	{
+		DesiredDodgeDirection = -OwnerCharacter->GetActorForwardVector();
+	}
+
+	const FVector CharacterForward = OwnerCharacter->GetActorForwardVector();
+    const FVector CharacterRight = OwnerCharacter->GetActorRightVector();
+
+    const double ForwardDotTemp = FVector::DotProduct(CharacterForward, DesiredDodgeDirection);
+    const double RightDotTemp = FVector::DotProduct(CharacterRight, DesiredDodgeDirection);
+
+    constexpr double AngleThreshold45 = 0.707;
+    
+    EDodgeDirection DirectionEnum;
+
+    if (ForwardDotTemp > AngleThreshold45)
+    {
+        DirectionEnum = EDodgeDirection::Forward;
+    }
+    else if (ForwardDotTemp < -AngleThreshold45)
+    {
+        DirectionEnum = EDodgeDirection::Backward;
+    }
+    else
+    {
+        if (RightDotTemp > 0)
+        {
+            DirectionEnum = EDodgeDirection::Right;
+        }
+        else
+        {
+            DirectionEnum = EDodgeDirection::Left;
+        }
+    }
+
+    const double AngleRad = FMath::Acos(ForwardDotTemp);
+    double AngleDeg = FMath::RadiansToDegrees(AngleRad);
+
+    if (RightDotTemp < 0)
+    {
+        AngleDeg *= -1.0;
+    }
+
+    if (AngleDeg >= -22.5 && AngleDeg < 22.5) DirectionEnum = EDodgeDirection::Forward;
+    else if (AngleDeg >= 22.5 && AngleDeg < 67.5) DirectionEnum = EDodgeDirection::ForwardRight;
+    else if (AngleDeg >= 67.5 && AngleDeg < 112.5) DirectionEnum = EDodgeDirection::Right;
+    else if (AngleDeg >= 112.5 && AngleDeg < 157.5) DirectionEnum = EDodgeDirection::BackwardRight;
+    else if (AngleDeg >= 157.5 || AngleDeg < -157.5) DirectionEnum = EDodgeDirection::Backward;
+    else if (AngleDeg >= -157.5 && AngleDeg < -112.5) DirectionEnum = EDodgeDirection::BackwardLeft;
+    else if (AngleDeg >= -112.5 && AngleDeg < -67.5) DirectionEnum = EDodgeDirection::Left;
+    else if (AngleDeg >= -67.5 && AngleDeg < -22.5) DirectionEnum = EDodgeDirection::ForwardLeft;
+
+    FName MontageToPlay = "";
+    switch (DirectionEnum)
+    {
+        case EDodgeDirection::Forward:        MontageToPlay = "Forward"; break;
+        case EDodgeDirection::ForwardRight:   MontageToPlay = "ForwardRight"; break;
+        case EDodgeDirection::Right:          MontageToPlay = "Right"; break;
+        case EDodgeDirection::BackwardRight:  MontageToPlay = "BackwardRight"; break;
+        case EDodgeDirection::Backward:       MontageToPlay = "Backward"; break;
+        case EDodgeDirection::BackwardLeft:   MontageToPlay = "BackwardLeft"; break;
+        case EDodgeDirection::Left:           MontageToPlay = "Left"; break;
+        case EDodgeDirection::ForwardLeft:    MontageToPlay = "ForwardLeft"; break;
+    }
+
+	CachedMontageComponent->PlayDodgeMontage(MontageToPlay);
+	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
 }
 
 void UMovementHandlerComponent::ToggleMenu()
@@ -915,16 +1012,16 @@ void UMovementHandlerComponent::RotateCameraToTarget(const AActor* Target, float
 
 void UMovementHandlerComponent::ToggleCameraZoom(const bool bIsZoomedOut, const float ZoomedOutArmLength)
 {
-	if (!OwnerCharacter->CameraBoom && OwnerCharacter->HasSecondaryState(TAG_Character_LockOn))
+	if (!OwnerCharacter->CameraBoom || !OwnerCharacter->CameraBoom || OwnerCharacter->HasSecondaryState(TAG_Character_LockOn))
 		return;
 
 	if (bIsZoomedOut)
 	{
-		OwnerCharacter->CameraBoom->TargetArmLength = DefaultArmLength;
+		DesiredArmLength = DefaultArmLength;
 	}
 	else
 	{
-		OwnerCharacter->CameraBoom->TargetArmLength = ZoomedOutArmLength;
+		DesiredArmLength = ZoomedOutArmLength;
 	}
 }
 
