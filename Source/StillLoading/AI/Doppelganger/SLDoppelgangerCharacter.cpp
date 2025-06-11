@@ -132,8 +132,6 @@ void ASLDoppelgangerCharacter::PerformJumpAttack()
     // 플레이어 방향으로 점프
     JumpTowardsPlayer();
     
-    UE_LOG(LogTemp, Warning, TEXT("Doppelganger performing jump attack: %s"), 
-           *UEnum::GetValueAsString(JumpPattern));
 }
 
 EDoppelgangerActionPattern ASLDoppelgangerCharacter::SelectJumpAttackPattern() const
@@ -646,26 +644,12 @@ float ASLDoppelgangerCharacter::CalculateContextualDashDegree() const
 
 bool ASLDoppelgangerCharacter::IsPlayerAttacking() const
 {
-    if (!AIController)
+    if (ASLBaseAIController* BaseController = Cast<ASLBaseAIController>(AIController))
     {
-        return false;
+        return BaseController->IsPlayerAttacking();
     }
     
-    UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
-    if (!BlackboardComponent)
-    {
-        return false;
-    }
-    
-    // 타겟 액터를 플레이어 캐릭터로 캐스팅
-    ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
-    if (!PlayerCharacter)
-    {
-        return false;
-    }
-    
-    // 플레이어의 PrimaryStateTags에서 공격 태그 확인
-    return PlayerCharacter->PrimaryStateTags.HasTag(TAG_Character_Attack);
+    return false;
 }
 
 bool ASLDoppelgangerCharacter::IsTargetTooClose() const
