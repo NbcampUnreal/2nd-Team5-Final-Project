@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -23,13 +21,16 @@ enum class EDoppelgangerActionPattern : uint8
     // 특수 공격
     EDAP_Attack_Up_01                   UMETA(DisplayName = "DG Attack Up 01"),
     EDAP_Attack_Up_Floor_To_Air_02      UMETA(DisplayName = "DG Attack Up Floor To Air 02"),
+    EDAP_Attack_Air_To_Floor            UMETA(DisplayName = "DG Attack Air To Floor"),
     EDAP_Run_Attack_02                  UMETA(DisplayName = "DG Run Attack 02"),
     EDAP_Dash_Air_Attack                UMETA(DisplayName = "DG Dash Air Attack"),
+    
+    // 대시 패턴
+    EDAP_Dash                           UMETA(DisplayName = "DG Dash"),
     
     // 방어 및 지원
     EDAP_Guard                          UMETA(DisplayName = "DG Guard"),
     EDAP_Parry                          UMETA(DisplayName = "DG Parry"),
-    EDAP_Buff_Cast                      UMETA(DisplayName = "DG Buff Cast"),
     
     // 가드 파괴
     EDAP_Guard_Break                    UMETA(DisplayName = "DG Guard Break")
@@ -40,7 +41,8 @@ enum class EDoppelgangerGuardState : uint8
 {
     EDGS_None                           UMETA(DisplayName = "None"),
     EDGS_Guarding                       UMETA(DisplayName = "Guarding"),
-    EDGS_GuardBroken                    UMETA(DisplayName = "Guard Broken")
+    EDGS_GuardBroken                    UMETA(DisplayName = "Guard Broken"),
+    EDGS_Parrying                       UMETA(DisplayName = "Parrying")
 };
 
 UCLASS()
@@ -91,17 +93,42 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Combat|Guard")
     bool IsGuardBroken() const;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-    TSubclassOf<ASLItem> SwordClass;
-    
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-    TSubclassOf<ASLItem> ShieldClass;
+    UFUNCTION(BlueprintCallable, Category = "Combat|Parry")
+    void TriggerParry();
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-    TObjectPtr<ASLItem> Sword;
+    UFUNCTION(BlueprintCallable, Category = "Combat|Parry")
+    void FinishParry();
+
+    UFUNCTION(BlueprintCallable, Category = "Combat|Parry")
+    bool IsParrying() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Combat|Parry")
+    void OnParryAnimationEnd();
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-    TObjectPtr<ASLItem> Shield;
+    UFUNCTION(BlueprintCallable, Category = "Combat|Dash")
+    void PerformDash(float DashDegree);
+    
+    UFUNCTION(BlueprintCallable, Category = "Combat|Dash")
+    void PerformContextualDash();
+    
+    UFUNCTION(BlueprintCallable, Category = "Combat|Dash")
+    void SetDashDegree(float Degree);
+    
+    UFUNCTION(BlueprintCallable, Category = "Combat|Dash")
+    float GetDashDegree() const;
+
+    // 점프 공격 관련 함수들
+    UFUNCTION(BlueprintCallable, Category = "Combat|Jump")
+    bool IsPlayerJumping() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Combat|Jump")
+    void PerformJumpAttack();
+
+    UFUNCTION(BlueprintCallable, Category = "Combat|Jump")
+    EDoppelgangerActionPattern SelectJumpAttackPattern() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Combat|Jump")
+    void JumpTowardsPlayer();
 
 protected:
     virtual void BeginPlay() override;
@@ -113,6 +140,18 @@ protected:
     void StartGuardCounterResetTimer();
     void StopGuardCounterResetTimer();
     void ResetGuardCounterWithDelay();
+    
+    float CalculateContextualDashDegree() const;
+    bool IsPlayerAttacking() const;
+    bool IsTargetTooClose() const;
+    bool IsTargetTooFar() const;
+    float GetRandomEvasiveAngle() const;
+    float GetFlankingAngle() const;
+    void SetHitStateForGuard(AActor* DamageCauser, const FHitResult& HitResult);
+
+    // 점프 공격 관련 헬퍼 함수들
+    FVector CalculateJumpTargetLocation() const;
+    bool ShouldPerformJumpAttack() const;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Guard")
     int32 MaxGuardCount;
@@ -123,21 +162,63 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Guard")
     float GuardCounterResetDelay;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Parry")
+    float ParryDuration;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Dash")
+    float MinDashDistance;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Dash")
+    float MaxDashDistance;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Dash")
+    float OptimalCombatDistance;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Dash")
+    float DashDuration;
+
+    // 점프 공격 관련 프로퍼티들
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Jump")
+    float JumpAttackRange;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Jump")
+    float JumpAttackHeight;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Jump")
+    float PlayerJumpCheckInterval;
+
 private:
-    EDoppelgangerActionPattern CurrentActionPattern;
-    int32 MaxRecentPatternMemory;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    TSubclassOf<ASLItem> SwordClass;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    TSubclassOf<ASLItem> ShieldClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<ASLItem> Sword;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<ASLItem> Shield;
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
     FGameplayTagContainer RecentlyUsedPatterns;
     
-    TMap<FGameplayTag, EDoppelgangerActionPattern> PatternTagToEnumMap;
-
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Guard", meta = (AllowPrivateAccess = "true"))
     EDoppelgangerGuardState CurrentGuardState;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Guard", meta = (AllowPrivateAccess = "true"))
-    int32 CurrentGuardCount;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Dash", meta = (AllowPrivateAccess = "true"))
+    float CurrentDashDegree;
 
+    EDoppelgangerActionPattern CurrentActionPattern;
+    int32 MaxRecentPatternMemory;
+    int32 CurrentGuardCount;
+    TMap<FGameplayTag, EDoppelgangerActionPattern> PatternTagToEnumMap;
     FTimerHandle GuardBreakRecoveryTimer;
     FTimerHandle GuardCounterResetTimer;
+    FTimerHandle ParryRecoveryTimer;
+    FTimerHandle DashTimerHandle;
+
+    // 점프 공격 관련 변수들
+    float LastPlayerJumpCheckTime;
+    bool bPlayerWasJumpingLastFrame;
 };

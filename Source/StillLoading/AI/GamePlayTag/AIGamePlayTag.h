@@ -102,6 +102,7 @@ namespace SLAIGameplayTags
 	// Doppelganger 특수 공격
 	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Attack_Up_01);
 	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Attack_Up_Floor_To_Air_02);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Attack_Air_To_Floor);
 	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Run_Attack_02);
 	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Dash_Air_Attack);
 
@@ -109,4 +110,5 @@ namespace SLAIGameplayTags
 	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Guard);
 	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Parry);
 	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Buff_Cast);
+	STILLLOADING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Doppelganger_Pattern_Dash);
 }

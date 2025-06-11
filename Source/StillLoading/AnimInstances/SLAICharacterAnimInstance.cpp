@@ -90,41 +90,33 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 	DamagePosition = OwningCharacter->GetHitDirectionVector();
 	bIsJump = OwningCharacter->IsJumping();
 	IsLoop = OwningCharacter->GetIsLoop();
+	
 	// 현재 속도 계산
 	FVector CurrentVelocity = OwningCharacter->GetMovementComponent()->GetVelocityForNavMovement();
 	GroundSpeed = CurrentVelocity.Size2D();
     
 	// AI 캐릭터를 위한 가속도 감지
-	const float MovementThreshold = 50.0f; // 이동으로 간주할 최소 속도
-	const float AccelerationThreshold = 15.0f; // 가속으로 간주할 속도 변화량 (AI용으로 낮춤)
-	const float StopThreshold = 5.0f; // 정지로 간주할 속도
+	const float MovementThreshold = 50.0f;
+	const float AccelerationThreshold = 15.0f;
+	const float StopThreshold = 5.0f;
 	
-	// 기존 방식
-	/*FVector CurrentAcceleration = OwningMovementComponent->GetCurrentAcceleration();
-	bool bHasEngineAcceleration = CurrentAcceleration.SizeSquared2D() > 0.f;*/
-	
-	// AI용 방식: 속도 변화 감지
 	float SpeedDifference = FMath::Abs(GroundSpeed - PreviousGroundSpeed);
 	bool bHasSpeedChange = SpeedDifference > AccelerationThreshold;
 	
-	// 가속 시작/정지 감지
 	bool bStartingMovement = (PreviousGroundSpeed <= StopThreshold && GroundSpeed > MovementThreshold);
 	bool bStoppingMovement = (PreviousGroundSpeed > MovementThreshold && GroundSpeed <= StopThreshold);
 	
-	// 방향 변화 감지 (회전하면서 이동하는 경우)
 	bool bHasDirectionChange = false;
 	if (GroundSpeed > MovementThreshold && PreviousGroundSpeed > MovementThreshold)
 	{
 		FVector CurrentDirection = CurrentVelocity.GetSafeNormal2D();
 		FVector PreviousDirection = PreviousVelocity.GetSafeNormal2D();
 		float DirectionDot = FVector::DotProduct(CurrentDirection, PreviousDirection);
-		bHasDirectionChange = DirectionDot < 0.9f; // 약 25도 이상 방향 변화
+		bHasDirectionChange = DirectionDot < 0.9f;
 	}
 	
-	// 최종 가속도 상태 결정
 	bHasAcceleration = bHasSpeedChange || bStartingMovement || bStoppingMovement || bHasDirectionChange;
 	
-	// 다음 프레임을 위해 이전 값들 저장
 	PreviousVelocity = CurrentVelocity;
 	PreviousGroundSpeed = GroundSpeed;
     
@@ -165,6 +157,8 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 		FaceYaw = NormalizeRotator.GetInverse().Yaw;
 		FacePitch = NormalizeRotator.GetInverse().Pitch;
 	}
+	
+	UpdateSpeedComponents();
 }
 
 /*void USLAICharacterAnimInstance::SetHitDirection(EHitDirection NewDirection)
