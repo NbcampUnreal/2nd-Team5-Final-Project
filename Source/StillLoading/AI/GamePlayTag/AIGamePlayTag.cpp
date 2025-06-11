@@ -96,6 +96,7 @@ namespace SLAIGameplayTags
 	// Doppelganger 특수 공격
 	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Attack_Up_01, "Doppelganger.Pattern.Attack.Up01");
 	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Attack_Up_Floor_To_Air_02, "Doppelganger.Pattern.Attack.UpFloorToAir02");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Attack_Air_To_Floor, "Doppelganger.Pattern.Attack.AirToFloor");
 	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Run_Attack_02, "Doppelganger.Pattern.Attack.Run02");
 	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Dash_Air_Attack, "Doppelganger.Pattern.Attack.DashAir");
 
@@ -103,5 +104,6 @@ namespace SLAIGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Guard, "Doppelganger.Pattern.Defense.Guard");
 	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Parry, "Doppelganger.Pattern.Defense.Parry");
 	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Buff_Cast, "Doppelganger.Pattern.Support.BuffCast");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Dash, "Doppelganger.Pattern.Dash");
 
 }

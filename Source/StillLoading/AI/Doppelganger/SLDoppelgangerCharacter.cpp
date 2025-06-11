@@ -1,14 +1,21 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "SLDoppelgangerCharacter.h"
 
+#include "AIController.h"
+#include "NiagaraComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "AI/GamePlayTag/AIGamePlayTag.h"
+#include "Character/SLPlayerCharacter.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/Item/SLItem.h"
+#include "Components/CapsuleComponent.h"
+#include "Controller/SLBaseAIController.h"
 #include "Engine/Engine.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 ASLDoppelgangerCharacter::ASLDoppelgangerCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
+    
     CurrentActionPattern = EDoppelgangerActionPattern::EDAP_None;
     MaxRecentPatternMemory = 3;
     CurrentGuardState = EDoppelgangerGuardState::EDGS_None;
@@ -16,6 +23,21 @@ ASLDoppelgangerCharacter::ASLDoppelgangerCharacter()
     MaxGuardCount = 3;
     GuardBreakDuration = 5.0f;
     GuardCounterResetDelay = 3.0f;
+    ParryDuration = 1.5f;
+    CurrentDashDegree = 0.0f;
+    MinDashDistance = 200.0f;
+    MaxDashDistance = 800.0f;
+    OptimalCombatDistance = 400.0f;
+    DashDuration = 2.0f;
+    
+    // 점프 공격 관련 초기화
+    JumpAttackRange = 500.0f;
+    JumpAttackHeight = 300.0f;
+    PlayerJumpCheckInterval = 0.1f;
+    LastPlayerJumpCheckTime = 0.0f;
+    bPlayerWasJumpingLastFrame = false;
+    
+    bCanBeExecuted = false;
 }
 
 void ASLDoppelgangerCharacter::BeginPlay()
@@ -44,8 +66,197 @@ void ASLDoppelgangerCharacter::BeginPlay()
 void ASLDoppelgangerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+    
+    // 주기적으로 플레이어 점프 상태 확인
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    if (CurrentTime - LastPlayerJumpCheckTime >= PlayerJumpCheckInterval)
+    {
+        bool bPlayerCurrentlyJumping = IsPlayerJumping();
+        
+        // 플레이어가 새로 점프를 시작했을 때 점프 공격 고려
+        if (bPlayerCurrentlyJumping && !bPlayerWasJumpingLastFrame)
+        {
+            if (ShouldPerformJumpAttack())
+            {
+                PerformJumpAttack();
+            }
+        }
+        
+        bPlayerWasJumpingLastFrame = bPlayerCurrentlyJumping;
+        LastPlayerJumpCheckTime = CurrentTime;
+    }
 }
 
+bool ASLDoppelgangerCharacter::IsPlayerJumping() const
+{
+    if (!AIController)
+    {
+        return false;
+    }
+    
+    UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
+    if (!BlackboardComponent)
+    {
+        return false;
+    }
+    
+    ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
+    if (!PlayerCharacter)
+    {
+        return false;
+    }
+    
+    // 플레이어의 이동 컴포넌트를 통해 점프 상태 확인
+    UCharacterMovementComponent* PlayerMovement = PlayerCharacter->GetCharacterMovement();
+    if (!PlayerMovement)
+    {
+        return false;
+    }
+    
+    // 떨어지고 있거나 점프 중인 상태 확인
+    return PlayerMovement->IsFalling();
+}
+
+void ASLDoppelgangerCharacter::PerformJumpAttack()
+{
+    if (!CanAIJump())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Doppelganger cannot jump for attack"));
+        return;
+    }
+    
+    // 점프 공격 패턴 선택
+    EDoppelgangerActionPattern JumpPattern = SelectJumpAttackPattern();
+    SetCurrentActionPattern(JumpPattern);
+    
+    // 플레이어 방향으로 점프
+    JumpTowardsPlayer();
+    
+    UE_LOG(LogTemp, Warning, TEXT("Doppelganger performing jump attack: %s"), 
+           *UEnum::GetValueAsString(JumpPattern));
+}
+
+EDoppelgangerActionPattern ASLDoppelgangerCharacter::SelectJumpAttackPattern() const
+{
+    // 점프 공격에 적합한 패턴들
+    TArray<EDoppelgangerActionPattern> JumpAttackPatterns = {
+        EDoppelgangerActionPattern::EDAP_Combo_Attack_Air,
+        EDoppelgangerActionPattern::EDAP_Attack_Up_Floor_To_Air_02,
+        EDoppelgangerActionPattern::EDAP_Dash_Air_Attack
+    };
+    
+    // 랜덤하게 선택
+    int32 RandomIndex = FMath::RandRange(0, JumpAttackPatterns.Num() - 1);
+    return JumpAttackPatterns[RandomIndex];
+}
+
+void ASLDoppelgangerCharacter::JumpTowardsPlayer()
+{
+    FVector JumpTarget = CalculateJumpTargetLocation();
+    
+    if (JumpTarget.IsZero())
+    {
+        // 타겟이 없으면 기본 점프
+        AIJump();
+        return;
+    }
+    
+    // 플레이어 방향으로 회전
+    FVector DirectionToTarget = (JumpTarget - GetActorLocation()).GetSafeNormal();
+    DirectionToTarget.Z = 0.0f; // 수평 방향만
+    
+    if (!DirectionToTarget.IsZero())
+    {
+        FRotator TargetRotation = FRotationMatrix::MakeFromX(DirectionToTarget).Rotator();
+        SetActorRotation(TargetRotation);
+    }
+    
+    // 점프 수행
+    AIJump();
+    
+    // 점프 후 약간의 전진 속도 추가 (선택사항)
+    if (UCharacterMovementComponent* MovementComp = GetCharacterMovement())
+    {
+        FVector LaunchVelocity = DirectionToTarget * 300.0f; // 전진 속도
+        LaunchVelocity.Z = MovementComp->JumpZVelocity * 0.8f; // 점프 높이 조절
+        
+        MovementComp->Launch(LaunchVelocity);
+    }
+}
+
+FVector ASLDoppelgangerCharacter::CalculateJumpTargetLocation() const
+{
+    if (!AIController)
+    {
+        return FVector::ZeroVector;
+    }
+    
+    UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
+    if (!BlackboardComponent)
+    {
+        return FVector::ZeroVector;
+    }
+    
+    AActor* TargetActor = Cast<AActor>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
+    if (!TargetActor)
+    {
+        return FVector::ZeroVector;
+    }
+    
+    FVector PlayerLocation = TargetActor->GetActorLocation();
+    FVector MyLocation = GetActorLocation();
+    
+    // 플레이어 근처의 위치를 타겟으로 설정 (너무 가깝지 않게)
+    FVector DirectionToPlayer = (PlayerLocation - MyLocation).GetSafeNormal();
+    FVector TargetLocation = PlayerLocation - (DirectionToPlayer * 200.0f); // 플레이어로부터 200유닛 떨어진 위치
+    
+    return TargetLocation;
+}
+
+bool ASLDoppelgangerCharacter::ShouldPerformJumpAttack() const
+{
+    // 이미 점프 중이거나 공격 중이면 점프 공격 안함
+    if (bIsJumping || bIsAttacking)
+    {
+        return false;
+    }
+    
+    // 가드나 패리 중이면 점프 공격 안함
+    if (CurrentGuardState != EDoppelgangerGuardState::EDGS_None)
+    {
+        return false;
+    }
+    
+    // 플레이어와의 거리 확인
+    if (!AIController)
+    {
+        return false;
+    }
+    
+    UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
+    if (!BlackboardComponent)
+    {
+        return false;
+    }
+    
+    AActor* TargetActor = Cast<AActor>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
+    if (!TargetActor)
+    {
+        return false;
+    }
+    
+    float DistanceToPlayer = FVector::Dist(GetActorLocation(), TargetActor->GetActorLocation());
+    
+    // 적절한 거리에 있을 때만 점프 공격 (너무 가깝거나 멀면 안함)
+    bool bInRange = (DistanceToPlayer >= 200.0f && DistanceToPlayer <= JumpAttackRange);
+    
+    // 30% 확률로 점프 공격 수행 (너무 자주 하지 않게)
+    bool bRandomChance = FMath::RandRange(1, 100) <= 30;
+    
+    return bInRange && bRandomChance;
+}
+
+// 기존 함수들은 동일하게 유지...
 EDoppelgangerActionPattern ASLDoppelgangerCharacter::GetCurrentActionPattern() const
 {
     return CurrentActionPattern;
@@ -59,23 +270,30 @@ void ASLDoppelgangerCharacter::SetCurrentActionPattern(EDoppelgangerActionPatter
     if (NewPattern == EDoppelgangerActionPattern::EDAP_Guard)
     {
         CurrentGuardState = EDoppelgangerGuardState::EDGS_Guarding;
-        // 가드 시작 시 카운터 리셋 타이머 중지
+        SetIsLoop(true);
+        StopGuardCounterResetTimer();
+    }
+    else if (NewPattern == EDoppelgangerActionPattern::EDAP_Parry)
+    {
+        CurrentGuardState = EDoppelgangerGuardState::EDGS_Parrying;
+        SetIsLoop(false);
         StopGuardCounterResetTimer();
     }
     else if (NewPattern == EDoppelgangerActionPattern::EDAP_Guard_Break)
     {
         CurrentGuardState = EDoppelgangerGuardState::EDGS_GuardBroken;
+        SetIsLoop(false);
         StopGuardCounterResetTimer();
     }
-    else if (CurrentGuardState != EDoppelgangerGuardState::EDGS_GuardBroken)
+    else if (CurrentGuardState != EDoppelgangerGuardState::EDGS_GuardBroken && 
+             CurrentGuardState != EDoppelgangerGuardState::EDGS_Parrying)
     {
-        // 가드 상태에서 벗어날 때
         if (CurrentGuardState == EDoppelgangerGuardState::EDGS_Guarding && CurrentGuardCount > 0)
         {
-            // 가드 해제 시 일정 시간 후 카운터 리셋 타이머 시작
             StartGuardCounterResetTimer();
         }
         CurrentGuardState = EDoppelgangerGuardState::EDGS_None;
+        SetIsLoop(false);
     }
 }
 
@@ -109,7 +327,7 @@ EDoppelgangerActionPattern ASLDoppelgangerCharacter::SelectRandomPatternFromTags
     if (FilteredPatterns.IsEmpty())
     {
         FilteredPatterns = PatternTags;
-        RecentlyUsedPatterns.Reset(); // 최근 사용 목록 초기화
+        RecentlyUsedPatterns.Reset();
     }
 
     // 랜덤 선택
@@ -149,6 +367,7 @@ FGameplayTagContainer ASLDoppelgangerCharacter::GetSpecialAttackPatterns() const
     FGameplayTagContainer SpecialPatterns;
     SpecialPatterns.AddTag(SLAIGameplayTags::Doppelganger_Pattern_Attack_Up_01);
     SpecialPatterns.AddTag(SLAIGameplayTags::Doppelganger_Pattern_Attack_Up_Floor_To_Air_02);
+    SpecialPatterns.AddTag(SLAIGameplayTags::Doppelganger_Pattern_Attack_Air_To_Floor);
     SpecialPatterns.AddTag(SLAIGameplayTags::Doppelganger_Pattern_Run_Attack_02);
     SpecialPatterns.AddTag(SLAIGameplayTags::Doppelganger_Pattern_Dash_Air_Attack);
     return SpecialPatterns;
@@ -169,6 +388,10 @@ FGameplayTagContainer ASLDoppelgangerCharacter::GetAllAttackPatterns() const
     AllPatterns.AppendTags(GetComboAttackPatterns());
     AllPatterns.AppendTags(GetSpecialAttackPatterns());
     AllPatterns.AppendTags(GetDefensePatterns());
+    
+    // 대시 패턴 직접 추가
+    AllPatterns.AddTag(SLAIGameplayTags::Doppelganger_Pattern_Dash);
+    
     return AllPatterns;
 }
 
@@ -179,16 +402,49 @@ void ASLDoppelgangerCharacter::OnGuardSuccess()
         return;
     }
 
-    CurrentGuardCount++;
+    TriggerParry();
     
-    // 가드 성공 시 카운터 리셋 타이머 재시작
-    StartGuardCounterResetTimer();
-    
-    UE_LOG(LogTemp, Warning, TEXT("Guard Success! Count: %d/%d"), CurrentGuardCount, MaxGuardCount);
+    UE_LOG(LogTemp, Warning, TEXT("Guard Success! Triggering Parry!"));
+}
 
-    if (CurrentGuardCount >= MaxGuardCount)
+void ASLDoppelgangerCharacter::TriggerParry()
+{
+    CurrentGuardState = EDoppelgangerGuardState::EDGS_Parrying;
+    SetCurrentActionPattern(EDoppelgangerActionPattern::EDAP_Parry);
+    
+    CurrentGuardCount = 0;
+    
+    UE_LOG(LogTemp, Warning, TEXT("Parry Triggered!"));
+    
+    GetWorld()->GetTimerManager().SetTimer(ParryRecoveryTimer, this, &ASLDoppelgangerCharacter::FinishParry, ParryDuration * 2.0f, false);
+}
+
+void ASLDoppelgangerCharacter::FinishParry()
+{
+    if (CurrentGuardState == EDoppelgangerGuardState::EDGS_Parrying)
     {
-        TriggerGuardBreak();
+        CurrentGuardState = EDoppelgangerGuardState::EDGS_None;
+        SetCurrentActionPattern(EDoppelgangerActionPattern::EDAP_None);
+        
+        UE_LOG(LogTemp, Warning, TEXT("Parry Finished"));
+    }
+}
+
+bool ASLDoppelgangerCharacter::IsParrying() const
+{
+    return CurrentGuardState == EDoppelgangerGuardState::EDGS_Parrying;
+}
+
+void ASLDoppelgangerCharacter::OnParryAnimationEnd()
+{
+    if (CurrentGuardState == EDoppelgangerGuardState::EDGS_Parrying)
+    {
+        if (ParryRecoveryTimer.IsValid())
+        {
+            GetWorld()->GetTimerManager().ClearTimer(ParryRecoveryTimer);
+        }
+        
+        FinishParry();
     }
 }
 
@@ -197,12 +453,10 @@ void ASLDoppelgangerCharacter::TriggerGuardBreak()
     CurrentGuardState = EDoppelgangerGuardState::EDGS_GuardBroken;
     SetCurrentActionPattern(EDoppelgangerActionPattern::EDAP_Guard_Break);
     
-    // 가드 카운터 리셋
     CurrentGuardCount = 0;
     
     UE_LOG(LogTemp, Warning, TEXT("Guard Break Triggered!"));
     
-    // 일정 시간 후 가드 브레이크에서 회복
     GetWorld()->GetTimerManager().SetTimer(GuardBreakRecoveryTimer, this, &ASLDoppelgangerCharacter::RecoverFromGuardBreak, GuardBreakDuration, false);
 }
 
@@ -224,32 +478,79 @@ void ASLDoppelgangerCharacter::ResetGuardCounter()
     UE_LOG(LogTemp, Log, TEXT("Guard Counter Reset"));
 }
 
-void ASLDoppelgangerCharacter::StartGuardCounterResetTimer()
-{
-    StopGuardCounterResetTimer();
-    GetWorld()->GetTimerManager().SetTimer(GuardCounterResetTimer, this, &ASLDoppelgangerCharacter::ResetGuardCounterWithDelay, GuardCounterResetDelay, false);
-}
-
-void ASLDoppelgangerCharacter::StopGuardCounterResetTimer()
-{
-    if (GuardCounterResetTimer.IsValid())
-    {
-        GetWorld()->GetTimerManager().ClearTimer(GuardCounterResetTimer);
-    }
-}
-
-void ASLDoppelgangerCharacter::ResetGuardCounterWithDelay()
-{
-    if (CurrentGuardCount > 0)
-    {
-        ResetGuardCounter();
-        UE_LOG(LogTemp, Log, TEXT("Guard Counter Reset due to timeout"));
-    }
-}
-
 bool ASLDoppelgangerCharacter::IsGuardBroken() const
 {
     return CurrentGuardState == EDoppelgangerGuardState::EDGS_GuardBroken;
+}
+
+void ASLDoppelgangerCharacter::PerformDash(float DashDegree)
+{
+    SetDashDegree(DashDegree);
+    SetCurrentActionPattern(EDoppelgangerActionPattern::EDAP_Dash);
+    
+    // 대시 종료 타이머 설정
+    GetWorld()->GetTimerManager().SetTimer(
+        DashTimerHandle,
+        [this]()
+        {
+            SetCurrentActionPattern(EDoppelgangerActionPattern::EDAP_None);
+            UE_LOG(LogTemp, Warning, TEXT("Dash Completed"));
+        },
+        DashDuration,
+        false
+    );
+    
+    UE_LOG(LogTemp, Warning, TEXT("Performing Dash at %f degrees"), DashDegree);
+}
+
+void ASLDoppelgangerCharacter::PerformContextualDash()
+{
+    float ContextualDegree = CalculateContextualDashDegree();
+    PerformDash(ContextualDegree);
+}
+
+void ASLDoppelgangerCharacter::SetDashDegree(float Degree)
+{
+    CurrentDashDegree = Degree;
+}
+
+float ASLDoppelgangerCharacter::GetDashDegree() const
+{
+    return CurrentDashDegree;
+}
+
+void ASLDoppelgangerCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+{
+    // 가드 브레이크 상태에서는 일반 피격 처리
+    if (CurrentGuardState == EDoppelgangerGuardState::EDGS_GuardBroken)
+    {
+        Super::CharacterHit(DamageCauser, DamageAmount, HitResult, AnimType);
+        return;
+    }
+    
+    // 패리 중일 때는 완전 무효화 (데미지도 히트 상태도 없음)
+    if (CurrentGuardState == EDoppelgangerGuardState::EDGS_Parrying)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Attack completely nullified by Parry! No damage and no hit state."));
+        return;
+    }
+    
+    // 가드 중이면 데미지는 막지만 히트 상태는 설정 (가드 리액션)
+    if (CurrentGuardState == EDoppelgangerGuardState::EDGS_Guarding)
+    {
+        SetHitStateForGuard(DamageCauser, HitResult);
+        OnGuardSuccess();
+        UE_LOG(LogTemp, Warning, TEXT("Guard Success! Damage blocked but guard reaction triggered."));
+        return;
+    }
+    
+    // 가드 중이 아니면 일반 데미지 처리
+    if (CurrentGuardCount > 0)
+    {
+        StopGuardCounterResetTimer();
+    }
+    
+    Super::CharacterHit(DamageCauser, DamageAmount, HitResult, AnimType);
 }
 
 void ASLDoppelgangerCharacter::InitializePatternMapping()
@@ -266,13 +567,15 @@ void ASLDoppelgangerCharacter::InitializePatternMapping()
     // 특수 공격 매핑
     PatternTagToEnumMap.Add(SLAIGameplayTags::Doppelganger_Pattern_Attack_Up_01, EDoppelgangerActionPattern::EDAP_Attack_Up_01);
     PatternTagToEnumMap.Add(SLAIGameplayTags::Doppelganger_Pattern_Attack_Up_Floor_To_Air_02, EDoppelgangerActionPattern::EDAP_Attack_Up_Floor_To_Air_02);
+    PatternTagToEnumMap.Add(SLAIGameplayTags::Doppelganger_Pattern_Attack_Air_To_Floor, EDoppelgangerActionPattern::EDAP_Attack_Air_To_Floor);
     PatternTagToEnumMap.Add(SLAIGameplayTags::Doppelganger_Pattern_Run_Attack_02, EDoppelgangerActionPattern::EDAP_Run_Attack_02);
     PatternTagToEnumMap.Add(SLAIGameplayTags::Doppelganger_Pattern_Dash_Air_Attack, EDoppelgangerActionPattern::EDAP_Dash_Air_Attack);
     
+    // 대시 패턴 매핑
+    PatternTagToEnumMap.Add(SLAIGameplayTags::Doppelganger_Pattern_Dash, EDoppelgangerActionPattern::EDAP_Dash);
+    
     // 방어 및 지원 매핑
     PatternTagToEnumMap.Add(SLAIGameplayTags::Doppelganger_Pattern_Guard, EDoppelgangerActionPattern::EDAP_Guard);
-    PatternTagToEnumMap.Add(SLAIGameplayTags::Doppelganger_Pattern_Parry, EDoppelgangerActionPattern::EDAP_Parry);
-    PatternTagToEnumMap.Add(SLAIGameplayTags::Doppelganger_Pattern_Buff_Cast, EDoppelgangerActionPattern::EDAP_Buff_Cast);
 }
 
 EDoppelgangerActionPattern ASLDoppelgangerCharacter::GetActionPatternForTag(const FGameplayTag& Tag) const
@@ -298,35 +601,190 @@ void ASLDoppelgangerCharacter::AttachItemToHand(AActor* ItemActor, const FName S
     );
 }
 
-void ASLDoppelgangerCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+void ASLDoppelgangerCharacter::StartGuardCounterResetTimer()
 {
-    // 가드 브레이크 상태에서는 가드 불가
-    if (CurrentGuardState == EDoppelgangerGuardState::EDGS_GuardBroken)
+    StopGuardCounterResetTimer();
+    GetWorld()->GetTimerManager().SetTimer(GuardCounterResetTimer, this, &ASLDoppelgangerCharacter::ResetGuardCounterWithDelay, GuardCounterResetDelay, false);
+}
+
+void ASLDoppelgangerCharacter::StopGuardCounterResetTimer()
+{
+    if (GuardCounterResetTimer.IsValid())
     {
-        Super::CharacterHit(DamageCauser, DamageAmount, HitResult, AnimType);
-        return;
+        GetWorld()->GetTimerManager().ClearTimer(GuardCounterResetTimer);
     }
-    
-    // 가드 중이면 가드 성공 처리
-    if (CurrentGuardState == EDoppelgangerGuardState::EDGS_Guarding)
+}
+
+void ASLDoppelgangerCharacter::ResetGuardCounterWithDelay()
+{
+    if (CurrentGuardCount > 0)
     {
-        OnGuardSuccess();
-        
-        // 가드 성공 시 데미지 감소
-        float ReducedDamage = DamageAmount * 0.1f; // 90% 데미지 감소
-        Super::CharacterHit(DamageCauser, ReducedDamage, HitResult, AnimType);
-        
-        UE_LOG(LogTemp, Warning, TEXT("Guard Success! Damage reduced from %f to %f"), DamageAmount, ReducedDamage);
+        ResetGuardCounter();
+        UE_LOG(LogTemp, Log, TEXT("Guard Counter Reset due to timeout"));
+    }
+}
+
+float ASLDoppelgangerCharacter::CalculateContextualDashDegree() const
+{
+    if (IsPlayerAttacking())
+    {
+        return GetRandomEvasiveAngle();
+    }
+    else if (IsTargetTooClose())
+    {
+        return 180.0f;
+    }
+    else if (IsTargetTooFar())
+    {
+        return 0.0f;
     }
     else
     {
-        // 가드 중이 아니면 일반 데미지 처리
-        // 가드 카운터가 있고 가드하지 않는 상태에서 데미지를 받으면 타이머 중지하고 카운터 유지
-        if (CurrentGuardCount > 0)
+        return GetFlankingAngle();
+    }
+}
+
+bool ASLDoppelgangerCharacter::IsPlayerAttacking() const
+{
+    if (!AIController)
+    {
+        return false;
+    }
+    
+    UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
+    if (!BlackboardComponent)
+    {
+        return false;
+    }
+    
+    // 타겟 액터를 플레이어 캐릭터로 캐스팅
+    ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
+    if (!PlayerCharacter)
+    {
+        return false;
+    }
+    
+    // 플레이어의 PrimaryStateTags에서 공격 태그 확인
+    return PlayerCharacter->PrimaryStateTags.HasTag(TAG_Character_Attack);
+}
+
+bool ASLDoppelgangerCharacter::IsTargetTooClose() const
+{
+    if (!AIController)
+    {
+        return false;
+    }
+    
+    UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
+    if (!BlackboardComponent)
+    {
+        return false;
+    }
+    
+    AActor* TargetActor = Cast<AActor>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
+    if (!TargetActor)
+    {
+        return false;
+    }
+    
+    float Distance = FVector::Dist(GetActorLocation(), TargetActor->GetActorLocation());
+    return Distance < MinDashDistance;
+}
+
+bool ASLDoppelgangerCharacter::IsTargetTooFar() const
+{
+    if (!AIController)
+    {
+        return false;
+    }
+    
+    UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent();
+    if (!BlackboardComponent)
+    {
+        return false;
+    }
+    
+    AActor* TargetActor = Cast<AActor>(BlackboardComponent->GetValueAsObject(FName("TargetActor")));
+    if (!TargetActor)
+    {
+        return false;
+    }
+    
+    float Distance = FVector::Dist(GetActorLocation(), TargetActor->GetActorLocation());
+    return Distance > MaxDashDistance;
+}
+
+float ASLDoppelgangerCharacter::GetRandomEvasiveAngle() const
+{
+    TArray<float> EvasiveAngles = {90.0f, -90.0f, 180.0f};
+    int32 RandomIndex = FMath::RandRange(0, EvasiveAngles.Num() - 1);
+    return EvasiveAngles[RandomIndex];
+}
+
+float ASLDoppelgangerCharacter::GetFlankingAngle() const
+{
+    return FMath::RandBool() ? 90.0f : -90.0f;
+}
+
+void ASLDoppelgangerCharacter::SetHitStateForGuard(AActor* DamageCauser, const FHitResult& HitResult)
+{
+    if (!DamageCauser)
+    {
+        return;
+    }
+    
+    // 공격자 방향 계산
+    FVector AttackerLocation = DamageCauser->GetActorLocation();
+    FVector DirectionVector = AttackerLocation - GetActorLocation();
+    DirectionVector.Normalize();
+    
+    FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
+
+    // 히트 방향 결정
+    float AbsX = FMath::Abs(LocalHitDirection.X);
+    float AbsY = FMath::Abs(LocalHitDirection.Y);
+
+    if (AbsY > AbsX)
+    {
+        HitDirection = (LocalHitDirection.Y > 0) ? EHitDirection::EHD_Right : EHitDirection::EHD_Left;
+    }
+    else 
+    {
+        HitDirection = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
+    }
+
+    HitDirectionVector = LocalHitDirection;
+    
+    // Hit 상태 설정
+    bIsHit = true;
+
+    // 히트 상태 리셋 타이머
+    FTimerHandle HitResetTimer;
+    GetWorld()->GetTimerManager().SetTimer(
+        HitResetTimer,
+        [this]()
         {
-            StopGuardCounterResetTimer();
+            bIsHit = false;
+        },
+        0.5f,
+        false
+    );
+    
+    // 히트 이펙트 재생 (가드/패리 시에도 이펙트 표시)
+    if (HitEffectComponent)
+    {
+        FVector EffectLocation = HitResult.bBlockingHit ? HitResult.ImpactPoint : HitResult.Location;
+        
+        if (EffectLocation.IsZero())
+        {
+            EffectLocation = GetActorLocation();
+            EffectLocation.Z += GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 0.5f;
         }
         
-        Super::CharacterHit(DamageCauser, DamageAmount, HitResult, AnimType);
+        HitEffectComponent->SetWorldLocation(EffectLocation);
+        HitEffectComponent->ActivateSystem();
     }
+    
+    UE_LOG(LogTemp, Warning, TEXT("Hit state set for guard/parry - Direction: %s"), 
+           *UEnum::GetValueAsString(HitDirection));
 }

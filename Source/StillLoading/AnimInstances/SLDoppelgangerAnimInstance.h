@@ -38,4 +38,10 @@ private:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Combat", meta = (AllowPrivateAccess = "true"))
     bool bIsGuardBroken;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Dash", meta = (AllowPrivateAccess = "true"))
+    float CurrentDashDegree;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Dash", meta = (AllowPrivateAccess = "true"))
+    bool bIsDashing;
 };

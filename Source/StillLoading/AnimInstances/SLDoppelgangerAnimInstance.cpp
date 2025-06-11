@@ -25,10 +25,16 @@ void USLDoppelgangerAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSec
         return;
     }
 
-    // 도플갱어의 현재 액션 패턴 업데이트
     CurrentActionPattern = OwningDoppelgangerCharacter->GetCurrentActionPattern();
     
     bIsGuardBroken = OwningDoppelgangerCharacter->IsGuardBroken();
+
+    bIsDashing = (CurrentActionPattern == EDoppelgangerActionPattern::EDAP_Dash);
+    
+    if (bIsDashing)
+    {
+        CurrentDashDegree = OwningDoppelgangerCharacter->GetDashDegree();
+    }
 }
 
 EDoppelgangerActionPattern USLDoppelgangerAnimInstance::GetCurrentPattern() const
