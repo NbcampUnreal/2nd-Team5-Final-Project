@@ -7,6 +7,7 @@
 #include "UI/SLUITypes.h"
 #include "SubSystem/SLLevelTransferTypes.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
+#include "UI/Widget/AdditiveWidget/SLBaseTextPrintWidget.h"
 #include "SLUISubsystem.generated.h"
 
 class USLAdditiveWidget;
@@ -19,23 +20,28 @@ class STILLLOADING_API USLUISubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
-	void SetChapterToUI(ESLChapterType ChapterType);
-	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
-
+	UFUNCTION(BlueprintCallable)
 	void ActivateFade(bool bIsFadeIn, bool bIsMoveLevel = false);
+
 	UFUNCTION(BlueprintCallable)
 	void ActivateNotify(ESLGameMapType MapType, const FName& NotiName);
+
 	UFUNCTION(BlueprintCallable)
 	void ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName);
+
 	UFUNCTION(BlueprintCallable)
 	void ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName);
 
 	UFUNCTION(BlueprintCallable)
 	void AddAdditiveWidget(ESLAdditiveWidgetType WidgetType);
+
+	void SetChapterToUI(ESLChapterType ChapterType);
+	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 	void RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveAllAdditveWidget();
 
 	UDataAsset* GetPublicImageData();
+	FOnTalkEnded GetTalkDelegate();
 
 private:
 	void SetInputModeAndCursor();

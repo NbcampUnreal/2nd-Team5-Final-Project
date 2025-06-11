@@ -10,6 +10,8 @@ class UButton;
 class UCanvasPanel;
 class UTextBlock;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTalkEnded);
+
 UCLASS()
 class STILLLOADING_API USLBaseTextPrintWidget : public USLAdditiveWidget
 {
@@ -27,12 +29,15 @@ protected:
 	void OnClickedSkipButton();
 
 	UFUNCTION()
-	void OnClickedFaseButton();
+	void OnClickedFastButton();
 
 	void PrintTalkText();
 	void ChangeTargetText();
 
 public:
+	UPROPERTY()
+	FOnTalkEnded OnTalkEnded;
+
 	UPROPERTY(EditAnywhere)
 	float PrintTime = 0.3f;
 

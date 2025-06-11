@@ -25,7 +25,6 @@ public:
 protected:
 	virtual void ApplyTextData() override;
 	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush) override;
-	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
 	virtual bool ApplyOtherImage() override;
 
 private:
@@ -38,23 +37,6 @@ private:
 	UFUNCTION()
 	void OnClickedQuitButton();
 
-	UFUNCTION()
-	void OnHoveredStartButton();
-
-	UFUNCTION()
-	void OnHoveredOptionButton();
-
-	UFUNCTION()
-	void OnHoveredQuitButton();
-
-	UFUNCTION()
-	void OnUnhorveredButton();
-
-	void MappingButtonMaterial();
-	void CheckButtonMaterial(UMaterialInstanceDynamic* ButtonMaterial);
-	void PlayHoverEvent();
-	void SetHoverTimer();
-
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Option")
 	float ProgressValue = 0.1f;
@@ -64,28 +46,16 @@ public:
 
 private:
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLButtonWidget> StartButtonWidget = nullptr;
+	TObjectPtr<USLButtonWidget> StartButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> StartButton = nullptr;
+	TObjectPtr<USLButtonWidget> OptionButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> OptionButton = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> QuitButton = nullptr;
+	TObjectPtr<USLButtonWidget> QuitButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> TitleText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> StartText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> OptionText = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UTextBlock> QuitText = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> TitleTextImg = nullptr;
@@ -94,39 +64,10 @@ private:
 	TObjectPtr<UImage> BackgroundBorder = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UNiagaraSystemWidget> StartButtonEffect = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UNiagaraSystemWidget> OptionButtonEffect = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UNiagaraSystemWidget> QuitButtonEffect = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<URetainerBox> StartRetainer = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<URetainerBox> OptionRetainer = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<URetainerBox> QuitRetainer = nullptr;
-
-	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UNiagaraSystemWidget> BackgroundEffect = nullptr;
-
-	UPROPERTY()
-	TObjectPtr<UMaterialInstanceDynamic> DynamicMat = nullptr;
-
-	UPROPERTY()
-	TMap<UButton*, UMaterialInstanceDynamic*> ButtonDMIMap;
 
 	static const FName TitleTextIndex;
 	static const FName StartButtonIndex;
 	static const FName OptionButtonIndex;
 	static const FName QuitButtonIndex;
-
-	FTimerHandle HoverTimer;
-	FName ProgressName = "Progress";
-	float CurrentProgress = 0.0f;
-	bool bIsContainEffect = false;
 };
