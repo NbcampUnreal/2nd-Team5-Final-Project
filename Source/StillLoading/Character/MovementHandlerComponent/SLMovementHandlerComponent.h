@@ -68,6 +68,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	float MouseSensitivity = 0.5f;
 
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float CameraZoomInterpSpeed = 5.0f;
+
 	// 피격시 BlendSpace 용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	float ForwardDot = 0.0f;
@@ -139,7 +142,7 @@ private:
 	void Move(const float AxisValue, const EInputActionType ActionType);
 	void Interact();
 	void PointMove();
-	void ToggleWalk(const bool bNewWalking);
+	void DodgeLoco();
 	void ToggleMenu();
 	void ToggleLockState();
 	void RotateCameraToTarget(const AActor* Target, float DeltaTime);
@@ -191,5 +194,7 @@ private:
 	// Begin Attack 용
 	UPROPERTY()
 	bool bDidBeginAttack = false;
+
+	float DesiredArmLength;
 	
 };

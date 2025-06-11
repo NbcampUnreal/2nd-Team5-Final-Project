@@ -23,6 +23,7 @@ public:
 	void OnPause();
 
 	void OnUnpause();
+	void DeactiveLevelWidget();
 
 protected:
 	UFUNCTION()

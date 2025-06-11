@@ -42,7 +42,7 @@ private:
     void SaveWidgetData();
 
     UFUNCTION()
-    void SendWidgetData();
+    void SendWidgetData(bool bIsFirstGame);
 
     UFUNCTION()
     void SaveChapterData();

@@ -20,6 +20,9 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "DefaultIMC")
 	TSoftObjectPtr<UInputMappingContext> PlayerIMC = nullptr;
 
+	UPROPERTY(EditAnywhere, Config, Category = "ActionKeyType")
+	TMap<TSoftObjectPtr<UInputAction>, EInputActionType> InputActionMap;
+
 	UPROPERTY(EditAnywhere, Config, Category = "DefaultLanguageSettings")
 	ESLLanguageType DefaultLanguage = ESLLanguageType::EL_Kor;
 

@@ -8,9 +8,11 @@
 #include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "Animation/WidgetAnimation.h"
 #include "UI/Widget/SLWidgetImageDataAsset.h"
+#include "UI/Widget/SLButtonWidget.h"
 #include "SubSystem/SLLevelTransferSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/TextBlock.h"
+#include "NiagaraSystem.h"
 
 void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -27,9 +29,6 @@ void USLBaseWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 		EndCloseAnimDelegate.BindDynamic(this, &ThisClass::OnEndedCloseAnim);
 		BindToAnimationFinished(CloseAnim, EndCloseAnimDelegate);
 	}
-
-	CheckValidOfTextPoolSubsystem();
-	TextPoolSubsystem->LanguageDelegate.AddDynamic(this, &ThisClass::NotifyChangedLanguage);
 
 	ApplyTextData();
 }
@@ -60,9 +59,24 @@ bool USLBaseWidget::GetWidgetCursorMode() const
 
 void USLBaseWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
+	CheckValidOfTextPoolSubsystem();
+	if (!TextPoolSubsystem->LanguageDelegate.IsAlreadyBound(this, &ThisClass::NotifyChangedLanguage))
+	{
+		TextPoolSubsystem->LanguageDelegate.AddDynamic(this, &ThisClass::NotifyChangedLanguage);
+	}
+
 	if (CurrentChapter != WidgetActivateBuffer.CurrentChapter)
 	{
 		ApplyOnChangedChapter(WidgetActivateBuffer);
+	}
+}
+
+void USLBaseWidget::DeactivateWidget()
+{
+	CheckValidOfTextPoolSubsystem();
+	if (TextPoolSubsystem->LanguageDelegate.IsAlreadyBound(this, &ThisClass::NotifyChangedLanguage))
+	{
+		TextPoolSubsystem->LanguageDelegate.RemoveDynamic(this, &ThisClass::NotifyChangedLanguage);
 	}
 }
 
@@ -123,6 +137,13 @@ void USLBaseWidget::ApplyFontData()
 				TextBlock->SetFont(FontInfo);
 				TextBlock->SetRenderTranslation(FVector2D(0, FontOffset));
 			}
+
+			USLButtonWidget* CustomButton = Cast<USLButtonWidget>(Widget);
+
+			if (IsValid(CustomButton))
+			{
+				CustomButton->SetButtonFont(FontInfo, FontOffset);
+			}
 		}
 	}
 }
@@ -142,43 +163,55 @@ bool USLBaseWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
 
 bool USLBaseWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 {
+	bool bIsContainNormal = ApplyButtonNormal(ButtonStyle);
+	ApplyButtonHover(ButtonStyle, bIsContainNormal);
+
+	TArray<UWidget*> FoundWidgets;
+	WidgetTree->GetAllWidgets(FoundWidgets);
+
+	for (UWidget* Widget : FoundWidgets)
+	{
+		if (IsValid(Widget))
+		{
+			USLButtonWidget* CustomButton = Cast<USLButtonWidget>(Widget);
+
+			if (IsValid(CustomButton))
+			{
+				CustomButton->SetButtonStyle(ButtonStyle);
+				ApplyButtonRetainer(CustomButton);
+				ApplyButtonNiagara(CustomButton);
+			}
+		}
+	}
+
+	return true;
+}
+
+bool USLBaseWidget::ApplyButtonNormal(FButtonStyle& ButtonStyle)
+{
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Button) || 
+		(PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Button) &&
+		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Button])))
+	{
+		return false;
+	}
+
 	FSlateBrush NormalBrush;
 	FSlateBrush HoverBrush;
 	FSlateBrush PressedBrush;
 	FSlateBrush DisableedBrush;
 
-	NormalBrush.TintColor = FSlateColor(FLinearColor(0.0f,0.0f, 0.0f, 0.0f));
-	HoverBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
-	PressedBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
-	DisableedBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
+	UObject* Resource = PublicAssetMap[ESLPublicWidgetImageType::EPWI_Button];
 
-	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Button) &&
-		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Button]))
-	{
-		UObject* Resource = PublicAssetMap[ESLPublicWidgetImageType::EPWI_Button];
-		
-		NormalBrush.SetResourceObject(Resource);
-		HoverBrush.SetResourceObject(Resource);
-		PressedBrush.SetResourceObject(Resource);
-		DisableedBrush.SetResourceObject(Resource);
+	NormalBrush.SetResourceObject(Resource);
+	HoverBrush.SetResourceObject(Resource);
+	PressedBrush.SetResourceObject(Resource);
+	DisableedBrush.SetResourceObject(Resource);
 
-		NormalBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 0.75f));
-		HoverBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-		PressedBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
-		DisableedBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
-	}
-
-	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonHover) &&
-		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover]))
-	{
-		UObject* Resource = PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover];
-
-		HoverBrush.SetResourceObject(Resource);
-		PressedBrush.SetResourceObject(Resource);
-
-		HoverBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-		PressedBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
-	}
+	NormalBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 0.75f));
+	HoverBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+	PressedBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
+	DisableedBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
 
 	ButtonStyle.SetNormal(NormalBrush);
 	ButtonStyle.SetHovered(HoverBrush);
@@ -186,6 +219,75 @@ bool USLBaseWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
 	ButtonStyle.SetDisabled(DisableedBrush);
 
 	return true;
+}
+
+void USLBaseWidget::ApplyButtonHover(FButtonStyle& ButtonStyle, bool bIsActiveNormal)
+{
+	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonHover) ||
+		(PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonHover) &&
+			!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover])))
+	{
+		return;
+	}
+
+	FSlateBrush NormalBrush;
+	FSlateBrush HoverBrush;
+	FSlateBrush PressedBrush;
+	FSlateBrush DisableedBrush;
+
+	UObject* Resource = PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonHover];
+
+	NormalBrush = ButtonStyle.Normal;
+	HoverBrush.SetResourceObject(Resource);
+	PressedBrush.SetResourceObject(Resource);
+	DisableedBrush = ButtonStyle.Disabled;
+
+	if (bIsActiveNormal)
+	{
+		NormalBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 0.75f));
+		DisableedBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
+	}
+	else
+	{
+		NormalBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
+		DisableedBrush.TintColor = FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
+	}
+
+	HoverBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+	PressedBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
+
+	ButtonStyle.SetNormal(NormalBrush);
+	ButtonStyle.SetHovered(HoverBrush);
+	ButtonStyle.SetPressed(PressedBrush);
+	ButtonStyle.SetDisabled(DisableedBrush);
+}
+
+void USLBaseWidget::ApplyButtonRetainer(USLButtonWidget* ButtonWidget)
+{
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonEffect) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonEffect]))
+	{
+		UNiagaraSystem* Niagara = Cast<UNiagaraSystem>(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonEffect]);
+
+		if (IsValid(Niagara))
+		{
+			ButtonWidget->SetNiagaraWidget(Niagara);
+		}
+	}
+}
+
+void USLBaseWidget::ApplyButtonNiagara(USLButtonWidget* ButtonWidget)
+{
+	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ButtonRetainer) &&
+		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonRetainer]))
+	{
+		UMaterialInterface* EffectMat = Cast<UMaterialInterface>(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ButtonRetainer]);
+
+		if (IsValid(EffectMat))
+		{
+			ButtonWidget->SetRetainerMat(EffectMat);
+		}
+	}
 }
 
 bool USLBaseWidget::ApplySliderImage(FSliderStyle& SliderStyle)

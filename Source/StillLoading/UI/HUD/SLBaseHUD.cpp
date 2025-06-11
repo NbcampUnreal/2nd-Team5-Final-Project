@@ -18,6 +18,12 @@ void ASLBaseHUD::OnUnpause()
 	GetOwningPlayerController()->SetPause(false);
 }
 
+void ASLBaseHUD::DeactiveLevelWidget()
+{
+	CheckValidOfLevelWidget();
+	LevelWidgetObj->DeactivateWidget();
+}
+
 void ASLBaseHUD::OnChangedCurrentChapter(ESLChapterType ChapterType)
 {
 	if (!IsValid(LevelWidgetObj))

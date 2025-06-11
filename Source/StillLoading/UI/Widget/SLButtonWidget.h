@@ -22,11 +22,14 @@ class STILLLOADING_API USLButtonWidget : public UUserWidget
 	
 public:
 	void InitButton();
-	void SetButtonStyle(const FButtonStyle& NewStyle);
+	void SetButtonStyle(FButtonStyle NewStyle);
 	void SetButtonText(const FText& NewText);
 	void SetButtonFont(FSlateFontInfo& NewFont, float FontOffset);
 	void SetRetainerMat(UMaterialInterface* NewMaterial);
 	void SetNiagaraWidget(UNiagaraSystem* NewNiagara);
+
+protected:
+	virtual void NativeConstruct() override;
 
 private:
 	UFUNCTION()
@@ -44,9 +47,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Button Property")
 	FOnSLButtonClicked OnClicked;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Property")
-	float Progress = 0.0f;
-
 private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UButton> Button = nullptr;
@@ -59,6 +59,12 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UNiagaraSystemWidget> NiagaraWidget = nullptr;
+
+	UPROPERTY(Meta = (BindWidgetAnim), Transient)
+	TObjectPtr<UWidgetAnimation> AddProgress = nullptr;
+
+	UPROPERTY()
+	TObjectPtr <UMaterialInstanceDynamic> ButtonDynamicMat = nullptr;
 
 	bool bIsContainNiagara = false;
 };

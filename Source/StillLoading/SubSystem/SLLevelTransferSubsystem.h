@@ -35,6 +35,7 @@ public:
 
 private:
 	void PostOpenLevel(UWorld* LoadedWorld);
+	void DeactiveHudWidget();
 
 	void CheckValidOfLevelDataAsset();
 	void CheckValidOfLevelTransferSettings();
