@@ -77,6 +77,19 @@ void UFormationComponent::Order(EOrderType OrderType)
 	}
 }
 
+void UFormationComponent::Attack()
+{
+	if (StoredAgents.Num() <= 1) return;
+
+	for (TObjectPtr<AActor> StoredAgent : StoredAgents)
+	{
+		if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
+		{
+			Monster->SetPrimaryState(TAG_JOBMOB_ATTACK);
+		}
+	}
+}
+
 TArray<FVector> UFormationComponent::CalculateFormationSlots(EFormationType Type, const FVector& Center, int32 NumAgents, float Spacing, const FRotator& Rotation) const
 {
 	TArray<FVector> Slots;

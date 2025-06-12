@@ -32,7 +32,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void Order(EOrderType OrderType);
-	
+
+	UFUNCTION(BlueprintCallable)
+	void Attack();
+
 protected:
 	virtual void BeginPlay() override;
 
