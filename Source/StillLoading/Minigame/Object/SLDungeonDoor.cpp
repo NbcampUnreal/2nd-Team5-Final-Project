@@ -2,7 +2,7 @@
 
 
 #include "Minigame/Object/SLDungeonDoor.h"
-#include "SLDungeonDoor.h"
+
 
 ASLDungeonDoor::ASLDungeonDoor()
 {
@@ -21,7 +21,7 @@ void ASLDungeonDoor::Tick(float DeltaTime)
 		FVector CurrentLocation = GetActorLocation();
 		FVector Target;
 
-		if (isOpen)
+		if (bIsOpen)
 		{
 			Target = OpenPosition;
 		}
@@ -44,7 +44,7 @@ void ASLDungeonDoor::Activate()
 {
 	Super::Activate();
 	bIsTrigger = true;
-	isOpen = true;
+	bIsOpen = true;
 	SetActorTickEnabled(true);
 
 }
@@ -54,7 +54,7 @@ void ASLDungeonDoor::DeActivate()
 	Super::DeActivate();
 
 	bIsTrigger = true;
-	isOpen = false;
+	bIsOpen = false;
 	SetActorTickEnabled(true);
 
 }
