@@ -16,6 +16,8 @@ ASLBaseReactiveObject::ASLBaseReactiveObject()
 
 	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &ASLBaseReactiveObject::BeginOverlapCollision);
 	CollisionComp->OnComponentEndOverlap.AddDynamic(this, &ASLBaseReactiveObject::EndOverlapCollision);
+	CollisionComp->SetCollisionProfileName("RadarDetectable");
+	CollisionComp->SetRelativeLocation({0, 0, 32});
 }
 
 void ASLBaseReactiveObject::TriggerReact(ASLPlayerCharacterBase* InCharacter, const ESLReactiveTriggerType InComingType)

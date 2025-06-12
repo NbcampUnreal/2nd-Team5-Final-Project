@@ -7,7 +7,6 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLAIBaseCharacter.h"
-#include "AI/NPC/SLNPC.h"
 #include "SLNPCAIController.generated.h"
 
 
