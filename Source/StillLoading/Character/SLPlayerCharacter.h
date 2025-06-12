@@ -4,9 +4,10 @@
 #include "GameplayTagContainer.h"
 #include "SLPlayerCharacterBase.h"
 #include "DataAsset/TagQueryDataAsset.h"
+#include "Item/SLItem.h"
 #include "SLPlayerCharacter.generated.h"
 
-class ASLItem;
+
 enum class EItemType : uint8;
 enum class EOrbitDirection : uint8;
 

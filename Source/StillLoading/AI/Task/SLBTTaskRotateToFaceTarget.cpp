@@ -15,7 +15,7 @@ USLBTTaskRotateToFaceTarget::USLBTTaskRotateToFaceTarget()
 	RotationInterpSpeed = 5.f;		//회전 속도를 설정
 	MaxRotationTime = 3.0f;
 	
-	bNotifyTick = true;		//프레임(틱)마다 업데이트
+	bNotifyTick = true;		//프레임(틱)마다 업데이트 
 	bNotifyTaskFinished = true;	//태스크가 끝났을 때, 완료된 것을 알림
 	bCreateNodeInstance = false;	//이 태스크는 새로운 노드 인스턴스를 생성하지 않도록 설정
 
@@ -129,9 +129,6 @@ void USLBTTaskRotateToFaceTarget::TickTask(UBehaviorTreeComponent& OwnerComp, ui
 
 	// 위아래 회전(Pitch)은 그대로 유지하도록 현재 값으로 설정
 	TargetRot.Pitch = CurrentRot.Pitch;
-
-	UE_LOG(LogTemp, Warning, TEXT("Current: %s, Target: %s, Setting: %s"), 
-		   *CurrentRot.ToString(), *LookAtRot.ToString(), *TargetRot.ToString());
 	
 	Memory->OwningPawn->SetActorRotation(TargetRot);
 }
