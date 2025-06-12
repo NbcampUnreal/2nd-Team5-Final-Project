@@ -34,7 +34,7 @@ ASLDoppelgangerCharacter::ASLDoppelgangerCharacter()
     bCanBeExecuted = false;
     
     HitReactionMode = EHitReactionMode::EHRM_Threshold;
-    HitDamageThreshold = 10.0f; 
+    HitDamageThreshold = 5.0f; 
 }
 
 void ASLDoppelgangerCharacter::BeginPlay()
@@ -628,7 +628,7 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
 
     // 넉백 강도 결정
     float KnockbackStrength = 100.0f;
-    float UpwardForce = 0.0f; 
+    float UpwardForce = 50.0f; 
 
     if (AnimType == EAttackAnimType::AAT_SpecialAttack1 || 
         AnimType == EAttackAnimType::AAT_SpecialAttack2 || 
@@ -666,7 +666,7 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
     case EAttackAnimType::AAT_SpecialAttack2:
     case EAttackAnimType::AAT_SpecialAttack3:
         {
-            LaunchVelocity.Z = UpwardForce;  // 강한 상승력
+            LaunchVelocity.Z = 100.f;  // 강한 상승력
             break;
         }
 
@@ -709,8 +709,7 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
 
 void ASLDoppelgangerCharacter::SetHitState(bool bNewIsHit, float AutoResetTime)
 {
-    UE_LOG(LogTemp, Warning, TEXT("SetHitState called: bNewIsHit=%s, AutoResetTime=%.2f"), 
-           bNewIsHit ? TEXT("true") : TEXT("false"), AutoResetTime);
+    
     
     if (HitStateResetTimer.IsValid())
     {
@@ -750,5 +749,5 @@ void ASLDoppelgangerCharacter::Landed(const FHitResult& Hit)
     Super::Landed(Hit);
     
     // 착지 시 AirHit 상태 해제
-    SetIsAirHit(false);
+    //SetIsAirHit(false);
 }
