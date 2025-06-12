@@ -1,6 +1,8 @@
 ﻿#include "SLInteractableCharacter.h"
 
+#include "SLTalkHandlerBase.h"
 #include "UI/SLUISubsystem.h"
+
 
 ASLInteractableCharacter::ASLInteractableCharacter()
 {
@@ -8,11 +10,31 @@ ASLInteractableCharacter::ASLInteractableCharacter()
 
 	CharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh"));
 	CharacterMesh->SetupAttachment(RootComponent);
+
+	BaseTalkHandler = CreateDefaultSubobject<USLTalkHandlerBase>(TEXT("Base Talk Handler"));
+	CurrentTalkHandler = BaseTalkHandler;
+}
+
+void ASLInteractableCharacter::SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandler)
+{
+	CurrentTalkHandler = TalkHandler;
 }
 
 void ASLInteractableCharacter::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
-	UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, CurrentTargetName, CurrentTalkNames[CurrentTalkIndex]);
+	if (CurrentTalkHandler.IsValid())
+	{
+		auto& [OnTalkEnded] = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, TargetName, CurrentTalkHandler->GetTalkName());
+		OnTalkEnded.AddDynamic(this, &ASLInteractableCharacter::OnCurrentTalkEnd);
+	}
+}
+
+void ASLInteractableCharacter::OnCurrentTalkEnd()
+{
+	if (CurrentTalkHandler.IsValid())
+	{
+		CurrentTalkHandler->OnTalkEnd();
+	}
 }
 
 void ASLInteractableCharacter::BeginPlay()

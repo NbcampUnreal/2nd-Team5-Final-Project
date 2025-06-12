@@ -7,9 +7,8 @@
 #include "Minigame/Object/SLBaseReactiveObject.h"
 #include "SLInteractableCharacter.generated.h"
 
+class USLTalkHandlerBase;
 class USLUISubsystem;
-
-// TODO: Reactibve 어쩌구로 바꾸기
 
 UCLASS()
 class STILLLOADING_API ASLInteractableCharacter : public ASLBaseReactiveObject
@@ -18,21 +17,25 @@ class STILLLOADING_API ASLInteractableCharacter : public ASLBaseReactiveObject
 
 public:
 	ASLInteractableCharacter();
+	UFUNCTION(BlueprintCallable, Category = "NPC")
+	void SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandler);
 	
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType) override;
 
 private:
+	UFUNCTION()
+	void OnCurrentTalkEnd();
+	
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> CharacterMesh;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC", meta = (AllowPrivateAccess = "true"))
-	FName CurrentTargetName;
+	FName TargetName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC", meta = (AllowPrivateAccess = "true"))
-	int32 CurrentTalkIndex;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC", meta = (AllowPrivateAccess = "true"))
-	TArray<FName> CurrentTalkNames;
+	TObjectPtr<USLTalkHandlerBase> BaseTalkHandler;
+
+	TWeakObjectPtr<USLTalkHandlerBase> CurrentTalkHandler;
 };
