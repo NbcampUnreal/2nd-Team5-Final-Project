@@ -920,6 +920,7 @@ void UMovementHandlerComponent::DodgeLoco()
     }
 
 	CachedMontageComponent->PlayDodgeMontage(MontageToPlay);
+	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
 }
 

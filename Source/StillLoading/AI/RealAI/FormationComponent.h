@@ -12,6 +12,13 @@ enum class EFormationType : uint8
 	Squad	UMETA(DisplayName = "Squad"),
 };
 
+UENUM(BlueprintType)
+enum class EOrderType : uint8
+{
+	Attack	UMETA(DisplayName = "Attack"),
+	Idle	UMETA(DisplayName = "Idle"),
+};
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UFormationComponent : public UActorComponent
 {
@@ -22,6 +29,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void AssignStoredFormation(EFormationType FormationType, float Spacing);
+
+	UFUNCTION(BlueprintCallable)
+	void Order(EOrderType OrderType);
+	
 protected:
 	virtual void BeginPlay() override;
 
