@@ -11,6 +11,10 @@ class STILLLOADING_API ASLTitleHUD : public ASLBaseHUD
 {
 	GENERATED_BODY()
 	
+public:
+	UFUNCTION()
+	void NotifyTalkEnded();
+
 protected:
 	virtual void OnStartedHUD() override;
 };

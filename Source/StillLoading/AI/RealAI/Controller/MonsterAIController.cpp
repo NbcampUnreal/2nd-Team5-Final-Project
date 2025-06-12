@@ -2,6 +2,7 @@
 
 #include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
+#include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
@@ -17,12 +18,13 @@ AMonsterAIController::AMonsterAIController()
 
 	AIPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+	BlackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
 
 	// Sight 구성
 	SightConfig->SightRadius = 1500.0f;
 	SightConfig->LoseSightRadius = 1700.0f;
-	SightConfig->PeripheralVisionAngleDegrees = 120.0f;
-	SightConfig->SetMaxAge(5.0f);
+	SightConfig->PeripheralVisionAngleDegrees = 100.0f;
+	SightConfig->SetMaxAge(0.5f);
 
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
@@ -47,19 +49,10 @@ void AMonsterAIController::OnPossess(APawn* InPawn)
 
 	SetGenericTeamId(FGenericTeamId(1));
 
-	if (BehaviorTreeAsset)
-	{
-		RunBehaviorTree(BehaviorTreeAsset);
-		BlackboardComponent = GetBlackboardComponent();
-	}
-
-	if (Blackboard)
-	{
-		Blackboard->SetValueAsObject(BlackboardKeys::SelfActor, GetPawn());
-	}
-
 	if (InPawn)
 	{
+		CheckPerception(InPawn);
+		
 		ACharacter* AICharacter = Cast<ACharacter>(InPawn);
 		if (AICharacter && AICharacter->GetMesh())
 		{
@@ -105,6 +98,45 @@ void AMonsterAIController::OnPossess(APawn* InPawn)
 void AMonsterAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void AMonsterAIController::CheckPerception(APawn* InPawn)
+{
+	APawn* MyPawn = GetPawn();
+	if (!MyPawn) return;
+
+	if (!LeaderBehaviorTreeAsset || !SoldierBehaviorTreeAsset)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AIController '%s' does not have Behavior Tree Assets assigned!"), *GetName());
+		return;
+	}
+
+	const AMonsterAICharacter* PossessedCharacter = Cast<AMonsterAICharacter>(MyPawn);
+	const bool bIsLeader = PossessedCharacter ? PossessedCharacter->StrategyStateTags.HasTag(TAG_AI_Leader) : false;
+
+	UBehaviorTree* BTToRun = nullptr;
+	if (bIsLeader)
+	{
+		BlackboardComponent->SetValueAsObject(BlackboardKeys::Leader, InPawn);
+		BTToRun = LeaderBehaviorTreeAsset; 
+	}
+	else
+	{
+		BTToRun = SoldierBehaviorTreeAsset;
+	}
+	
+	if (AIPerception)
+	{
+		AIPerception->SetActive(bIsLeader);
+	}
+
+	UBlackboardComponent* RawBlackboard = BlackboardComponent.Get();
+	if (UseBlackboard(BTToRun->BlackboardAsset, RawBlackboard))
+	{
+		RunBehaviorTree(BTToRun);
+		BlackboardComponent->SetValueAsObject(BlackboardKeys::SelfActor, MyPawn);
+		UE_LOG(LogTemp, Log, TEXT("AI '%s' initialized as %s."), *MyPawn->GetName(), bIsLeader ? TEXT("Leader") : TEXT("Soldier"));
+	}
 }
 
 void AMonsterAIController::ToggleLockOnWidget(bool bIsLockOnWidget)

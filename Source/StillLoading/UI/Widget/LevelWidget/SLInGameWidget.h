@@ -21,14 +21,14 @@ public:
 	virtual void DeactivateWidget() override;
 
 	void SetIsTimerActivate(bool bIsActived);
-	void SetIsPlayerStateActivate(bool bIsActived);
-	void SetIsObjectiveActivate(bool bIsActived);
+	void SetIsPlayerStateActivate(bool bIsActived, bool bIsVisibleSpecial);
+	void SetIsObjectiveActivate();
 	void SetIsHitEffectActivate(bool bIsActived);
 	void SetIsBossStateActivate(bool bIsActived);
 
 	void SetTimerText(int32 TimeSeconds);
 	void SetHpValue(int32 MaxHp, int32 CurrentHp);
-	void SetSpecialBalue(int32 MaxValue, int32 CurrentValue);
+	void SetSpecialValue(int32 MaxValue, int32 CurrentValue);
 	void SetBossHpValue(int32 MaxHp, int32 CurrentHp);
 	void SetObjectiveText(const FName& ObjectiveName);
 	void SetObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount, int32 CurrentCount);
@@ -70,6 +70,9 @@ protected:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UProgressBar> BossHpBar = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UCanvasPanel> PlayerStatePanel = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UCanvasPanel> HitEffectPanel = nullptr;

@@ -18,8 +18,43 @@ void ASLInGameHUD::OnStartedHUD()
 
 void ASLInGameHUD::ApplyObjective(const FName& ObjectiveName)
 {
-	SetObjectiveValue(ObjectiveName);
-	SetObjectiveVisibility(true);
+	SetObjectiveName(ObjectiveName);
+	SetObjectiveVisibility();
+}
+
+void ASLInGameHUD::ApplyObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount)
+{
+	SetObjectiveCounter(ObjectiveName, MaxCount, 0);
+	SetObjectiveVisibility();
+}
+
+void ASLInGameHUD::ApplyTimer(int32 SecondsValue)
+{
+	SetTimerVisibility(true);
+	SetTimerValue(SecondsValue);
+}
+
+void ASLInGameHUD::ApplyPlayerHp(int32 MaxHp)
+{
+	SetPlayerStateVisibility(true, false);
+	SetPlayerHpValue(MaxHp, MaxHp);
+}
+
+void ASLInGameHUD::ApplyPlayerSpecial(int32 MaxValue)
+{
+	SetPlayerStateVisibility(true, true);
+	SetPlayerSpecialValue(MaxValue, MaxValue);
+}
+
+void ASLInGameHUD::ApplyBossHp(int32 MaxHp)
+{
+	SetBossStateVisibility(true);
+	SetBossHpValue(MaxHp, MaxHp);
+}
+
+void ASLInGameHUD::ApplyHitEffect()
+{
+	InGameWidget->SetIsHitEffectActivate(true);
 }
 
 void ASLInGameHUD::SetTimerVisibility(bool bIsVisible)
@@ -27,19 +62,14 @@ void ASLInGameHUD::SetTimerVisibility(bool bIsVisible)
 	InGameWidget->SetIsTimerActivate(bIsVisible);
 }
 
-void ASLInGameHUD::SetPlayerStateVisibility(bool bIsVisible)
+void ASLInGameHUD::SetPlayerStateVisibility(bool bIsVisible, bool bIsSpecial)
 {
-	InGameWidget->SetIsPlayerStateActivate(bIsVisible);
+	InGameWidget->SetIsPlayerStateActivate(bIsVisible, bIsSpecial);
 }
 
-void ASLInGameHUD::SetObjectiveVisibility(bool bIsVisible)
+void ASLInGameHUD::SetObjectiveVisibility()
 {
-	InGameWidget->SetIsObjectiveActivate(bIsVisible);
-}
-
-void ASLInGameHUD::SetHitEffectVisibility(bool bIsVisible)
-{
-	InGameWidget->SetIsHitEffectActivate(bIsVisible);
+	InGameWidget->SetIsObjectiveActivate();
 }
 
 void ASLInGameHUD::SetBossStateVisibility(bool bIsVisible)
@@ -57,9 +87,19 @@ void ASLInGameHUD::SetPlayerHpValue(int32 MaxHp, int32 CurrentHp)
 	InGameWidget->SetHpValue(MaxHp, CurrentHp);
 }
 
-void ASLInGameHUD::SetObjectiveValue(const FName& ObjectiveName)
+void ASLInGameHUD::SetPlayerSpecialValue(int32 MaxValue, int32 CurrentValue)
+{
+	InGameWidget->SetSpecialValue(MaxValue, CurrentValue);
+}
+
+void ASLInGameHUD::SetObjectiveName(const FName& ObjectiveName)
 {
 	InGameWidget->SetObjectiveText(ObjectiveName);
+}
+
+void ASLInGameHUD::SetObjectiveCounter(const FName& ObjectiveName, int32 MaxCount, int32 CurrentCount)
+{
+	InGameWidget->SetObjectiveByCounter(ObjectiveName, MaxCount, CurrentCount);
 }
 
 void ASLInGameHUD::SetBossHpValue(int32 MaxHp, int32 CurrentHp)

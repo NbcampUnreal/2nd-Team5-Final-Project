@@ -78,7 +78,6 @@ void AMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
-	SetStrategyState(TAG_AI_STRATEGY_ORGANIZED_HOLDPOSITION);
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 
@@ -128,14 +127,18 @@ void AMonsterAICharacter::ResetPushFlag()
 
 void AMonsterAICharacter::SetLeader()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Leader Selected!! [%s]"), *this->GetName());
 	bIsLeader = true;
 
-	AAIController* LeaderController = Cast<AAIController>(GetController());
+	SetStrategyState(TAG_AI_Leader);
+
+	AMonsterAIController* LeaderController = Cast<AMonsterAIController>(GetController());
 
 	if (LeaderController && LeaderController->GetBlackboardComponent())
 	{
 		LeaderController->GetBlackboardComponent()->SetValueAsObject(FName("Leader"), this);
 		LeaderController->GetBlackboardComponent()->SetValueAsVector(FName("LeaderOrderLocation"), FVector::ZeroVector);
+		LeaderController->CheckPerception(this);
 	}
 }
 
@@ -187,6 +190,13 @@ void AMonsterAICharacter::AttachItemToHand(AActor* ItemActor, const FName Socket
 void AMonsterAICharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void AMonsterAICharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	StopFlyingState();
 }
 
 void AMonsterAICharacter::SetChasing(bool bEnable)
@@ -242,6 +252,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	AnimationComponent->StopAllMontages(0.2f);
 	HitDirection(Causer);
 	ChangeMeshTemporarily();
+	StartFlyingState();
 
 	LastAttacker = Causer;
 	CurrentHealth -= Damage;
@@ -259,7 +270,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	case EAttackAnimType::AAT_AirAttack3:
 		{
 			const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
-			if (GetCharacterMovement()->IsFalling() && GroundDistance > 50.0f)
+			if (GetCharacterMovement()->IsFalling() && GroundDistance > 20.0f)
 			{
 				AnimationComponent->PlayAIHitMontage("HitAir");
 				FVector Velocity = GetCharacterMovement()->Velocity;
@@ -295,7 +306,8 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		SetBattleState(TAG_AI_Hit);
 		if (CurrentHealth < 0.f)
 		{
-			Dead(Causer, true);
+			//Dead(Causer, true);
+			AnimationComponent->PlayAIHitMontage("Dead");
 		}
 		break;
 	case EAttackAnimType::AAT_Skill1:
@@ -303,7 +315,8 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		SetBattleState(TAG_AI_Hit);
 		if (CurrentHealth < 0.f)
 		{
-			Dead(Causer, true);
+			//Dead(Causer, true);
+			AnimationComponent->PlayAIHitMontage("Dead");
 		}
 		break;
 	case EAttackAnimType::AAT_Skill2:
@@ -312,7 +325,8 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		SetBattleState(TAG_AI_Hit);
 		if (CurrentHealth < 0.f)
 		{
-			Dead(Causer, true);
+			//Dead(Causer, true);
+			AnimationComponent->PlayAIHitMontage("Dead");
 		}
 		break;
 	case EAttackAnimType::AAT_FinalAttackA:
@@ -387,6 +401,7 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	}
 
 	SetBattleState(TAG_AI_Idle);
+	StopFlyingState();
 }
 
 void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
@@ -404,7 +419,6 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 		GetMesh()->SetMaterial(0, DeathMaterial);
 	}
 
-	// AI 중지
 	if (AMonsterAIController* AICon = Cast<AMonsterAIController>(GetController()))
 	{
 		AICon->StopMovement();
@@ -448,4 +462,20 @@ void AMonsterAICharacter::FixCharacterVelocity()
 	FVector Velocity = GetCharacterMovement()->Velocity;
 	Velocity.Z = 0.f;
 	GetCharacterMovement()->Velocity = Velocity;
+}
+
+void AMonsterAICharacter::StartFlyingState()
+{
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	}
+}
+
+void AMonsterAICharacter::StopFlyingState()
+{
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+	}
 }
