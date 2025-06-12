@@ -4,6 +4,7 @@
 #include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/DataAsset/AttackDataAsset.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
@@ -36,6 +37,9 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 
 	UAnimationMontageComponent* AnimComp = AIPawn->FindComponentByClass<UAnimationMontageComponent>();
 	if (!AnimComp) return EBTNodeResult::Failed;
+
+	ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(Target);
+	if (!PlayerCharacter) return EBTNodeResult::Failed;
 
 	if (AttackType == EAttackAnimType::AAT_AINormal)
 	{

@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "MonsterSpawner.generated.h"
 
+class UNiagaraSystem;
 class UBoxComponent;
 struct FMonsterMeshData;
 class UMonsterMeshDataAsset;
@@ -16,7 +17,7 @@ struct FMonsterSpawnInfo
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AMonsterAICharacter> Monster;
+	TSubclassOf<AActor> Monster;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1", ClampMax = "100"))
 	int32 Count = 1;
@@ -30,14 +31,17 @@ class STILLLOADING_API AMonsterSpawner : public AActor
 public:
 	AMonsterSpawner();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawn")
-	TObjectPtr<UBoxComponent> SpawnArea;
-	
 	UFUNCTION(BlueprintPure)
 	FVector GetRandomSpawnLocation() const;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawn")
+	TObjectPtr<UBoxComponent> SpawnArea;
+
 	UPROPERTY(EditAnywhere, Category = "Debug")
 	bool bDrawDebugSpawnCapsules = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+	float RiseHeight = 500.f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -45,10 +49,16 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SpawnMonstersByType();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	TObjectPtr<UNiagaraSystem> SpawnEffect;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	TArray<FMonsterSpawnInfo> SpawnInfos;
 
 private:
+	UFUNCTION()
+	void SpawnFloorEffect(const AMonsterAICharacter* MonsterActor);
+	
 	UPROPERTY()
 	float SpawnSpacing = 200.f;
 	
