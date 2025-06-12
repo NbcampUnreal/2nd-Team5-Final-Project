@@ -161,6 +161,12 @@ void UAnimationMontageComponent::PlayAIHitMontage(FName Section)
 		PlayMontage(MontageData->AIHitMontage, Section);
 }
 
+void UAnimationMontageComponent::PlayAIETCMontage(FName Section)
+{
+	if (MontageData)
+		PlayMontage(MontageData->AIETCMontage, Section);
+}
+
 bool UAnimationMontageComponent::IsMontagePlayingHelper(const UAnimMontage* Montage) const
 {
     if (AnimInstance && Montage)

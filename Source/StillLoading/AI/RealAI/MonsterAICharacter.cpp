@@ -8,6 +8,7 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/TimelineComponent.h"
 #include "Controller/MonsterAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -28,6 +29,7 @@ AMonsterAICharacter::AMonsterAICharacter()
 	AnimationComponent = CreateDefaultSubobject<UAnimationMontageComponent>(TEXT("AnimationComponent"));
 	BattleComponent = CreateDefaultSubobject<UBattleComponent>(TEXT("BattleComponent"));
 	FormationComponent = CreateDefaultSubobject<UFormationComponent>(TEXT("FormationComponent"));
+	SpawnTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("SpawnTimeline"));
 
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AMonsterAICharacter::OnHitByCharacter);
 
@@ -86,8 +88,8 @@ void AMonsterAICharacter::BeginPlay()
 
 	if (!bOriginalMaterialsInitialized)
 	{
-		USkeletalMeshComponent* MeshComp = GetMesh();
-		int32 MaterialCount = MeshComp->GetNumMaterials();
+		const USkeletalMeshComponent* MeshComp = GetMesh();
+		const int32 MaterialCount = MeshComp->GetNumMaterials();
 
 		OriginalMaterials.Empty();
 		for (int32 i = 0; i < MaterialCount; ++i)
@@ -96,6 +98,53 @@ void AMonsterAICharacter::BeginPlay()
 		}
 
 		bOriginalMaterialsInitialized = true;
+	}
+
+	if (SpawnMovementCurve)
+	{
+		FOnTimelineFloat InterpFunction;
+		InterpFunction.BindUFunction(this, FName("UpdateSpawnMovement"));
+
+		FOnTimelineEvent TimelineFinishedFunction;
+		TimelineFinishedFunction.BindUFunction(this, FName("OnSpawnMovementFinished"));
+        
+		SpawnTimeline->AddInterpFloat(SpawnMovementCurve, InterpFunction);
+		SpawnTimeline->SetTimelineFinishedFunc(TimelineFinishedFunction);
+	}
+}
+
+void AMonsterAICharacter::BeginSpawning(const FVector& FinalLocation, const float RiseHeight)
+{
+	SpawnEndLocation = FinalLocation;
+	SpawnStartLocation = FinalLocation - FVector(0.f, 0.f, RiseHeight);
+
+	SetActorLocation(SpawnStartLocation);
+	AnimationComponent->PlayAIETCMontage("Spawn");
+
+	//SetActorEnableCollision(false);
+    
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->SetMovementMode(MOVE_None);
+	}
+
+	ChangeMeshTemporarily(3);
+	SpawnTimeline->PlayFromStart();
+}
+
+void AMonsterAICharacter::UpdateSpawnMovement(float Alpha)
+{
+	const FVector NewLocation = FMath::Lerp(SpawnStartLocation, SpawnEndLocation, Alpha);
+	SetActorLocation(NewLocation);
+}
+
+void AMonsterAICharacter::OnSpawnMovementFinished()
+{
+	//SetActorEnableCollision(true);
+
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	}
 }
 
@@ -293,8 +342,6 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 					{
 						GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
 					}
-
-					GetMesh()->SetMaterial(0, DeathMaterial);
 				}
 				AnimationComponent->PlayAIHitMontage("Dead");
 			}
@@ -347,7 +394,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	}
 }
 
-void AMonsterAICharacter::ChangeMeshTemporarily()
+void AMonsterAICharacter::ChangeMeshTemporarily(const float Rate)
 {
 	if (!HitMaterial || !bOriginalMaterialsInitialized)
 		return;
@@ -368,7 +415,7 @@ void AMonsterAICharacter::ChangeMeshTemporarily()
 		MaterialResetTimerHandle,
 		this,
 		&AMonsterAICharacter::ResetMaterial,
-		0.3f,
+		Rate,
 		false
 	);
 }
@@ -393,7 +440,7 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	case EAttackAnimType::AAT_FinalAttackB:
 	case EAttackAnimType::AAT_FinalAttackC:
 	case EAttackAnimType::AAT_Dead:
-		Dead(LastAttacker, false);
+		Dead(LastAttacker, true);
 		break;
 	case EAttackAnimType::AAT_ParryAttack:
 		break;

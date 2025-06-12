@@ -61,6 +61,8 @@ public:
 	void PlayAIAttackMontage(FName Section = NAME_None);
 	UFUNCTION()
 	void PlayAIHitMontage(FName Section = NAME_None);
+	UFUNCTION()
+	void PlayAIETCMontage(FName Section = NAME_None);
 	
 protected:
 	virtual void BeginPlay() override;

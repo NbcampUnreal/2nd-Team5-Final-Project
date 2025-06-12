@@ -1,10 +1,9 @@
 #include "MonsterSpawner.h"
 
-#include "AIController.h"
 #include "NavigationSystem.h"
+#include "NiagaraFunctionLibrary.h"
 #include "AI/RealAI/FormationComponent.h"
 #include "AI/RealAI/MonsterAICharacter.h"
-#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/BoxComponent.h"
 
 AMonsterSpawner::AMonsterSpawner()
@@ -67,22 +66,26 @@ void AMonsterSpawner::SpawnMonstersByType()
 			if (!bBlocked)
 			{
 				FActorSpawnParameters Params;
-				Params.SpawnCollisionHandlingOverride =
-					ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+				Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-				AMonsterAICharacter* Monster = GetWorld()->SpawnActor<AMonsterAICharacter>(
+				AActor* Monster = GetWorld()->SpawnActor<AActor>(
 					Info.Monster,
 					SpawnLocation,
 					FRotator::ZeroRotator,
 					Params
 				);
-				
-				SpawnedMonsters.Add(Monster);
 
-				if (Monster && !Leader)
+				if (AMonsterAICharacter* AIMonster = Cast<AMonsterAICharacter>(Monster))
 				{
-					Monster->SetLeader(); // 리더 지정
-					Leader = Monster;
+					SpawnFloorEffect(AIMonster);
+					AIMonster->BeginSpawning(SpawnLocation, RiseHeight);
+					SpawnedMonsters.Add(AIMonster);
+
+					if (!Leader)
+					{
+						AIMonster->SetLeader(); // 리더 지정
+						Leader = AIMonster;
+					}
 				}
 			}
 
@@ -104,6 +107,27 @@ void AMonsterSpawner::SpawnMonstersByType()
 	}
 
 	SpawnedMonsters.Reset();
+}
+
+void AMonsterSpawner::SpawnFloorEffect(const AMonsterAICharacter* MonsterActor)
+{
+	if (!MonsterActor || !SpawnEffect) return;
+
+	USkeletalMeshComponent* MonsterMesh = MonsterActor->GetMesh();
+	if (!MonsterMesh) return;
+
+	const FName AttachSocketName = FName("root");
+
+	UNiagaraFunctionLibrary::SpawnSystemAttached(
+		SpawnEffect,            
+		MonsterMesh,            
+		AttachSocketName,     
+		FVector(0.f, 0.f, 20.f),           
+		FRotator(0.f),         
+		EAttachLocation::SnapToTarget, 
+		true,             
+		true
+	);
 }
 
 FVector AMonsterSpawner::GetRandomSpawnLocation() const

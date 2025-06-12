@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
+class UTimelineComponent;
 class UWidgetComponent;
 class USLMonsterStateTreeComponent;
 enum class EAttackAnimType : uint8;
@@ -35,6 +36,9 @@ class STILLLOADING_API AMonsterAICharacter : public ACharacter
 
 public:
 	AMonsterAICharacter();
+
+	UFUNCTION()
+	void BeginSpawning(const FVector& FinalLocation, float RiseHeight = 300.f);
 
 	UFUNCTION()
 	void SetChasing(bool bEnable);
@@ -105,6 +109,15 @@ protected:
 	UFUNCTION()
 	void ResetPushFlag();
 
+	UPROPERTY()
+	TObjectPtr<UTimelineComponent> SpawnTimeline;
+	UPROPERTY(EditDefaultsOnly, Category = "Spawning")
+	TObjectPtr<UCurveFloat> SpawnMovementCurve;
+	UFUNCTION()
+	void UpdateSpawnMovement(float Alpha);
+	UFUNCTION()
+	void OnSpawnMovementFinished();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
@@ -123,7 +136,7 @@ private:
 	UFUNCTION()
 	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
 	UFUNCTION()
-	void ChangeMeshTemporarily();
+	void ChangeMeshTemporarily(float Rate = 0.3f);
 	UFUNCTION()
 	void ResetMaterial();
 	UFUNCTION()
@@ -158,12 +171,23 @@ private:
 	bool bRecentlyPushed = false;
 	bool bOriginalMaterialsInitialized = false;
 
+	UPROPERTY()
+	FVector SpawnStartLocation;
+	UPROPERTY()
+	FVector SpawnEndLocation;
+
 public:
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	void SetLeader();
 
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	FORCEINLINE bool IsLeader() const { return bIsLeader; }
+
+	FORCEINLINE TObjectPtr<UAnimationMontageComponent> GetAnimMontageComp()
+	{
+		if (AnimationComponent) return nullptr;
+		return AnimationComponent;
+	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	FORCEINLINE void SetFollower() { bIsLeader = false; }
