@@ -282,6 +282,7 @@ bool AMonsterAICharacter::HasBattleState(const FGameplayTag StateToCheck) const
 
 void AMonsterAICharacter::SetStrategyState(const FGameplayTag NewState)
 {
+	StrategyStateTags.Reset();
 	StrategyStateTags.AddTag(NewState);
 }
 

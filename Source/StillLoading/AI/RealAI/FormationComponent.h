@@ -43,10 +43,15 @@ private:
 	UFUNCTION()
 	TArray<FVector> CalculateFormationSlots(EFormationType Type, const FVector& Center, int32 NumAgents, float Spacing, const FRotator& Rotation) const;
 
+	void CleanUpInvalidAgents();
+	
 	UPROPERTY()
 	TArray<TObjectPtr<AActor>> StoredAgents;
 
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> AttackingAgents;
+
 public:
 	UFUNCTION(BlueprintCallable)
-	void SetAgentList(const TArray<AActor*>& Agents);
+	void SetAgentList(const TArray<AActor*> Agents);
 };
