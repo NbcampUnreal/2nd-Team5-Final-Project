@@ -4,7 +4,9 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLAIBaseCharacter.h"
+#include "Character/SLPlayerCharacter.h"
 #include "Character/SLPlayerCharacterBase.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/CrowdFollowingComponent.h"
@@ -425,4 +427,36 @@ void ASLBaseAIController::BeginPlay()
 void ASLBaseAIController::SetAITeamId(const FGenericTeamId& NewTeamID)
 {
 	AAIController::SetGenericTeamId(NewTeamID);
+}
+
+bool ASLBaseAIController::IsPlayerAttacking() const
+{
+	ASLPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	if (!PlayerCharacter)
+	{
+		return false;
+	}
+
+	return PlayerCharacter->PrimaryStateTags.HasTag(TAG_Character_Attack);
+}
+
+bool ASLBaseAIController::IsPlayerPerformingSpecificAttack(FGameplayTag AttackTag) const
+{
+	ASLPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	if (!PlayerCharacter)
+	{
+		return false;
+	}
+    
+	return PlayerCharacter->PrimaryStateTags.HasTag(AttackTag);
+}
+
+ASLPlayerCharacter* ASLBaseAIController::GetPlayerCharacter() const
+{
+	if (!GetBlackboardComponent())
+	{
+		return nullptr;
+	}
+    
+	return Cast<ASLPlayerCharacter>(GetBlackboardComponent()->GetValueAsObject(FName("TargetActor")));
 }

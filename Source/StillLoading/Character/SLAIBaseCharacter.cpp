@@ -25,6 +25,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
     bUseControllerRotationRoll = false;
     bUseControllerRotationYaw = false;
 
+
     GetCharacterMovement()->bUseControllerDesiredRotation = false;
     GetCharacterMovement()->bOrientRotationToMovement = true;
     GetCharacterMovement()->RotationRate = FRotator(0.f, 180.f, 0.f);
@@ -87,6 +88,8 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	HitReactionMode = EHitReactionMode::EHRM_Always;
 	HitDamageThreshold = 20.0f;
 	AccumulatedDamage = 0.0f;
+	MaxHealth = 100.f;
+	CurrentHealth = MaxHealth;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -156,8 +159,8 @@ void ASLAIBaseCharacter::Landed(const FHitResult& Hit)
 		{
 			if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
 			{
-				BlackboardComponent->SetValueAsBool(FName("IsJumping"), false);
-				BlackboardComponent->SetValueAsBool(FName("IsLanding"), true);
+				BlackboardComponent->SetValueAsBool(FName("IsJumping"), bIsJumping);
+				BlackboardComponent->SetValueAsBool(FName("IsLanding"), bIsLanding);
 			}
 		}
         
@@ -172,7 +175,7 @@ void ASLAIBaseCharacter::Landed(const FHitResult& Hit)
 			{
 				if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
 				{
-					BlackboardComponent->SetValueAsBool(FName("IsLanding"), false);
+					BlackboardComponent->SetValueAsBool(FName("IsLanding"), bIsLanding);
 				}
 			}
 		}, 1.0f, false);
@@ -265,6 +268,14 @@ void ASLAIBaseCharacter::SetIsHitReaction(bool bNewIsHitReaction)
 void ASLAIBaseCharacter::SetIsHit(bool bNewIsHit)
 {
 	bIsHit = bNewIsHit;
+
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("IsHit"), bIsHit);
+		}
+	}
 }
 
 void ASLAIBaseCharacter::SetIsDown(bool bNewIsDown)
@@ -290,7 +301,7 @@ void ASLAIBaseCharacter::SetIsAttacking(bool bNewIsAttacking)
 	{
 		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
 		{
-			BlackboardComponent->SetValueAsBool(FName("IsAttacking"), bNewIsAttacking);
+			BlackboardComponent->SetValueAsBool(FName("IsAttacking"), bIsAttacking);
 		}
 	}
 }
@@ -481,15 +492,7 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
     	}
 
     	HitDirectionVector = LocalHitDirection;
-    	// 캐릭터 상태 직접 설정
-    	bIsHit = true;
-        
-    	// 일정 시간 후 히트 상태 해제
-    	FTimerHandle HitResetTimer;
-    	GetWorld()->GetTimerManager().SetTimer(HitResetTimer, [this]()
-		{
-			bIsHit = false;
-		}, 0.5f, false);
+    	SetHitState(true, 1.0f);
     }
 
 	if (HitEffectComponent)
@@ -864,7 +867,7 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
                 {
                     if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
                     {
-                        BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
+                        BlackboardComponent->SetValueAsBool(FName("Isdead"), IsDead);
                     }
                 }
                 
@@ -923,6 +926,19 @@ void ASLAIBaseCharacter::SetIsLoop(bool NewLoop)
 		}
 	}
 	
+}
+
+void ASLAIBaseCharacter::SetIsAirHit(bool NewbIsAirHit)
+{
+	bIsAirHit = NewbIsAirHit;
+
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("IsAirHit"), bIsAirHit);
+		}
+	}
 }
 
 void ASLAIBaseCharacter::SetIsInvincibility(bool NewIsInvincibility)
@@ -1094,4 +1110,40 @@ void ASLAIBaseCharacter::ProcessDeath()
     
 	// 블루프린트 이벤트 호출
 	OnDeath();
+}
+
+void ASLAIBaseCharacter::SetHitState(bool bNewIsHit, float AutoResetTime)
+{
+	bIsHit = bNewIsHit;
+    
+	if (bNewIsHit && AutoResetTime > 0.0f)
+	{
+		FTimerHandle HitResetTimer;
+		GetWorld()->GetTimerManager().SetTimer(HitResetTimer, [this]()
+		{
+			bIsHit = false;
+		}, AutoResetTime, false);
+	}
+}
+
+void ASLAIBaseCharacter::ProcessDamageOnly(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+{
+	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+
+	if (DamageCauser)
+	{
+		UAISense_Damage::ReportDamageEvent(GetWorld(), this, DamageCauser, DamageAmount, GetActorLocation(), HitResult.Location);
+	}
+    
+	if (CurrentHealth <= 0.0f)
+	{
+		ProcessDeath();
+		return;
+	}
+
+	if (HitEffectComponent)
+	{
+		HitEffectComponent->SetWorldLocation(HitResult.Location);
+		HitEffectComponent->ActivateSystem();
+	}
 }

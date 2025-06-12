@@ -36,8 +36,9 @@ void ASLReactiveObjectRotationStatue::BeginPlay()
 	{
 		PuzzleManager = PuzzleCond;
 		UE_LOG(LogTemp, Warning, TEXT("Find PuzzleCond Succeed"));
+		PuzzleManager->ObjectResetRequested.AddDynamic(this, &ASLReactiveObjectRotationStatue::ResetCondition);
 	}
-	PuzzleManager->ObjectResetRequested.AddDynamic(this, &ASLReactiveObjectRotationStatue::ResetCondition);
+
 
 	InitialRotation = GetActorRotation();
 	TargetRotation = FRotator::ZeroRotator;
@@ -94,6 +95,10 @@ void ASLReactiveObjectRotationStatue::RotateActor(float DeltaTime)
 			return;
 		}
 		
-		PuzzleManager->UpdateStatueState(StatueIndex, CurrentRotationIndex);
+		if (PuzzleManager)
+		{
+			PuzzleManager->UpdateStatueState(StatueIndex, CurrentRotationIndex);
+		}
+		
 	}
 }

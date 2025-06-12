@@ -2,6 +2,7 @@
 #include "GameFramework/Actor.h"
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
+#include "Character/SLPlayerCharacter.h"
 
 DEFINE_LOG_CATEGORY(LogCollisionRadarComponent);
 
@@ -49,7 +50,7 @@ void UCollisionRadarComponent::BeginPlay()
     GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, this, &UCollisionRadarComponent::DetectClosestActorInFOV, UpdateInterval, true);
 }
 
-bool UCollisionRadarComponent::IsInFieldOfView(const AActor* TargetActor) const
+bool UCollisionRadarComponent::IsInFieldOfView(const AActor* TargetActor)
 {
     if (!TargetActor)
         return false;
@@ -63,7 +64,7 @@ bool UCollisionRadarComponent::IsInFieldOfView(const AActor* TargetActor) const
     if (Distance > DetectionRadius)
         return false;
 
-    FVector ForwardVector = GetOwner()->GetActorForwardVector().GetSafeNormal();
+    FVector ForwardVector = GetForwardVector().GetSafeNormal();
     FVector ToTarget = (TargetLocation - MyLocation).GetSafeNormal();
 
     float DotProduct = FVector::DotProduct(ForwardVector, ToTarget);
@@ -137,6 +138,15 @@ void UCollisionRadarComponent::OnOverlapEnd(UPrimitiveComponent* OverlappedComp,
     }
 }
 
+const FVector UCollisionRadarComponent::GetForwardVector()
+{
+    if (ASLPlayerCharacter* OwnerActor = Cast<ASLPlayerCharacter>(GetOwner()))
+    {
+        return OwnerActor->GetActorForwardVector();
+    }
+    return FVector::ZeroVector;
+}
+
 void UCollisionRadarComponent::DrawDebugVisualization()
 {
 #if WITH_EDITOR
@@ -144,7 +154,7 @@ void UCollisionRadarComponent::DrawDebugVisualization()
         return;
 
     FVector Location = GetOwner()->GetActorLocation();
-    FVector Forward = GetOwner()->GetActorForwardVector();
+    FVector Forward = GetForwardVector();
 
     if (bShowDetectionRadius)
     {

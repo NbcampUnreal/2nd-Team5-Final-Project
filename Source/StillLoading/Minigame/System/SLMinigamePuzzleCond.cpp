@@ -70,10 +70,10 @@ void ASLMinigamePuzzleCond::SubmittedAnswer()
 	{
 		DeactivateAllStatue();
 	}
-	else
+	/*else
 	{
 		DeactivateAllStatue();
-	}
+	}*/
 	
 }
 

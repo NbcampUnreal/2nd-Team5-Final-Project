@@ -55,8 +55,9 @@ void ASLReactiveObjectLuminousStatue::BeginPlay()
 	{
 		PuzzleManager = PuzzleCond;
 		UE_LOG(LogTemp, Warning, TEXT("Find PuzzleCond Succeed"));
+		PuzzleManager->ObjectResetRequested.AddDynamic(this, &ASLReactiveObjectLuminousStatue::ResetCondition);
 	}
-	PuzzleManager->ObjectResetRequested.AddDynamic(this, &ASLReactiveObjectLuminousStatue::ResetCondition);
+	
 }
 
 void ASLReactiveObjectLuminousStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
@@ -97,7 +98,11 @@ void ASLReactiveObjectLuminousStatue::SetLightActive()
 			{
 				UE_LOG(LogTemp, Warning, TEXT("End Timer"));
 				GetWorld()->GetTimerManager().ClearTimer(LightControlHandler);
-				PuzzleManager->UpdateStatueState(StatueIndex, StatueIndex+1);
+				if (PuzzleManager)
+				{
+					PuzzleManager->UpdateStatueState(StatueIndex, StatueIndex + 1);
+				}
+				
 			}
 		},
 		Interval, true);
