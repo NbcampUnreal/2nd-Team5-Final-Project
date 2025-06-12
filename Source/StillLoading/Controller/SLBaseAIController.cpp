@@ -436,9 +436,7 @@ bool ASLBaseAIController::IsPlayerAttacking() const
 	{
 		return false;
 	}
-    
-	// TAG_Character_Attack은 모든 공격 태그의 부모 태그이므로
-	// 이를 확인하면 모든 공격 관련 태그를 포함하여 확인됩니다
+
 	return PlayerCharacter->PrimaryStateTags.HasTag(TAG_Character_Attack);
 }
 

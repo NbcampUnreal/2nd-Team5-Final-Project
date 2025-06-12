@@ -17,7 +17,6 @@ USLBTService_CheckPlayerJump::USLBTService_CheckPlayerJump()
     
     // 기본 블랙보드 키 설정
     PlayerIsJumpingKey.SelectedKeyName = FName("PlayerIsJumping");
-    PlayerStartedJumpingKey.SelectedKeyName = FName("PlayerStartedJumping");
 }
 
 void USLBTService_CheckPlayerJump::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
@@ -48,16 +47,6 @@ void USLBTService_CheckPlayerJump::TickNode(UBehaviorTreeComponent& OwnerComp, u
     // 블랙보드에 현재 점프 상태 설정
     BlackboardComp->SetValueAsBool(PlayerIsJumpingKey.SelectedKeyName, bCurrentPlayerJumpState);
 
-    // 플레이어가 새로 점프를 시작했는지 확인
-    bool bPlayerStartedJumping = bCurrentPlayerJumpState && !bPreviousPlayerJumpState;
-    BlackboardComp->SetValueAsBool(PlayerStartedJumpingKey.SelectedKeyName, bPlayerStartedJumping);
-
     // 이전 상태 업데이트
     bPreviousPlayerJumpState = bCurrentPlayerJumpState;
-
-    // 디버그 로그
-    if (bPlayerStartedJumping)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("BTService: Player started jumping!"));
-    }
 }
