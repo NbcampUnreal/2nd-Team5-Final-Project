@@ -14,7 +14,7 @@ void UFormationComponent::BeginPlay()
 	
 }
 
-void UFormationComponent::SetAgentList(const TArray<AActor*>& Agents)
+void UFormationComponent::SetAgentList(const TArray<AActor*> Agents)
 {
 	StoredAgents = Agents;
 }
@@ -53,42 +53,102 @@ void UFormationComponent::AssignStoredFormation(EFormationType FormationType, fl
 	}
 }
 
-void UFormationComponent::Order(EOrderType OrderType)
+void UFormationComponent::Order(const EOrderType OrderType)
 {
 	if (StoredAgents.Num() <= 1) return;
 
-	for (TObjectPtr<AActor> StoredAgent : StoredAgents)
+	switch (OrderType)
 	{
-		switch (OrderType)
+	case EOrderType::Attack:
+		Attack();
+		
+		break;
+	case EOrderType::Idle:
+		CleanUpInvalidAgents();
+       
+		for (TObjectPtr<AActor> StoredAgent : StoredAgents)
 		{
-		case EOrderType::Attack:
+			if (AttackingAgents.Contains(StoredAgent))
+			{
+				continue;
+			}
+
 			if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
 			{
-				Monster->SetPrimaryState(TAG_AI_AbleToAttack);
+				Monster->SetStrategyState(TAG_JOBMOB_HOLDPOSITION);
 			}
-			break;
-		case EOrderType::Idle:
-			if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
-			{
-				Monster->SetPrimaryState(TAG_AI_Idle);
-			}
-			break;
 		}
+       
+		//AttackingAgents.Empty();
+		
+		break;
 	}
 }
 
 void UFormationComponent::Attack()
 {
-	if (StoredAgents.Num() <= 1) return;
-
-	for (TObjectPtr<AActor> StoredAgent : StoredAgents)
+	CleanUpInvalidAgents();
+	
+	if (StoredAgents.IsEmpty() || AttackingAgents.Num() > 2)
 	{
-		if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
+		return;
+	}
+
+	const int32 NumToSelect = FMath::Min(2, StoredAgents.Num());
+    
+	if (NumToSelect <= 0)
+	{
+		for (TObjectPtr<AActor> StoredAgent : StoredAgents)
 		{
-			Monster->SetPrimaryState(TAG_JOBMOB_ATTACK);
+			if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
+			{
+				Monster->SetStrategyState(TAG_JOBMOB_ATTACK);
+			}
+		}
+		return;
+	}
+
+	TArray<int32> Indices;
+	Indices.Reserve(StoredAgents.Num());
+	for (int32 i = 0; i < StoredAgents.Num(); ++i)
+	{
+		Indices.Add(i);
+	}
+
+	for (int32 i = Indices.Num() - 1; i > 0; --i)
+	{
+		const int32 j = FMath::RandRange(0, i);
+		Indices.Swap(i, j);
+	}
+
+	for (int32 i = 0; i < NumToSelect; ++i)
+	{
+		const int32 AgentIndex = Indices[i];
+
+		if (AActor* StoredAgent = StoredAgents[AgentIndex].Get())
+		{
+			if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
+			{
+				Monster->SetStrategyState(TAG_JOBMOB_ATTACK);
+				AttackingAgents.Add(StoredAgent);
+			}
 		}
 	}
 }
+
+void UFormationComponent::CleanUpInvalidAgents()
+{
+	StoredAgents.RemoveAll([](const TObjectPtr<AActor>& Agent)
+	{
+		return !IsValid(Agent.Get());
+	});
+
+	AttackingAgents.RemoveAll([](const TObjectPtr<AActor>& Agent)
+	{
+		return !IsValid(Agent.Get());
+	});
+}
+
 
 TArray<FVector> UFormationComponent::CalculateFormationSlots(EFormationType Type, const FVector& Center, int32 NumAgents, float Spacing, const FRotator& Rotation) const
 {

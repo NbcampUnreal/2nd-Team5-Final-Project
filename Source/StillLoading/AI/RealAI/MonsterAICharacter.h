@@ -77,7 +77,7 @@ public:
 	// 내부 사용 단일
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer BattleStateTags;
-	// BT연동 다중
+	// BT연동 단일
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StrategyStateTags;
 	
