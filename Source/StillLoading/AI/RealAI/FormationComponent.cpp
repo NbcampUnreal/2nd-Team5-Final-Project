@@ -1,5 +1,7 @@
 #include "FormationComponent.h"
 #include "AIController.h"
+#include "MonsterAICharacter.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 
 UFormationComponent::UFormationComponent()
 {
@@ -21,14 +23,14 @@ void UFormationComponent::AssignStoredFormation(EFormationType FormationType, fl
 {
 	if (StoredAgents.Num() <= 1) return;
 
-	AActor* Leader = StoredAgents[0];
-	FRotator LeaderRotation = Leader->GetActorRotation();
-	FVector LeaderForward = Leader->GetActorForwardVector();
+	const AActor* Leader = StoredAgents[0];
+	const FRotator LeaderRotation = Leader->GetActorRotation();
+	const FVector LeaderForward = Leader->GetActorForwardVector();
 
-	float LeaderOffsetDistance = -200.f;
-	FVector FormationCenter = Leader->GetActorLocation() - LeaderForward * LeaderOffsetDistance;
+	const float LeaderOffsetDistance = -200.f;
+	const FVector FormationCenter = Leader->GetActorLocation() - LeaderForward * LeaderOffsetDistance;
 
-	FRotator FormationRotation = FRotator(0.f, LeaderRotation.Yaw + 180.f, 0.f);
+	const FRotator FormationRotation = FRotator(0.f, LeaderRotation.Yaw + 180.f, 0.f);
 
 	TArray<AActor*> Followers;
 	for (int32 i = 1; i < StoredAgents.Num(); ++i)
@@ -47,6 +49,30 @@ void UFormationComponent::AssignStoredFormation(EFormationType FormationType, fl
 		{
 			AICon->MoveToLocation(SlotPositions[i], 50.f);
 			Pawn->SetActorRotation(LeaderRotation);
+		}
+	}
+}
+
+void UFormationComponent::Order(EOrderType OrderType)
+{
+	if (StoredAgents.Num() <= 1) return;
+
+	for (TObjectPtr<AActor> StoredAgent : StoredAgents)
+	{
+		switch (OrderType)
+		{
+		case EOrderType::Attack:
+			if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
+			{
+				Monster->SetPrimaryState(TAG_AI_AbleToAttack);
+			}
+			break;
+		case EOrderType::Idle:
+			if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
+			{
+				Monster->SetPrimaryState(TAG_AI_Idle);
+			}
+			break;
 		}
 	}
 }

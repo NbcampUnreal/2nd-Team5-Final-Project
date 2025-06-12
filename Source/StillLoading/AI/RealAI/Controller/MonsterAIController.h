@@ -21,6 +21,9 @@ public:
 	UFUNCTION()
 	void ToggleLockOnWidget(bool bIsLockOnWidget);
 
+	UFUNCTION()
+	void CheckPerception(APawn* InPawn);
+
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> LockOnWidgetClass;
 	
@@ -36,8 +39,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UAISenseConfig_Sight> SightConfig;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BlackBoard")
+	TObjectPtr<UBlackboardComponent> BlackboardComponent;
 
 protected:
 	virtual void BeginPlay() override;
@@ -51,6 +54,9 @@ protected:
 
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
-	UPROPERTY()
-	TObjectPtr<UBlackboardComponent> BlackboardComponent;
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	TObjectPtr<UBehaviorTree> LeaderBehaviorTreeAsset;
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	TObjectPtr<UBehaviorTree> SoldierBehaviorTreeAsset;
 };

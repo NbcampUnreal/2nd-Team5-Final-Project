@@ -16,7 +16,7 @@ class STILLLOADING_API ASLReactiveObjectRock : public ASLBaseReactiveObject
 	
 	ASLReactiveObjectRock();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void PushInDirection(FVector Direction);
 
 	UFUNCTION()

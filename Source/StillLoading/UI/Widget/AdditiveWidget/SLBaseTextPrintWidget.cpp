@@ -34,10 +34,17 @@ void USLBaseTextPrintWidget::ActivateWidget(const FSLWidgetActivateBuffer& Widge
 
 	if (TalkArray.IsEmpty())
 	{
+		TalkDelegateBuffer.OnTalkEnded.Broadcast();
+		CloseWidget();
 		return;
 	}
 
 	ChangeTargetText();
+}
+
+FSLTalkDelegateBuffer& USLBaseTextPrintWidget::GetTalkDelegateBuffer()
+{
+	return TalkDelegateBuffer;
 }
 
 void USLBaseTextPrintWidget::OnClickedNextButton()
@@ -56,8 +63,8 @@ void USLBaseTextPrintWidget::OnClickedNextButton()
 	if (TargetTextIndex >= TalkArray.Num())
 	{
 		TalkArray.Empty();
+		TalkDelegateBuffer.OnTalkEnded.Broadcast();
 		CloseWidget();
-		OnTalkEnded.Broadcast();
 		return;
 	}
 
@@ -69,6 +76,7 @@ void USLBaseTextPrintWidget::OnClickedSkipButton()
 	GetWorld()->GetTimerManager().ClearTimer(TextPrintTimer);
 
 	TalkArray.Empty();
+	TalkDelegateBuffer.OnTalkEnded.Broadcast();
 	CloseWidget();
 }
 

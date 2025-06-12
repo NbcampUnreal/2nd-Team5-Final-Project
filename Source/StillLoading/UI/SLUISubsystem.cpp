@@ -4,6 +4,7 @@
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUISettings.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
+#include "UI/Widget/AdditiveWidget/SLBaseTextPrintWidget.h"
 
 void USLUISubsystem::SetInputModeAndCursor()
 {
@@ -90,13 +91,17 @@ void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, const FName& St
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
 }
 
-void USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName)
+FSLTalkDelegateBuffer& USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName)
 {
 	WidgetActivateBuffer.TargetTalk = TalkTargetType;
 	WidgetActivateBuffer.TargetName = TargetName;
 	WidgetActivateBuffer.TalkName = TalkName;
 
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_TalkWidget);
+
+	USLBaseTextPrintWidget* TalkWidget = Cast<USLBaseTextPrintWidget>(AdditiveWidgetMap[ESLAdditiveWidgetType::EAW_TalkWidget]);
+
+	return TalkWidget->GetTalkDelegateBuffer();
 }
 
 void USLUISubsystem::AddAdditiveWidget(ESLAdditiveWidgetType WidgetType)
@@ -106,12 +111,15 @@ void USLUISubsystem::AddAdditiveWidget(ESLAdditiveWidgetType WidgetType)
 	if (!ActiveAdditiveWidgets.Contains(AdditiveWidgetMap[WidgetType]))
 	{
 		ActiveAdditiveWidgets.Add(AdditiveWidgetMap[WidgetType]);
-
-		AdditiveWidgetMap[WidgetType]->ActivateWidget(WidgetActivateBuffer);
-		AdditiveWidgetMap[WidgetType]->AddToViewport(AdditiveWidgetMap[WidgetType]->GetWidgetOrder());
-
-		SetInputModeAndCursor();
 	}
+
+	if (!AdditiveWidgetMap[WidgetType]->IsInViewport())
+	{
+		AdditiveWidgetMap[WidgetType]->AddToViewport(AdditiveWidgetMap[WidgetType]->GetWidgetOrder());
+	}
+
+	AdditiveWidgetMap[WidgetType]->ActivateWidget(WidgetActivateBuffer);
+	SetInputModeAndCursor();
 }
 
 void USLUISubsystem::RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType)
@@ -150,12 +158,6 @@ UDataAsset* USLUISubsystem::GetPublicImageData()
 {
 	CheckValidOfWidgetDataAsset();
 	return WidgetActivateBuffer.WidgetPublicData;
-}
-
-FOnTalkEnded USLUISubsystem::GetTalkDelegate()
-{
-	CheckValidOfAdditiveWidget(ESLAdditiveWidgetType::EAW_TalkWidget);
-	return Cast<USLBaseTextPrintWidget>(AdditiveWidgetMap[ESLAdditiveWidgetType::EAW_TalkWidget])->OnTalkEnded;
 }
 
 void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType)
