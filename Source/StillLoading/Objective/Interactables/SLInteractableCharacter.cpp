@@ -10,7 +10,7 @@ ASLInteractableCharacter::ASLInteractableCharacter()
 	CharacterMesh->SetupAttachment(RootComponent);
 }
 
-void ASLInteractableCharacter::Interaction()
+void ASLInteractableCharacter::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, CurrentTargetName, CurrentTalkNames[CurrentTalkIndex]);
 }

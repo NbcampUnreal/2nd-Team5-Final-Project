@@ -3,23 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SLInteractableObjectBase.h"
 #include "GameFramework/Actor.h"
+#include "Minigame/Object/SLBaseReactiveObject.h"
 #include "SLInteractableCharacter.generated.h"
 
 class USLUISubsystem;
 
+// TODO: Reactibve 어쩌구로 바꾸기
+
 UCLASS()
-class STILLLOADING_API ASLInteractableCharacter : public AActor, public ISLInteractableObjectBase
+class STILLLOADING_API ASLInteractableCharacter : public ASLBaseReactiveObject
 {
 	GENERATED_BODY()
 
 public:
 	ASLInteractableCharacter();
-	virtual void Interaction() override;
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType) override;
 
 private:
 	UPROPERTY()

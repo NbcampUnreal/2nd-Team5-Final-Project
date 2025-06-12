@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "SL2DMovementHandlerComponent.generated.h"
 
+class ASLBaseReactiveObject;
 class ISLInteractableBase;
 class UCollisionRadarComponent;
 class ASLPlayerCharacter;
@@ -65,5 +66,5 @@ private:
 	UPROPERTY()
 	TObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
 	UPROPERTY()
-	TObjectPtr<UObject> DetectedInteractableObject;
+	TWeakObjectPtr<ASLBaseReactiveObject> DetectedReactiveObject;
 };
