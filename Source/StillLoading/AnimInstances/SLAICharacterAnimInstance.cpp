@@ -38,7 +38,8 @@ USLAICharacterAnimInstance::USLAICharacterAnimInstance()
 	IsDead = false;
 	IsExecution = false;
 	bIsInCombat = false;
-    
+	bIsAirHit = false;
+	
 	HitDirectionVector = EHitDirection::EHD_Back; // enum 기본값에 맞게 조정
 	DamagePosition =  FVector::ZeroVector; 
 	// 이전 프레임 데이터 초기화
@@ -71,6 +72,7 @@ void USLAICharacterAnimInstance::NativeInitializeAnimation()
 	FaceYaw = 0.f;
 	FacePitch = 0.f;
 	Angle = 0.f;
+	bIsAirHit = false;
 }
 
 void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
@@ -90,6 +92,7 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 	DamagePosition = OwningCharacter->GetHitDirectionVector();
 	bIsJump = OwningCharacter->IsJumping();
 	IsLoop = OwningCharacter->GetIsLoop();
+	bIsAirHit = OwningCharacter->GetIsAirHit();
 	
 	// 현재 속도 계산
 	FVector CurrentVelocity = OwningCharacter->GetMovementComponent()->GetVelocityForNavMovement();
@@ -160,41 +163,6 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 	
 	UpdateSpeedComponents();
 }
-
-/*void USLAICharacterAnimInstance::SetHitDirection(EHitDirection NewDirection)
-{
-	HitDirectionVector = NewDirection;
-}
-
-void USLAICharacterAnimInstance::SetIsHit(bool bNewIsHit)
-{
-	bIsHit = bNewIsHit;
-}
-
-void USLAICharacterAnimInstance::SetIsDead(bool bNewIsDead)
-{
-	IsDead = bNewIsDead;
-}
-
-void USLAICharacterAnimInstance::SetIsDown(bool bNewIsDown)
-{
-	IsDown = bNewIsDown;
-}
-
-void USLAICharacterAnimInstance::SetIsStun(bool bNewIsStun)
-{
-	IsStun = bNewIsStun;
-}
-
-void USLAICharacterAnimInstance::SetIsAttacking(bool bNewIsAttacking)
-{
-	IsAttacking = bNewIsAttacking;
-}
-
-void USLAICharacterAnimInstance::SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer)
-{
-	ShouldLookAtPlayer = bNewShouldLookAtPlayer;
-}*/
 
 bool USLAICharacterAnimInstance::IsTargetBehindCharacter(float AngleThreshold) const
 {

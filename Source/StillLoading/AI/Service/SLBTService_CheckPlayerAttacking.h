@@ -4,24 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTService.h"
-#include "SLBTService_CheckPlayerJump.generated.h"
+#include "SLBTService_CheckPlayerAttacking.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class STILLLOADING_API USLBTService_CheckPlayerJump : public UBTService
+class STILLLOADING_API USLBTService_CheckPlayerAttacking : public UBTService
 {
     GENERATED_BODY()
+
 public:
-    USLBTService_CheckPlayerJump();
-    
+    USLBTService_CheckPlayerAttacking();
+
 protected:
     virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
-    // 플레이어 점프 상태를 저장할 블랙보드 키
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Blackboard")
-    FBlackboardKeySelector PlayerIsJumpingKey;
-private:
-    bool bPreviousPlayerJumpState;
+    FBlackboardKeySelector IsPlayerAttackingKey;
 };

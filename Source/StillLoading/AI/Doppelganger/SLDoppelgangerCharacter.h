@@ -117,23 +117,16 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Combat|Dash")
     float GetDashDegree() const;
 
-    // 점프 공격 관련 함수들
     UFUNCTION(BlueprintCallable, Category = "Combat|Jump")
     bool IsPlayerJumping() const;
 
-    UFUNCTION(BlueprintCallable, Category = "Combat|Jump")
-    void PerformJumpAttack();
 
-    UFUNCTION(BlueprintCallable, Category = "Combat|Jump")
-    EDoppelgangerActionPattern SelectJumpAttackPattern() const;
-
-    UFUNCTION(BlueprintCallable, Category = "Combat|Jump")
-    void JumpTowardsPlayer();
-
+    
 protected:
     virtual void BeginPlay() override;
     virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType) override;
-
+    virtual void SetHitState(bool bNewIsHit, float AutoResetTime = 0.5f) override;
+    virtual void Landed(const FHitResult& Hit) override;
     void InitializePatternMapping();
     EDoppelgangerActionPattern GetActionPatternForTag(const FGameplayTag& Tag) const;
     void AttachItemToHand(AActor* ItemActor, const FName SocketName) const;
@@ -148,10 +141,8 @@ protected:
     float GetRandomEvasiveAngle() const;
     float GetFlankingAngle() const;
     void SetHitStateForGuard(AActor* DamageCauser, const FHitResult& HitResult);
-
-    // 점프 공격 관련 헬퍼 함수들
-    FVector CalculateJumpTargetLocation() const;
-    bool ShouldPerformJumpAttack() const;
+    void OnPlayerAttackReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
+    void ProcessPlayerSpecificReaction(AActor* Causer, EAttackAnimType AnimType);
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Guard")
     int32 MaxGuardCount;
@@ -176,16 +167,6 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Dash")
     float DashDuration;
-
-    // 점프 공격 관련 프로퍼티들
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Jump")
-    float JumpAttackRange;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Jump")
-    float JumpAttackHeight;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Jump")
-    float PlayerJumpCheckInterval;
 
 private:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
@@ -217,8 +198,5 @@ private:
     FTimerHandle GuardCounterResetTimer;
     FTimerHandle ParryRecoveryTimer;
     FTimerHandle DashTimerHandle;
-
-    // 점프 공격 관련 변수들
-    float LastPlayerJumpCheckTime;
-    bool bPlayerWasJumpingLastFrame;
+    FTimerHandle HitStateResetTimer;
 };
