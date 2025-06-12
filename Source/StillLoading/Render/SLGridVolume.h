@@ -31,16 +31,16 @@ public:
     float GetGridWidth() const;
     UCameraComponent* GetCameraComponent() const { return CameraComponent; }
     
-    UPROPERTY(VisibleAnywhere, Category = "GridNode")
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GridNode")
     TObjectPtr<USLGridNode> UpGridNode;
     
-    UPROPERTY(VisibleAnywhere, Category = "GridNode")
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GridNode")
     TObjectPtr<USLGridNode> DownGridNode;
     
-    UPROPERTY(VisibleAnywhere, Category = "GridNode")
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GridNode")
     TObjectPtr<USLGridNode> LeftGridNode;
     
-    UPROPERTY(VisibleAnywhere, Category = "GridNode")
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GridNode")
     TObjectPtr<USLGridNode> RightGridNode;
     
 protected:
