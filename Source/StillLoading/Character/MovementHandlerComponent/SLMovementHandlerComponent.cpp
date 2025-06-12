@@ -15,6 +15,7 @@
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/RadarComponent/CollisionRadarComponent.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
+#include "Controller/SLBasePlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -113,6 +114,17 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 	if (DetectedActor->IsA(AMonsterAICharacter::StaticClass())
 			|| DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
 	{
+		if (const ASLAIBaseCharacter* DetectedActorTemp = Cast<ASLAIBaseCharacter>(DetectedActor))
+		{
+			if (const IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(DetectedActorTemp->GetController()))
+			{
+				if (const ASLBasePlayerController* PlayerController = Cast<ASLBasePlayerController>(OwnerCharacter->GetController()))
+				{
+					if (TeamAgentInterface->GetGenericTeamId() == PlayerController->GetGenericTeamId()) return;
+				}
+			}
+		}
+		
 		if (Distance <= FocusMaxDistance && IsValid(DetectedActor))
 		{
 			if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn)) return;
