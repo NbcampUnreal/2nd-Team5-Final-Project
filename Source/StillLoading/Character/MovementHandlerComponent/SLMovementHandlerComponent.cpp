@@ -13,7 +13,6 @@
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
-#include "Character/PlayerState/SLBattlePlayerState.h"
 #include "Character/RadarComponent/CollisionRadarComponent.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -360,14 +359,8 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 		return;
 	}
 
-	// 피격무적
-	if (OwnerCharacter->HasSecondaryState(TAG_Character_Invulnerable)) return;
-	OwnerCharacter->AddSecondaryState(TAG_Character_Invulnerable);
-	OwnerCharacter->GetWorldTimerManager().PauseTimer(InvulnerabilityTimerHandle);
-	OwnerCharacter->GetWorldTimerManager().ClearTimer(InvulnerabilityTimerHandle);
-	OwnerCharacter->GetWorldTimerManager().SetTimer(InvulnerabilityTimerHandle, this,
-	                                                &UMovementHandlerComponent::RemoveInvulnerability,
-	                                                InvulnerableDuration, false);
+	// 피격무적 분기
+	if (OwnerCharacter->HasSecondaryState(TAG_Character_Invulnerable) && InvulnerableDuration > 0) return;
 
 	// 피격
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable, TAG_Character_Empowered});
@@ -455,6 +448,14 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 		}),
 		RemoveDelay, false
 	);
+
+	// 무적 상태 진입
+	OwnerCharacter->AddSecondaryState(TAG_Character_Invulnerable);
+	OwnerCharacter->GetWorldTimerManager().PauseTimer(InvulnerabilityTimerHandle);
+	OwnerCharacter->GetWorldTimerManager().ClearTimer(InvulnerabilityTimerHandle);
+	OwnerCharacter->GetWorldTimerManager().SetTimer(InvulnerabilityTimerHandle, this,
+													&UMovementHandlerComponent::RemoveInvulnerability,
+													InvulnerableDuration, false);
 }
 
 void UMovementHandlerComponent::HitDirection(AActor* Causer)
