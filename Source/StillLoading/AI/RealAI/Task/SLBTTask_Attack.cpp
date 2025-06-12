@@ -37,14 +37,6 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	UAnimationMontageComponent* AnimComp = AIPawn->FindComponentByClass<UAnimationMontageComponent>();
 	if (!AnimComp) return EBTNodeResult::Failed;
 
-	const float CurrentTime = GetWorld()->GetTimeSeconds();
-	const float LastAttackTime = BlackboardComp->GetValueAsFloat(BlackboardKeys::LastAttackTime);
-
-	if (CurrentTime - LastAttackTime < AttackCooldown)
-	{
-		return EBTNodeResult::Failed;
-	}
-
 	if (AttackType == EAttackAnimType::AAT_AINormal)
 	{
 		if (FMath::RandRange(0, 1) == 0)

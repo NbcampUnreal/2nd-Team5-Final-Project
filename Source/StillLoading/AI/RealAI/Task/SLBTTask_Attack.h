@@ -15,9 +15,6 @@ public:
 	USLBTTask_Attack();
 
 	UPROPERTY(EditAnywhere, Category = "Cooldown")
-	float AttackCooldown = 2.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Cooldown")
 	FName LastAttackTimeKey = "LastAttackTime";
 
 	UPROPERTY(EditAnywhere, Category = "AttackType")
