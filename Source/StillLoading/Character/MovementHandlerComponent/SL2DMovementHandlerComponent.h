@@ -6,6 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "SL2DMovementHandlerComponent.generated.h"
 
+class ASLBaseReactiveObject;
+class ISLInteractableBase;
+class UCollisionRadarComponent;
 class ASLPlayerCharacter;
 class UCombatHandlerComponent;
 class UBattleComponent;
@@ -42,10 +45,13 @@ private:
 	void OnActionStarted(EInputActionType ActionType);
 	UFUNCTION()
 	void OnActionCompleted(EInputActionType ActionType);
+	UFUNCTION()
+	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
 	
 	void Move(const float AxisValue, const EInputActionType ActionType);
 	void Attack();
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
+	void Interaction();
 	
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
@@ -57,5 +63,8 @@ private:
 	TObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
 	UPROPERTY()
 	TObjectPtr<USkeletalMeshComponent> CachedSkeletalMesh;
-	
+	UPROPERTY()
+	TObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
+	UPROPERTY()
+	TWeakObjectPtr<ASLBaseReactiveObject> DetectedReactiveObject;
 };

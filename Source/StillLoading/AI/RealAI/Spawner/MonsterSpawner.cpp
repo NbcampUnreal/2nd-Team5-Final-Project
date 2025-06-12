@@ -76,7 +76,7 @@ void AMonsterSpawner::SpawnMonstersByType()
 					FRotator::ZeroRotator,
 					Params
 				);
-
+				
 				SpawnedMonsters.Add(Monster);
 
 				if (Monster && !Leader)
@@ -104,30 +104,6 @@ void AMonsterSpawner::SpawnMonstersByType()
 	}
 
 	SpawnedMonsters.Reset();
-}
-
-void AMonsterSpawner::SpawnAllMonsters()
-{
-	for (const FMonsterSpawnInfo& Info : SpawnInfos)
-	{
-		if (!Info.Monster) continue;
-
-		for (int32 i = 0; i < Info.Count; ++i)
-		{
-			FVector SpawnLoc = GetRandomSpawnLocation();
-			FRotator SpawnRot = FRotator::ZeroRotator;
-
-			FActorSpawnParameters Params;
-			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-			AMonsterAICharacter* Monster = GetWorld()->SpawnActor<AMonsterAICharacter>(
-				Info.Monster, SpawnLoc, SpawnRot, Params);
-			if (Monster)
-			{
-				// 필요시 무기 장착, 커스텀 컴포넌트 초기화 등
-			}
-		}
-	}
 }
 
 FVector AMonsterSpawner::GetRandomSpawnLocation() const

@@ -219,6 +219,8 @@ void USLGraphicSettingWidget::ApplyExpandableImage()
 
 		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Expandable]);
 		ResolutionList->SetBorderBrush(SlateBrush);
+		ResolutionList->SynchronizeProperties();
+
 	}
 }
 

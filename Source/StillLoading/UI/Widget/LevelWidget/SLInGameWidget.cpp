@@ -34,12 +34,24 @@ void USLInGameWidget::SetIsTimerActivate(bool bIsActived)
 	SetIsSubWidgetActivate(bIsActived, ActiveTimerAnim, DeactiveTimerAnim);
 }
 
-void USLInGameWidget::SetIsPlayerStateActivate(bool bIsActived)
+void USLInGameWidget::SetIsPlayerStateActivate(bool bIsActived, bool bIsVisibleSpecial)
 {
-	SetIsSubWidgetActivate(bIsActived, ActivePlayerStateAnim, DeactivePlayerStateAnim);
+	if (bIsVisibleSpecial)
+	{
+		SpecialBar->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		SpecialBar->SetVisibility(ESlateVisibility::Collapsed);
+	}
+
+	if (!PlayerStatePanel->IsVisible())
+	{
+		SetIsSubWidgetActivate(bIsActived, ActivePlayerStateAnim, DeactivePlayerStateAnim);
+	}
 }
 
-void USLInGameWidget::SetIsObjectiveActivate(bool bIsActived)
+void USLInGameWidget::SetIsObjectiveActivate()
 {
 	if (bIsObjectiveVisible)
 	{
@@ -75,7 +87,7 @@ void USLInGameWidget::SetTimerText(int32 TimeSeconds)
 	int32 TextMin = TimeSeconds / 60;
 	int32 TextSec = TimeSeconds % 60;
 
-	TimerText->SetText(FText::FromString(FString::Printf(TEXT("%2d : %2d"), TextMin, TextSec)));
+	TimerText->SetText(FText::FromString(FString::Printf(TEXT("%02d : %02d"), TextMin, TextSec)));
 }
 
 void USLInGameWidget::SetHpValue(int32 MaxHp, int32 CurrentHp)
@@ -85,7 +97,7 @@ void USLInGameWidget::SetHpValue(int32 MaxHp, int32 CurrentHp)
 	HpBar->SetPercent(PerHp);
 }
 
-void USLInGameWidget::SetSpecialBalue(int32 MaxValue, int32 CurrentValue)
+void USLInGameWidget::SetSpecialValue(int32 MaxValue, int32 CurrentValue)
 {
 	float PerHp = (float)CurrentValue / (float)MaxValue;
 
@@ -149,9 +161,9 @@ bool USLInGameWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
 		return false;
 	}
 
-	TimerBack->SetBrush(SlateBrush);
+	/*TimerBack->SetBrush(SlateBrush);
 	PlayerStateBack->SetBrush(SlateBrush);
-	GameStateBack->SetBrush(SlateBrush);
+	GameStateBack->SetBrush(SlateBrush);*/
 
 	return true;
 }
