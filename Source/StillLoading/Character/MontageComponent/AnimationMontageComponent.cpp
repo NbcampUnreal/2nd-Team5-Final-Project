@@ -100,6 +100,12 @@ void UAnimationMontageComponent::PlayTrickMontage(FName Section)
 		PlayMontage(MontageData->TrickMontage, Section);
 }
 
+void UAnimationMontageComponent::PlayDodgeMontage(FName Section)
+{
+	if (MontageData)
+		PlayMontage(MontageData->DodgeMontage, Section);
+}
+
 void UAnimationMontageComponent::StopAllMontages(float BlendOutTime)
 {
 	if (!AnimInstance) return;

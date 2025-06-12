@@ -11,4 +11,5 @@ namespace BlackboardKeys
 	static const FName AllyCountKey = TEXT("AllyCountKey");
 	static const FName CenterActorKey = TEXT("CenterActorKey");
 	static const FName TargetLocation = TEXT("TargetLocation");
+	static const FName Leader = TEXT("Leader");
 }

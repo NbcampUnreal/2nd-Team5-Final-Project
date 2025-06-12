@@ -21,6 +21,8 @@ public:
 
 	UFUNCTION()
 	void OnAttackStageFinished(ECharacterMontageState AttackStage);
+	UFUNCTION()
+	void BeginBuff();
 
 protected:
 	virtual void BeginPlay() override;
@@ -54,6 +56,8 @@ protected:
 	void HitDirection(AActor* Causer);
 	UFUNCTION()
 	void RotateToHitCauser(const AActor* Causer, FRotator& TargetRotation, bool& bIsHitFromBack);
+	UFUNCTION()
+	void DodgeLoco();
 	UFUNCTION()
 	void ToggleMenu();
 	UFUNCTION()

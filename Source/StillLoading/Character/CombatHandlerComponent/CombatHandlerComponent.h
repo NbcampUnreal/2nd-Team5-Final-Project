@@ -72,7 +72,7 @@ public:
     FORCEINLINE bool IsEmpowered() const { return CurrentMode == ECharacterComboState::CCS_Empowered; }
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Empowered", meta = (ClampMin = "0.1", ClampMax = "30.0"))
-    float MaxEmpoweredDuration = 30.f;
+    float MaxEmpoweredDuration = 50.f;
 
     UPROPERTY(BlueprintAssignable, Category = "Combat")
     FOnEmpoweredStateChanged OnEmpoweredStateChanged;

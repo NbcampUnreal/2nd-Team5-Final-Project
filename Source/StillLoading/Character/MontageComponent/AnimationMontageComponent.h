@@ -8,6 +8,19 @@ class UBattleComponent;
 class ASLPlayerCharacter;
 class UMontageDataAsset;
 
+UENUM(BlueprintType)
+enum class EDodgeDirection : uint8
+{
+	Forward,
+	ForwardRight,
+	Right,
+	BackwardRight,
+	Backward,
+	BackwardLeft,
+	Left,
+	ForwardLeft
+};
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UAnimationMontageComponent : public UActorComponent
 {
@@ -34,6 +47,8 @@ public:
 	void PlayExecutionMontage(FName Section = NAME_None);
 	UFUNCTION()
 	void PlayTrickMontage(FName Section = NAME_None);
+	UFUNCTION()
+	void PlayDodgeMontage(FName Section = NAME_None);
 	UFUNCTION()
 	void StopAllMontages(float BlendOutTime);
 	UFUNCTION()

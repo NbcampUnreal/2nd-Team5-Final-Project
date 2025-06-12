@@ -192,6 +192,7 @@ void USL25DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType
 					BlockCount = 0;
 				}
 				
+				CachedCombatComponent->SetEmpoweredCombatMode(10);
 				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
 
 				// 전체 슬로우 (자기 자신 포함)
@@ -219,6 +220,8 @@ void USL25DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType
 		Block(true);
 		break;
 	case EInputActionType::EIAT_Walk:
+		StartFacingMouse();
+		DodgeLoco();
 		break;
 	case EInputActionType::EIAT_Menu:
 		ToggleMenu();
@@ -457,6 +460,26 @@ void USL25DMovementHandlerComponent::RotateToHitCauser(const AActor* Causer, FRo
 	{
 		bIsHitFromBack = true;
 	}
+}
+
+void USL25DMovementHandlerComponent::BeginBuff()
+{
+	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
+	OwnerCharacter->SetPrimaryState(TAG_Character_OnBuff);
+	CachedMontageComponent->StopAllMontages(0.2f);
+	CachedMontageComponent->PlayTrickMontage("Buff");
+}
+
+void USL25DMovementHandlerComponent::DodgeLoco()
+{
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_DogeBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
+		return;
+	}
+	
+	CachedMontageComponent->PlayDodgeMontage("Forward");
+	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
 }
 
 void USL25DMovementHandlerComponent::ToggleMenu()
@@ -733,6 +756,9 @@ void USL25DMovementHandlerComponent::OnAttackStageFinished(const ECharacterMonta
 	case ECharacterMontageState::ECS_Attack_Begin:
 		break;
 	case ECharacterMontageState::ECS_Attack_BeginAir:
+		break;
+	case ECharacterMontageState::ECS_Buff:
+		CachedCombatComponent->SetEmpoweredCombatMode(10);
 		break;
 	default:
 		break;

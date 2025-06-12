@@ -44,6 +44,9 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Delegate | Battle")
 	FOnCharacterHited OnCharacterHited;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Burning Gage")
+	float IncreaseBurningGageAmount = 2;
 	
 protected:
 	virtual void BeginPlay() override;

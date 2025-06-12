@@ -50,7 +50,7 @@ void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitRes
 		{
 			if (ASLBattlePlayerState* PlayerState = APlayerCharacter->GetPlayerState<ASLBattlePlayerState>())
 			{
-				PlayerState->IncreaseBurningGage(2);
+				PlayerState->IncreaseBurningGage(IncreaseBurningGageAmount);
 			}
 		}
 		
@@ -132,7 +132,7 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 	{
 		FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 25);
 		FVector End = Start + OwnerActor->GetActorForwardVector() * 80;
-		FCollisionShape SweepShape = FCollisionShape::MakeCapsule(30.f, 70.f);
+		FCollisionShape SweepShape = FCollisionShape::MakeCapsule(45.f, 60.f);
 
 		switch (AttackType)
 		{
