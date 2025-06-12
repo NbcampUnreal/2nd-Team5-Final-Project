@@ -13,6 +13,7 @@
 class USLUISubsystem;
 class USLTextPoolSubsystem;
 class USLSoundSubsystem;
+class USLButtonWidget;
 struct FSLWidgetActivateBuffer;
 
 UCLASS()
@@ -23,7 +24,7 @@ class STILLLOADING_API USLBaseWidget : public UUserWidget
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem);
 	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
-	virtual void DeactivateWidget() {};
+	virtual void DeactivateWidget();
 
 	void ApplyOnChangedChapter(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
 
@@ -49,8 +50,13 @@ protected:
 	virtual void ApplyFontData();
 	virtual void ApplyTextData() {};
 
-	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush);
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
+	virtual bool ApplyButtonNormal(FButtonStyle& ButtonStyle);
+	virtual void ApplyButtonHover(FButtonStyle& ButtonStyle, bool bIsActiveNormal);
+	virtual void ApplyButtonRetainer(USLButtonWidget* ButtonWidget);
+	virtual void ApplyButtonNiagara(USLButtonWidget* ButtonWidget);
+
+	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush);
 	virtual bool ApplySliderImage(FSliderStyle& SliderStyle);
 	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush);
 	virtual bool ApplyTextBorderImage(FSlateBrush& SlateBrush);

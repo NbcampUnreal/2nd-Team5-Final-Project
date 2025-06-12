@@ -65,18 +65,7 @@ void ASLReactiveObjectRock::OnReacted(const ASLPlayerCharacterBase* InCharacter,
 {
 	checkf(IsValid(InCharacter), TEXT("InCharacter is nullptr!"));
 
-	PushInDirection(FVector::ForwardVector);
+	PushInDirection(InCharacter->GetActorForwardVector());
 	UE_LOG(LogTemp, Warning, TEXT("PushInDirection"));
-	/*FVector RockLocation = GetActorLocation();
 
-	FVector HitOrigin = InCharacter->GetActorLocation();
-	FVector KnockbackDirection = (RockLocation - HitOrigin).GetSafeNormal();
-
-
-	UPrimitiveComponent* Primitive = FindComponentByClass<UPrimitiveComponent>();
-	if (Primitive && Primitive->IsSimulatingPhysics())
-	{
-		StaticMeshComp->SetSimulatePhysics(true);
-		Primitive->AddImpulse(KnockbackDirection * KnockbackForce, NAME_None, true);
-	}*/
 }

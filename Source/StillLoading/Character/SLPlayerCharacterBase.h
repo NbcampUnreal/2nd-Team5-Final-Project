@@ -10,6 +10,14 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 
+UENUM(BlueprintType)
+enum class ECharacterRenderingType : uint8
+{
+	CRT_2D UMETA(DisplayName = "2D"),
+	CRT_25D UMETA(DisplayName = "2.5D"),
+	CRT_3D UMETA(DisplayName = "3D"),
+};
+
 UCLASS()
 class STILLLOADING_API ASLPlayerCharacterBase : public ACharacter
 {
@@ -20,6 +28,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSource;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	ECharacterRenderingType CharacterType;
 
 protected:
 	virtual void BeginPlay() override;

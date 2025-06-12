@@ -2,11 +2,11 @@
 
 
 #include "UI/Widget/AdditiveWidget/SLOptionWidget.h"
-#include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Components/WidgetSwitcher.h"
 #include "UI/SLUISubsystem.h"
+#include "UI/Widget/SLButtonWidget.h"
 #include "UI/Widget/AdditiveWidget/SubWidget/SLKeySettingWidget.h"
 #include "UI/Widget/AdditiveWidget/SubWidget/SLLanguageSettingWidget.h"
 #include "UI/Widget/AdditiveWidget/SubWidget/SLGraphicSettingWidget.h"
@@ -16,6 +16,7 @@
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/HUD/SLBaseHUD.h"
+#include "NiagaraSystem.h"
 
 const FName USLOptionWidget::TitleTextIndex = "TitleText";
 const FName USLOptionWidget::KeySettingButtonIndex = "KeySettingButton";
@@ -34,19 +35,19 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
 	Super::InitWidget(NewUISubsystem);
 
+	LanguageSetBt->InitButton();
+	GraphicSetBt->InitButton();
+	SoundSetBt->InitButton();
+	KeySettingButton->InitButton();
+	QuitGameButton->InitButton();
+	CloseButton->InitButton();
+
 	LanguageSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedLanguageSetting);
 	GraphicSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedGraphicSetting);
 	SoundSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedSoundSetting);
 	KeySettingButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedKeySetting);
 	QuitGameButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuit);
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
-
-	LanguageSetBt->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
-	GraphicSetBt->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
-	SoundSetBt->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
-	KeySettingButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
-	QuitGameButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
-	CloseButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
 
 	LanguageSettingWidget->InitWidget(NewUISubsystem);
 	GraphicSettingWidget->InitWidget(NewUISubsystem);
@@ -79,6 +80,13 @@ void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 
 void USLOptionWidget::DeactivateWidget()
 {
+	Super::DeactivateWidget();
+
+	LanguageSettingWidget->DeactivateWidget();
+	GraphicSettingWidget->DeactivateWidget();
+	SoundSettingWidget->DeactivateWidget();
+	KeySettingWidget->DeactivateWidget();
+
 	if (IsValid(CloseAnim))
 	{
 		PlayAnimation(CloseAnim);
@@ -113,29 +121,13 @@ void USLOptionWidget::ApplyTextData()
 	}
 
 	TitleText->SetText(OptionTextMap[TitleTextIndex]);
-	KeySettingText->SetText(OptionTextMap[KeySettingButtonIndex]);
-	LanguageSetText->SetText(OptionTextMap[LanguageSettingIndex]);
-	GraphicSetText->SetText(OptionTextMap[GraphicSettingIndex]);
-	SoundSetText->SetText(OptionTextMap[SoundSettingIndex]);
-	QuitGameText->SetText(OptionTextMap[QuitGameButtonIndex]);
-	CloseText->SetText(OptionTextMap[CloseButtonIndex]);
-}
 
-bool USLOptionWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
-{
-	if (!Super::ApplyButtonImage(ButtonStyle))
-	{
-		return false;
-	}
-
-	KeySettingButton->SetStyle(ButtonStyle);
-	QuitGameButton->SetStyle(ButtonStyle);
-	CloseButton->SetStyle(ButtonStyle);
-	LanguageSetBt->SetStyle(ButtonStyle);
-	GraphicSetBt->SetStyle(ButtonStyle);
-	SoundSetBt->SetStyle(ButtonStyle);
-
-	return true;
+	LanguageSetBt->SetButtonText(OptionTextMap[LanguageSettingIndex]);
+	GraphicSetBt->SetButtonText(OptionTextMap[GraphicSettingIndex]);
+	SoundSetBt->SetButtonText(OptionTextMap[SoundSettingIndex]);
+	KeySettingButton->SetButtonText(OptionTextMap[KeySettingButtonIndex]);
+	QuitGameButton->SetButtonText(OptionTextMap[QuitGameButtonIndex]);
+	CloseButton->SetButtonText(OptionTextMap[CloseButtonIndex]);
 }
 
 bool USLOptionWidget::ApplyBorderImage(FSlateBrush& SlateBrush)

@@ -13,5 +13,8 @@ UCLASS()
 class STILLLOADING_API ASLGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+protected:
+	virtual void BeginPlay() override;
 	
 };
