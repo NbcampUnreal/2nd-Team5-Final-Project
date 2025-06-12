@@ -93,12 +93,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	float RightDot = 0.0f;
 
-	FTimerHandle TestTimerHandle;
-	FTimerHandle TestTimerHandle2;
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void Landed(const FHitResult& Hit) override;
 
 	UFUNCTION()
 	void OnHitByCharacter(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -133,6 +132,10 @@ private:
 	void RotateToHitCauser(const AActor* Causer);
 	UFUNCTION()
 	void FixCharacterVelocity();
+	UFUNCTION(BlueprintCallable)
+	void StartFlyingState();
+	UFUNCTION(BlueprintCallable)
+	void StopFlyingState();
 
 	UPROPERTY()
 	TObjectPtr<AActor> LastAttacker;

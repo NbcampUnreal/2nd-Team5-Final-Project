@@ -43,9 +43,6 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
-	void SpawnAllMonsters();
-
-	UFUNCTION(BlueprintCallable)
 	void SpawnMonstersByType();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
