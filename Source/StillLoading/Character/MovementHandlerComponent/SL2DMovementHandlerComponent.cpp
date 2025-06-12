@@ -15,7 +15,7 @@
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/RadarComponent/CollisionRadarComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Objective/Interactables/SLInteractableObjectBase.h"
+#include "Minigame/Object/SLBaseReactiveObject.h"
 
 USL2DMovementHandlerComponent::USL2DMovementHandlerComponent(): OwnerCharacter(nullptr), CachedSkeletalMesh(nullptr)
 {
@@ -125,9 +125,9 @@ void USL2DMovementHandlerComponent::OnActionCompleted(EInputActionType ActionTyp
 
 void USL2DMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
 {
-	if (DetectedActor && DetectedActor->Implements<USLInteractableObjectBase>())
+	if (DetectedActor && DetectedActor->IsA(ASLBaseReactiveObject::StaticClass()))
 	{
-		DetectedInteractableObject = DetectedActor;
+		DetectedReactiveObject = MakeWeakObjectPtr<ASLBaseReactiveObject>(Cast<ASLBaseReactiveObject>(DetectedActor));
 	}
 }
 
@@ -243,16 +243,16 @@ void USL2DMovementHandlerComponent::ApplyAttackState(const FName& SectionName, b
 
 void USL2DMovementHandlerComponent::Interaction()
 {
-	if (!IsValid(DetectedInteractableObject))
+	if (!DetectedReactiveObject.IsValid())
 	{
 		return;
 	}
 	
-	if (ISLInteractableObjectBase* Interface = Cast<ISLInteractableObjectBase>(DetectedInteractableObject))
+	if (CachedRadarComponent->IsInFieldOfView(DetectedReactiveObject.Get()))
 	{
-		if (CachedRadarComponent->IsInFieldOfView(Cast<AActor>(DetectedInteractableObject)))
+		if (ASLPlayerCharacterBase* PlayerCharacter = Cast<ASLPlayerCharacterBase>(GetOwner()))
 		{
-			Interface->Interaction();
+			DetectedReactiveObject->TriggerReact(PlayerCharacter, ESLReactiveTriggerType::ERT_InteractKey);
 		}
 	}
 }

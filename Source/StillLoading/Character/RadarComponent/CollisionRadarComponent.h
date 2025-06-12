@@ -57,10 +57,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<class UMotionWarpingComponent> MotionWarpComponent;
 
-    bool IsInFieldOfView(const AActor* TargetActor) const;
+    bool IsInFieldOfView(const AActor* TargetActor);
     
 protected:
     virtual void BeginPlay() override;
+    virtual const FVector GetForwardVector();
 
 private:
     void DrawDebugVisualization();
@@ -74,6 +75,7 @@ private:
     void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+    
 private:
     UPROPERTY(VisibleAnywhere, Category = "Radar|Components")
     USphereComponent* DetectionZone = nullptr;
