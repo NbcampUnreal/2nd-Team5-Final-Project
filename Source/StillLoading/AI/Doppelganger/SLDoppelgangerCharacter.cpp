@@ -612,14 +612,14 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
     // 공중 상태 체크
     const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
     bool bIsCurrentlyInAir = GetCharacterMovement()->IsFalling() && GroundDistance > 50.0f;
-    bool bIsAirborneAttack = (AnimType == EAttackAnimType::AAT_Airborn || 
-                             AnimType == EAttackAnimType::AAT_SpecialAttack1 ||
-                             AnimType == EAttackAnimType::AAT_SpecialAttack2 ||
-                             AnimType == EAttackAnimType::AAT_SpecialAttack3 ||
-                             AnimType == EAttackAnimType::AAT_Skill1);
+    bool bIsAirborneAttack = (
+        AnimType == EAttackAnimType::AAT_Airborn || AnimType == EAttackAnimType::AAT_Skill1);
 
-    // AirHit 상태를 클래스 멤버 변수로 설정
-    SetIsAirHit(bIsCurrentlyInAir || bIsAirborneAttack);
+   
+    if (!GetIsAirHit())
+    {
+        SetIsAirHit(bIsCurrentlyInAir || bIsAirborneAttack);
+    }
 
     // 기본 넉백 처리
     FVector PushDirection = GetActorLocation() - Causer->GetActorLocation();
@@ -630,12 +630,11 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
     float KnockbackStrength = 100.0f;
     float UpwardForce = 50.0f; 
 
-    if (AnimType == EAttackAnimType::AAT_SpecialAttack1 || 
-        AnimType == EAttackAnimType::AAT_SpecialAttack2 || 
-        AnimType == EAttackAnimType::AAT_SpecialAttack3)
+    if (AnimType == EAttackAnimType::AAT_Airborn || 
+        AnimType == EAttackAnimType::AAT_Skill1)
     {
         KnockbackStrength = 300.0f;
-        UpwardForce = 700.0f; 
+        UpwardForce = 450.0f; 
     }
 
     // 공격 타입별 특수 처리 및 Launch 벡터 계산
@@ -666,7 +665,7 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
     case EAttackAnimType::AAT_SpecialAttack2:
     case EAttackAnimType::AAT_SpecialAttack3:
         {
-            LaunchVelocity.Z = 100.f;  // 강한 상승력
+            LaunchVelocity.Z = UpwardForce;  // 강한 상승력
             break;
         }
 
@@ -680,13 +679,13 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
 
     case EAttackAnimType::AAT_Airborn:
         {
-            LaunchVelocity.Z = 700.f * 1.5f;  // 에어본은 높은 상승력
+            LaunchVelocity.Z = UpwardForce * 1.5f;  // 에어본은 높은 상승력
             break;
         }
 
     case EAttackAnimType::AAT_Skill1:
         {
-            LaunchVelocity.Z = UpwardForce * 1.2f;  // 스킬1은 상향 공격
+            LaunchVelocity.Z = UpwardForce * 2.0f;  // 스킬1은 상향 공격
             break;
         }
 
