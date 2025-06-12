@@ -42,7 +42,7 @@ private:
 	bool bIsTrigger = false;
 
 	UPROPERTY()
-	bool isOpen = false;
+	bool bIsOpen = false;
 
 
 };
