@@ -61,7 +61,7 @@ void ASLInteractableObjectRock::Tick(float DeltaTime)
 	UE_LOG(LogTemp, Warning, TEXT("Tick"));
 }
 
-void ASLInteractableObjectRock::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectRock::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	checkf(IsValid(InCharacter), TEXT("InCharacter is nullptr!"));
 

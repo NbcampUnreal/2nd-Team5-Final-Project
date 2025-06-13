@@ -5,6 +5,7 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "MonsterAIController.generated.h"
 
+class AAISquadManager;
 class UWidgetComponent;
 class UAISenseConfig_Damage;
 class UAISenseConfig_Sight;

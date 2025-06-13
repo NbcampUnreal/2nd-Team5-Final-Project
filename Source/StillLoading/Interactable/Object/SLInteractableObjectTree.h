@@ -25,7 +25,7 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
-	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType);
+	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType);
 	
 	virtual void Tick(float DeltaTime);
 	

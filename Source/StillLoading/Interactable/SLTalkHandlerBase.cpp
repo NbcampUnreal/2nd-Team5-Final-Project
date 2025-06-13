@@ -17,3 +17,8 @@ FName USLTalkHandlerBase::GetTalkName()
 {
 	return TalkName;
 }
+
+void USLTalkHandlerBase::SetTalkName(const FName InName)
+{
+	TalkName = InName;
+}

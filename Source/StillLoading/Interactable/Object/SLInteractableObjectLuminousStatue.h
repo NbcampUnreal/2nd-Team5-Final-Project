@@ -21,7 +21,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
+	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
 	UFUNCTION()
 	void SetLightActive();
 private:

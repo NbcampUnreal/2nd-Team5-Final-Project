@@ -1,6 +1,7 @@
 #include "MonsterAICharacter.h"
 
-#include "FormationComponent.h"
+#include "AISquadManager.h"
+#include "Blackboardkeys.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
@@ -11,6 +12,7 @@
 #include "Components/TimelineComponent.h"
 #include "Controller/MonsterAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Navigation/PathFollowingComponent.h"
 
 AMonsterAICharacter::AMonsterAICharacter()
 {
@@ -28,7 +30,6 @@ AMonsterAICharacter::AMonsterAICharacter()
 
 	AnimationComponent = CreateDefaultSubobject<UAnimationMontageComponent>(TEXT("AnimationComponent"));
 	BattleComponent = CreateDefaultSubobject<UBattleComponent>(TEXT("BattleComponent"));
-	FormationComponent = CreateDefaultSubobject<UFormationComponent>(TEXT("FormationComponent"));
 	SpawnTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("SpawnTimeline"));
 
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AMonsterAICharacter::OnHitByCharacter);
@@ -43,22 +44,12 @@ AMonsterAICharacter::AMonsterAICharacter()
 void AMonsterAICharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	
+	DrawDebugMessage();
 
-	if (bIsLeader)
-	{
-		FVector Location = GetActorLocation();
-
-		FVector TextLocation = Location + FVector(0, 0, 120);
-		DrawDebugString(
-			GetWorld(),
-			TextLocation,
-			TEXT("Leader"),
-			nullptr,
-			FColor::White,
-			0.f,
-			true
-		);
-	}
+	// 아래는 리더 아닌애 로직
+	if (bIsLeader) return;
+	//StepBackward(DeltaSeconds);
 }
 
 void AMonsterAICharacter::BeginPlay()
@@ -80,6 +71,7 @@ void AMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
+	SetStrategyState(TAG_JOBMOB_HOLDPOSITION);
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 
@@ -120,6 +112,12 @@ void AMonsterAICharacter::BeginSpawning(const FVector& FinalLocation, const floa
 
 	SetActorLocation(SpawnStartLocation);
 	AnimationComponent->PlayAIETCMontage("Spawn");
+
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		const float RandomMaxSpeed = FMath::FRandRange(200.f, 400.f);
+		MoveComp->MaxWalkSpeed = RandomMaxSpeed;
+	}
 
 	//SetActorEnableCollision(false);
     
@@ -296,13 +294,26 @@ void AMonsterAICharacter::RemoveStrategyState()
 	StrategyStateTags.Reset();
 }
 
-void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
-                                        EAttackAnimType AnimType)
+void AMonsterAICharacter::SetSquadManager(AAISquadManager* InManager)
+{
+	this->SquadManager = InManager;
+	if (AMonsterAIController* AIController = Cast<AMonsterAIController>(GetController()))
+	{
+		AIController->GetBlackboardComponent()->SetValueAsObject(TEXT("SquadManager"), InManager);
+	}
+}
+
+void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType)
 {
 	AnimationComponent->StopAllMontages(0.2f);
 	HitDirection(Causer);
+	RotateToHitCauser(Causer);
 	ChangeMeshTemporarily();
 	StartFlyingState();
+	if (!bIsLeader)
+	{
+		SetStrategyState(TAG_JOBMOB_ATTACK);
+	}
 
 	LastAttacker = Causer;
 	CurrentHealth -= Damage;
@@ -525,5 +536,70 @@ void AMonsterAICharacter::StopFlyingState()
 	if (GetCapsuleComponent())
 	{
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+	}
+}
+
+void AMonsterAICharacter::DrawDebugMessage()
+{
+	if (bIsLeader)
+	{
+		const FVector Location = GetActorLocation();
+		const FVector TextLocation = Location + FVector(0, 0, 120);
+		DrawDebugString(GetWorld(), TextLocation, TEXT("Leader"), nullptr, FColor::White, 0.f, true);
+	}
+}
+
+void AMonsterAICharacter::StepBackward(const float DeltaTime)
+{
+	if (!HasStrategyState(TAG_JOBMOB_HOLDPOSITION)) return;
+
+	AAIController* AICon = Cast<AAIController>(GetController());
+	const UBlackboardComponent* Blackboard = AICon ? AICon->GetBlackboardComponent() : nullptr;
+	if (!AICon || !Blackboard) return;
+
+	const AActor* Target = Cast<AActor>(Blackboard->GetValueAsObject(BlackboardKeys::TargetActor));
+	if (!Target) return;
+
+	const float DistanceToTarget = GetDistanceTo(Target);
+
+	if (DistanceToTarget < RetreatDistanceThreshold && AICon->GetMoveStatus() == EPathFollowingStatus::Idle)
+	{
+		const FVector MyLocation = GetActorLocation();
+		const FVector TargetLocation = Target->GetActorLocation();
+		const FVector DirectionAwayFromTarget = (MyLocation - TargetLocation).GetSafeNormal();
+		const FVector RetreatLocation = MyLocation + DirectionAwayFromTarget * RetreatDistance;
+
+		AICon->MoveToLocation(RetreatLocation);
+	}
+
+	// WatchTarget(DeltaTime);
+}
+
+void AMonsterAICharacter::WatchTarget(const float DeltaTime)
+{
+	if (!HasStrategyState(TAG_JOBMOB_HOLDPOSITION)) return;
+
+	AAIController* AICon = Cast<AAIController>(GetController());
+	if (!AICon) return;
+
+	const UBlackboardComponent* Blackboard = AICon->GetBlackboardComponent();
+	if (!Blackboard) return;
+
+	if (const AActor* Target = Cast<AActor>(Blackboard->GetValueAsObject(BlackboardKeys::TargetActor)))
+	{
+		const FVector MyLocation = GetActorLocation();
+		const FVector TargetLocation = Target->GetActorLocation();
+        
+		const FVector DirectionToTarget = (TargetLocation - MyLocation).GetSafeNormal();
+		const FRotator TargetRotation = FRotationMatrix::MakeFromX(DirectionToTarget).Rotator();
+
+		const FRotator SmoothedRotation = FMath::RInterpTo(
+			GetActorRotation(),
+			FRotator(0.f, TargetRotation.Yaw, 0.f),
+			DeltaTime,
+			10.f
+		);
+
+		SetActorRotation(SmoothedRotation);
 	}
 }

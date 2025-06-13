@@ -23,6 +23,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "TalkHandler")
 	FName GetTalkName();
+
+	UFUNCTION(BlueprintCallable, Category = "TalkHandler")
+	void SetTalkName(const FName InName);
 	
 	UPROPERTY(BlueprintAssignable, Category = "TalkHandler")
 	FOnTalkEndSignature OnTalkEndDelegate;
