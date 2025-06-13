@@ -113,7 +113,7 @@ protected:
 	TObjectPtr<UWidgetAnimation> ActiveHitEffectAnim = nullptr;
 
 	UPROPERTY()
-	TMap<ESLInGamePrivateImageType, UTexture2D*> PrivateImageMap;
+	TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>> PrivateImageMap;
 
 	bool bIsObjectiveVisible = false;
 	int32 CurrentTimeValue = 0;
