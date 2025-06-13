@@ -1,5 +1,6 @@
 #include "MonsterAIController.h"
 
+#include "AI/RealAI/AISquadManager.h"
 #include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BehaviorTree.h"
@@ -23,7 +24,7 @@ AMonsterAIController::AMonsterAIController()
 	// Sight 구성
 	SightConfig->SightRadius = 1500.0f;
 	SightConfig->LoseSightRadius = 1700.0f;
-	SightConfig->PeripheralVisionAngleDegrees = 100.0f;
+	SightConfig->PeripheralVisionAngleDegrees = 270.0f;
 	SightConfig->SetMaxAge(0.5f);
 
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
@@ -152,11 +153,7 @@ void AMonsterAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
 	{
 		if (Stimulus.WasSuccessfullySensed())
 		{
-			if (BlackboardComponent->GetValueAsObject(BlackboardKeys::TargetActor) != Actor)
-			{
-				BlackboardComponent->SetValueAsObject(BlackboardKeys::TargetActor, Actor);
-			}
-			
+			BlackboardComponent->SetValueAsObject(BlackboardKeys::TargetActor, Actor);
 			if (AMonsterAICharacter* MyChar = Cast<AMonsterAICharacter>(GetPawn()))
 			{
 				MyChar->SetChasing(true);
@@ -165,7 +162,6 @@ void AMonsterAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
 		}
 		else if (!Stimulus.WasSuccessfullySensed())
 		{
-			//BlackboardComponent->ClearValue(BlackboardKeys::TargetActor);
 			if (AMonsterAICharacter* MyChar = Cast<AMonsterAICharacter>(GetPawn()))
 			{
 				MyChar->SetChasing(false);

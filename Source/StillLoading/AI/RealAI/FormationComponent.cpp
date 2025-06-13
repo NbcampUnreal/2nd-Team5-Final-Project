@@ -1,7 +1,6 @@
 #include "FormationComponent.h"
 #include "AIController.h"
-#include "MonsterAICharacter.h"
-#include "Character/GamePlayTag/GamePlayTag.h"
+#include "Navigation/PathFollowingComponent.h"
 
 UFormationComponent::UFormationComponent()
 {
@@ -11,144 +10,115 @@ UFormationComponent::UFormationComponent()
 void UFormationComponent::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void UFormationComponent::StartFidgetingFor(const TArray<TObjectPtr<AActor>>& AgentsToFidget)
+{
+	FidgetStates.Empty();
+
+	for (const auto& Agent : AgentsToFidget)
+	{
+		if (Agent)
+		{
+			FFidgetState NewState;
+			NewState.HomeLocation = Agent->GetActorLocation();
+			NewState.FidgetTimer = FMath::RandRange(0.f, static_cast<float>(FidgetInterval.X));
+            
+			FidgetStates.Add(Agent, NewState);
+		}
+	}
+}
+
+void UFormationComponent::StopFidgeting()
+{
+	FidgetStates.Empty();
+}
+
+void UFormationComponent::UpdateFidgeting(float DeltaTime)
+{
+	for (auto& Elem : FidgetStates)
+	{
+		AActor* Agent = Elem.Key.Get();
+		FFidgetState& State = Elem.Value;
+
+		if (!Agent) continue;
+
+		State.FidgetTimer -= DeltaTime;
+
+		if (State.FidgetTimer <= 0.f)
+		{
+			AController* Con = Agent->GetInstigatorController();
+			AAIController* AICon = Cast<AAIController>(Con);
+
+			if (AICon && AICon->GetMoveStatus() == EPathFollowingStatus::Type::Idle)
+			{
+				const FVector RightVector = Agent->GetActorRightVector();
+				const float RandomOffset = FMath::RandRange(-FidgetRange, FidgetRange);
+				const FVector NewLocation = State.HomeLocation + RightVector * RandomOffset;
+
+				AICon->MoveToLocation(NewLocation, 5.f);
+			}
+            
+			State.FidgetTimer = FMath::RandRange(FidgetInterval.X, FidgetInterval.Y);
+		}
+	}
+}
+
+void UFormationComponent::AssignStoredFormation(
+	AActor* InLeader, 
+	const TArray<TObjectPtr<AActor>>& InFollowers,
+	const TArray<TObjectPtr<AActor>>& InAttackingAgents,
+	EFormationType FormationType, 
+	float Spacing)
+{
+	if (InFollowers.IsEmpty() || !InLeader) return;
+    
+	TArray<AActor*> NonAttackingFollowers;
+	for (AActor* Agent : InFollowers)
+	{
+		if (Agent && !InAttackingAgents.Contains(Agent))
+		{
+			NonAttackingFollowers.Add(Agent);
+		}
+	}
+    
+	if (NonAttackingFollowers.IsEmpty()) return;
+
+	const FRotator LeaderRotation = InLeader->GetActorRotation();
+	const FVector LeaderForward = InLeader->GetActorForwardVector();
 	
-}
-
-void UFormationComponent::SetAgentList(const TArray<AActor*> Agents)
-{
-	StoredAgents = Agents;
-}
-
-void UFormationComponent::AssignStoredFormation(EFormationType FormationType, float Spacing)
-{
-	if (StoredAgents.Num() <= 1) return;
-
-	const AActor* Leader = StoredAgents[0];
-	const FRotator LeaderRotation = Leader->GetActorRotation();
-	const FVector LeaderForward = Leader->GetActorForwardVector();
-
 	const float LeaderOffsetDistance = -200.f;
-	const FVector FormationCenter = Leader->GetActorLocation() - LeaderForward * LeaderOffsetDistance;
-
+	const FVector FormationCenter = InLeader->GetActorLocation() - LeaderForward * LeaderOffsetDistance;
 	const FRotator FormationRotation = FRotator(0.f, LeaderRotation.Yaw + 180.f, 0.f);
 
-	TArray<AActor*> Followers;
-	for (int32 i = 1; i < StoredAgents.Num(); ++i)
+	TArray<FVector> SlotPositions = CalculateFormationSlots(FormationType, FormationCenter, NonAttackingFollowers.Num(), Spacing, FormationRotation);
+
+	for (int32 i = 0; i < NonAttackingFollowers.Num(); ++i)
 	{
-		if (StoredAgents[i]) Followers.Add(StoredAgents[i]);
-	}
-
-	TArray<FVector> SlotPositions = CalculateFormationSlots(FormationType, FormationCenter, Followers.Num(), Spacing, FormationRotation);
-
-	for (int32 i = 0; i < Followers.Num(); ++i)
-	{
-		APawn* Pawn = Cast<APawn>(Followers[i]);
-		AAIController* AICon = Cast<AAIController>(Pawn ? Pawn->GetController() : nullptr);
-
-		if (AICon && Pawn)
-		{
-			AICon->MoveToLocation(SlotPositions[i], 50.f);
-			Pawn->SetActorRotation(LeaderRotation);
-		}
-	}
-}
-
-void UFormationComponent::Order(const EOrderType OrderType)
-{
-	if (StoredAgents.Num() <= 1) return;
-
-	switch (OrderType)
-	{
-	case EOrderType::Attack:
-		Attack();
-		
-		break;
-	case EOrderType::Idle:
-		CleanUpInvalidAgents();
+		APawn* Pawn = Cast<APawn>(NonAttackingFollowers[i]);
+		if (!Pawn) continue;
        
-		for (TObjectPtr<AActor> StoredAgent : StoredAgents)
-		{
-			if (AttackingAgents.Contains(StoredAgent))
-			{
-				continue;
-			}
+		const float DistanceToSlot = FVector::Dist(Pawn->GetActorLocation(), SlotPositions[i]);
 
-			if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
+		if (DistanceToSlot > FormationAcceptanceRadius)
+		{
+			AAIController* AICon = Cast<AAIController>(Pawn->GetController());
+			if (AICon)
 			{
-				Monster->SetStrategyState(TAG_JOBMOB_HOLDPOSITION);
+				AICon->MoveToLocation(SlotPositions[i], 50.f);
 			}
 		}
-       
-		//AttackingAgents.Empty();
-		
-		break;
-	}
-}
-
-void UFormationComponent::Attack()
-{
-	CleanUpInvalidAgents();
-	
-	if (StoredAgents.IsEmpty() || AttackingAgents.Num() > 2)
-	{
-		return;
-	}
-
-	const int32 NumToSelect = FMath::Min(2, StoredAgents.Num());
-    
-	if (NumToSelect <= 0)
-	{
-		for (TObjectPtr<AActor> StoredAgent : StoredAgents)
+		else
 		{
-			if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
-			{
-				Monster->SetStrategyState(TAG_JOBMOB_ATTACK);
-			}
-		}
-		return;
-	}
-
-	TArray<int32> Indices;
-	Indices.Reserve(StoredAgents.Num());
-	for (int32 i = 0; i < StoredAgents.Num(); ++i)
-	{
-		Indices.Add(i);
-	}
-
-	for (int32 i = Indices.Num() - 1; i > 0; --i)
-	{
-		const int32 j = FMath::RandRange(0, i);
-		Indices.Swap(i, j);
-	}
-
-	for (int32 i = 0; i < NumToSelect; ++i)
-	{
-		const int32 AgentIndex = Indices[i];
-
-		if (AActor* StoredAgent = StoredAgents[AgentIndex].Get())
-		{
-			if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(StoredAgent))
-			{
-				Monster->SetStrategyState(TAG_JOBMOB_ATTACK);
-				AttackingAgents.Add(StoredAgent);
-			}
+			const FRotator CurrentRotation = Pawn->GetActorRotation();
+			const FRotator TargetRotation = LeaderRotation;
+          
+			const FRotator SmoothedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 5.0f);
+          
+			Pawn->SetActorRotation(SmoothedRotation);
 		}
 	}
 }
-
-void UFormationComponent::CleanUpInvalidAgents()
-{
-	StoredAgents.RemoveAll([](const TObjectPtr<AActor>& Agent)
-	{
-		return !IsValid(Agent.Get());
-	});
-
-	AttackingAgents.RemoveAll([](const TObjectPtr<AActor>& Agent)
-	{
-		return !IsValid(Agent.Get());
-	});
-}
-
 
 TArray<FVector> UFormationComponent::CalculateFormationSlots(EFormationType Type, const FVector& Center, int32 NumAgents, float Spacing, const FRotator& Rotation) const
 {
@@ -208,6 +178,73 @@ TArray<FVector> UFormationComponent::CalculateFormationSlots(EFormationType Type
 					FVector RotatedOffset = Rotation.RotateVector(LocalOffset);
 					Slots.Add(Center + RotatedOffset);
 				}
+			}
+			break;
+		}
+	case EFormationType::Circle:
+		{
+			if (NumAgents <= 0) break;
+
+			float CustomSpace = 0.f;
+			if (Spacing < 200.f)
+			{
+				CustomSpace = 200.0f;
+			}
+			CustomSpace = Spacing;
+			const float Radius = CustomSpace;
+          
+			if (NumAgents == 1)
+			{
+				FVector Offset = FVector(Radius, 0.f, 0.f);
+				FVector RotatedOffset = Rotation.RotateVector(Offset);
+				Slots.Add(Center + RotatedOffset);
+				break;
+			}
+
+			const float AngleStep = FMath::DegreesToRadians(180.f) / (NumAgents - 1);
+			const float StartAngle = -FMath::DegreesToRadians(90.f);
+
+			for (int32 i = 0; i < NumAgents; ++i)
+			{
+				const float CurrentAngle = StartAngle + i * AngleStep;
+
+				FVector Offset = FVector(Radius * FMath::Cos(CurrentAngle), Radius * FMath::Sin(CurrentAngle), 0.f);
+
+				FVector RotatedOffset = Rotation.RotateVector(Offset);
+				Slots.Add(Center + RotatedOffset);
+			}
+			break;
+		}
+	case EFormationType::BackCircle:
+		{
+			if (NumAgents <= 0) break;
+
+			const float Radius = Spacing;
+			const float BackwardOffset = 100.f;
+
+			if (NumAgents == 1)
+			{
+				FVector Offset = FVector(Radius + BackwardOffset, 0.f, 0.f);
+				FVector RotatedOffset = Rotation.RotateVector(Offset);
+				Slots.Add(Center + RotatedOffset);
+				break;
+			}
+
+			const float AngleStep = FMath::DegreesToRadians(180.f) / (NumAgents - 1);
+			const float StartAngle = -FMath::DegreesToRadians(90.f);
+
+			for (int32 i = 0; i < NumAgents; ++i)
+			{
+				const float CurrentAngle = StartAngle + i * AngleStep;
+
+				FVector Offset = FVector(
+				Radius * FMath::Cos(CurrentAngle) + BackwardOffset,
+				Radius * FMath::Sin(CurrentAngle), 
+				0.f
+			 );
+
+				FVector RotatedOffset = Rotation.RotateVector(Offset);
+				Slots.Add(Center + RotatedOffset);
 			}
 			break;
 		}
