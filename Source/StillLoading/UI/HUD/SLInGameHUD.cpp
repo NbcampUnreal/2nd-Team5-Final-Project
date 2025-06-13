@@ -17,7 +17,7 @@ void ASLInGameHUD::OnStartedHUD()
 	checkf(IsValid(InGameWidget), TEXT("Cast Fail. Level Widget To InGame Widget"));
 }
 
-void ASLInGameHUD::ApplyObjective(const FName& ObjectiveName)
+void ASLInGameHUD::ApplyObjective(const FName& ObjectiveName) // 게임 모드의 델리게이트 구독
 {
 	SetObjectiveName(ObjectiveName);
 	SetObjectiveVisibility();
@@ -35,23 +35,24 @@ void ASLInGameHUD::ApplyTimer(int32 SecondsValue)
 	SetTimerValue(SecondsValue);
 }
 
-void ASLInGameHUD::ApplyPlayerHp(float MaxHp, FSLPlayerHpDelegateBuffer PlayerHpDelegate)
+void ASLInGameHUD::ApplyPlayerHp(float MaxHp)//, FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 {
-	PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
+	bIsFirstApplyHp = true;
+	//PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
 	SetPlayerStateVisibility(true, false);
 	SetPlayerHpValue(MaxHp, MaxHp * 0.7f);
 }
 
-void ASLInGameHUD::ApplyPlayerSpecial(float MaxValue, FSLSpecialValueDelegateBuffer SpecialValueDelegate)
+void ASLInGameHUD::ApplyPlayerSpecial(float MaxValue)//, FSLSpecialValueDelegateBuffer& SpecialValueDelegate)
 {
-	SpecialValueDelegate.OnSpecialValueChanged.AddDynamic(this, &ThisClass::SetPlayerSpecialValue);
+	//SpecialValueDelegate.OnSpecialValueChanged.AddDynamic(this, &ThisClass::SetPlayerSpecialValue);
 	SetPlayerStateVisibility(true, true);
 	SetPlayerSpecialValue(MaxValue, 0);
 }
 
-void ASLInGameHUD::ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer BossHpDelegate)
+void ASLInGameHUD::ApplyBossHp(float MaxHp)//, FSLBossHpDelegateBuffer& BossHpDelegate)
 {
-	BossHpDelegate.OnBossHpChanged.AddDynamic(this, &ThisClass::SetBossHpValue);
+	//BossHpDelegate.OnBossHpChanged.AddDynamic(this, &ThisClass::SetBossHpValue);
 	SetBossStateVisibility(true);
 	SetBossHpValue(MaxHp, MaxHp * 0.7f);
 }
@@ -88,7 +89,12 @@ void ASLInGameHUD::SetTimerValue(int32 SecondsValue)
 
 void ASLInGameHUD::SetPlayerHpValue(float MaxHp, float CurrentHp)
 {
-	ApplyHitEffect();
+	if (!bIsFirstApplyHp)
+	{
+		ApplyHitEffect();
+		bIsFirstApplyHp = false;
+	}
+	
 	InGameWidget->SetHpValue(MaxHp, CurrentHp);
 }
 

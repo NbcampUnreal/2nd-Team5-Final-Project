@@ -19,6 +19,6 @@ void ASLTitleHUD::OnStartedHUD()
 	CheckValidOfUISubsystem();
 
 	UISubsystem->ActivateFade(true);
-	UISubsystem->GetTalkDelegate().OnTalkEnded.AddDynamic(this, &ThisClass::NotifyTalkEnded);
+	UISubsystem->GetTalkWidget()->OnTalkEnded.AddDynamic(this, &ThisClass::NotifyTalkEnded);
 	UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Heroine, "Serena", "TitleTalk");
 }
