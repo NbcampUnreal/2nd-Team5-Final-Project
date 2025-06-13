@@ -201,6 +201,8 @@ void USLInGameWidget::ApplyProgressBarImage()
 		ProgressBarStyle.SetFillImage(SlateBrush);
 	}
 
+	ProgressBarStyle.BackgroundImage.TintColor = HpBar->GetWidgetStyle().BackgroundImage.TintColor;
+	ProgressBarStyle.FillImage.TintColor = HpBar->GetWidgetStyle().FillImage.TintColor;
 	HpBar->SetWidgetStyle(ProgressBarStyle);
 
 	if (PrivateImageMap.Contains(ESLInGamePrivateImageType::EGPI_SpecailBack) &&
@@ -217,6 +219,8 @@ void USLInGameWidget::ApplyProgressBarImage()
 		ProgressBarStyle.SetFillImage(SlateBrush);
 	}
 
+	ProgressBarStyle.BackgroundImage.TintColor = SpecialBar->GetWidgetStyle().BackgroundImage.TintColor;
+	ProgressBarStyle.FillImage.TintColor = SpecialBar->GetWidgetStyle().FillImage.TintColor;
 	SpecialBar->SetWidgetStyle(ProgressBarStyle);
 
 	if (PrivateImageMap.Contains(ESLInGamePrivateImageType::EGPI_BossHpBack) &&
@@ -233,6 +237,8 @@ void USLInGameWidget::ApplyProgressBarImage()
 		ProgressBarStyle.SetFillImage(SlateBrush);
 	}
 
+	ProgressBarStyle.BackgroundImage.TintColor = BossHpBar->GetWidgetStyle().BackgroundImage.TintColor;
+	ProgressBarStyle.FillImage.TintColor = BossHpBar->GetWidgetStyle().FillImage.TintColor;
 	BossHpBar->SetWidgetStyle(ProgressBarStyle);
 }
 
@@ -243,7 +249,9 @@ bool USLInGameWidget::ApplyOtherImage()
 	if (PrivateImageMap.Contains(ESLInGamePrivateImageType::EGPI_HitEffect) &&
 		IsValid(PrivateImageMap[ESLInGamePrivateImageType::EGPI_HitEffect]))
 	{
-		HitEffectImg->SetBrushFromTexture(PrivateImageMap[ESLInGamePrivateImageType::EGPI_HitEffect]);
+		FSlateBrush SlateBrush;
+		SlateBrush.SetResourceObject(PrivateImageMap[ESLInGamePrivateImageType::EGPI_HitEffect]);
+		HitEffectImg->SetBrush(SlateBrush);
 	}
 
 	ApplyTimerImage();
@@ -282,10 +290,13 @@ void USLInGameWidget::PlaySubWidgetAnim(UWidgetAnimation* PlayTargetAnim, UWidge
 
 void USLInGameWidget::ApplyTimerImage()
 {
+	FSlateBrush SlateBrush;
+
 	if (PrivateImageMap.Contains(ESLInGamePrivateImageType::EGPI_TimerBorder) &&
 		IsValid(PrivateImageMap[ESLInGamePrivateImageType::EGPI_TimerBorder]))
 	{
-		TimerBorder->SetBrushFromTexture(PrivateImageMap[ESLInGamePrivateImageType::EGPI_TimerBorder]);
+		SlateBrush.SetResourceObject(PrivateImageMap[ESLInGamePrivateImageType::EGPI_TimerBorder]);
+		TimerBorder->SetBrush(SlateBrush);
 		TimerBorder->SetVisibility(ESlateVisibility::Visible);
 	}
 	else
@@ -296,7 +307,8 @@ void USLInGameWidget::ApplyTimerImage()
 	if (PrivateImageMap.Contains(ESLInGamePrivateImageType::EGPI_TimerHands) &&
 		IsValid(PrivateImageMap[ESLInGamePrivateImageType::EGPI_TimerHands]))
 	{
-		TimerHands->SetBrushFromTexture(PrivateImageMap[ESLInGamePrivateImageType::EGPI_TimerHands]);
+		SlateBrush.SetResourceObject(PrivateImageMap[ESLInGamePrivateImageType::EGPI_TimerHands]);
+		TimerHands->SetBrush(SlateBrush);
 		TimerHands->SetVisibility(ESlateVisibility::Visible);
 	}
 	else

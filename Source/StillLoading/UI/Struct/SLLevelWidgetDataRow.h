@@ -53,5 +53,5 @@ struct STILLLOADING_API FSLInGameImageData
 
 public:
 	UPROPERTY(EditAnywhere)
-	TMap<ESLInGamePrivateImageType, UTexture2D*> InGameImageMap;
+	TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>> InGameImageMap;
 };

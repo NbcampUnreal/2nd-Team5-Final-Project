@@ -47,7 +47,7 @@ void ASLInGameHUD::ApplyPlayerSpecial(float MaxValue)//, FSLSpecialValueDelegate
 {
 	//SpecialValueDelegate.OnSpecialValueChanged.AddDynamic(this, &ThisClass::SetPlayerSpecialValue);
 	SetPlayerStateVisibility(true, true);
-	SetPlayerSpecialValue(MaxValue, 0);
+	SetPlayerSpecialValue(MaxValue, MaxValue * 0.7f);
 }
 
 void ASLInGameHUD::ApplyBossHp(float MaxHp)//, FSLBossHpDelegateBuffer& BossHpDelegate)
