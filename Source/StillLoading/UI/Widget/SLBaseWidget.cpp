@@ -108,7 +108,6 @@ void USLBaseWidget::ApplyImageData()
 {
 	FButtonStyle ButtonStyle;
 	FSliderStyle SliderStyle;
-	FProgressBarStyle ProgressBarStyle;
 	FSlateBrush SlateBrush;
 
 	ApplyBackgroundImage(SlateBrush);
@@ -116,7 +115,6 @@ void USLBaseWidget::ApplyImageData()
 	ApplySliderImage(SliderStyle);
 	ApplyBorderImage(SlateBrush);
 	ApplyTextBorderImage(SlateBrush);
-	ApplyProgressBarImage(ProgressBarStyle);
 	ApplyOtherImage();
 }
 
@@ -341,31 +339,6 @@ bool USLBaseWidget::ApplyTextBorderImage(FSlateBrush& SlateBrush)
 	}
 
 	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_TextBorder]);
-
-	return true;
-}
-
-bool USLBaseWidget::ApplyProgressBarImage(FProgressBarStyle& ProgressBarStyle)
-{
-	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ProgressBack) ||
-		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ProgressBack]))
-	{
-		return false;
-	}
-
-	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ProgressBar) ||
-		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ProgressBar]))
-	{
-		return false;
-	}
-
-	FSlateBrush SlateBrush;
-
-	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ProgressBack]);
-	ProgressBarStyle.SetBackgroundImage(SlateBrush);
-	
-	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ProgressBar]);
-	ProgressBarStyle.SetFillImage(SlateBrush);
 
 	return true;
 }

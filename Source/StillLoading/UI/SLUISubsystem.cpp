@@ -160,6 +160,14 @@ UDataAsset* USLUISubsystem::GetPublicImageData()
 	return WidgetActivateBuffer.WidgetPublicData;
 }
 
+FSLTalkDelegateBuffer& USLUISubsystem::GetTalkDelegate()
+{
+	CheckValidOfAdditiveWidget(ESLAdditiveWidgetType::EAW_TalkWidget);
+	USLBaseTextPrintWidget* TalkWidget = Cast<USLBaseTextPrintWidget>(AdditiveWidgetMap[ESLAdditiveWidgetType::EAW_TalkWidget]);
+
+	return TalkWidget->GetTalkDelegateBuffer();
+}
+
 void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType)
 {
 	if (AdditiveWidgetMap.Contains(WidgetType))

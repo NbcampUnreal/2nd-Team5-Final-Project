@@ -26,10 +26,11 @@ public:
 	void SetIsHitEffectActivate(bool bIsActived);
 	void SetIsBossStateActivate(bool bIsActived);
 
+	UFUNCTION()
 	void SetTimerText(int32 TimeSeconds);
-	void SetHpValue(int32 MaxHp, int32 CurrentHp);
-	void SetSpecialValue(int32 MaxValue, int32 CurrentValue);
-	void SetBossHpValue(int32 MaxHp, int32 CurrentHp);
+	void SetHpValue(float MaxHp, float CurrentHp);
+	void SetSpecialValue(float MaxValue, float CurrentValue);
+	void SetBossHpValue(float MaxHp, float CurrentHp);
 	void SetObjectiveText(const FName& ObjectiveName);
 	void SetObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount, int32 CurrentCount);
 
@@ -43,12 +44,19 @@ protected:
 	void SetIsSubWidgetActivate(bool bIsActived, UWidgetAnimation* ActiveAnim, UWidgetAnimation* DeactiveAnim);
 	void PlaySubWidgetAnim(UWidgetAnimation* PlayTargetAnim, UWidgetAnimation* StopTargetAnim = nullptr);
 
+private:
+	void ApplyTimerImage();
+	void ApplyProgressBarImage();
+
 protected:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> HitEffectImg = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UImage> TimerBack = nullptr;
+	TObjectPtr<UImage> TimerBorder = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> TimerHands = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> GameStateBack = nullptr;
@@ -108,4 +116,6 @@ protected:
 	TMap<ESLInGamePrivateImageType, UTexture2D*> PrivateImageMap;
 
 	bool bIsObjectiveVisible = false;
+	int32 CurrentTimeValue = 0;
+	FTimerHandle TimerHandle;
 };

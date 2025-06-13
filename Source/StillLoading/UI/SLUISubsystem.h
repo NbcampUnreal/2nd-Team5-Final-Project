@@ -40,6 +40,7 @@ public:
 	void RemoveAllAdditveWidget();
 
 	UDataAsset* GetPublicImageData();
+	FSLTalkDelegateBuffer& GetTalkDelegate();
 
 private:
 	void SetInputModeAndCursor();

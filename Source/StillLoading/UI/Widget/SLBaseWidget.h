@@ -60,7 +60,6 @@ protected:
 	virtual bool ApplySliderImage(FSliderStyle& SliderStyle);
 	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush);
 	virtual bool ApplyTextBorderImage(FSlateBrush& SlateBrush);
-	virtual bool ApplyProgressBarImage(FProgressBarStyle& ProgressBarStyle);
 	virtual bool ApplyOtherImage();
 	
 	void PlayUISound(ESLUISoundType SoundType);
