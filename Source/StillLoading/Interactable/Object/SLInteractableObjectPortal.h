@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Minigame/Object/SLBaseReactiveObject.h"
+#include "Interactable/SLInteractableObjectBase.h"
 #include "GeometryCollection\GeometryCollectionComponent.h"
 
-#include "SLReactiveObjectPortal.generated.h"
+#include "SLInteractableObjectPortal.generated.h"
 
 class ASLObjectDestroyer;
 class UArrowComponent;
@@ -14,11 +14,11 @@ class UArrowComponent;
  * 
  */
 UCLASS()
-class STILLLOADING_API ASLReactiveObjectPortal : public ASLBaseReactiveObject
+class STILLLOADING_API ASLInteractableObjectPortal : public ASLInteractableObjectBase
 {
 	GENERATED_BODY()
 public:
-	ASLReactiveObjectPortal();
+	ASLInteractableObjectPortal();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UArrowComponent> ArrowComponent;
@@ -62,4 +62,7 @@ private:
 
 	UPROPERTY()
 	FRotator SpawnRotation;
+
+	UPROPERTY()
+	TObjectPtr<USphereComponent> CollisionComp;
 };

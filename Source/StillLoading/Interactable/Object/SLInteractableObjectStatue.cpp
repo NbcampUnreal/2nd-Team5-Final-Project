@@ -1,16 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Minigame/Object/SLReactiveObjectStatue.h"
+#include "SLInteractableObjectStatue.h"
 #include "StillLoading\Character\SLPlayerCharacterBase.h"
 #include "StillLoading\Minigame\System\SLMinigamePuzzleCond.h"
 #include "EngineUtils.h"
 
-ASLReactiveObjectStatue::ASLReactiveObjectStatue()
+ASLInteractableObjectStatue::ASLInteractableObjectStatue()
 {
 }
 
-void ASLReactiveObjectStatue::BeginPlay()
+void ASLInteractableObjectStatue::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -24,12 +24,12 @@ void ASLReactiveObjectStatue::BeginPlay()
 	}
 }
 
-void ASLReactiveObjectStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 
 }
 
-void ASLReactiveObjectStatue::DeactivateStatue()
+void ASLInteractableObjectStatue::DeactivateStatue()
 {
 }
 

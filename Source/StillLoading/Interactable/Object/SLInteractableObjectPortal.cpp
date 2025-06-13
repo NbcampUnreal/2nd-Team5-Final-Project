@@ -1,20 +1,21 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Minigame/Object/SLReactiveObjectPortal.h"
+#include "SLInteractableObjectPortal.h"
 #include "Kismet\GameplayStatics.h"
 #include "Components\SphereComponent.h"
 #include "Minigame/Object/SLObjectDestroyer.h"
 #include "Components\ArrowComponent.h"
 #include "StillLoading\Character\SLPlayerCharacterBase.h"
 
-ASLReactiveObjectPortal::ASLReactiveObjectPortal()
+ASLInteractableObjectPortal::ASLInteractableObjectPortal()
 {
     // GeometryCollectionComponent 생성
     GeometryCollectionComp = CreateDefaultSubobject<UGeometryCollectionComponent>(TEXT("GeometryCollectionComp"));
     ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
     RootComponent = GeometryCollectionComp;
-    
+
+    CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
     CollisionComp->SetupAttachment(GeometryCollectionComp);
     StaticMeshComp->SetupAttachment(GeometryCollectionComp);
     StaticMeshComp->SetHiddenInGame(true);
@@ -30,12 +31,10 @@ ASLReactiveObjectPortal::ASLReactiveObjectPortal()
     CollisionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     CollisionComp->SetCollisionObjectType(ECC_PhysicsBody);
 
-  
-
     ObjectHp = 3;
 }
 
-void ASLReactiveObjectPortal::BeginPlay()
+void ASLInteractableObjectPortal::BeginPlay()
 {
     Super::BeginPlay();
     SpawnLocation = ArrowComponent->GetComponentLocation();
@@ -44,7 +43,7 @@ void ASLReactiveObjectPortal::BeginPlay()
     
 }
 
-void ASLReactiveObjectPortal::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectPortal::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
     if (InTriggerType == ESLReactiveTriggerType::ERT_InteractKey)
     {
@@ -67,18 +66,18 @@ void ASLReactiveObjectPortal::OnReacted(const ASLPlayerCharacterBase* InCharacte
     }
 }
 
-void ASLReactiveObjectPortal::BrokenDoor()
+void ASLInteractableObjectPortal::BrokenDoor()
 {
     ASLObjectDestroyer* BrokenActors = GetWorld()->SpawnActor<ASLObjectDestroyer>(DestroyerActor, SpawnLocation, SpawnRotation);
     if (BrokenActors)
     {
-        BrokenActors->OnHitDoor.AddDynamic(this, &ASLReactiveObjectPortal::OnBroken);
+        BrokenActors->OnHitDoor.AddDynamic(this, &ASLInteractableObjectPortal::OnBroken);
     }
     
 
 }
 
-void ASLReactiveObjectPortal::OnBroken()
+void ASLInteractableObjectPortal::OnBroken()
 {
 
     GeometryCollectionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);

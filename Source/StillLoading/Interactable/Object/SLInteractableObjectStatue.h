@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Minigame/Object/SLBaseReactiveObject.h"
-#include "SLReactiveObjectStatue.generated.h"
+#include "Interactable/SLInteractableObjectBase.h"
+#include "SLInteractableObjectStatue.generated.h"
 
 UENUM()
 enum class ESLStatueType : uint8
@@ -15,13 +15,13 @@ enum class ESLStatueType : uint8
 };
 
 UCLASS()
-class STILLLOADING_API ASLReactiveObjectStatue : public ASLBaseReactiveObject
+class STILLLOADING_API ASLInteractableObjectStatue : public ASLInteractableObjectBase
 {
 	GENERATED_BODY()
 	
 	
 public:
-	ASLReactiveObjectStatue();
+	ASLInteractableObjectStatue();
 	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
 	UFUNCTION()
 	void DeactivateStatue();

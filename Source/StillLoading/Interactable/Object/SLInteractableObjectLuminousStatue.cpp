@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Minigame/Object/SLReactiveObjectLuminousStatue.h"
+#include "SLInteractableObjectLuminousStatue.h"
 
 #include "Minigame/System/SLMinigamePuzzleCond.h"
 #include "Components\PointLightComponent.h"
 #include "Minigame/System/SLMiniGameUtility.h"
 
 
-ASLReactiveObjectLuminousStatue::ASLReactiveObjectLuminousStatue()
+ASLInteractableObjectLuminousStatue::ASLInteractableObjectLuminousStatue()
 {
 	PointLightComp = CreateDefaultSubobject<UPointLightComponent>(TEXT("PointLight"));
 	PointLightComp->SetupAttachment(StaticMeshComp);
@@ -16,7 +16,7 @@ ASLReactiveObjectLuminousStatue::ASLReactiveObjectLuminousStatue()
 	bLightOn = false;
 }
 
-void ASLReactiveObjectLuminousStatue::TurnOffLight()
+void ASLInteractableObjectLuminousStatue::TurnOffLight()
 {
 	float ElapsedTime = 0.0f;
 
@@ -45,7 +45,7 @@ void ASLReactiveObjectLuminousStatue::TurnOffLight()
 		Interval, true);
 }
 
-void ASLReactiveObjectLuminousStatue::BeginPlay()
+void ASLInteractableObjectLuminousStatue::BeginPlay()
 {
 	Super::BeginPlay();
 	PointLightComp->SetIntensity(0.0f);
@@ -55,12 +55,12 @@ void ASLReactiveObjectLuminousStatue::BeginPlay()
 	{
 		PuzzleManager = PuzzleCond;
 		UE_LOG(LogTemp, Warning, TEXT("Find PuzzleCond Succeed"));
-		PuzzleManager->ObjectResetRequested.AddDynamic(this, &ASLReactiveObjectLuminousStatue::ResetCondition);
+		PuzzleManager->ObjectResetRequested.AddDynamic(this, &ASLInteractableObjectLuminousStatue::ResetCondition);
 	}
 	
 }
 
-void ASLReactiveObjectLuminousStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectLuminousStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	if (!bLightOn)
 	{
@@ -70,7 +70,7 @@ void ASLReactiveObjectLuminousStatue::OnReacted(const ASLPlayerCharacterBase* In
 	
 }
 
-void ASLReactiveObjectLuminousStatue::SetLightActive()
+void ASLInteractableObjectLuminousStatue::SetLightActive()
 {
 	if (!PointLightComp)
 	{
@@ -109,7 +109,7 @@ void ASLReactiveObjectLuminousStatue::SetLightActive()
 	
 }
 
-void ASLReactiveObjectLuminousStatue::ResetCondition()
+void ASLInteractableObjectLuminousStatue::ResetCondition()
 {
 	TurnOffLight();
 	bLightOn = false;

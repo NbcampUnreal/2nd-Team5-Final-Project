@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Minigame/Object/SLBaseReactiveObject.h"
-#include "SLReactiveObjectBreakable.generated.h"
+#include "Interactable/SLInteractableObjectBase.h"
+
+#include "SLInteractableBreakable.generated.h"
 
 class UNiagaraSystem;
 
 UCLASS()
-class STILLLOADING_API ASLReactiveObjectBreakable : public ASLBaseReactiveObject
+class STILLLOADING_API ASLInteractableBreakable : public ASLInteractableObjectBase
 {
 	GENERATED_BODY()
 	
