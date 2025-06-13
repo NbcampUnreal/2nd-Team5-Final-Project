@@ -50,6 +50,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	void OnTargetDeath(AActor* DeadActor);
 
+	UFUNCTION(BlueprintCallable, Category = "AI|Player Detection")
+	bool IsPlayerAttacking() const;
+    
+	UFUNCTION(BlueprintCallable, Category = "AI|Player Detection")
+	bool IsPlayerPerformingSpecificAttack(FGameplayTag AttackTag) const;
+    
+	UFUNCTION(BlueprintCallable, Category = "AI|Player Detection") 
+	ASLPlayerCharacter* GetPlayerCharacter() const;
+	
 protected:
 	UFUNCTION()
 	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);

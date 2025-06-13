@@ -63,6 +63,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	float GetDistanceToGround() const;
+
+	UFUNCTION()
+	void UpdateSpeedComponents();
 	
 	// --- Anim Data | References ---
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|References")
@@ -90,6 +93,21 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|Movement")
 	float FallSpeed;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
+	float Speed_X;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
+	float Speed_Y;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
+	float SpeedDegree;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
+	float SpeedLength;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
+	float LastSpeedDegree;
+	
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|Movement")
 	bool bIsJump;
 	// --- Anim Data | Aiming & Looking ---
@@ -129,6 +147,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
 	bool IsLoop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
+	bool bIsAirHit;
 	
 	// --- Anim Data | Combat Specific ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|Combat Specific")

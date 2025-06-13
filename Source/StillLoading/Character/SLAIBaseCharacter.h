@@ -241,6 +241,12 @@ public:
 	void SetIsLoop(bool bNewLoop);
 
 	UFUNCTION(BlueprintCallable, Category = "combat")
+	FORCEINLINE bool GetIsAirHit() const { return bIsAirHit; }
+
+	UFUNCTION(BlueprintCallable, Category = "combat")
+	void SetIsAirHit(bool NewbIsAirHit);
+	
+	UFUNCTION(BlueprintCallable, Category = "combat")
 	FORCEINLINE bool GetIsInvincibility() const { return IsInvincibility; }
 
 	UFUNCTION(BlueprintCallable, Category = "combat")
@@ -299,6 +305,12 @@ protected:
 
 	virtual void ProcessDeath();
 
+	UFUNCTION(BlueprintCallable, Category = "Combat|Hit")
+	virtual void SetHitState(bool bNewIsHit, float AutoResetTime = 0.5f);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ProcessDamageOnly(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
+	
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<ASLBaseAIController> AIController;
@@ -325,6 +337,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
 	bool IsInvincibility;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
+	bool bIsAirHit;
 	
 	// --- Chapter Info ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Chapter", meta = (AllowPrivateAccess = "true"))

@@ -38,7 +38,8 @@ USLAICharacterAnimInstance::USLAICharacterAnimInstance()
 	IsDead = false;
 	IsExecution = false;
 	bIsInCombat = false;
-    
+	bIsAirHit = false;
+	
 	HitDirectionVector = EHitDirection::EHD_Back; // enum 기본값에 맞게 조정
 	DamagePosition =  FVector::ZeroVector; 
 	// 이전 프레임 데이터 초기화
@@ -71,6 +72,7 @@ void USLAICharacterAnimInstance::NativeInitializeAnimation()
 	FaceYaw = 0.f;
 	FacePitch = 0.f;
 	Angle = 0.f;
+	bIsAirHit = false;
 }
 
 void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
@@ -90,41 +92,34 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 	DamagePosition = OwningCharacter->GetHitDirectionVector();
 	bIsJump = OwningCharacter->IsJumping();
 	IsLoop = OwningCharacter->GetIsLoop();
+	bIsAirHit = OwningCharacter->GetIsAirHit();
+	
 	// 현재 속도 계산
 	FVector CurrentVelocity = OwningCharacter->GetMovementComponent()->GetVelocityForNavMovement();
 	GroundSpeed = CurrentVelocity.Size2D();
     
 	// AI 캐릭터를 위한 가속도 감지
-	const float MovementThreshold = 50.0f; // 이동으로 간주할 최소 속도
-	const float AccelerationThreshold = 15.0f; // 가속으로 간주할 속도 변화량 (AI용으로 낮춤)
-	const float StopThreshold = 5.0f; // 정지로 간주할 속도
+	const float MovementThreshold = 50.0f;
+	const float AccelerationThreshold = 15.0f;
+	const float StopThreshold = 5.0f;
 	
-	// 기존 방식
-	/*FVector CurrentAcceleration = OwningMovementComponent->GetCurrentAcceleration();
-	bool bHasEngineAcceleration = CurrentAcceleration.SizeSquared2D() > 0.f;*/
-	
-	// AI용 방식: 속도 변화 감지
 	float SpeedDifference = FMath::Abs(GroundSpeed - PreviousGroundSpeed);
 	bool bHasSpeedChange = SpeedDifference > AccelerationThreshold;
 	
-	// 가속 시작/정지 감지
 	bool bStartingMovement = (PreviousGroundSpeed <= StopThreshold && GroundSpeed > MovementThreshold);
 	bool bStoppingMovement = (PreviousGroundSpeed > MovementThreshold && GroundSpeed <= StopThreshold);
 	
-	// 방향 변화 감지 (회전하면서 이동하는 경우)
 	bool bHasDirectionChange = false;
 	if (GroundSpeed > MovementThreshold && PreviousGroundSpeed > MovementThreshold)
 	{
 		FVector CurrentDirection = CurrentVelocity.GetSafeNormal2D();
 		FVector PreviousDirection = PreviousVelocity.GetSafeNormal2D();
 		float DirectionDot = FVector::DotProduct(CurrentDirection, PreviousDirection);
-		bHasDirectionChange = DirectionDot < 0.9f; // 약 25도 이상 방향 변화
+		bHasDirectionChange = DirectionDot < 0.9f;
 	}
 	
-	// 최종 가속도 상태 결정
 	bHasAcceleration = bHasSpeedChange || bStartingMovement || bStoppingMovement || bHasDirectionChange;
 	
-	// 다음 프레임을 위해 이전 값들 저장
 	PreviousVelocity = CurrentVelocity;
 	PreviousGroundSpeed = GroundSpeed;
     
@@ -165,42 +160,9 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 		FaceYaw = NormalizeRotator.GetInverse().Yaw;
 		FacePitch = NormalizeRotator.GetInverse().Pitch;
 	}
+	
+	UpdateSpeedComponents();
 }
-
-/*void USLAICharacterAnimInstance::SetHitDirection(EHitDirection NewDirection)
-{
-	HitDirectionVector = NewDirection;
-}
-
-void USLAICharacterAnimInstance::SetIsHit(bool bNewIsHit)
-{
-	bIsHit = bNewIsHit;
-}
-
-void USLAICharacterAnimInstance::SetIsDead(bool bNewIsDead)
-{
-	IsDead = bNewIsDead;
-}
-
-void USLAICharacterAnimInstance::SetIsDown(bool bNewIsDown)
-{
-	IsDown = bNewIsDown;
-}
-
-void USLAICharacterAnimInstance::SetIsStun(bool bNewIsStun)
-{
-	IsStun = bNewIsStun;
-}
-
-void USLAICharacterAnimInstance::SetIsAttacking(bool bNewIsAttacking)
-{
-	IsAttacking = bNewIsAttacking;
-}
-
-void USLAICharacterAnimInstance::SetShouldLookAtPlayer(bool bNewShouldLookAtPlayer)
-{
-	ShouldLookAtPlayer = bNewShouldLookAtPlayer;
-}*/
 
 bool USLAICharacterAnimInstance::IsTargetBehindCharacter(float AngleThreshold) const
 {
@@ -275,4 +237,33 @@ float USLAICharacterAnimInstance::GetDistanceToGround() const
     
 	// 히트되지 않았으면 큰 값 반환
 	return 5000.0f;
+}
+
+void USLAICharacterAnimInstance::UpdateSpeedComponents()
+{
+	if (!OwningCharacter)
+	{
+		return;
+	}
+	
+	FVector Velocity = OwningCharacter->GetVelocity();
+	FVector ForwardVector = OwningCharacter->GetActorForwardVector();
+	FVector RightVector = OwningCharacter->GetActorRightVector();
+	
+	// 속도를 캐릭터의 로컬 좌표계로 변환
+	Speed_X = FVector::DotProduct(Velocity, ForwardVector);
+	Speed_Y = FVector::DotProduct(Velocity, RightVector);
+	
+	// 속도 각도 계산
+	SpeedDegree = UKismetMathLibrary::DegAtan2(Speed_Y, Speed_X);
+	
+	// 속도 크기 계산 (보간 적용)
+	float TargetSpeedLength = Velocity.Size();
+	SpeedLength = FMath::FInterpTo(SpeedLength, TargetSpeedLength, GetWorld()->GetDeltaSeconds(), 20.0f);
+	
+	// 이동 중이고 가속 중일 때만 마지막 속도 각도 업데이트
+	if (bHasAcceleration && SpeedLength > 200.0f)
+	{
+		LastSpeedDegree = SpeedDegree;
+	}
 }

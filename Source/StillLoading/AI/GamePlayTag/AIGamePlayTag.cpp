@@ -82,4 +82,28 @@ namespace SLAIGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Companion_Pattern_WZ_Loop_Attack04, "Companion.Pattern.WZ.Loop.Attack04");
 
+
+	// Doppelganger 행동 패턴
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_None, "Doppelganger.Pattern.None");
+
+	// Doppelganger 콤보 공격
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Combo_Attack_01, "Doppelganger.Pattern.Combo.Attack01");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Combo_Attack_02, "Doppelganger.Pattern.Combo.Attack02");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Combo_Attack_03, "Doppelganger.Pattern.Combo.Attack03");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Combo_Attack_04, "Doppelganger.Pattern.Combo.Attack04");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Combo_Attack_Air, "Doppelganger.Pattern.Combo.AttackAir");
+
+	// Doppelganger 특수 공격
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Attack_Up_01, "Doppelganger.Pattern.Attack.Up01");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Attack_Up_Floor_To_Air_02, "Doppelganger.Pattern.Attack.UpFloorToAir02");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Attack_Air_To_Floor, "Doppelganger.Pattern.Attack.AirToFloor");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Run_Attack_02, "Doppelganger.Pattern.Attack.Run02");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Dash_Air_Attack, "Doppelganger.Pattern.Attack.DashAir");
+
+	// Doppelganger 방어 및 지원
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Guard, "Doppelganger.Pattern.Defense.Guard");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Parry, "Doppelganger.Pattern.Defense.Parry");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Buff_Cast, "Doppelganger.Pattern.Support.BuffCast");
+	UE_DEFINE_GAMEPLAY_TAG(Doppelganger_Pattern_Dash, "Doppelganger.Pattern.Dash");
+
 }
