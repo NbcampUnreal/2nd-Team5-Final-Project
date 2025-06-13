@@ -43,7 +43,7 @@ void ASLInteractableObjectPortal::BeginPlay()
     
 }
 
-void ASLInteractableObjectPortal::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectPortal::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
     if (InTriggerType == ESLReactiveTriggerType::ERT_InteractKey)
     {

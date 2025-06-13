@@ -25,7 +25,7 @@ void ASLInteractableObjectTree::BeginPlay()
 	
 }
 
-void ASLInteractableObjectTree::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectTree::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	return;
 }

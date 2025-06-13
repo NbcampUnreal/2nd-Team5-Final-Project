@@ -7,9 +7,16 @@
 #include "SLObjectiveDataAsset.generated.h"
 
 class USLObjectiveBase;
-/**
- * 
- */
+
+USTRUCT()
+struct FSLObjectiveRuntimeData
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	TMap<FName, TObjectPtr<USLObjectiveBase>> ChapterObjectiveMap;
+};
+
 UCLASS()
 class STILLLOADING_API USLObjectiveDataAsset : public UDataAsset
 {
