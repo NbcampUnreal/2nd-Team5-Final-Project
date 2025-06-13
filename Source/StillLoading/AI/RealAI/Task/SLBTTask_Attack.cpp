@@ -10,7 +10,7 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 
-USLBTTask_Attack::USLBTTask_Attack()
+USLBTTask_Attack::USLBTTask_Attack(): AttackType()
 {
 	NodeName = "Attack Player";
 }
@@ -40,6 +40,8 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 
 	ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(Target);
 	if (!PlayerCharacter) return EBTNodeResult::Failed;
+
+	if (AICharacter->HasBattleState(TAG_AI_Hit)) return EBTNodeResult::Failed;
 
 	if (AttackType == EAttackAnimType::AAT_AINormal)
 	{
