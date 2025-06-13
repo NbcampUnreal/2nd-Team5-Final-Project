@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "SLMinigameTreeSpawnManager.generated.h"
 
-class ASLReactiveObjectTree;
+class ASLInteractableObjectTree;
 class UBoxComponent;
 
 UCLASS()
@@ -62,10 +62,10 @@ protected:
 	int32 BeginSpawnCount = 10;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<ASLReactiveObjectTree> TreeRef;
+	TSubclassOf<ASLInteractableObjectTree> TreeRef;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	TSet<TObjectPtr<ASLReactiveObjectTree>> TreeSet;
+	TSet<TObjectPtr<ASLInteractableObjectTree>> TreeSet;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TObjectPtr<UStaticMesh>> MeshComponents;

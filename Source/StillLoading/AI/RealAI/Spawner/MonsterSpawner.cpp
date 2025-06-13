@@ -2,7 +2,7 @@
 
 #include "NavigationSystem.h"
 #include "NiagaraFunctionLibrary.h"
-#include "AI/RealAI/FormationComponent.h"
+#include "AI/RealAI/AISquadManager.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "Components/BoxComponent.h"
 
@@ -100,9 +100,13 @@ void AMonsterSpawner::SpawnMonstersByType()
 
 	if (Leader && SpawnedMonsters.Num() > 1)
 	{
-		if (UFormationComponent* FormationComp = Leader->FindComponentByClass<UFormationComponent>())
+		FVector SpawnLocation = FVector(100.f, 100.f, 100.f);
+		FRotator SpawnRotation = FRotator::ZeroRotator;
+
+		if (AAISquadManager* MyNewSquadManager = GetWorld()->SpawnActor<AAISquadManager>(AAISquadManager::StaticClass(), SpawnLocation, SpawnRotation))
 		{
-			FormationComp->SetAgentList(SpawnedMonsters);
+			MyNewSquadManager->InitializeSquad(SpawnedMonsters);
+			Leader->SetSquadManager(MyNewSquadManager);
 		}
 	}
 

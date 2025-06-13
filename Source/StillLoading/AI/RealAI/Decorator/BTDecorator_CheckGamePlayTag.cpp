@@ -4,7 +4,7 @@
 
 UBTDecorator_CheckGamePlayTag::UBTDecorator_CheckGamePlayTag()
 {
-	NodeName = "Check Gameplay Tag";
+	NodeName = "Check Tag";
 }
 
 bool UBTDecorator_CheckGamePlayTag::CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const
@@ -14,6 +14,16 @@ bool UBTDecorator_CheckGamePlayTag::CalculateRawConditionValue(UBehaviorTreeComp
 
 	AMonsterAICharacter* AIPawn = Cast<AMonsterAICharacter>(AICon->GetPawn());
 	if (!AIPawn) return false;
-	
-	return AIPawn->IsInPrimaryState(TagToCheck);
+
+	switch (TagType)
+	{
+	case ETagType::TT_State:
+		return AIPawn->IsInPrimaryState(TagToCheck);
+	case ETagType::TT_Battle:
+		return AIPawn->HasBattleState(TagToCheck);
+	case ETagType::TT_Strategy:
+		return AIPawn->HasStrategyState(TagToCheck);
+	}
+
+	return false;
 }

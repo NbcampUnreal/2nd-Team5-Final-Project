@@ -2,7 +2,6 @@
 
 
 #include "Minigame/System/SLMinigamePuzzleCond.h"
-#include "Minigame/Object/SLReactiveObjectStatue.h"
 
 // Sets default values
 ASLMinigamePuzzleCond::ASLMinigamePuzzleCond()
@@ -77,7 +76,7 @@ void ASLMinigamePuzzleCond::SubmittedAnswer()
 	
 }
 
-void ASLMinigamePuzzleCond::RegisterStatue(ASLReactiveObjectStatue* InStatue)
+void ASLMinigamePuzzleCond::RegisterStatue(ASLInteractableObjectStatue* InStatue)
 {
 	Statues.Add(InStatue);
 }

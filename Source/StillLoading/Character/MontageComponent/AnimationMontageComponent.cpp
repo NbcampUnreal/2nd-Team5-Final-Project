@@ -78,6 +78,7 @@ void UAnimationMontageComponent::PlaySkillMontage(FName Section)
 
 void UAnimationMontageComponent::PlayHitMontage(FName Section)
 {
+	AnimInstance->Montage_Stop(0.25f);
 	if (MontageData)
 		PlayMontage(MontageData->HitMontage, Section);
 }
@@ -157,6 +158,8 @@ void UAnimationMontageComponent::PlayAIAttackMontage(FName Section)
 
 void UAnimationMontageComponent::PlayAIHitMontage(FName Section)
 {
+	AnimInstance->Montage_Stop(0.25f);
+	
 	if (MontageData)
 		PlayMontage(MontageData->AIHitMontage, Section);
 }
