@@ -79,8 +79,6 @@ enum class ESLPublicWidgetImageType : uint8
 	EPWI_ButtonHover,
 	EPWI_SliderBack,
 	EPWI_SliderBar,
-	EPWI_ProgressBack,
-	EPWI_ProgressBar,
 	EPWI_Expandable,
 	EPWI_ExpandedButton,
 	EPWI_ListBack,
@@ -100,8 +98,20 @@ enum class ESLInGamePrivateImageType : uint8
 	EGPI_HitEffect,
 	EGPI_PlayerHpBack,
 	EGPI_PlayerHpBar,
+	EGPI_SpecailBack,
+	EGPI_SpecialBar,
 	EGPI_BossHpBack,
-	EGPI_BossHpBar
+	EGPI_BossHpBar,
+	EGPI_TimerBorder,
+	EGPI_TimerHands
+};
+
+UENUM(BlueprintType)
+enum class ESLTilePrivateImageType : uint8
+{
+	ETPI_None = 0,
+	ETPI_Background,
+	ETPI_Logo
 };
 
 UCLASS()

@@ -7,15 +7,18 @@
 
 void ASLTitleHUD::NotifyTalkEnded()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Recieve End Talk"));
+	LevelWidgetObj->AddToViewport();
 }
 
 void ASLTitleHUD::OnStartedHUD()
 {
 	Super::OnStartedHUD();
 
-	CheckValidOfUISubsystem();
-	UISubsystem->ActivateFade(true);
+	LevelWidgetObj->RemoveFromViewport();
 
-	//UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Heroine, "Serena", "TitleTalk").OnTalkEnded.AddDynamic(this, &ThisClass::NotifyTalkEnded);
+	CheckValidOfUISubsystem();
+
+	UISubsystem->ActivateFade(true);
+	UISubsystem->GetTalkWidget()->OnTalkEnded.AddDynamic(this, &ThisClass::NotifyTalkEnded);
+	UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Heroine, "Serena", "TitleTalk");
 }
