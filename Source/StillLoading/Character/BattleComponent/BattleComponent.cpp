@@ -87,7 +87,8 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 
 		OnCharacterHited.Broadcast(DamageCauser, GetDamageByType(AnimType), HitResult, AnimType);
 
-		if (OwnerActor->IsA(AMonsterAICharacter::StaticClass()) || OwnerActor->IsA(ASLAIBaseCharacter::StaticClass()))
+		if (OwnerActor->IsA(AMonsterAICharacter::StaticClass())
+			|| OwnerActor->IsA(ASLAIBaseCharacter::StaticClass()))
 		{
 			if (HitEffectData)
 			{
@@ -121,6 +122,24 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 						true
 					);
 				}
+			}
+		}
+		else if (OwnerActor->IsA(ASLPlayerCharacter::StaticClass()))
+		{
+			UNiagaraSystem* EffectToSpawn = HitEffectData->CharacterHitEffect;
+
+			if (USkeletalMeshComponent* Mesh = OwnerActor->FindComponentByClass<USkeletalMeshComponent>())
+			{
+				const FName TargetBone = HitResult.BoneName.IsNone() ? TEXT("root") : HitResult.BoneName;
+				UNiagaraFunctionLibrary::SpawnSystemAttached(
+					EffectToSpawn,
+					Mesh,
+					TargetBone,
+					FVector::ZeroVector,
+					FRotator::ZeroRotator,
+					EAttachLocation::SnapToTarget,
+					true
+				);
 			}
 		}
 	}

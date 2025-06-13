@@ -119,19 +119,19 @@ protected:
 	UPROPERTY()
 	FVector2D MovementInputAxis = FVector2D::ZeroVector;
 
-	UPROPERTY(EditAnywhere, Category = "Camera Focus")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Focus")
 	float FocusMaxDistance = 800.0f;
 	
-	UPROPERTY(EditAnywhere, Category = "Camera Focus")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Invulnerable")
 	int32 InvulnerableDuration = 0.5;
 
-	UPROPERTY(EditAnywhere, Category = "Warp")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Warp")
 	float WarpDistanceThreshold = 500.f;
 
-	UPROPERTY(EditAnywhere, Category = "Warp")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Warp")
 	float ExecuteDistanceThreshold = 200.f;
 
-	UPROPERTY(EditAnywhere, Category="Camera")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
 	float DefaultArmLength = 300.f;
 
 private:

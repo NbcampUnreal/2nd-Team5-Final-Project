@@ -152,16 +152,20 @@ void AMonsterAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
 	{
 		if (Stimulus.WasSuccessfullySensed())
 		{
-			BlackboardComponent->SetValueAsObject(BlackboardKeys::TargetActor, Actor);
+			if (BlackboardComponent->GetValueAsObject(BlackboardKeys::TargetActor) != Actor)
+			{
+				BlackboardComponent->SetValueAsObject(BlackboardKeys::TargetActor, Actor);
+			}
+			
 			if (AMonsterAICharacter* MyChar = Cast<AMonsterAICharacter>(GetPawn()))
 			{
 				MyChar->SetChasing(true);
 				MyChar->SetPrimaryState(TAG_AI_AbleToAttack);
 			}
 		}
-		else
+		else if (!Stimulus.WasSuccessfullySensed())
 		{
-			BlackboardComponent->ClearValue(BlackboardKeys::TargetActor);
+			//BlackboardComponent->ClearValue(BlackboardKeys::TargetActor);
 			if (AMonsterAICharacter* MyChar = Cast<AMonsterAICharacter>(GetPawn()))
 			{
 				MyChar->SetChasing(false);
