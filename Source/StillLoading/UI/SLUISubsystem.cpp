@@ -4,7 +4,6 @@
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUISettings.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
-#include "UI/Widget/AdditiveWidget/SLBaseTextPrintWidget.h"
 
 void USLUISubsystem::SetInputModeAndCursor()
 {
@@ -91,7 +90,7 @@ void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, const FName& St
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
 }
 
-FSLTalkDelegateBuffer& USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName)
+USLBaseTextPrintWidget* USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName)
 {
 	WidgetActivateBuffer.TargetTalk = TalkTargetType;
 	WidgetActivateBuffer.TargetName = TargetName;
@@ -101,7 +100,7 @@ FSLTalkDelegateBuffer& USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTarget
 
 	USLBaseTextPrintWidget* TalkWidget = Cast<USLBaseTextPrintWidget>(AdditiveWidgetMap[ESLAdditiveWidgetType::EAW_TalkWidget]);
 
-	return TalkWidget->GetTalkDelegateBuffer();
+	return TalkWidget;
 }
 
 void USLUISubsystem::AddAdditiveWidget(ESLAdditiveWidgetType WidgetType)
@@ -160,12 +159,12 @@ UDataAsset* USLUISubsystem::GetPublicImageData()
 	return WidgetActivateBuffer.WidgetPublicData;
 }
 
-FSLTalkDelegateBuffer& USLUISubsystem::GetTalkDelegate()
+USLBaseTextPrintWidget* USLUISubsystem::GetTalkWidget()
 {
 	CheckValidOfAdditiveWidget(ESLAdditiveWidgetType::EAW_TalkWidget);
 	USLBaseTextPrintWidget* TalkWidget = Cast<USLBaseTextPrintWidget>(AdditiveWidgetMap[ESLAdditiveWidgetType::EAW_TalkWidget]);
 
-	return TalkWidget->GetTalkDelegateBuffer();
+	return TalkWidget;
 }
 
 void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType)

@@ -7,18 +7,6 @@
 #include "SubSystem/SLLevelTransferTypes.h"
 #include "SLWidgetActivateBuffer.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTalkEnded);
-
-USTRUCT(BlueprintType)
-struct STILLLOADING_API FSLTalkDelegateBuffer
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(BlueprintAssignable)
-	FOnTalkEnded OnTalkEnded;
-};
-
 USTRUCT(BlueprintType)
 struct STILLLOADING_API FSLWidgetActivateBuffer
 {

@@ -6,6 +6,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UI/SLUITypes.h"
 #include "SubSystem/SLLevelTransferTypes.h"
+#include "UI/Widget/AdditiveWidget/SLBaseTextPrintWidget.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "SLUISubsystem.generated.h"
 
@@ -29,7 +30,7 @@ public:
 	void ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName);
 
 	UFUNCTION(BlueprintCallable)
-	FSLTalkDelegateBuffer& ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName);
+	USLBaseTextPrintWidget* ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName);
 
 	UFUNCTION(BlueprintCallable)
 	void AddAdditiveWidget(ESLAdditiveWidgetType WidgetType);
@@ -40,7 +41,7 @@ public:
 	void RemoveAllAdditveWidget();
 
 	UDataAsset* GetPublicImageData();
-	FSLTalkDelegateBuffer& GetTalkDelegate();
+	USLBaseTextPrintWidget* GetTalkWidget();
 
 private:
 	void SetInputModeAndCursor();

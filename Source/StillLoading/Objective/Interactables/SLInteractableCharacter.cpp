@@ -1,4 +1,4 @@
-﻿#include "SLInteractableCharacter.h"
+#include "SLInteractableCharacter.h"
 
 #include "SLTalkHandlerBase.h"
 #include "UI/SLUISubsystem.h"
@@ -24,8 +24,8 @@ void ASLInteractableCharacter::OnReacted(const ASLPlayerCharacterBase* InCharact
 {
 	if (CurrentTalkHandler.IsValid())
 	{
-		auto& [OnTalkEnded] = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, TargetName, CurrentTalkHandler->GetTalkName());
-		OnTalkEnded.AddDynamic(this, &ASLInteractableCharacter::OnCurrentTalkEnd);
+		//auto& [OnTalkEnded] = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, TargetName, CurrentTalkHandler->GetTalkName());
+		//OnTalkEnded.AddDynamic(this, &ASLInteractableCharacter::OnCurrentTalkEnd);
 	}
 }
 

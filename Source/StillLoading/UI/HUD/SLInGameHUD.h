@@ -27,13 +27,13 @@ public:
 	void ApplyTimer(int32 SecondsValue);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyPlayerHp(float MaxHp, FSLPlayerHpDelegateBuffer PlayerHpDelegate);
+	void ApplyPlayerHp(float MaxHp);//, FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyPlayerSpecial(float MaxValue, FSLSpecialValueDelegateBuffer SpecialValueDelegate);
+	void ApplyPlayerSpecial(float MaxValue);//, FSLSpecialValueDelegateBuffer& SpecialValueDelegate);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer BossHpDelegate);
+	void ApplyBossHp(float MaxHp);//, FSLBossHpDelegateBuffer& BossHpDelegate);
 
 	UFUNCTION(BlueprintCallable)
 	void ApplyHitEffect();
@@ -76,4 +76,7 @@ protected:
 protected:
 	UPROPERTY()
 	TObjectPtr<USLInGameWidget> InGameWidget = nullptr;
+
+private:
+	bool bIsFirstApplyHp = true;
 };
