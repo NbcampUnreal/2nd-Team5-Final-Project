@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "SLObjectiveDataAsset.h"
 #include "SLObjectiveSubsystem.generated.h"
 
 /**
@@ -26,8 +27,14 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool IsObjectiveCompleted(ESLChapterType Chapter, FName Name);
+
+protected:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	
 private:
 	UPROPERTY()
 	const USLObjectiveDataSettings* ObjectiveDataSettings = nullptr;
+
+	UPROPERTY()
+	TMap<ESLChapterType, FSLObjectiveRuntimeData> CachedChapterObjectiveDataMap;
 };

@@ -15,7 +15,7 @@ class STILLLOADING_API ASLInteractableBreakable : public ASLInteractableObjectBa
 	GENERATED_BODY()
 	
 public:
-	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType);
+	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType);
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Effects")

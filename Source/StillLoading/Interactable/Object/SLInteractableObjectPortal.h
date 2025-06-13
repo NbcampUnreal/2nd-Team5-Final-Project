@@ -30,7 +30,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnReacted(const ASLPlayerCharacterBase*, ESLReactiveTriggerType TriggerType);
+	virtual void OnInteracted(const ASLPlayerCharacterBase*, ESLReactiveTriggerType TriggerType);
 
 	
 

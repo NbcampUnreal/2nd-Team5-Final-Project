@@ -60,7 +60,7 @@ void ASLInteractableObjectLuminousStatue::BeginPlay()
 	
 }
 
-void ASLInteractableObjectLuminousStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectLuminousStatue::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	if (!bLightOn)
 	{

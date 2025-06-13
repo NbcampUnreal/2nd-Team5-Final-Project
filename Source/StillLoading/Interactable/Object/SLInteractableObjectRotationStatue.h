@@ -16,7 +16,7 @@ class STILLLOADING_API ASLInteractableObjectRotationStatue : public ASLInteracta
 public:
 	ASLInteractableObjectRotationStatue();
 protected:
-	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
+	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 private:

@@ -4,7 +4,7 @@
 #include "SLInteractableBreakable.h"
 #include "NiagaraFunctionLibrary.h"
 
-void ASLInteractableBreakable::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableBreakable::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
     if (CurrentHp > 0)
     {

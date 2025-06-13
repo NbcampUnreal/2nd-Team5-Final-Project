@@ -1,0 +1,42 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Interactable/SLInteractableObjectBase.h"
+#include "SLInteractableObject.generated.h"
+
+class USLBaseTextPrintWidget;
+class USLUISubsystem;
+class USLTalkHandlerBase;
+
+UCLASS()
+class STILLLOADING_API ASLInteractableObject : public ASLInteractableObjectBase
+{
+	GENERATED_BODY()
+
+public:
+	ASLInteractableObject();
+	UFUNCTION(BlueprintCallable, Category = "InteractableObject")
+	void SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandler);
+	
+protected:
+	virtual void BeginPlay() override;
+	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType) override;
+	
+	UFUNCTION()
+	void OnCurrentTalkEnd();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject")
+	FName TargetName;
+	UPROPERTY(VisibleInstanceOnly, Category = "InteractableObject", DisplayName = "현재 대화 핸들러", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USLTalkHandlerBase> CurrentTalkHandler;
+	UPROPERTY()
+	TObjectPtr<USLBaseTextPrintWidget> CurrentTextWidget = nullptr;
+	UPROPERTY()
+	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
+	
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USLTalkHandlerBase> BaseTalkHandler;
+};

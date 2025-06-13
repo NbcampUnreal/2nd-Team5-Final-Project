@@ -29,7 +29,7 @@ void ASLInteractableObjectBase::TriggerReact(ASLPlayerCharacterBase* InCharacter
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("OnReacted"));
-	OnReacted(InCharacter, InComingType);
+	OnInteracted(InCharacter, InComingType);
 }
 
 void ASLInteractableObjectBase::OnDetected()
@@ -49,7 +49,7 @@ void ASLInteractableObjectBase::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ASLInteractableObjectBase::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectBase::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 
 }
