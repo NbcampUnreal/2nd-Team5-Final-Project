@@ -3,18 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Minigame/Object/SLReactiveObjectStatue.h"
-#include "SLReactiveObjectRotationStatue.generated.h"
+#include "SLInteractableObjectStatue.h"
+#include "SLInteractableObjectRotationStatue.generated.h"
 
 class ASLMinigamePuzzleCond;
 
 UCLASS()
-class STILLLOADING_API ASLReactiveObjectRotationStatue : public ASLReactiveObjectStatue
+class STILLLOADING_API ASLInteractableObjectRotationStatue : public ASLInteractableObjectStatue
 {
 	GENERATED_BODY()
 
 public:
-	ASLReactiveObjectRotationStatue();
+	ASLInteractableObjectRotationStatue();
 protected:
 	virtual void OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
 	virtual void BeginPlay() override;

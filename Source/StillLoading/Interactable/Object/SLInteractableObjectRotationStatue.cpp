@@ -1,19 +1,19 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Minigame/Object/SLReactiveObjectRotationStatue.h"
+#include "SLInteractableObjectRotationStatue.h"
 #include "StillLoading\Character\SLPlayerCharacter.h"
 #include "Minigame/System/SLMinigamePuzzleCond.h"
 #include "Minigame/System/SLMiniGameUtility.h"
 
-ASLReactiveObjectRotationStatue::ASLReactiveObjectRotationStatue()
+ASLInteractableObjectRotationStatue::ASLInteractableObjectRotationStatue()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = false;
 	RotationStates = {};
 }
 
-void ASLReactiveObjectRotationStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectRotationStatue::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	if (RotationStates.Num() == 0 || bRotateTrigger)
 	{
@@ -26,7 +26,7 @@ void ASLReactiveObjectRotationStatue::OnReacted(const ASLPlayerCharacterBase* In
 
 }
 
-void ASLReactiveObjectRotationStatue::BeginPlay()
+void ASLInteractableObjectRotationStatue::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -36,7 +36,7 @@ void ASLReactiveObjectRotationStatue::BeginPlay()
 	{
 		PuzzleManager = PuzzleCond;
 		UE_LOG(LogTemp, Warning, TEXT("Find PuzzleCond Succeed"));
-		PuzzleManager->ObjectResetRequested.AddDynamic(this, &ASLReactiveObjectRotationStatue::ResetCondition);
+		PuzzleManager->ObjectResetRequested.AddDynamic(this, &ASLInteractableObjectRotationStatue::ResetCondition);
 	}
 
 
@@ -44,7 +44,7 @@ void ASLReactiveObjectRotationStatue::BeginPlay()
 	TargetRotation = FRotator::ZeroRotator;
 }
 
-void ASLReactiveObjectRotationStatue::Tick(float DeltaTime)
+void ASLInteractableObjectRotationStatue::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -55,7 +55,7 @@ void ASLReactiveObjectRotationStatue::Tick(float DeltaTime)
 	}
 }
 
-void ASLReactiveObjectRotationStatue::SetRotate(FRotator TargetRotator)
+void ASLInteractableObjectRotationStatue::SetRotate(FRotator TargetRotator)
 {
 	//임시
 	StartRotation = GetActorRotation();
@@ -64,7 +64,7 @@ void ASLReactiveObjectRotationStatue::SetRotate(FRotator TargetRotator)
 	SetActorTickEnabled(true);
 }
 
-void ASLReactiveObjectRotationStatue::ResetCondition()
+void ASLInteractableObjectRotationStatue::ResetCondition()
 {
 	SetRotate(RotationStates[0]);
 	CurrentRotationIndex = 0;
@@ -74,7 +74,7 @@ void ASLReactiveObjectRotationStatue::ResetCondition()
 
 }
 
-void ASLReactiveObjectRotationStatue::RotateActor(float DeltaTime)
+void ASLInteractableObjectRotationStatue::RotateActor(float DeltaTime)
 {
 
 	RotationElapsed += DeltaTime;

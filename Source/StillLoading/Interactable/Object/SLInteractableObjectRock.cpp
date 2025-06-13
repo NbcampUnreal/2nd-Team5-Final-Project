@@ -1,16 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Minigame/Object/SLReactiveObjectRock.h"
+#include "SLInteractableObjectRock.h"
 #include "StillLoading\Character\SLPlayerCharacter.h"
 
-ASLReactiveObjectRock::ASLReactiveObjectRock()
+ASLInteractableObjectRock::ASLInteractableObjectRock()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = false; // 기본적으로 Tick OFF
 }
 
-void ASLReactiveObjectRock::PushInDirection(FVector Direction)
+void ASLInteractableObjectRock::PushInDirection(FVector Direction)
 {
 	if (bIsMoving) return;
 
@@ -22,7 +22,7 @@ void ASLReactiveObjectRock::PushInDirection(FVector Direction)
 	SetActorTickEnabled(true);  // Tick ON
 }
 
-void ASLReactiveObjectRock::MoveRock(float DeltaTime)
+void ASLInteractableObjectRock::MoveRock(float DeltaTime)
 {
 	if (!bIsMoving) return;
 
@@ -50,7 +50,7 @@ void ASLReactiveObjectRock::MoveRock(float DeltaTime)
 	}
 }
 
-void ASLReactiveObjectRock::Tick(float DeltaTime)
+void ASLInteractableObjectRock::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	if (bIsMoving)
@@ -61,7 +61,7 @@ void ASLReactiveObjectRock::Tick(float DeltaTime)
 	UE_LOG(LogTemp, Warning, TEXT("Tick"));
 }
 
-void ASLReactiveObjectRock::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectRock::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	checkf(IsValid(InCharacter), TEXT("InCharacter is nullptr!"));
 

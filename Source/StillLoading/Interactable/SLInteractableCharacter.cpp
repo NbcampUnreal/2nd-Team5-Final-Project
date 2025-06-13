@@ -1,4 +1,4 @@
-#include "SLInteractableCharacter.h"
+﻿#include "SLInteractableCharacter.h"
 
 #include "SLTalkHandlerBase.h"
 #include "UI/SLUISubsystem.h"
@@ -10,9 +10,10 @@ ASLInteractableCharacter::ASLInteractableCharacter()
 
 	CharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh"));
 	CharacterMesh->SetupAttachment(RootComponent);
+	CharacterMesh->SetCollisionProfileName("RadarDetectable");
 
-	BaseTalkHandler = CreateDefaultSubobject<USLTalkHandlerBase>(TEXT("Base Talk Handler"));
-	CurrentTalkHandler = BaseTalkHandler;
+	BaseTalkHandler = CreateDefaultSubobject<USLTalkHandlerBase>(TEXT("SLTalkHandlerBase"));
+	TriggerType = ESLReactiveTriggerType::ERT_InteractKey;
 }
 
 void ASLInteractableCharacter::SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandler)
@@ -24,8 +25,10 @@ void ASLInteractableCharacter::OnReacted(const ASLPlayerCharacterBase* InCharact
 {
 	if (CurrentTalkHandler.IsValid())
 	{
-		//auto& [OnTalkEnded] = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, TargetName, CurrentTalkHandler->GetTalkName());
-		//OnTalkEnded.AddDynamic(this, &ASLInteractableCharacter::OnCurrentTalkEnd);
+		if (USLBaseTextPrintWidget* TextWidget = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, TargetName, CurrentTalkHandler->GetTalkName()))
+		{
+			TextWidget->OnTalkEnded.AddUniqueDynamic(this, &ASLInteractableCharacter::OnCurrentTalkEnd);
+		}
 	}
 }
 
@@ -42,4 +45,6 @@ void ASLInteractableCharacter::BeginPlay()
 	Super::BeginPlay();
 	UISubsystem = GetGameInstance()->GetSubsystem<USLUISubsystem>();
 	check(UISubsystem)
+	
+	CurrentTalkHandler = BaseTalkHandler;
 }

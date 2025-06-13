@@ -3,18 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Minigame/Object/SLBaseReactiveObject.h"
-#include "SLReactiveObjectRock.generated.h"
+#include "Interactable/SLInteractableObjectBase.h"
+#include "SLInteractableObjectRock.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class STILLLOADING_API ASLReactiveObjectRock : public ASLBaseReactiveObject
+class STILLLOADING_API ASLInteractableObjectRock : public ASLInteractableObjectBase
 {
 	GENERATED_BODY()
 	
-	ASLReactiveObjectRock();
+	ASLInteractableObjectRock();
 
 	UFUNCTION(BlueprintCallable)
 	void PushInDirection(FVector Direction);

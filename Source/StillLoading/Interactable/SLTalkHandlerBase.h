@@ -15,6 +15,8 @@ class STILLLOADING_API USLTalkHandlerBase : public UActorComponent
 	GENERATED_BODY()
 	
 public:
+	USLTalkHandlerBase();
+	
 	UFUNCTION(BlueprintNativeEvent, Category = "TalkHandler")
 	void OnTalkEnd();
 	virtual void OnTalkEnd_Implementation();

@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Minigame/Object/SLBaseReactiveObject.h"
+#include "SLInteractableObjectBase.h"
 #include "SLInteractableCharacter.generated.h"
 
 class USLTalkHandlerBase;
 class USLUISubsystem;
 
 UCLASS()
-class STILLLOADING_API ASLInteractableCharacter : public ASLBaseReactiveObject
+class STILLLOADING_API ASLInteractableCharacter : public ASLInteractableObjectBase
 {
 	GENERATED_BODY()
 

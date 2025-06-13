@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Minigame/Object/SLReactiveObjectStatue.h"
+#include "SLInteractableObjectStatue.h"
 
-#include "SLReactiveObjectLuminousStatue.generated.h"
+#include "SLInteractableObjectLuminousStatue.generated.h"
 
 class UPointLightComponent;
 class ASLMinigamePuzzleCond;
 
 UCLASS()
-class STILLLOADING_API ASLReactiveObjectLuminousStatue : public ASLReactiveObjectStatue
+class STILLLOADING_API ASLInteractableObjectLuminousStatue : public ASLInteractableObjectStatue
 {
 	GENERATED_BODY()
 public:
-	ASLReactiveObjectLuminousStatue();
+	ASLInteractableObjectLuminousStatue();
 	UFUNCTION()
 	void TurnOffLight();
 

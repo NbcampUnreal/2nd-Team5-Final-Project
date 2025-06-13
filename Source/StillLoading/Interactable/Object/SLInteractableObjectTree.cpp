@@ -1,43 +1,41 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Minigame/Object/SLReactiveObjectTree.h"
-#include "SLReactiveObjectTree.h"
+#include "SLInteractableObjectTree.h"
 #include "Kismet\GameplayStatics.h"
 #include "StillLoading\Character\SLPlayerCharacterBase.h"
 #include "StillLoading/Character/SLPlayerRidingCharacter.h"
 #include "Components/SphereComponent.h"
 
-ASLReactiveObjectTree::ASLReactiveObjectTree()
+ASLInteractableObjectTree::ASLInteractableObjectTree()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &ASLReactiveObjectTree::BeginOverlapCharacter);
 }
 
-void ASLReactiveObjectTree::SetStaticMesh(UStaticMesh* StaticMesh)
+void ASLInteractableObjectTree::SetStaticMesh(UStaticMesh* StaticMesh)
 {
 	StaticMeshComp->SetStaticMesh(StaticMesh);
 }
 
-void ASLReactiveObjectTree::BeginPlay()
+void ASLInteractableObjectTree::BeginPlay()
 {
 	Super::BeginPlay();
 
 	
 }
 
-void ASLReactiveObjectTree::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableObjectTree::OnReacted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	return;
 }
-void ASLReactiveObjectTree::Tick(float DeltaTime)
+void ASLInteractableObjectTree::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	Move(DeltaTime);
 }
 
-void ASLReactiveObjectTree::BeginOverlapCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ASLInteractableObjectTree::BeginOverlapCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && OtherActor->ActorHasTag("RidingCharacter"))
 	{
@@ -48,7 +46,7 @@ void ASLReactiveObjectTree::BeginOverlapCharacter(UPrimitiveComponent* Overlappe
 	}
 }
 
-void ASLReactiveObjectTree::Move(float DeltaTime)
+void ASLInteractableObjectTree::Move(float DeltaTime)
 {
 	FVector MyPos = GetActorLocation();
 	MyPos.X -= MoveSpeed * DeltaTime;

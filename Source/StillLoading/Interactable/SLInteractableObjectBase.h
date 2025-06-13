@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "SLBaseReactiveObject.generated.h"
+
+#include "SLInteractableObjectBase.generated.h"
 
 class USphereComponent;
 class ASLPlayerCharacterBase;
@@ -19,20 +20,23 @@ enum class ESLReactiveTriggerType : uint8
 };
 
 UCLASS()
-class STILLLOADING_API ASLBaseReactiveObject : public AActor
+class STILLLOADING_API ASLInteractableObjectBase : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
-	ASLBaseReactiveObject();
+	ASLInteractableObjectBase();
 
 	//캐릭터에서 상호작용 시 아래 함수에 접근, 상호작용 방식에 대한 값을 넣어주면 됨.
 	UFUNCTION(BlueprintCallable)
 	void TriggerReact(ASLPlayerCharacterBase* InCharacter, const ESLReactiveTriggerType InComingType);
 
+	UFUNCTION()
+	virtual void OnDetected();
+	UFUNCTION()
+	virtual void OnUndetected();
+	
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
@@ -62,10 +66,6 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UStaticMeshComponent> StaticMeshComp = nullptr;
 
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USphereComponent> CollisionComp = nullptr;
-
-private:
 	UPROPERTY(EditAnywhere, Category = "Reactive")
 	ESLReactiveTriggerType TriggerType = ESLReactiveTriggerType::ERT_None;
 

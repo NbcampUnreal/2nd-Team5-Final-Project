@@ -3,15 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Minigame/Object/SLBaseReactiveObject.h"
-#include "SLReactiveObjectTree.generated.h"
+#include "Interactable/SLInteractableObjectBase.h"
+#include "SLInteractableObjectTree.generated.h"
 
 UCLASS()
-class STILLLOADING_API ASLReactiveObjectTree : public ASLBaseReactiveObject
+class STILLLOADING_API ASLInteractableObjectTree : public ASLInteractableObjectBase
 {
 	GENERATED_BODY()
 public:
-	ASLReactiveObjectTree();
+	ASLInteractableObjectTree();
 
 	UFUNCTION()
 	void SetStaticMesh(UStaticMesh* StaticMesh);

@@ -4,7 +4,7 @@
 #include "Minigame/System/SLMinigameTreeSpawnManager.h"
 #include "SLMinigameTreeSpawnManager.h"
 #include "Components\BoxComponent.h"
-#include "StillLoading\Minigame\Object\SLReactiveObjectTree.h"
+#include "Interactable/Object/SLInteractableObjectTree.h"
 
 // Sets default values
 ASLMinigameTreeSpawnManager::ASLMinigameTreeSpawnManager()
@@ -28,7 +28,7 @@ void ASLMinigameTreeSpawnManager::CreateTree(int SpawnCount)
 {
 	for (int i = 0; i < SpawnCount; i++)
 	{
-		ASLReactiveObjectTree* Tree = GetWorld()->SpawnActor<ASLReactiveObjectTree>(TreeRef);
+		ASLInteractableObjectTree* Tree = GetWorld()->SpawnActor<ASLInteractableObjectTree>(TreeRef);
 		Tree->SetActorHiddenInGame(true);
 		Tree->SetActorTickEnabled(false);
 		Tree->SetActorEnableCollision(false);
@@ -43,7 +43,7 @@ void ASLMinigameTreeSpawnManager::SpawnTree()
 		CreateTree(5);
 	}
 	auto It = TreeSet.CreateIterator();
-	ASLReactiveObjectTree* Tree = *It;
+	ASLInteractableObjectTree* Tree = *It;
 	It.RemoveCurrent();
 	
 	int RandLineIndex = FMath::RandRange(0, LineIndex - 1);
@@ -59,7 +59,7 @@ void ASLMinigameTreeSpawnManager::BeginOverlapTree(UPrimitiveComponent* Overlapp
 {
 	if (OtherActor && OtherActor->ActorHasTag("Tree"))
 	{
-		if (ASLReactiveObjectTree* Tree = Cast<ASLReactiveObjectTree>(OtherActor))
+		if (ASLInteractableObjectTree* Tree = Cast<ASLInteractableObjectTree>(OtherActor))
 		{
 			Tree->SetActorHiddenInGame(true);
 			Tree->SetActorTickEnabled(false);
