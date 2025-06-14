@@ -24,6 +24,22 @@ bool USLObjectiveSubsystem::IsObjectiveCompleted(const ESLChapterType Chapter, c
     return Objective->GetObjectiveState() == ESLObjectiveState::Complete;
 }
 
+TArray<USLObjectiveBase*> USLObjectiveSubsystem::GetInProgressedObejctives()
+{
+    TArray<USLObjectiveBase*> InProgressedObjectives;
+    for (const auto&[Chapter, ChapterData] : CachedChapterObjectiveDataMap)
+    {
+        for (const auto&[Name, Objective] : ChapterData.ChapterObjectiveMap)
+        {
+            if (Objective->GetObjectiveState() == ESLObjectiveState::InProgress)
+            {
+                InProgressedObjectives.Add(Objective);
+            }
+        }
+    }
+    return InProgressedObjectives;
+}
+
 void USLObjectiveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);

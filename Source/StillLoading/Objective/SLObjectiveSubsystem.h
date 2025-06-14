@@ -28,6 +28,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool IsObjectiveCompleted(ESLChapterType Chapter, FName Name);
 
+	UFUNCTION(BlueprintCallable)
+	TArray<USLObjectiveBase*> GetInProgressedObejctives();
+	
 protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SLGameModeBase.h"
 #include "GameFramework/GameMode.h"
 #include "SLGameMode.generated.h"
 
@@ -10,7 +11,7 @@
  * 
  */
 UCLASS()
-class STILLLOADING_API ASLGameMode : public AGameModeBase
+class STILLLOADING_API ASLGameMode : public ASLGameModeBase
 {
 	GENERATED_BODY()
 
