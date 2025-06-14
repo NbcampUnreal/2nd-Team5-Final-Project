@@ -7,6 +7,8 @@
 #include "SLGameStateBase.generated.h"
 
 
+class USLObjectiveBase;
+
 UCLASS()
 class STILLLOADING_API ASLGameStateBase : public AGameState
 {
@@ -14,5 +16,12 @@ class STILLLOADING_API ASLGameStateBase : public AGameState
 
 public:
 	ASLGameStateBase();
+
+	TArray<TObjectPtr<USLObjectiveBase>>& GetInProgressedObjectives();
 	
+protected:
+	virtual void BeginPlay() override;
+
+private:
+	TArray<TObjectPtr<USLObjectiveBase>> InProgressedObjectives;
 };
