@@ -594,17 +594,12 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 
 	AController* Controller = OwnerCharacter->GetController();
 	if (!Controller) return;
-	
-	FRotator ControlRotation = Controller->GetControlRotation();
-	FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
-	
-	FVector ForwardDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	FVector RightDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-	
-	ForwardDir.Z = 0.f;
-	RightDir.Z = 0.f;
-	ForwardDir.Normalize();
-	RightDir.Normalize();
+
+	const FRotator ControlRotation = Controller->GetControlRotation();
+	const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
+
+	const FVector ForwardDir = FVector(1.f, -1.f, 0.f).GetSafeNormal();
+	const FVector RightDir = FVector(1.f, 1.f, 0.f).GetSafeNormal();
 	
 	if (CachedSkeletalMesh)
 	{

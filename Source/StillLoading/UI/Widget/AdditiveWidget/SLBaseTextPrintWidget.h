@@ -11,6 +11,8 @@ class UButton;
 class UCanvasPanel;
 class UTextBlock;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTalkEnded);
+
 UCLASS()
 class STILLLOADING_API USLBaseTextPrintWidget : public USLAdditiveWidget
 {
@@ -19,8 +21,6 @@ class STILLLOADING_API USLBaseTextPrintWidget : public USLAdditiveWidget
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
-
-	FSLTalkDelegateBuffer& GetTalkDelegateBuffer();
 
 protected:
 	UFUNCTION()
@@ -36,6 +36,9 @@ protected:
 	void ChangeTargetText();
 
 public:
+	UPROPERTY(BlueprintAssignable)
+	FOnTalkEnded OnTalkEnded;
+
 	UPROPERTY(EditAnywhere)
 	float PrintTime = 0.1f;
 
@@ -43,9 +46,6 @@ public:
 	float Accelerator = 2.0f;
 
 protected:
-	UPROPERTY(BlueprintReadOnly)
-	FSLTalkDelegateBuffer TalkDelegateBuffer;
-
 	UPROPERTY()
 	TObjectPtr<UButton> ParentNextButton = nullptr;
 

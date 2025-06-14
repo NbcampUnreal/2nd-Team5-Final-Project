@@ -4,6 +4,7 @@
 #include "UI/HUD/SLInGameHUD.h"
 #include "UI/SLUISubsystem.h"
 #include "UI/Widget/LevelWidget/SLInGameWidget.h"
+#include "UI/Struct/SLInGameDelegateBuffers.h"
 
 void ASLInGameHUD::OnStartedHUD()
 {
@@ -16,7 +17,7 @@ void ASLInGameHUD::OnStartedHUD()
 	checkf(IsValid(InGameWidget), TEXT("Cast Fail. Level Widget To InGame Widget"));
 }
 
-void ASLInGameHUD::ApplyObjective(const FName& ObjectiveName)
+void ASLInGameHUD::ApplyObjective(const FName& ObjectiveName) // 게임 모드의 델리게이트 구독
 {
 	SetObjectiveName(ObjectiveName);
 	SetObjectiveVisibility();
@@ -34,22 +35,26 @@ void ASLInGameHUD::ApplyTimer(int32 SecondsValue)
 	SetTimerValue(SecondsValue);
 }
 
-void ASLInGameHUD::ApplyPlayerHp(int32 MaxHp)
+void ASLInGameHUD::ApplyPlayerHp(float MaxHp)//, FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 {
+	bIsFirstApplyHp = true;
+	//PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
 	SetPlayerStateVisibility(true, false);
-	SetPlayerHpValue(MaxHp, MaxHp);
+	SetPlayerHpValue(MaxHp, MaxHp * 0.7f);
 }
 
-void ASLInGameHUD::ApplyPlayerSpecial(int32 MaxValue)
+void ASLInGameHUD::ApplyPlayerSpecial(float MaxValue)//, FSLSpecialValueDelegateBuffer& SpecialValueDelegate)
 {
+	//SpecialValueDelegate.OnSpecialValueChanged.AddDynamic(this, &ThisClass::SetPlayerSpecialValue);
 	SetPlayerStateVisibility(true, true);
-	SetPlayerSpecialValue(MaxValue, MaxValue);
+	SetPlayerSpecialValue(MaxValue, 0);
 }
 
-void ASLInGameHUD::ApplyBossHp(int32 MaxHp)
+void ASLInGameHUD::ApplyBossHp(float MaxHp)//, FSLBossHpDelegateBuffer& BossHpDelegate)
 {
+	//BossHpDelegate.OnBossHpChanged.AddDynamic(this, &ThisClass::SetBossHpValue);
 	SetBossStateVisibility(true);
-	SetBossHpValue(MaxHp, MaxHp);
+	SetBossHpValue(MaxHp, MaxHp * 0.7f);
 }
 
 void ASLInGameHUD::ApplyHitEffect()
@@ -82,12 +87,18 @@ void ASLInGameHUD::SetTimerValue(int32 SecondsValue)
 	InGameWidget->SetTimerText(SecondsValue);
 }
 
-void ASLInGameHUD::SetPlayerHpValue(int32 MaxHp, int32 CurrentHp)
+void ASLInGameHUD::SetPlayerHpValue(float MaxHp, float CurrentHp)
 {
+	if (!bIsFirstApplyHp)
+	{
+		ApplyHitEffect();
+		bIsFirstApplyHp = false;
+	}
+	
 	InGameWidget->SetHpValue(MaxHp, CurrentHp);
 }
 
-void ASLInGameHUD::SetPlayerSpecialValue(int32 MaxValue, int32 CurrentValue)
+void ASLInGameHUD::SetPlayerSpecialValue(float MaxValue, float CurrentValue)
 {
 	InGameWidget->SetSpecialValue(MaxValue, CurrentValue);
 }
@@ -102,7 +113,7 @@ void ASLInGameHUD::SetObjectiveCounter(const FName& ObjectiveName, int32 MaxCoun
 	InGameWidget->SetObjectiveByCounter(ObjectiveName, MaxCount, CurrentCount);
 }
 
-void ASLInGameHUD::SetBossHpValue(int32 MaxHp, int32 CurrentHp)
+void ASLInGameHUD::SetBossHpValue(float MaxHp, float CurrentHp)
 {
 	InGameWidget->SetBossHpValue(MaxHp, CurrentHp);
 }

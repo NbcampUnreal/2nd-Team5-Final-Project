@@ -7,6 +7,9 @@
 #include "SLInGameHUD.generated.h"
 
 class USLInGameWidget;
+struct FSLPlayerHpDelegateBuffer;
+struct FSLSpecialValueDelegateBuffer;
+struct FSLBossHpDelegateBuffer;
 
 UCLASS()
 class STILLLOADING_API ASLInGameHUD : public ASLBaseHUD
@@ -20,17 +23,17 @@ public:
 	UFUNCTION(BlueprintCallable) // Need Delegate
 	void ApplyObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount);
 
-	UFUNCTION(BlueprintCallable) // Need Delegate
+	UFUNCTION(BlueprintCallable)
 	void ApplyTimer(int32 SecondsValue);
 
-	UFUNCTION(BlueprintCallable) // Need Delegate
-	void ApplyPlayerHp(int32 MaxHp);
+	UFUNCTION(BlueprintCallable)
+	void ApplyPlayerHp(float MaxHp);//, FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
 
-	UFUNCTION(BlueprintCallable) // Need Delegate
-	void ApplyPlayerSpecial(int32 MaxValue);
+	UFUNCTION(BlueprintCallable)
+	void ApplyPlayerSpecial(float MaxValue);//, FSLSpecialValueDelegateBuffer& SpecialValueDelegate);
 
-	UFUNCTION(BlueprintCallable) // Need Delegate
-	void ApplyBossHp(int32 MaxHp);
+	UFUNCTION(BlueprintCallable)
+	void ApplyBossHp(float MaxHp);//, FSLBossHpDelegateBuffer& BossHpDelegate);
 
 	UFUNCTION(BlueprintCallable)
 	void ApplyHitEffect();
@@ -53,10 +56,10 @@ public:
 	void SetTimerValue(int32 SecondsValue);
 
 	UFUNCTION(BlueprintCallable)
-	void SetPlayerHpValue(int32 MaxHp, int32 CurrentHp);
+	void SetPlayerHpValue(float MaxHp, float CurrentHp);
 
 	UFUNCTION(BlueprintCallable)
-	void SetPlayerSpecialValue(int32 MaxValue, int32 CurrentValue);
+	void SetPlayerSpecialValue(float MaxValue, float CurrentValue);
 
 	UFUNCTION(BlueprintCallable)
 	void SetObjectiveName(const FName& ObjectiveName);
@@ -65,7 +68,7 @@ public:
 	void SetObjectiveCounter(const FName& ObjectiveName, int32 MaxCount, int32 CurrentCount);
 
 	UFUNCTION(BlueprintCallable)
-	void SetBossHpValue(int32 MaxHp, int32 CurrentHp);
+	void SetBossHpValue(float MaxHp, float CurrentHp);
 
 protected:
 	virtual void OnStartedHUD() override;
@@ -73,4 +76,7 @@ protected:
 protected:
 	UPROPERTY()
 	TObjectPtr<USLInGameWidget> InGameWidget = nullptr;
+
+private:
+	bool bIsFirstApplyHp = true;
 };

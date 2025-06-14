@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
+class AAISquadManager;
 class UTimelineComponent;
 class UWidgetComponent;
 class USLMonsterStateTreeComponent;
@@ -36,6 +37,9 @@ class STILLLOADING_API AMonsterAICharacter : public ACharacter
 
 public:
 	AMonsterAICharacter();
+
+	UFUNCTION()
+	void SetSquadManager(AAISquadManager* InManager);
 
 	UFUNCTION()
 	void BeginSpawning(const FVector& FinalLocation, float RiseHeight = 300.f);
@@ -71,13 +75,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster")
 	EMonsterType CurrentMonsterType = EMonsterType::MT_None;
-	// BT 연동 단일
+	// 상태 단일
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StateTags;
-	// 내부 사용 단일
+	// 배틀 상태 단일
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer BattleStateTags;
-	// BT연동 단일
+	// 전략 상태 단일
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StrategyStateTags;
 	
@@ -91,11 +95,19 @@ public:
 	UPROPERTY()
 	TObjectPtr<AActor> Shield;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Squad")
+	TObjectPtr<AAISquadManager> SquadManager;
+
 	// 피격시 BlendSpace 용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	float ForwardDot = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	float RightDot = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
+	float RetreatDistanceThreshold = 300.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
+	float RetreatDistance = 200.f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -109,21 +121,20 @@ protected:
 	UFUNCTION()
 	void ResetPushFlag();
 
-	UPROPERTY()
-	TObjectPtr<UTimelineComponent> SpawnTimeline;
-	UPROPERTY(EditDefaultsOnly, Category = "Spawning")
-	TObjectPtr<UCurveFloat> SpawnMovementCurve;
 	UFUNCTION()
 	void UpdateSpawnMovement(float Alpha);
 	UFUNCTION()
 	void OnSpawnMovementFinished();
 
+	UPROPERTY()
+	TObjectPtr<UTimelineComponent> SpawnTimeline;
+	UPROPERTY(EditDefaultsOnly, Category = "Spawning")
+	TObjectPtr<UCurveFloat> SpawnMovementCurve;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UBattleComponent> BattleComponent;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Formation")
-	TObjectPtr<UFormationComponent> FormationComponent;
 
 	UPROPERTY(EditAnywhere, Category="Mesh")
 	TObjectPtr<UMaterialInterface> HitMaterial;
@@ -149,6 +160,12 @@ private:
 	void StartFlyingState();
 	UFUNCTION(BlueprintCallable)
 	void StopFlyingState();
+	UFUNCTION()
+	void DrawDebugMessage();
+	UFUNCTION()
+	void StepBackward(const float DeltaTime);
+	UFUNCTION()
+	void WatchTarget(float DeltaTime);
 
 	UPROPERTY()
 	TObjectPtr<AActor> LastAttacker;
@@ -194,4 +211,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Stat")
 	FORCEINLINE void SetMonsterMaxHealth(const float Health) { MaxHealth = Health; }
+
+	FORCEINLINE AAISquadManager* GetSquadManager() const { return SquadManager; }
 };

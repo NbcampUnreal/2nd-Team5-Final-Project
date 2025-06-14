@@ -7,15 +7,14 @@
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/SLAnimNotify.h"
 #include "Character/BattleComponent/BattleComponent.h"
-#include "Character/Buffer/InputBufferComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
+#include "Character/Interaction/SLInteractionComponent.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
-#include "Character/RadarComponent/CollisionRadarComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Minigame/Object/SLBaseReactiveObject.h"
+#include "Interactable/SLInteractableObjectBase.h"
 
 USL2DMovementHandlerComponent::USL2DMovementHandlerComponent(): OwnerCharacter(nullptr), CachedSkeletalMesh(nullptr)
 {
@@ -54,11 +53,9 @@ void USL2DMovementHandlerComponent::BeginPlay()
 		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
 		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
 		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
-		CachedRadarComponent = OwnerCharacter->FindComponentByClass<UCollisionRadarComponent>();
+		CachedInteractionComponent = OwnerCharacter->FindComponentByClass<USLInteractionComponent>();
 		CachedSkeletalMesh = OwnerCharacter->GetMesh();
 
-		CachedRadarComponent->OnActorDetectedEnhanced.AddDynamic(this, &USL2DMovementHandlerComponent::OnRadarDetectedActor);
-		
 		BindIMCComponent();
 	}
 
@@ -121,14 +118,6 @@ void USL2DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 void USL2DMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
 {
 	
-}
-
-void USL2DMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
-{
-	if (DetectedActor && DetectedActor->IsA(ASLBaseReactiveObject::StaticClass()))
-	{
-		DetectedReactiveObject = MakeWeakObjectPtr<ASLBaseReactiveObject>(Cast<ASLBaseReactiveObject>(DetectedActor));
-	}
 }
 
 void USL2DMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)
@@ -243,16 +232,11 @@ void USL2DMovementHandlerComponent::ApplyAttackState(const FName& SectionName, b
 
 void USL2DMovementHandlerComponent::Interaction()
 {
-	if (!DetectedReactiveObject.IsValid())
-	{
-		return;
-	}
-	
-	if (CachedRadarComponent->IsInFieldOfView(DetectedReactiveObject.Get()))
+	if (ASLInteractableObjectBase* InteractableObject = CachedInteractionComponent->GetInteractableObject())
 	{
 		if (ASLPlayerCharacterBase* PlayerCharacter = Cast<ASLPlayerCharacterBase>(GetOwner()))
 		{
-			DetectedReactiveObject->TriggerReact(PlayerCharacter, ESLReactiveTriggerType::ERT_InteractKey);
+			InteractableObject->TriggerReact(PlayerCharacter, ESLReactiveTriggerType::ERT_InteractKey);
 		}
 	}
 }

@@ -136,6 +136,9 @@ void ASLBattlePlayerState::OnRep_BurningGage()
 	const ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(Pawn);
 	if (!PlayerCharacter) return;
 
+	const UCombatHandlerComponent* CombatHandler = Pawn->FindComponentByClass<UCombatHandlerComponent>();
+	if (!CombatHandler || CombatHandler->IsEmpowered()) return;
+
 	if (ASLDefaultSword* SwordActor = Cast<ASLDefaultSword>(PlayerCharacter->Sword))
 	{
 		SwordActor->UpdateMaterialByGauge(BurningGage);

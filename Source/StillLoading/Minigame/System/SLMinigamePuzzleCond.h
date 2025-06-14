@@ -16,7 +16,7 @@ enum class ESLPuzzleType : uint8
 	LightPuzzle
 };
 
-class ASLReactiveObjectStatue;
+class ASLInteractableObjectStatue;
 
 
 UCLASS()
@@ -38,7 +38,7 @@ public:
 
 	void SubmittedAnswer();
 
-	void RegisterStatue(ASLReactiveObjectStatue* InStatue);
+	void RegisterStatue(ASLInteractableObjectStatue* InStatue);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle")
 	ESLPuzzleType PuzzleType;
@@ -78,5 +78,5 @@ private:
 	
 
 
-	TArray<TObjectPtr<ASLReactiveObjectStatue>> Statues;
+	TArray<TObjectPtr<ASLInteractableObjectStatue>> Statues;
 };
