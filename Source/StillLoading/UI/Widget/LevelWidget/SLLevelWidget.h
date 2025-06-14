@@ -16,7 +16,4 @@ class STILLLOADING_API USLLevelWidget : public USLBaseWidget
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
-
-protected:
-	void RequestAddedWidgetToUISubsystem(ESLAdditiveWidgetType TargetWidgetType);
 };

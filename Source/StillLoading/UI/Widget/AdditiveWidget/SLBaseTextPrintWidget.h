@@ -8,10 +8,12 @@
 #include "SLBaseTextPrintWidget.generated.h"
 
 class UButton;
+class USLButtonWidget;
 class UCanvasPanel;
 class UTextBlock;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTalkEnded);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChoiceEnded, bool, bIsAccept);
 
 UCLASS()
 class STILLLOADING_API USLBaseTextPrintWidget : public USLAdditiveWidget
@@ -32,12 +34,22 @@ protected:
 	UFUNCTION()
 	void OnClickedFastButton();
 
+	UFUNCTION()
+	void OnClickedAcceptButton();
+
+	UFUNCTION()
+	void OnClickedRejectButton();
+
 	void PrintTalkText();
 	void ChangeTargetText();
+	void SetChoiceVisibility(bool bIsVisible);
 
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnTalkEnded OnTalkEnded;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnChoiceEnded OnChoiceEnded;
 
 	UPROPERTY(EditAnywhere)
 	float PrintTime = 0.1f;
@@ -46,9 +58,6 @@ public:
 	float Accelerator = 2.0f;
 
 protected:
-	UPROPERTY()
-	TObjectPtr<UButton> ParentNextButton = nullptr;
-
 	UPROPERTY()
 	TObjectPtr<UTextBlock> ParentNameText = nullptr;
 
@@ -59,10 +68,19 @@ protected:
 	TObjectPtr<UCanvasPanel> ParentNamePanel = nullptr;
 
 	UPROPERTY()
-	TObjectPtr<UButton> ParentSkipButton = nullptr;
+	TObjectPtr<UButton> ParentNextButton = nullptr;
 
 	UPROPERTY()
-	TObjectPtr<UButton> ParentFastButton = nullptr;
+	TObjectPtr<USLButtonWidget> ParentSkipButton = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<USLButtonWidget> ParentFastButton = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<USLButtonWidget> ParentAcceptButton = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<USLButtonWidget> ParentRejectButton = nullptr;
 
 	UPROPERTY()
 	TArray<FName> NameArray;

@@ -35,7 +35,7 @@ public:
 	void SetObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount, int32 CurrentCount);
 
 protected:
-	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer);
+	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 
 	virtual void ApplyFontData() override;
 	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush) override;
@@ -116,6 +116,7 @@ protected:
 	TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>> PrivateImageMap;
 
 	bool bIsObjectiveVisible = false;
+	bool bIsExistHitEffect = false;
 	int32 CurrentTimeValue = 0;
 	FTimerHandle TimerHandle;
 };

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/Widget/LevelWidget/SLLevelWidget.h"
+#include "UI/SLUITypes.h"
 #include "SLTitleWidget.generated.h"
 
 class UButton;
@@ -23,8 +24,8 @@ public:
 	virtual void DeactivateWidget() override;
 
 protected:
+	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void ApplyTextData() override;
-	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush) override;
 	virtual bool ApplyOtherImage() override;
 
 private:
@@ -65,6 +66,9 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UNiagaraSystemWidget> BackgroundEffect = nullptr;
+
+	UPROPERTY()
+	TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>> PrivateImageMap;
 
 	static const FName TitleTextIndex;
 	static const FName StartButtonIndex;

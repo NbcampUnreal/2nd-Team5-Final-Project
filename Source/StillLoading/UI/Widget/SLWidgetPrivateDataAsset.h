@@ -33,9 +33,35 @@ class STILLLOADING_API USLInGamePrivateDataAsset : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	const FSLInGameImageData& GetInGameImageByChapter(ESLChapterType ChapterType);
+	const TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>>& GetBrushDataMap() const;
 
 private:
 	UPROPERTY(EditAnywhere)
-	TMap<ESLChapterType, FSLInGameImageData> InGameImageMap;
+	TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>> InGameImageMap;
+};
+
+UCLASS()
+class STILLLOADING_API USLTitlePrivateDataAsset : public UDataAsset
+{
+	GENERATED_BODY()
+
+public:
+	const TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>>& GetBrushDataMap() const;
+
+private:
+	UPROPERTY(EditAnywhere)
+	TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>> TitleImageMap;
+};
+
+UCLASS()
+class STILLLOADING_API USLOptionPrivateDataAsset : public UDataAsset
+{
+	GENERATED_BODY()
+
+public:
+	const TMap<ESLOptionPrivateImageType, TObjectPtr<UObject>>& GetBrushDataMap() const;
+
+private:
+	UPROPERTY(EditAnywhere)
+	TMap<ESLOptionPrivateImageType, TObjectPtr<UObject>> OptionImageMap;
 };

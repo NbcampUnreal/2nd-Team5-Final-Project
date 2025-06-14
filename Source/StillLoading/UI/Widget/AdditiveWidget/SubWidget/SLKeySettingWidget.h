@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
+#include "UI/Widget/AdditiveWidget/SubWidget/SLOptionSubBase.h"
 #include "Character//DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "SLKeySettingWidget.generated.h"
 
@@ -15,7 +15,7 @@ class UButton;
 class UImage;
 
 UCLASS()
-class STILLLOADING_API USLKeySettingWidget : public USLAdditiveWidget
+class STILLLOADING_API USLKeySettingWidget : public USLOptionSubBase
 {
 	GENERATED_BODY()
 	

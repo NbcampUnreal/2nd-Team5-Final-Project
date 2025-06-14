@@ -61,6 +61,7 @@ void USLButtonWidget::SetNiagaraWidget(UNiagaraSystem* NewNiagara)
 	{
 		NiagaraWidget->UpdateNiagaraSystemReference(NewNiagara);
 		bIsContainNiagara = true;
+		NiagaraWidget->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
 

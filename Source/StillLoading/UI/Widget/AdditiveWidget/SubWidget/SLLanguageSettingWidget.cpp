@@ -53,17 +53,6 @@ void USLLanguageSettingWidget::ApplyTextData()
 	LanguageModeText->SetText(OptionTextMap[LanguageTagIndex]);
 }
 
-bool USLLanguageSettingWidget::ApplyOtherImage()
-{
-	Super::ApplyOtherImage();
-
-	ApplyListBackImage();
-	ApplyLeftArrowImage();
-	ApplyRightArrowImage();
-
-	return true;
-}
-
 void USLLanguageSettingWidget::OnClickedLanguageLeftButton()
 {
 	UpdateLanguage(true);
@@ -121,67 +110,36 @@ void USLLanguageSettingWidget::UpdateLanguageText()
 	}
 }
 
-void USLLanguageSettingWidget::ApplyListBackImage()
+bool USLLanguageSettingWidget::ApplyListBackImage(FSlateBrush& SlateBrush)
 {
-	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ListBack) &&
-		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ListBack]))
+	if (!Super::ApplyListBackImage(SlateBrush))
 	{
-		FSlateBrush SlateBrush;
-		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ListBack]);
-		LanguageBack->SetBrush(SlateBrush);
+		return false;
 	}
+
+	LanguageBack->SetBrush(SlateBrush);
+	return true;
 }
 
-void USLLanguageSettingWidget::ApplyLeftArrowImage()
+bool USLLanguageSettingWidget::ApplyLeftArrowImage(FButtonStyle& ButtonStyle)
 {
-	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_LeftArrow) &&
-		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_LeftArrow]))
+	if (!Super::ApplyLeftArrowImage(ButtonStyle))
 	{
-		FButtonStyle ButtonStyle;
-		FSlateBrush SlateBrush;
-
-		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_LeftArrow]);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 1.0f));
-		ButtonStyle.SetNormal(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-		ButtonStyle.SetHovered(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
-		ButtonStyle.SetPressed(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
-		ButtonStyle.SetDisabled(SlateBrush);
-
-		LanguageLeftButton->SetStyle(ButtonStyle);
+		return false;
 	}
+
+	LanguageLeftButton->SetStyle(ButtonStyle);
+	return true;
 }
-
-void USLLanguageSettingWidget::ApplyRightArrowImage()
+bool USLLanguageSettingWidget::ApplyRightArrowImage(FButtonStyle& ButtonStyle)
 {
-	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_RightArrow) &&
-		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_RightArrow]))
+	if (!Super::ApplyRightArrowImage(ButtonStyle))
 	{
-		FButtonStyle ButtonStyle;
-		FSlateBrush SlateBrush;
-
-		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_RightArrow]);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 1.0f));
-		ButtonStyle.SetNormal(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-		ButtonStyle.SetHovered(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
-		ButtonStyle.SetPressed(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
-		ButtonStyle.SetDisabled(SlateBrush);
-
-		LanguageRightButton->SetStyle(ButtonStyle);
+		return false;
 	}
+
+	LanguageRightButton->SetStyle(ButtonStyle);
+	return true;
 }
 
 void USLLanguageSettingWidget::CheckValidOfUserDataSubsystem()

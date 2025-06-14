@@ -2,6 +2,7 @@
 
 
 #include "UI/Widget/AdditiveWidget/SLBaseTextPrintWidget.h"
+#include "UI/Widget/SLButtonWidget.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanel.h"
@@ -15,14 +16,32 @@ void USLBaseTextPrintWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 		ParentNextButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedNextButton);
 	}
 
-	if (IsValid(ParentNextButton))
+	if (IsValid(ParentSkipButton))
 	{
 		ParentSkipButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedSkipButton);
+		ParentSkipButton->SetButtonText(FText::FromString(FString::Printf(TEXT("SKIP"))));
+		ParentSkipButton->InitButton();
 	}
 
-	if (IsValid(ParentNextButton))
+	if (IsValid(ParentFastButton))
 	{
 		ParentFastButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedFastButton);
+		ParentFastButton->SetButtonText(FText::FromString(FString::Printf(TEXT(">>"))));
+		ParentFastButton->InitButton();
+	}
+
+	if (IsValid(ParentAcceptButton))
+	{
+		ParentAcceptButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedAcceptButton);
+		ParentAcceptButton->SetButtonText(FText::FromString(FString::Printf(TEXT("Yes"))));
+		ParentAcceptButton->InitButton();
+	}
+
+	if (IsValid(ParentRejectButton))
+	{
+		ParentRejectButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedRejectButton);
+		ParentRejectButton->SetButtonText(FText::FromString(FString::Printf(TEXT("No"))));
+		ParentRejectButton->InitButton();
 	}
 }
 
@@ -35,10 +54,12 @@ void USLBaseTextPrintWidget::ActivateWidget(const FSLWidgetActivateBuffer& Widge
 	if (TalkArray.IsEmpty())
 	{
 		OnTalkEnded.Broadcast();
+		OnChoiceEnded.Broadcast(false);
 		CloseWidget();
 		return;
 	}
 
+	SetChoiceVisibility(false);
 	ChangeTargetText();
 }
 
@@ -59,6 +80,7 @@ void USLBaseTextPrintWidget::OnClickedNextButton()
 	{
 		TalkArray.Empty();
 		OnTalkEnded.Broadcast();
+		OnChoiceEnded.Broadcast(false);
 		CloseWidget();
 		return;
 	}
@@ -70,14 +92,47 @@ void USLBaseTextPrintWidget::OnClickedSkipButton()
 {
 	GetWorld()->GetTimerManager().ClearTimer(TextPrintTimer);
 
-	TalkArray.Empty();
-	OnTalkEnded.Broadcast();
-	CloseWidget();
+	if (NameArray.Last() == "Choice")
+	{
+		TargetTextIndex = NameArray.Num() - 1;
+		ChangeTargetText();
+	}
+	else
+	{
+		TalkArray.Empty();
+		OnTalkEnded.Broadcast();
+		OnChoiceEnded.Broadcast(false);
+		CloseWidget();
+	}
 }
 
 void USLBaseTextPrintWidget::OnClickedFastButton()
 {
 	bIsFasted = !bIsFasted;
+
+	if (IsValid(ParentFastButton))
+	{
+		if (bIsFasted)
+		{
+			ParentFastButton->SetButtonText(FText::FromString(FString::Printf(TEXT(">"))));
+		}
+		else
+		{
+			ParentFastButton->SetButtonText(FText::FromString(FString::Printf(TEXT(">>"))));
+		}
+	}
+}
+
+void USLBaseTextPrintWidget::OnClickedAcceptButton()
+{
+	OnChoiceEnded.Broadcast(true);
+	CloseWidget();
+}
+
+void USLBaseTextPrintWidget::OnClickedRejectButton()
+{
+	OnChoiceEnded.Broadcast(false);
+	CloseWidget();
 }
 
 void USLBaseTextPrintWidget::PrintTalkText()
@@ -111,9 +166,14 @@ void USLBaseTextPrintWidget::ChangeTargetText()
 
 	FName TargetName = NameArray[TargetTextIndex];
 
-	if (TargetName == "None")
+	if (TargetName == "None" || TargetName == "Choice")
 	{
 		ParentNamePanel->SetVisibility(ESlateVisibility::Collapsed);
+
+		if (TargetName == "Choice")
+		{
+			SetChoiceVisibility(true);
+		}
 	}
 	else
 	{
@@ -122,4 +182,24 @@ void USLBaseTextPrintWidget::ChangeTargetText()
 	}
 
 	PrintTalkText();
+}
+
+void USLBaseTextPrintWidget::SetChoiceVisibility(bool bIsVisible)
+{
+	if (bIsVisible)
+	{
+		ParentAcceptButton->SetVisibility(ESlateVisibility::Visible);
+		ParentRejectButton->SetVisibility(ESlateVisibility::Visible);
+		ParentFastButton->SetVisibility(ESlateVisibility::Collapsed);
+		ParentSkipButton->SetVisibility(ESlateVisibility::Collapsed);
+		ParentNextButton->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	else
+	{
+		ParentAcceptButton->SetVisibility(ESlateVisibility::Collapsed);
+		ParentRejectButton->SetVisibility(ESlateVisibility::Collapsed);
+		ParentFastButton->SetVisibility(ESlateVisibility::Visible);
+		ParentSkipButton->SetVisibility(ESlateVisibility::Visible);
+		ParentNextButton->SetVisibility(ESlateVisibility::Visible);
+	}
 }

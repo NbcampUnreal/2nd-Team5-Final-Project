@@ -21,4 +21,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Config, Category = "WidgetData")
 	TMap<ESLChapterType, TSoftObjectPtr<UDataAsset>> ChapterWidgetPublicDataMap;
+
+	UPROPERTY(EditAnywhere, Config, Category = "WidgetData")
+	TMap<ESLChapterType, TSoftObjectPtr<UDataAsset>> OptionWidgetPrivateDataMap;
 };

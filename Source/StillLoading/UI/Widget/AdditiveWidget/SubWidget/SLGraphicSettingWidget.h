@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
+#include "UI/Widget/AdditiveWidget/SubWidget/SLOptionSubBase.h"
 #include "SLGraphicSettingWidget.generated.h"
 
 class UButton;
@@ -13,7 +13,7 @@ class UExpandableArea;
 class USLUserDataSubsystem;
 
 UCLASS()
-class STILLLOADING_API USLGraphicSettingWidget : public USLAdditiveWidget
+class STILLLOADING_API USLGraphicSettingWidget : public USLOptionSubBase
 {
 	GENERATED_BODY()
 	
@@ -25,7 +25,8 @@ protected:
 	virtual void ApplyTextData() override;
 	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle) override;
 	virtual bool ApplySliderImage(FSliderStyle& SliderStyle) override;
-	virtual bool ApplyOtherImage();
+	virtual bool ApplyExpandableImage(FSlateBrush& SlateBrush) override;
+	virtual bool ApplyExpandedImage(FButtonStyle& ButtonStyle) override;
 
 private:
 	// Screen Mode Function
@@ -55,8 +56,7 @@ private:
 	void UpdateScreenModeButton();
 	void UpdateResolution(int32 ResolutionNum);
 
-	void ApplyExpandableImage();
-	void ApplyExpandedImage();
+	
 
 	void CheckValidOfUserDataSubsystem();
 
