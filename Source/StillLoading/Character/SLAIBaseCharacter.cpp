@@ -90,6 +90,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	AccumulatedDamage = 0.0f;
 	MaxHealth = 100.f;
 	CurrentHealth = MaxHealth;
+	bIsSpecialPattern = false;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -1107,7 +1108,7 @@ void ASLAIBaseCharacter::ProcessDeath()
 			BaseAIController->OnTargetDeath(this);
 		}
 	}
-    
+	OnCharacterDeath.Broadcast(this);
 	// 블루프린트 이벤트 호출
 	OnDeath();
 }
@@ -1146,4 +1147,23 @@ void ASLAIBaseCharacter::ProcessDamageOnly(AActor* DamageCauser, float DamageAmo
 		HitEffectComponent->SetWorldLocation(HitResult.Location);
 		HitEffectComponent->ActivateSystem();
 	}
+}
+
+void ASLAIBaseCharacter::SetIsSpecialPattern(bool bNewIsSpecialPattern)
+{
+	bIsSpecialPattern = bNewIsSpecialPattern;
+    
+	// 블랙보드에도 값 동기화
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("IsSpecialPattern"), bIsSpecialPattern);
+		}
+	}
+}
+
+void ASLAIBaseCharacter::NotifyPatternFinished()
+{
+	OnPatternFinished.Broadcast(this);
 }

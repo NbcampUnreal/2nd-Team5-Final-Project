@@ -78,6 +78,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Combat")
     FGameplayTagContainer GetAllAttackPatterns() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    FORCEINLINE ASLItem* GetSword() const { return Sword; }
+    
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    FORCEINLINE ASLItem* GetShield() const { return Shield; }
+    
     UFUNCTION(BlueprintCallable, Category = "Combat|Guard")
     void OnGuardSuccess();
 

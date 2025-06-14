@@ -84,6 +84,8 @@ enum class EHitReactionMode : uint8
 	EHRM_Disabled       UMETA(DisplayName = "Disabled")
 };
 
+
+
 UCLASS()
 class STILLLOADING_API ASLAIBaseCharacter : public ACharacter
 {
@@ -94,6 +96,9 @@ public:
 	ASLAIBaseCharacter();
 	virtual void BeginPlay() override;
 	virtual void Landed(const FHitResult& Hit) override;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCharacterDeath, ASLAIBaseCharacter*);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPatternFinished, ASLAIBaseCharacter*);
 	
 	// --- Getters (Collision) ---
 	// 손 콜리전 컴포넌트 접근자
@@ -133,6 +138,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool GetShouldLookAtPlayer() const { return bShouldLookAtPlayer; }
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	FORCEINLINE AActor* GetEquippedWeapon() const { return EquippedWeapon; }
 	
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentHealth(float NewHealth);
@@ -284,7 +292,18 @@ public:
     
 	UFUNCTION(BlueprintCallable, Category = "Death")
 	void HandleDeath();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool GetIsSpecialPattern() const { return bIsSpecialPattern; }
+    
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetIsSpecialPattern(bool bNewIsSpecialPattern);
 	
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void NotifyPatternFinished();
+
+	FOnCharacterDeath OnCharacterDeath;
+	FOnPatternFinished OnPatternFinished;
 protected:
 	
 #if WITH_EDITOR
@@ -454,4 +473,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|HitReaction")
 	TObjectPtr<UNiagaraSystem> DissolveEffect;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsSpecialPattern;
 };
