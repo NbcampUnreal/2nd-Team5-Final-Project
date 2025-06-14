@@ -103,6 +103,25 @@ void ASLAIProjectile::SetupSpawnedProjectile(EAttackAnimType AnimType, float Spe
 	ProjectileMovement->MaxSpeed = Speed;
 }
 
+void ASLAIProjectile::BeginPlay()
+{
+	Super::BeginPlay();
+    
+	// 발사한 캐릭터와의 충돌 무시 설정
+	if (GetInstigator())
+	{
+		CollisionComp->IgnoreActorWhenMoving(GetInstigator(), true);
+        
+		// 캐릭터의 모든 컴포넌트와 충돌 무시
+		TArray<UPrimitiveComponent*> Components;
+		GetInstigator()->GetComponents<UPrimitiveComponent>(Components);
+		for (UPrimitiveComponent* Component : Components)
+		{
+			CollisionComp->IgnoreComponentWhenMoving(Component, true);
+		}
+	}
+}
+
 void ASLAIProjectile::PlayHitEffects(const FHitResult& Hit)
 {
 	// 충돌 지점에 나이아가라 이펙트 재생
