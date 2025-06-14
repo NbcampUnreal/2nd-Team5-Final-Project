@@ -13,6 +13,11 @@ void USLTalkHandlerBase::OnTalkEnd_Implementation()
 	OnTalkEndDelegate.Broadcast(this);
 }
 
+void USLTalkHandlerBase::OnChoiceEnd_Implementation(bool bResult)
+{
+	OnChoiceEndDelegate.Broadcast(bResult);
+}
+
 FName USLTalkHandlerBase::GetTalkName()
 {
 	return TalkName;

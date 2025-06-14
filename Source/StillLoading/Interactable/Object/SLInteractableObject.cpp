@@ -13,10 +13,10 @@ ASLInteractableObject::ASLInteractableObject()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	BaseTalkHandler = CreateDefaultSubobject<USLTalkHandlerBase>(TEXT("SLTalkHandlerBase"));
+	DefaultTalkHandler = CreateDefaultSubobject<USLTalkHandlerBase>(TEXT("기본 대화 핸들러"));
 	TriggerType = ESLReactiveTriggerType::ERT_InteractKey;
 	TargetName = "Object";
-	CurrentTalkHandler= BaseTalkHandler;
+	CurrentTalkHandler = DefaultTalkHandler;
 }
 
 void ASLInteractableObject::SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandler)
@@ -26,11 +26,12 @@ void ASLInteractableObject::SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandle
 
 void ASLInteractableObject::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
-	if (IsValid(CurrentTalkHandler))
+	if (CurrentTalkHandler.IsValid())
 	{
 		if (USLBaseTextPrintWidget* TextWidget = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Object, TargetName, CurrentTalkHandler->GetTalkName()))
 		{
-			TextWidget->OnTalkEnded.AddUniqueDynamic(this, &ASLInteractableObject::OnCurrentTalkEnd);
+			TextWidget->OnTalkEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentTalkEnd);
+			TextWidget->OnChoiceEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentChoiceEnd);
 			CurrentTextWidget = TextWidget;
 		}
 	}
@@ -38,10 +39,19 @@ void ASLInteractableObject::OnInteracted(const ASLPlayerCharacterBase* InCharact
 
 void ASLInteractableObject::OnCurrentTalkEnd()
 {
-	if (IsValid(CurrentTalkHandler) && IsValid(CurrentTextWidget))
+	if (CurrentTalkHandler.IsValid() && IsValid(CurrentTextWidget))
 	{
 		CurrentTalkHandler->OnTalkEnd();
-		CurrentTextWidget->OnTalkEnded.RemoveDynamic(this, &ASLInteractableObject::OnCurrentTalkEnd);
+		CurrentTextWidget->OnTalkEnded.RemoveDynamic(this, &ThisClass::OnCurrentTalkEnd);
+	}
+}
+
+void ASLInteractableObject::OnCurrentChoiceEnd(bool bResult)
+{
+	if (CurrentTalkHandler.IsValid() && IsValid(CurrentTextWidget))
+	{
+		CurrentTalkHandler->OnChoiceEnd(bResult);
+		CurrentTextWidget->OnChoiceEnded.RemoveDynamic(this, &ThisClass::OnCurrentChoiceEnd);
 	}
 }
 
