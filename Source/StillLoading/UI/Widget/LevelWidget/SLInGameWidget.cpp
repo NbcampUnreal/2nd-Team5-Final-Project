@@ -73,7 +73,7 @@ void USLInGameWidget::SetIsBossStateActivate(bool bIsActived)
 
 void USLInGameWidget::SetIsHitEffectActivate(bool bIsActived)
 {
-	if (bIsActived)
+	if (bIsActived && bIsExistHitEffect)
 	{
 		PlaySubWidgetAnim(ActiveHitEffectAnim);
 	}
@@ -94,7 +94,7 @@ void USLInGameWidget::SetTimerText(int32 TimeSeconds)
 		TimerText->SetText(FText::FromString(FString::Printf(TEXT("%02d : %02d"), TextMin, TextSec)));
 
 		FTimerDelegate TimerDelegate;
-		TimerDelegate.BindUFunction(this, FName("SetTimerText"), TimeSeconds - 1); // 42는 int32 인자
+		TimerDelegate.BindUFunction(this, FName("SetTimerText"), TimeSeconds - 1);
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 1.0f, false);
 	}
 	else
@@ -159,7 +159,7 @@ void USLInGameWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActiva
 	{
 		USLInGamePrivateDataAsset* PrivateData = Cast<USLInGamePrivateDataAsset>(WidgetActivateBuffer.WidgetPrivateData);
 		PrivateImageMap.Empty();
-		PrivateImageMap = PrivateData->GetInGameImageByChapter(WidgetActivateBuffer.CurrentChapter).InGameImageMap;
+		PrivateImageMap = PrivateData->GetBrushDataMap();
 	}
 }
 
@@ -176,7 +176,6 @@ bool USLInGameWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
 	}
 
 	/*TimerBack->SetBrush(SlateBrush);
-	PlayerStateBack->SetBrush(SlateBrush);
 	GameStateBack->SetBrush(SlateBrush);*/
 
 	return true;
@@ -252,6 +251,11 @@ bool USLInGameWidget::ApplyOtherImage()
 		FSlateBrush SlateBrush;
 		SlateBrush.SetResourceObject(PrivateImageMap[ESLInGamePrivateImageType::EGPI_HitEffect]);
 		HitEffectImg->SetBrush(SlateBrush);
+		bIsExistHitEffect = true;
+	}
+	else
+	{
+		bIsExistHitEffect = false;
 	}
 
 	ApplyTimerImage();

@@ -41,8 +41,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
 	TSubclassOf<USLLevelWidget> LevelWidgetClass = nullptr;
 
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
+	//TSoftObjectPtr<UDataAsset> PrivateDataAsset = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetData")
-	TSoftObjectPtr<UDataAsset> PrivateDataAsset = nullptr;
+	TMap<ESLChapterType, TSoftObjectPtr<UDataAsset>> PrivateDataMap;
 
 protected:
 	UPROPERTY()

@@ -4,6 +4,7 @@
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUISettings.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
+#include "UI/HUD/SLInGameHUD.h"
 
 void USLUISubsystem::SetInputModeAndCursor()
 {
@@ -64,6 +65,12 @@ void USLUISubsystem::SetLevelInputMode(ESLInputModeType InputModeType, bool bIsV
 	bIsVisibleLevelCursor = bIsVisibleMouseCursor;
 
 	RemoveAllAdditveWidget();
+}
+
+void USLUISubsystem::ActivateOption()
+{
+	CheckValidOfOptiondDataAsset();
+	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_OptionWidget);
 }
 
 void USLUISubsystem::ActivateFade(bool bIsFadeIn, bool bIsMoveLevel)
@@ -167,6 +174,57 @@ USLBaseTextPrintWidget* USLUISubsystem::GetTalkWidget()
 	return TalkWidget;
 }
 
+void USLUISubsystem::OnPlayerHpChanged()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (IsValid(PC))
+	{
+		ASLInGameHUD* HUD = Cast<ASLInGameHUD>(PC->GetHUD());
+
+		if (IsValid(HUD))
+		{
+			PlayerCurrentHp = PlayerMaxHp;
+			HUD->ApplyPlayerHp(PlayerMaxHp, PlayerHpBuffer);
+			DecreasePlayerHp();
+		}
+	}
+}
+
+void USLUISubsystem::OnPlayerSpecialChanged()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (IsValid(PC))
+	{
+		ASLInGameHUD* HUD = Cast<ASLInGameHUD>(PC->GetHUD());
+
+		if (IsValid(HUD))
+		{
+			SpecialCurrentValue = 0;
+			HUD->ApplyPlayerSpecial(SpecialMaxValue, SpecialValueBuffer);
+			IncreaseSpecialValue();
+		}
+	}
+}
+
+void USLUISubsystem::OnBossHpChanged()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (IsValid(PC))
+	{
+		ASLInGameHUD* HUD = Cast<ASLInGameHUD>(PC->GetHUD());
+
+		if (IsValid(HUD))
+		{
+			BossCurrentHp = BossMaxHp;
+			HUD->ApplyBossHp(BossMaxHp, BossHpBuffer);
+			DecreaseBossHp();
+		}
+	}
+}
+
 void USLUISubsystem::CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType)
 {
 	if (AdditiveWidgetMap.Contains(WidgetType))
@@ -218,4 +276,46 @@ void USLUISubsystem::CheckValidOfWidgetDataAsset()
 	checkf(UISettings->ChapterWidgetPublicDataMap.Contains(CurrentDataChapter), TEXT("Widget Public Data Map is not contains"));
 	WidgetActivateBuffer.WidgetPublicData = UISettings->ChapterWidgetPublicDataMap[CurrentDataChapter].LoadSynchronous();
 	checkf(IsValid(WidgetActivateBuffer.WidgetPublicData), TEXT("Widget ImageData is invalid"));
+}
+
+void USLUISubsystem::CheckValidOfOptiondDataAsset()
+{
+	CheckValidOfWidgetDataAsset();
+
+	checkf(UISettings->OptionWidgetPrivateDataMap.Contains(CurrentDataChapter), TEXT("Option Private Data Map is not contains"));
+	WidgetActivateBuffer.WidgetPrivateData = UISettings->OptionWidgetPrivateDataMap[CurrentDataChapter].LoadSynchronous();
+	checkf(IsValid(WidgetActivateBuffer.WidgetPrivateData), TEXT("Option ImageData is invalid"));
+}
+
+void USLUISubsystem::DecreasePlayerHp()
+{
+	if (PlayerCurrentHp >= 5)
+	{
+		PlayerCurrentHp -= 5;
+		PlayerHpBuffer.OnPlayerHpChanged.Broadcast(PlayerMaxHp, PlayerCurrentHp);
+
+		GetWorld()->GetTimerManager().SetTimer(PlayerHpTimer, this, &ThisClass::DecreasePlayerHp, 1.0f);
+	}
+}
+
+void USLUISubsystem::DecreaseBossHp()
+{
+	if (BossCurrentHp >= 5)
+	{
+		BossCurrentHp -= 5;
+		BossHpBuffer.OnBossHpChanged.Broadcast(BossMaxHp, BossCurrentHp);
+
+		GetWorld()->GetTimerManager().SetTimer(BossHpTimer, this, &ThisClass::DecreaseBossHp, 2.0f);
+	}
+}
+
+void USLUISubsystem::IncreaseSpecialValue()
+{
+	if (SpecialCurrentValue <= SpecialMaxValue - 5)
+	{
+		SpecialCurrentValue += 5;
+		SpecialValueBuffer.OnSpecialValueChanged.Broadcast(SpecialMaxValue, SpecialCurrentValue);
+
+		GetWorld()->GetTimerManager().SetTimer(SpecialValueTimer, this, &ThisClass::IncreaseSpecialValue, 3.0f);
+	}
 }

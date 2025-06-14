@@ -128,16 +128,6 @@ bool USLGraphicSettingWidget::ApplySliderImage(FSliderStyle& SliderStyle)
 	return true;
 }
 
-bool USLGraphicSettingWidget::ApplyOtherImage()
-{
-	Super::ApplyOtherImage();
-
-	ApplyExpandableImage();
-	ApplyExpandedImage();
-
-	return true;
-}
-
 void USLGraphicSettingWidget::OnClickedFullScreen()
 {
 	CheckValidOfUserDataSubsystem();
@@ -210,46 +200,31 @@ void USLGraphicSettingWidget::UpdateResolution(int32 ResolutionNum)
 	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
-void USLGraphicSettingWidget::ApplyExpandableImage()
+bool USLGraphicSettingWidget::ApplyExpandableImage(FSlateBrush& SlateBrush)
 {
-	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Expandable) &&
-		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Expandable]))
+	if (!Super::ApplyExpandableImage(SlateBrush))
 	{
-		FSlateBrush SlateBrush;
-
-		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Expandable]);
-		ResolutionList->SetBorderBrush(SlateBrush);
-		ResolutionList->SynchronizeProperties();
-
+		return false;
 	}
+
+	ResolutionList->SetBorderBrush(SlateBrush);
+	ResolutionList->SynchronizeProperties();
+
+	return true;
 }
 
-void USLGraphicSettingWidget::ApplyExpandedImage()
+bool USLGraphicSettingWidget::ApplyExpandedImage(FButtonStyle& ButtonStyle)
 {
-	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_ExpandedButton) &&
-		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ExpandedButton]))
+	if (!Super::ApplyExpandedImage(ButtonStyle))
 	{
-		FButtonStyle ButtonStyle;
-		FSlateBrush SlateBrush;
-
-		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_ExpandedButton]);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.75f, 0.75f, 0.75f, 1.0f));
-		ButtonStyle.SetNormal(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-		ButtonStyle.SetHovered(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
-		ButtonStyle.SetPressed(SlateBrush);
-
-		SlateBrush.TintColor = FSlateColor(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f));
-		ButtonStyle.SetDisabled(SlateBrush);
-
-		FirstResolutionButton->SetStyle(ButtonStyle);
-		SecondResolutionButton->SetStyle(ButtonStyle);
-		ThirdResolutionButton->SetStyle(ButtonStyle);
+		return false;
 	}
+
+	FirstResolutionButton->SetStyle(ButtonStyle);
+	SecondResolutionButton->SetStyle(ButtonStyle);
+	ThirdResolutionButton->SetStyle(ButtonStyle);
+
+	return true;
 }
 
 void USLGraphicSettingWidget::CheckValidOfUserDataSubsystem()

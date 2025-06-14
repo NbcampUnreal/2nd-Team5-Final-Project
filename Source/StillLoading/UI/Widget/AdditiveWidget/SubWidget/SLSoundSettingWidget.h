@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
+#include "UI/Widget/AdditiveWidget/SubWidget/SLOptionSubBase.h"
 #include "SLSoundSettingWidget.generated.h"
 
 class UTextBlock;
@@ -11,7 +11,7 @@ class USlider;
 class USLUserDataSubsystem;
 
 UCLASS()
-class STILLLOADING_API USLSoundSettingWidget : public USLAdditiveWidget
+class STILLLOADING_API USLSoundSettingWidget : public USLOptionSubBase
 {
 	GENERATED_BODY()
 	

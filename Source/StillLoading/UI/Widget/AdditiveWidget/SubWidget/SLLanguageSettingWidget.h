@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
+#include "UI/Widget/AdditiveWidget/SubWidget/SLOptionSubBase.h"
 #include "SLLanguageSettingWidget.generated.h"
 
 class UButton;
@@ -12,7 +12,7 @@ class UImage;
 class USLUserDataSubsystem;
 
 UCLASS()
-class STILLLOADING_API USLLanguageSettingWidget : public USLAdditiveWidget
+class STILLLOADING_API USLLanguageSettingWidget : public USLOptionSubBase
 {
 	GENERATED_BODY()
 	
@@ -22,7 +22,9 @@ public:
 
 protected:
 	virtual void ApplyTextData() override;
-	virtual bool ApplyOtherImage();
+	virtual bool ApplyListBackImage(FSlateBrush& SlateBrush) override;
+	virtual bool ApplyLeftArrowImage(FButtonStyle& ButtonStyle) override;
+	virtual bool ApplyRightArrowImage(FButtonStyle& ButtonStyle) override;
 
 private:
 	UFUNCTION()
@@ -33,10 +35,6 @@ private:
 
 	void UpdateLanguage(bool bIsLeft);
 	void UpdateLanguageText();
-
-	void ApplyListBackImage();
-	void ApplyLeftArrowImage();
-	void ApplyRightArrowImage();
 
 	void CheckValidOfUserDataSubsystem();
 

@@ -18,9 +18,3 @@ void USLLevelWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivat
 
 	Super::ActivateWidget(WidgetActivateBuffer);
 }
-
-void USLLevelWidget::RequestAddedWidgetToUISubsystem(ESLAdditiveWidgetType TargetWidgetType)
-{
-	CheckValidOfUISubsystem();
-	UISubsystem->AddAdditiveWidget(TargetWidgetType);
-}

@@ -10,7 +10,7 @@ void ASLBaseHUD::OnPause()
 {
 	GetOwningPlayerController()->SetPause(true);
 	CheckValidOfUISubsystem();
-	UISubsystem->AddAdditiveWidget(ESLAdditiveWidgetType::EAW_OptionWidget);
+	UISubsystem->ActivateOption();
 }
 
 void ASLBaseHUD::OnUnpause()
@@ -57,9 +57,10 @@ void ASLBaseHUD::OnStartedHUD()
 	ActivateBuffer.CurrentChapter = LevelSubsystem->GetCurrentChapter();
 
 	if (!IsValid(ActivateBuffer.WidgetPrivateData) &&
-		!PrivateDataAsset.IsNull())
+		PrivateDataMap.Contains(ActivateBuffer.CurrentChapter) &&
+		!PrivateDataMap[ActivateBuffer.CurrentChapter].IsNull())
 	{
-		ActivateBuffer.WidgetPrivateData = PrivateDataAsset.LoadSynchronous();
+		ActivateBuffer.WidgetPrivateData = PrivateDataMap[ActivateBuffer.CurrentChapter].LoadSynchronous();
 	}
 	
 	if (!IsValid(ActivateBuffer.WidgetPublicData))

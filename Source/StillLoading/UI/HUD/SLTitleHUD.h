@@ -15,6 +15,9 @@ public:
 	UFUNCTION()
 	void NotifyTalkEnded();
 
+	UFUNCTION()
+	void NotifyChoiceEnded(bool bIsAccept);
+
 protected:
 	virtual void OnStartedHUD() override;
 };

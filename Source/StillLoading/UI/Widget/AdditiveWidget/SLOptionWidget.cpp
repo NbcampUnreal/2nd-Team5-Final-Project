@@ -16,6 +16,7 @@
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/HUD/SLBaseHUD.h"
+#include "UI/Widget/SLWidgetPrivateDataAsset.h"
 #include "NiagaraSystem.h"
 
 const FName USLOptionWidget::TitleTextIndex = "TitleText";
@@ -130,14 +131,17 @@ void USLOptionWidget::ApplyTextData()
 	CloseButton->SetButtonText(OptionTextMap[CloseButtonIndex]);
 }
 
-bool USLOptionWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
+bool USLOptionWidget::ApplyOtherImage()
 {
-	if (!Super::ApplyBorderImage(SlateBrush))
-	{
-		return false;
-	}
+	Super::ApplyOtherImage();
 
-	OptionPanelBack->SetBrush(SlateBrush);
+	if (PrivateImageMap.Contains(ESLOptionPrivateImageType::EOPI_Background) &&
+		IsValid(PrivateImageMap[ESLOptionPrivateImageType::EOPI_Background]))
+	{
+		FSlateBrush SlateBrush;
+		SlateBrush.SetResourceObject(PrivateImageMap[ESLOptionPrivateImageType::EOPI_Background]);
+		OptionPanelBack->SetBrush(SlateBrush);
+	}
 
 	return true;
 }
@@ -183,4 +187,16 @@ void USLOptionWidget::OnClickedQuit()
 {
 	PlayUISound(ESLUISoundType::EUS_Click);
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
+}
+
+void USLOptionWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
+{
+	Super::FindWidgetData(WidgetActivateBuffer);
+
+	if (IsValid(WidgetActivateBuffer.WidgetPrivateData))
+	{
+		USLOptionPrivateDataAsset* PrivateData = Cast<USLOptionPrivateDataAsset>(WidgetActivateBuffer.WidgetPrivateData);
+		PrivateImageMap.Empty();
+		PrivateImageMap = PrivateData->GetBrushDataMap();
+	}
 }
