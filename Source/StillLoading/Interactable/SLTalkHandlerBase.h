@@ -8,8 +8,9 @@
 class USLTalkHandlerBase;
 
 DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam(FOnTalkEndSignature, USLTalkHandlerBase, OnTalkEndDelegate, USLTalkHandlerBase*, Component);
+DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam(FOnChoiceEndSignature, USLTalkHandlerBase, OnChoiceEndDelegate, bool, bResult);
 
-UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), DisplayName="대화 핸들러 컴포넌트")
 class STILLLOADING_API USLTalkHandlerBase : public UActorComponent
 {
 	GENERATED_BODY()
@@ -21,6 +22,10 @@ public:
 	void OnTalkEnd();
 	virtual void OnTalkEnd_Implementation();
 
+	UFUNCTION(BlueprintNativeEvent, Category = "TalkHandler")
+	void OnChoiceEnd(bool bResult);
+	virtual void OnChoiceEnd_Implementation(bool bResult);
+
 	UFUNCTION(BlueprintCallable, Category = "TalkHandler")
 	FName GetTalkName();
 
@@ -29,6 +34,9 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "TalkHandler")
 	FOnTalkEndSignature OnTalkEndDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = "TalkHandler")
+	FOnChoiceEndSignature OnChoiceEndDelegate;
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TalkHandler", meta = (AllowPrivateAccess = "true"))
