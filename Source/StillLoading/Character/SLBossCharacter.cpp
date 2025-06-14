@@ -23,9 +23,8 @@ ASLBossCharacter::ASLBossCharacter()
 	AllMeshesTargetAlpha = 1.0f;
 	AllMeshesFadeStartTime = 0.0f;
 	AllMeshesFadeDuration = 1.0f;
-
-	//처형 안되게 수정해야함
-	bCanBeExecuted = true;
+	
+	bCanBeExecuted = false;
 }
 
 void ASLBossCharacter::SetBossAttackPattern(EBossAttackPattern NewPattern)
@@ -86,7 +85,7 @@ void ASLBossCharacter::BeginPlay()
 	SetTargetPointToBlackboard();
 
 	
-	CurrentHealth = MaxHealth;
+	SetCurrentHealth(MaxHealth);
 }
 
 EBossAttackPattern ASLBossCharacter::SelectRandomPattern(float DistanceToTarget, const TArray<EBossAttackPattern>& CloseRangePatterns, const TArray<EBossAttackPattern>& LongRangePatterns, float DistanceThreshold)
@@ -200,39 +199,6 @@ void ASLBossCharacter::SetAllMeshesAlpha(float AlphaValue)
 	}
 }
 
-void ASLBossCharacter::FadeAllMeshes(float InTargetAlpha, float Duration)
-{
-	if (ChildMeshesDynamicMaterials.Num() == 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("FadeAllMeshes: No dynamic materials created"));
-		return;
-	}
-
-	// 현재 Alpha 값들을 시작값으로 저장
-	for (int32 i = 0; i < ChildMeshesCurrentAlpha.Num(); i++)
-	{
-		ChildMeshesStartAlpha[i] = ChildMeshesCurrentAlpha[i];
-	}
-
-	AllMeshesTargetAlpha = FMath::Clamp(InTargetAlpha, 0.0f, 1.0f);
-	AllMeshesFadeDuration = FMath::Max(Duration, 0.01f);
-	AllMeshesFadeStartTime = GetWorld()->GetTimeSeconds();
-
-	// 기존 타이머 정리
-	if (AllMeshesFadeTimerHandle.IsValid())
-	{
-		GetWorld()->GetTimerManager().ClearTimer(AllMeshesFadeTimerHandle);
-	}
-
-	// 새 타이머 시작
-	GetWorld()->GetTimerManager().SetTimer(
-		AllMeshesFadeTimerHandle,
-		this,
-		&ASLBossCharacter::UpdateAllMeshesFade,
-		0.016f,
-		true
-	);
-}
 
 void ASLBossCharacter::UpdateAllMeshesFade()
 {
@@ -256,74 +222,4 @@ void ASLBossCharacter::UpdateAllMeshesFade()
 	{
 		GetWorld()->GetTimerManager().ClearTimer(AllMeshesFadeTimerHandle);
 	}
-}
-
-void ASLBossCharacter::SetMeshAlphaByIndex(int32 MeshIndex, float AlphaValue)
-{
-	if (!ChildMeshesDynamicMaterials.IsValidIndex(MeshIndex))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("SetMeshAlphaByIndex: Invalid mesh index %d"), MeshIndex);
-		return;
-	}
-
-	if (ChildMeshesDynamicMaterials[MeshIndex])
-	{
-		float ClampedAlpha = FMath::Clamp(AlphaValue, 0.0f, 1.0f);
-		ChildMeshesDynamicMaterials[MeshIndex]->SetScalarParameterValue(FName("Alpha"), ClampedAlpha);
-		ChildMeshesCurrentAlpha[MeshIndex] = ClampedAlpha;
-	}
-}
-
-void ASLBossCharacter::FadeMeshByIndex(int32 MeshIndex, float InTargetAlpha, float Duration)
-{
-	if (!ChildMeshesDynamicMaterials.IsValidIndex(MeshIndex))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("FadeMeshByIndex: Invalid mesh index %d"), MeshIndex);
-		return;
-	}
-
-	// 기존 타이머가 있으면 정리
-	if (FTimerHandle* ExistingTimer = IndividualFadeTimers.Find(MeshIndex))
-	{
-		if (ExistingTimer->IsValid())
-		{
-			GetWorld()->GetTimerManager().ClearTimer(*ExistingTimer);
-		}
-	}
-
-	// 개별 타이머를 사용한 페이드
-	float StartAlpha = ChildMeshesCurrentAlpha[MeshIndex];
-	float TargetAlpha = FMath::Clamp(InTargetAlpha, 0.0f, 1.0f);
-	float FadeDuration = FMath::Max(Duration, 0.01f);
-	float StartTime = GetWorld()->GetTimeSeconds();
-
-	FTimerDelegate TimerDelegate;
-	FTimerHandle NewTimer;
-	
-	TimerDelegate.BindLambda([this, MeshIndex, StartAlpha, TargetAlpha, FadeDuration, StartTime]()
-	{
-		float CurrentTime = GetWorld()->GetTimeSeconds();
-		float ElapsedTime = CurrentTime - StartTime;
-		float Progress = FMath::Clamp(ElapsedTime / FadeDuration, 0.0f, 1.0f);
-		
-		if (ChildMeshesDynamicMaterials.IsValidIndex(MeshIndex) && ChildMeshesDynamicMaterials[MeshIndex])
-		{
-			float NewAlpha = FMath::Lerp(StartAlpha, TargetAlpha, Progress);
-			ChildMeshesDynamicMaterials[MeshIndex]->SetScalarParameterValue(FName("Alpha"), NewAlpha);
-			ChildMeshesCurrentAlpha[MeshIndex] = NewAlpha;
-		}
-		
-		if (Progress >= 1.0f)
-		{
-			// 타이머 정리
-			if (FTimerHandle* Timer = IndividualFadeTimers.Find(MeshIndex))
-			{
-				GetWorld()->GetTimerManager().ClearTimer(*Timer);
-				IndividualFadeTimers.Remove(MeshIndex);
-			}
-		}
-	});
-
-	GetWorld()->GetTimerManager().SetTimer(NewTimer, TimerDelegate, 0.016f, true);
-	IndividualFadeTimers.Add(MeshIndex, NewTimer);
 }
