@@ -8,6 +8,7 @@
 #include "NiagaraSystem.h"
 #include "SLPlayerCharacterBase.h"
 #include "DataAsset/AttackDataAsset.h"
+#include "UI/Struct/SLInGameDelegateBuffers.h"
 #include "SLAIBaseCharacter.generated.h"
 
 class UNiagaraComponent;
@@ -302,6 +303,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void NotifyPatternFinished();
 
+	UFUNCTION(BlueprintCallable, Category = "Delegate")
+	FSLBossHpDelegateBuffer& GetBossHpChangedDelegate() { return OnBossHpChanged; }
+	
 	FOnCharacterDeath OnCharacterDeath;
 	FOnPatternFinished OnPatternFinished;
 protected:
@@ -319,7 +323,7 @@ protected:
 	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
 
 	virtual void OnLanded(const FHitResult& Hit);
-
+	
 	bool ShouldPlayHitReaction(float DamageAmount);
 
 	virtual void ProcessDeath();
@@ -327,9 +331,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Hit")
 	virtual void SetHitState(bool bNewIsHit, float AutoResetTime = 0.5f);
 
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void ProcessDamageOnly(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
-	
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<ASLBaseAIController> AIController;
@@ -467,7 +468,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|HitReaction")
 	float HitDamageThreshold;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|HitReaction")
 	float AccumulatedDamage;
 
@@ -476,4 +477,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool bIsSpecialPattern;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	FSLBossHpDelegateBuffer OnBossHpChanged;
 };

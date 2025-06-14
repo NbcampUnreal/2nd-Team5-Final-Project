@@ -410,7 +410,7 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
 {
     if (!IsInvincibility)
     {
-        CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+        SetCurrentHealth(CurrentHealth - DamageAmount);
 
         if (DamageCauser)
         {

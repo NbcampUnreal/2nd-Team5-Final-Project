@@ -51,15 +51,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Set All Meshes Alpha"))
 	void SetAllMeshesAlpha(float AlphaValue);
 
-	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Fade All Meshes"))
-	void FadeAllMeshes(float TargetAlpha, float Duration);
-
-	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Set Mesh Alpha By Index"))
-	void SetMeshAlphaByIndex(int32 MeshIndex, float AlphaValue);
-
-	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Fade Mesh By Index"))
-	void FadeMeshByIndex(int32 MeshIndex, float TargetAlpha, float Duration);
-
 protected:
 	virtual void BeginPlay() override;
 

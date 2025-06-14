@@ -47,56 +47,35 @@ AActor* USLBossAnimInstance::SpawnActorToThrow(TSubclassOf<AActor> ActorClass, F
 {
     if (!ActorClass || !OwningCharacter || !GetWorld())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot spawn actor: Invalid actor class or owner"));
+        UE_LOG(LogTemp, Warning, TEXT("Cannot spawn actor: Invalid parameters"));
         return nullptr;
     }
     
-    if (!OwningCharacter->GetMesh()->DoesSocketExist(SocketName))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on character mesh"), *SocketName.ToString());
-        return nullptr;
-    }
-    
-    FVector SpawnLocation = OwningCharacter->GetActorLocation(); 
+    // 스폰 위치는 소켓 위치로
+    FVector SpawnLocation = OwningCharacter->GetMesh()->GetSocketLocation(SocketName);
     FRotator SpawnRotation = OwningCharacter->GetActorRotation();
     
     FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     SpawnParams.Owner = OwningCharacter;
     
     AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(ActorClass, SpawnLocation, SpawnRotation, SpawnParams);
     
     if (SpawnedActor)
     {
-        // 루트 컴포넌트 가져오기
-        USceneComponent* RootComp = SpawnedActor->GetRootComponent();
-        if (RootComp)
+        // 소켓에 어태치
+        SpawnedActor->AttachToComponent(
+            OwningCharacter->GetMesh(),
+            FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+            SocketName
+        );
+        
+        // 충돌 비활성화 (던질 때까지)
+        if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(SpawnedActor->GetRootComponent()))
         {
-            // 물리 설정
-            UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(RootComp);
-            if (PrimComp)
-            {
-                PrimComp->SetSimulatePhysics(false);
-                PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-            }
-            
-            // 소켓에 어태치
-            RootComp->AttachToComponent(
-                OwningCharacter->GetMesh(),
-                FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-                SocketName
-            );
-            
-            // 위치 및 회전 재설정
-            RootComp->SetRelativeLocation(FVector::ZeroVector);
-            RootComp->SetRelativeRotation(FRotator::ZeroRotator);
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Spawned actor does not have a valid root component"));
+            PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         }
         
-        // 생성된 액터 저장
         ActorToThrow = SpawnedActor;
     }
     
@@ -111,117 +90,79 @@ AActor* USLBossAnimInstance::ThrowActorAtTarget(float LaunchSpeed, float TimeToT
         return nullptr;
     }
     
-    // 소켓 존재 여부 확인
-    if (!OwningCharacter->GetMesh()->DoesSocketExist(SocketName))
+    // 현재 액터의 위치 (이미 소켓에 어태치되어 있음)
+    FVector StartLocation = ActorToThrow->GetActorLocation();
+    
+    // 소켓이 지정되어 있고 유효한 경우, 소켓 위치 사용
+    if (SocketName != NAME_None && OwningCharacter->GetMesh()->DoesSocketExist(SocketName))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist on character mesh"), *SocketName.ToString());
-        return nullptr;
+        StartLocation = OwningCharacter->GetMesh()->GetSocketLocation(SocketName);
     }
     
-    FVector StartLocation = OwningCharacter->GetMesh()->GetSocketLocation(SocketName);
-
-    // 액터 디태치 및 위치 설정
+    // 액터 디태치
     USceneComponent* RootComp = ActorToThrow->GetRootComponent();
     if (RootComp && RootComp->GetAttachParent() != nullptr)
     {
-        // 물리 시뮬레이션 일시 중지
-        UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(RootComp);
-        if (PrimComp)
-        {
-            PrimComp->SetSimulatePhysics(false);
-            PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        }
-    
-        // 디태치
         RootComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-    
-        ActorToThrow->SetActorLocation(StartLocation);
-    
-        // 물리 시뮬레이션 활성화
-        if (PrimComp)
-        {
-            PrimComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
-            PrimComp->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
-        
-            PrimComp->SetSimulatePhysics(true);
-            PrimComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-            PrimComp->IgnoreActorWhenMoving(OwningCharacter, true);
-        }
     }
     
-    FVector TargetLocation = TargetCharacter->GetActorLocation();
+    // 디태치 후 정확한 위치로 설정
+    ActorToThrow->SetActorLocation(StartLocation);
     
+    // 타겟 위치 계산
+    FVector TargetLocation = TargetCharacter->GetActorLocation();
     if (UCapsuleComponent* CapsuleComp = TargetCharacter->FindComponentByClass<UCapsuleComponent>())
     {
-        float HalfHeight = CapsuleComp->GetScaledCapsuleHalfHeight();
-        TargetLocation.Z += HalfHeight * 0.7f; // 머리 높이 타겟팅
-    }
-    else
-    {
-        TargetLocation.Z += 100.0f; // 캡슐이 없는 경우 임의 높이 추가
+        TargetLocation.Z += CapsuleComp->GetScaledCapsuleHalfHeight() * 0.5f; // 가슴 높이
     }
     
-    // 시간 확인 (최소값 보장)
-    TimeToTarget = FMath::Max(TimeToTarget, 0.5f);
-    
-    // 프로젝타일 컴포넌트 설정
+    // ProjectileMovementComponent 가져오기
     UProjectileMovementComponent* ProjectileMovement = ActorToThrow->FindComponentByClass<UProjectileMovementComponent>();
-    if (ProjectileMovement)
-    {
-        ProjectileMovement->DestroyComponent();
-    }
-    
-    ProjectileMovement = NewObject<UProjectileMovementComponent>(ActorToThrow, UProjectileMovementComponent::StaticClass());
     if (!ProjectileMovement)
     {
+        UE_LOG(LogTemp, Warning, TEXT("Actor does not have ProjectileMovementComponent"));
+        ActorToThrow = nullptr;
         return nullptr;
     }
-    ProjectileMovement->RegisterComponent();
     
-    // 물리 설정
-    UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(ActorToThrow->GetRootComponent());
-    if (PrimComp)
+    // 초기 발사 방향 계산 (약간 위쪽으로)
+    FVector Direction = TargetLocation - StartLocation;
+    Direction.Normalize();
+    
+    // 위쪽으로 각도 추가 (15~30도)
+    float UpwardAngle = FMath::DegreesToRadians(20.0f);
+    float CurrentPitch = FMath::Atan2(Direction.Z, FVector(Direction.X, Direction.Y, 0).Size());
+    float NewPitch = CurrentPitch + UpwardAngle;
+    
+    FVector LaunchDirection;
+    LaunchDirection.X = Direction.X * FMath::Cos(UpwardAngle);
+    LaunchDirection.Y = Direction.Y * FMath::Cos(UpwardAngle);
+    LaunchDirection.Z = FMath::Sin(NewPitch);
+    LaunchDirection.Normalize();
+    
+    // Owner 무시 설정
+    if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(RootComp))
     {
-        PrimComp->SetSimulatePhysics(true);
-        PrimComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         PrimComp->IgnoreActorWhenMoving(OwningCharacter, true);
+        PrimComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     }
     
-    // 중력 값
-    float GravityZ = FMath::Abs(GetWorld()->GetGravityZ());
-    if (GravityZ < KINDA_SMALL_NUMBER)
-    {
-        GravityZ = 980.0f;
-    }
+    // ProjectileMovementComponent 설정
+    ProjectileMovement->Velocity = LaunchDirection * LaunchSpeed;
+    ProjectileMovement->InitialSpeed = LaunchSpeed;
+    ProjectileMovement->MaxSpeed = LaunchSpeed * 1.5f;
     
-    FVector PositionDelta = TargetLocation - StartLocation;
+    // 호밍 설정 (정확한 도착을 위해)
+    ProjectileMovement->bIsHomingProjectile = true;
+    ProjectileMovement->HomingTargetComponent = TargetCharacter->GetRootComponent();
+    ProjectileMovement->HomingAccelerationMagnitude = LaunchSpeed * 2.0f; // 호밍 강도
     
-    // 수평 속도: 거리/시간
-    FVector HorizontalVelocity = FVector(PositionDelta.X, PositionDelta.Y, 0.0f) / TimeToTarget;
+    // 활성화
+    ProjectileMovement->Activate();
     
-    // 수직 속도: 중력 보정 포함
-    float VerticalVelocity = PositionDelta.Z / TimeToTarget + 0.5f * GravityZ * TimeToTarget;
+    UE_LOG(LogTemp, Warning, TEXT("Throwing with homing from: %s to: %s"), *StartLocation.ToString(), *TargetLocation.ToString());
     
-    // 최종 발사 속도
-    FVector LaunchVelocity = HorizontalVelocity;
-    LaunchVelocity.Z = VerticalVelocity;
-    
-    // 최대 속도 제한
-    float CalculatedSpeed = LaunchVelocity.Size();
-    if (CalculatedSpeed > LaunchSpeed)
-    {
-        LaunchVelocity = LaunchVelocity * (LaunchSpeed / CalculatedSpeed);
-    }
-    
-    // 프로젝타일 설정 적용
-    ProjectileMovement->bRotationFollowsVelocity = true;
-    ProjectileMovement->bShouldBounce = false;
-    ProjectileMovement->ProjectileGravityScale = 1.0f;
-    ProjectileMovement->Velocity = LaunchVelocity;
-    ProjectileMovement->InitialSpeed = LaunchVelocity.Size();
-    ProjectileMovement->MaxSpeed = LaunchVelocity.Size() * 1.1f;
-    
-    // 액터 던진 후 참조 해제
+    // 액터 참조 해제
     AActor* ThrownActor = ActorToThrow;
     ActorToThrow = nullptr;
     

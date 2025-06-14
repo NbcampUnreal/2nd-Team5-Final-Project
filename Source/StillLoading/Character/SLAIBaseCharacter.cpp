@@ -97,7 +97,6 @@ void ASLAIBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//CurrentHealth = MaxHealth;
 	AIController = Cast<ASLBaseAIController>(GetController());
 	AnimInstancePtr = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
 
@@ -135,14 +134,12 @@ void ASLAIBaseCharacter::BeginPlay()
 		}
 	}
 
-	
 	IsHitReaction = false;
 	IsDead = false;
-	CurrentHealth = MaxHealth;
+	SetCurrentHealth(MaxHealth);
 	CombatPhase = ECombatPhase::ECP_Phase_None;
 	bCanBeExecuted = false;
 	bIsBeingExecuted = false;
-	
 }
 
 void ASLAIBaseCharacter::Landed(const FHitResult& Hit)
@@ -258,7 +255,23 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 
 void ASLAIBaseCharacter::SetCurrentHealth(float NewHealth)
 {
-	CurrentHealth = NewHealth;
+	float PreviousHealth = CurrentHealth;
+	CurrentHealth = FMath::Clamp(NewHealth, 0.0f, MaxHealth);
+    
+	// 체력이 실제로 변경된 경우에만 델리게이트 호출
+	if (PreviousHealth != CurrentHealth)
+	{
+		OnBossHpChanged.OnBossHpChanged.Broadcast(MaxHealth, CurrentHealth);
+
+		if (AIController)
+		{
+			if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+			{
+				BlackboardComponent->SetValueAsFloat(FName("CurrentHealth"), CurrentHealth);
+				BlackboardComponent->SetValueAsFloat(FName("MaxHealth"), MaxHealth);
+			}
+		}
+	}
 }
 
 void ASLAIBaseCharacter::SetIsHitReaction(bool bNewIsHitReaction)
@@ -431,76 +444,75 @@ UBattleComponent* ASLAIBaseCharacter::GetBattleComponent()
 
 void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
 {
-	// 이미 처형 중이면 무시
-	if (bIsBeingExecuted)
-	{
-		return;
-	}
+    // 이미 처형 중이면 무시
+    if (bIsBeingExecuted)
+    {
+        return;
+    }
     
-	// 처형 공격인지 확인
-	if (AnimType == EAttackAnimType::AAT_FinalAttackA || 
-		AnimType == EAttackAnimType::AAT_FinalAttackB || 
-		AnimType == EAttackAnimType::AAT_FinalAttackC)
-	{
-		if (CanBeExecuted())
-		{
-			bIsBeingExecuted = true;  // 처형 상태로 설정
-			PlayExecutionAnimation(AnimType, DamageCauser);
-			return;
-		}
-	}
-	
-	// 데미지 적용
-    CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+    // 처형 공격인지 확인
+    if (AnimType == EAttackAnimType::AAT_FinalAttackA || 
+        AnimType == EAttackAnimType::AAT_FinalAttackB || 
+        AnimType == EAttackAnimType::AAT_FinalAttackC)
+    {
+        if (CanBeExecuted())
+        {
+            bIsBeingExecuted = true;  // 처형 상태로 설정
+            PlayExecutionAnimation(AnimType, DamageCauser);
+            return;
+        }
+    }
+    
+    SetCurrentHealth(CurrentHealth - DamageAmount);
 
-	if (DamageCauser)
-	{
-		UAISense_Damage::ReportDamageEvent(
-			GetWorld(),
-			this,           // 데미지 받은 액터
-			DamageCauser,   // 데미지 준 액터
-			DamageAmount,   // 데미지 양
-			GetActorLocation(), // 데미지 받은 위치
-			HitResult.Location  // 히트 위치
-		);
-	}
-	
+    if (DamageCauser)
+    {
+        UAISense_Damage::ReportDamageEvent(
+            GetWorld(),
+            this,           // 데미지 받은 액터
+            DamageCauser,   // 데미지 준 액터
+            DamageAmount,   // 데미지 양
+            GetActorLocation(), // 데미지 받은 위치
+            HitResult.Location  // 히트 위치
+        );
+    }
+    
     if (CurrentHealth <= 0.0f)
     {
-    	ProcessDeath();
-    	return;
+        ProcessDeath();
+        return;
     }
     else if (DamageCauser && ShouldPlayHitReaction(DamageAmount))
     {
-    	// 애님 인스턴스에 설정하는 대신 캐릭터 멤버 변수에 직접 설정
-    	FVector AttackerLocation = DamageCauser->GetActorLocation();
-    	FVector DirectionVector = AttackerLocation - GetActorLocation();
-    	DirectionVector.Normalize();
+        // 애님 인스턴스에 설정하는 대신 캐릭터 멤버 변수에 직접 설정
+        FVector AttackerLocation = DamageCauser->GetActorLocation();
+        FVector DirectionVector = AttackerLocation - GetActorLocation();
+        DirectionVector.Normalize();
         
-    	FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
+        FVector LocalHitDirection = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
         
-    	// 히트 방향 결정
-    	float AbsX = FMath::Abs(LocalHitDirection.X);
-    	float AbsY = FMath::Abs(LocalHitDirection.Y);
+        // 히트 방향 결정
+        float AbsX = FMath::Abs(LocalHitDirection.X);
+        float AbsY = FMath::Abs(LocalHitDirection.Y);
 
-    	if (AbsY > AbsX)
-    	{
-    		HitDirection = (LocalHitDirection.Y > 0) ? EHitDirection::EHD_Right : EHitDirection::EHD_Left;
-    	}
-    	else 
-    	{
-    		HitDirection = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
-    	}
+        if (AbsY > AbsX)
+        {
+            HitDirection = (LocalHitDirection.Y > 0) ? EHitDirection::EHD_Right : EHitDirection::EHD_Left;
+        }
+        else 
+        {
+            HitDirection = (LocalHitDirection.X > 0) ? EHitDirection::EHD_Front : EHitDirection::EHD_Back;
+        }
 
-    	HitDirectionVector = LocalHitDirection;
-    	SetHitState(true, 1.0f);
+        HitDirectionVector = LocalHitDirection;
+        SetHitState(true, 1.0f);
     }
 
-	if (HitEffectComponent)
-	{
-		HitEffectComponent->SetWorldLocation(HitResult.Location);
-		HitEffectComponent->ActivateSystem();
-	}
+    if (HitEffectComponent)
+    {
+        HitEffectComponent->SetWorldLocation(HitResult.Location);
+        HitEffectComponent->ActivateSystem();
+    }
 }
 
 void ASLAIBaseCharacter::OnLanded(const FHitResult& Hit)
@@ -1124,28 +1136,6 @@ void ASLAIBaseCharacter::SetHitState(bool bNewIsHit, float AutoResetTime)
 		{
 			bIsHit = false;
 		}, AutoResetTime, false);
-	}
-}
-
-void ASLAIBaseCharacter::ProcessDamageOnly(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
-{
-	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
-
-	if (DamageCauser)
-	{
-		UAISense_Damage::ReportDamageEvent(GetWorld(), this, DamageCauser, DamageAmount, GetActorLocation(), HitResult.Location);
-	}
-    
-	if (CurrentHealth <= 0.0f)
-	{
-		ProcessDeath();
-		return;
-	}
-
-	if (HitEffectComponent)
-	{
-		HitEffectComponent->SetWorldLocation(HitResult.Location);
-		HitEffectComponent->ActivateSystem();
 	}
 }
 
