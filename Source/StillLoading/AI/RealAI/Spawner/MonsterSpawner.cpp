@@ -17,6 +17,27 @@ AMonsterSpawner::AMonsterSpawner()
 	SpawnArea->SetCollisionResponseToAllChannels(ECR_Ignore);
 }
 
+void AMonsterSpawner::SpawnActorAtLocation(const TSubclassOf<AActor> ActorToSpawn, const FVector& SpawnLocation, FMonsterSpawnedInfo& OutMonsterInfo)
+{
+	if (!GetWorld() || !ActorToSpawn)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpawnActorAtLocation: World or ActorToSpawn is not valid."));
+		return;
+	}
+
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+	AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(
+		ActorToSpawn,
+		SpawnLocation,
+		FRotator::ZeroRotator,
+		Params
+	);
+
+	OutMonsterInfo.SpawnedMonster = SpawnedActor;
+}
+
 void AMonsterSpawner::BeginPlay()
 {
 	Super::BeginPlay();

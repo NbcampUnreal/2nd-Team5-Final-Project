@@ -14,6 +14,7 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/RadarComponent/CollisionRadarComponent.h"
+#include "Character/Skill/SLSkillComponent.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "Controller/SLBasePlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -627,7 +628,16 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
-	BeginBuff();
+	//BeginBuff();
+	Test();
+}
+
+void UMovementHandlerComponent::Test()
+{
+	if (USLSkillComponent* SkillComp = OwnerCharacter->FindComponentByClass<USLSkillComponent>())
+	{
+		SkillComp->ActivateSkill(EActiveSkillType::AST_Spawn);
+	}
 }
 
 void UMovementHandlerComponent::Attack()
@@ -796,7 +806,7 @@ void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool 
 		else
 		{
 			OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic3);
-			CachedCombatComponent->StartCharging();
+			//CachedCombatComponent->StartCharging();
 		}
 	}
 	else if (SectionName == "Attack2")
@@ -1039,7 +1049,7 @@ void UMovementHandlerComponent::ToggleCameraZoom(const bool bIsZoomedOut, const 
 	}
 }
 
-void UMovementHandlerComponent::Dodge()
+void UMovementHandlerComponent::SpawnSword()
 {
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AirBlock) || OwnerCharacter->GetMovementComponent()->
 		IsFalling())
@@ -1048,9 +1058,14 @@ void UMovementHandlerComponent::Dodge()
 		return;
 	}
 
-	ToggleCameraZoom(false);
+	if (USLSkillComponent* SkillComp = OwnerCharacter->FindComponentByClass<USLSkillComponent>())
+	{
+		SkillComp->ActivateSkill(EActiveSkillType::AST_Spawn);
+	}
+
+	ToggleCameraZoom(false, 1000.f);
 	CachedMontageComponent->PlaySkillMontage(FName("Dodge"));
-	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack_SpawnSword);
 }
 
 void UMovementHandlerComponent::Airborne()
@@ -1242,7 +1257,7 @@ void UMovementHandlerComponent::HandleBufferedInput(ESkillType Action)
 		Block(true);
 		break;
 	case ESkillType::ST_Dodge:
-		Dodge();
+		SpawnSword();
 		break;
 	case ESkillType::ST_Airborne:
 		Airborne();

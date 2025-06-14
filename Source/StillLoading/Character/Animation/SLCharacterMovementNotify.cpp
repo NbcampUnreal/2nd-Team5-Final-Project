@@ -56,6 +56,13 @@ void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 		Character->OnEmpoweredStateChanged(true);
 		break;
 
+	case ECharacterMovementAction::CMA_DestroySword:
+		if (Character->Sword)
+		{
+			Character->Sword->Destroy();
+		}
+		break;
+
 	default: break;
 	}
 }
