@@ -204,7 +204,7 @@ public:
 	EChapter GetChapter() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
-	ASLAIProjectile* SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName = NAME_None, float ProjectileSpeed = 2000.0f, EAttackAnimType AnimType = EAttackAnimType::AAT_Attack_01, bool bHorizontalOnly = false );
+	ASLAIProjectile* SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName = NAME_None, float ProjectileSpeed = 2000.0f, EAttackAnimType AnimType = EAttackAnimType::AAT_Attack_01, bool bHorizontalOnly = false);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
 	FRotator CalculateProjectileRotation(const FVector& StartLocation, const FVector& TargetLocation) const;
@@ -302,7 +302,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void NotifyPatternFinished();
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Delegate")
 	FSLBossHpDelegateBuffer& GetBossHpChangedDelegate() { return OnBossHpChanged; }
 	

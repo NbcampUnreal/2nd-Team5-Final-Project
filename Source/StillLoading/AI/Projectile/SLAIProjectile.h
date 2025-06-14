@@ -32,6 +32,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	void SetupSpawnedProjectile(EAttackAnimType AnimType, float Speed);
 protected:
+	virtual void BeginPlay() override;
+	
 	// --- Components ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USphereComponent> CollisionComp;

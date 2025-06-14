@@ -551,6 +551,12 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
 
     FVector SpawnLocation = GetMesh()->GetSocketLocation(SocketName);
     
+    // bHorizontalOnly가 true일 때 스폰 위치의 높이를 타겟 높이에 맞춰 조정
+    if (bHorizontalOnly)
+    {
+        SpawnLocation.Z = TargetLocation.Z;
+    }
+    
     if (TargetLocation.IsZero() || TargetLocation.IsNearlyZero())
     {
         TargetLocation = SpawnLocation + GetActorForwardVector() * 1000.0f;
@@ -573,8 +579,8 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
         // 수평 방향에 대한 Yaw 값만 계산
         FRotator HorizontalRotation = HorizontalDirection.Rotation();
         
-        // 최종 회전값: 현재 Pitch와 Roll 유지, Yaw만 타겟 방향으로 설정
-        SpawnRotation = FRotator(CurrentRotation.Pitch, HorizontalRotation.Yaw, CurrentRotation.Roll);
+        // 최종 회전값: Pitch는 0, Roll은 현재 값 유지, Yaw만 타겟 방향으로 설정
+        SpawnRotation = FRotator(0.0f, HorizontalRotation.Yaw, CurrentRotation.Roll);
         
         // 발사 방향도 수평으로만 설정
         LaunchDirection = HorizontalDirection;
