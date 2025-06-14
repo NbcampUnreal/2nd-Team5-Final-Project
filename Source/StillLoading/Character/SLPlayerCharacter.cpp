@@ -3,12 +3,12 @@
 #include "BattleComponent/BattleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "CombatHandlerComponent/CombatHandlerComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GamePlayTag/GamePlayTag.h"
 #include "Item/SLDefaultSword.h"
 #include "Item/SLItem.h"
+#include "MontageComponent/AnimationMontageComponent.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
 
 ASLPlayerCharacter::ASLPlayerCharacter()
@@ -62,6 +62,33 @@ void ASLPlayerCharacter::BeginPlay()
 	if (UCombatHandlerComponent* CombatHandler = FindComponentByClass<UCombatHandlerComponent>())
 	{
 		CombatHandler->OnEmpoweredStateChanged.AddDynamic(this, &ASLPlayerCharacter::OnEmpoweredStateChanged);
+	}
+
+	CachedMontageComponent = FindComponentByClass<UAnimationMontageComponent>();
+}
+
+void ASLPlayerCharacter::SwordFromSky()
+{
+	if (CachedMontageComponent)
+	{
+		CachedMontageComponent->PlaySkillMontage("SwordFromSky");
+	}
+}
+
+void ASLPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (Sword)
+	{
+		Sword->Destroy();
+		Sword = nullptr;
+	}
+
+	if (Shield)
+	{
+		Shield->Destroy();
+		Shield = nullptr;
 	}
 }
 
