@@ -19,9 +19,9 @@ AFallingSword::AFallingSword()
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->InitialSpeed = 50.f;
-	ProjectileMovement->MaxSpeed = 2000.f;
+	ProjectileMovement->MaxSpeed = 5000.f;
 	ProjectileMovement->bRotationFollowsVelocity = false;
-	ProjectileMovement->ProjectileGravityScale = 1.0f;
+	ProjectileMovement->ProjectileGravityScale = 2.0f;
 	ProjectileMovement->SetUpdatedComponent(RootComponent);
 }
 

@@ -628,16 +628,7 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 void UMovementHandlerComponent::Interact()
 {
 	// TODO: 인터랙션 대상 탐색 및 처리
-	//BeginBuff();
-	Test();
-}
-
-void UMovementHandlerComponent::Test()
-{
-	if (USLSkillComponent* SkillComp = OwnerCharacter->FindComponentByClass<USLSkillComponent>())
-	{
-		SkillComp->ActivateSkill(EActiveSkillType::AST_Spawn);
-	}
+	BeginBuff();
 }
 
 void UMovementHandlerComponent::Attack()
@@ -1057,6 +1048,8 @@ void UMovementHandlerComponent::SpawnSword()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
 		return;
 	}
+
+	if (!CachedCombatComponent->IsEmpowered()) return;
 
 	if (USLSkillComponent* SkillComp = OwnerCharacter->FindComponentByClass<USLSkillComponent>())
 	{

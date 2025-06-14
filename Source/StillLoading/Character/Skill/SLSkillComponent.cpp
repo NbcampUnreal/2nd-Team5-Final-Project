@@ -25,6 +25,10 @@ void USLSkillComponent::ActiveSpawnSkill()
 
 		if (OutMonsterInfo.SpawnedMonster)
 		{
+			const FRotator OwnerRotation = GetOwner()->GetActorRotation();
+			const FRotator LookDirection = FRotator(0.0f, OwnerRotation.Yaw, 0.0f);
+
+			OutMonsterInfo.SpawnedMonster->SetActorRotation(LookDirection);
 			OutMonsterInfo.SpawnedMonster->SetLifeSpan(7.0f);
 		}
 
@@ -45,7 +49,7 @@ void USLSkillComponent::ActiveSpawnSkill()
 
 			if (GetWorld())
 			{
-				GetWorld()->SpawnActor<AFallingSword>(SwordClassToSpawn, SpawnLocation, FRotator(0, 0, 0), SpawnParams);
+				GetWorld()->SpawnActor<AFallingSword>(SwordClassToSpawn, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 			}
 		}
 	}
