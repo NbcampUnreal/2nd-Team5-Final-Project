@@ -156,8 +156,6 @@ private:
 	void RotateToHitCauser(const AActor* Causer, FRotator &TargetRotation, bool &bIsHitFromBack);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
 
-	void Test();
-
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
 	UPROPERTY()
