@@ -7,6 +7,7 @@
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
+class USLSoundSubsystem;
 class USLBattleSoundSubsystem;
 class UCollisionRadarComponent;
 class UCombatHandlerComponent;
@@ -137,7 +138,7 @@ protected:
 
 private:
 	UFUNCTION()
-	USLBattleSoundSubsystem* GetBattleSoundSubSystem() const;
+	USLSoundSubsystem* GetBattleSoundSubSystem() const;
 	
 	void Attack();
 	void BeginAttack();
@@ -171,7 +172,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
 	UPROPERTY()
-	TObjectPtr<USLBattleSoundSubsystem> CachedBattleSoundSubsystem;
+	TObjectPtr<USLSoundSubsystem> CachedBattleSoundSubsystem;
 	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;
 	UPROPERTY()

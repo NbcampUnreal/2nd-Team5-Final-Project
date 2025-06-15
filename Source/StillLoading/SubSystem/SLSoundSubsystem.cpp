@@ -70,6 +70,20 @@ void USLSoundSubsystem::StopBgmSound()
 	}
 }
 
+void USLSoundSubsystem::PlayBattleSound(EBattleSoundType SoundType, const FVector& Location)
+{
+	CheckValidOfSoundDataAsset();
+
+	USoundBase* SoundSource = SoundDataAsset->GetBattleSoundSource(SoundType);
+
+	if (!IsValid(SoundSource))
+	{
+		return;
+	}
+	
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), SoundSource, Location, FRotator::ZeroRotator, EffectVolume);
+}
+
 void USLSoundSubsystem::SetBgmVolume(float VolumeValue)
 {
 	BgmVolume = FMath::Clamp(VolumeValue, 0.0f, 1.0f);

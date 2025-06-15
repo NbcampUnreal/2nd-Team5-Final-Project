@@ -5,6 +5,8 @@
 #include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
+class USLSoundSubsystem;
+class USLBattleSoundSubsystem;
 class AAISquadManager;
 class UTimelineComponent;
 class UWidgetComponent;
@@ -166,6 +168,9 @@ private:
 	void StepBackward(const float DeltaTime);
 	UFUNCTION()
 	void WatchTarget(float DeltaTime);
+
+	UFUNCTION()
+	USLSoundSubsystem* GetBattleSoundSubSystem() const;
 
 	UPROPERTY()
 	TObjectPtr<AActor> LastAttacker;

@@ -23,6 +23,8 @@ public:
 	void PlayBgmSound(ESLBgmSoundType SoundType);
 	void StopBgmSound();
 
+	void PlayBattleSound(EBattleSoundType SoundType, const FVector& Location);
+
 	void SetBgmVolume(float VolumeValue);
 	void SetEffectVolume(float VolumeValue);
 

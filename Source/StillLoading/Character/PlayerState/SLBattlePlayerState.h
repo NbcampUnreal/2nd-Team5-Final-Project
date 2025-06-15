@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "UI/Struct/SLInGameDelegateBuffers.h"
 #include "SLBattlePlayerState.generated.h"
 
 class UCharacterStatData;
@@ -28,6 +29,11 @@ public:
 	void SetMaxSpeed(float NewMaxSpeed);
 	UFUNCTION()
 	void IncreaseBurningGage(float Amount);
+
+	UFUNCTION()
+	FSLSpecialValueDelegateBuffer& GetGageDelegate() { return GageDelegate; }
+	UFUNCTION()
+	FSLPlayerHpDelegateBuffer& GetHPDelegate() { return HPDelegate; }
 
 	UFUNCTION()
 	FORCEINLINE float GetBurningGage() const { return BurningGage; }
@@ -59,11 +65,17 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_BurningGage, BlueprintReadOnly, Category = "Stat")
 	float BurningGage = 0.f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stat")
+	float MaxBurningGage = 100.f;
+
 private:
 	UFUNCTION()
 	void UpdateGauge();
 
 	FTimerHandle GaugeUpdateTimerHandle;
 
-	
+	UPROPERTY()
+	FSLSpecialValueDelegateBuffer GageDelegate;
+	UPROPERTY()
+	FSLPlayerHpDelegateBuffer HPDelegate;
 };
