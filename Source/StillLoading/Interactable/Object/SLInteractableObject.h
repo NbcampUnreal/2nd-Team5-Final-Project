@@ -17,8 +17,11 @@ class STILLLOADING_API ASLInteractableObject : public ASLInteractableObjectBase
 
 public:
 	ASLInteractableObject();
+	
 	UFUNCTION(BlueprintCallable, Category = "InteractableObject")
 	void SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandler);
+	UFUNCTION(BlueprintCallable, Category = "InteractableObject")
+	USLTalkHandlerBase* GetCurrentTalkHandler();
 	
 protected:
 	virtual void BeginPlay() override;
