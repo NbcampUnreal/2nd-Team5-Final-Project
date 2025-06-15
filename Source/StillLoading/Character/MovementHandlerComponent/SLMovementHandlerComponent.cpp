@@ -350,6 +350,7 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 			CachedMontageComponent->PlayBlockMontage(FName("BlockBreak"));
 			BlockCount = 0;
 			LastBlockTime = 0;
+			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuardBreak, OwnerCharacter->GetActorLocation());
 
 			if (!GetWorld()->GetTimerManager().IsTimerActive(DelayTimerHandle))
 			{
@@ -368,6 +369,7 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 			HitDirection(Causer);
 			const float CurrentTime = GetWorld()->GetTimeSeconds();
 			LastBlockTime = CurrentTime;
+			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuard, OwnerCharacter->GetActorLocation());
 
 			CachedMontageComponent->PlayBlockMontage(FName("BlockHit"));
 			++BlockCount;
@@ -617,6 +619,8 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 	default:
 		break;
 	}
+
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterWalk, OwnerCharacter->GetActorLocation());
 }
 
 void UMovementHandlerComponent::Interact()
@@ -930,6 +934,7 @@ void UMovementHandlerComponent::DodgeLoco()
 	CachedMontageComponent->PlayDodgeMontage(MontageToPlay);
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterDodge, OwnerCharacter->GetActorLocation());
 }
 
 void UMovementHandlerComponent::ToggleMenu()

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "SLSoundTypes.generated.h"
 
 UENUM(BlueprintType)
@@ -42,8 +41,10 @@ enum class EBattleSoundType : uint8
 	BST_CharacterAttack			UMETA(DisplayName = "Character Attack"),
 	BST_CharacterHit			UMETA(DisplayName = "Character Hit"),
 	BST_CharacterWalk			UMETA(DisplayName = "Character Walk"),
+	BST_CharacterDodge			UMETA(DisplayName = "Character Dodge"),
 	BST_CharacterSpirit			UMETA(DisplayName = "Character Spirit"),
 	BST_CharacterGuard			UMETA(DisplayName = "Character Guard"),
+	BST_CharacterGuardBreak		UMETA(DisplayName = "Character GuardBreak"),
 	BST_CharacterSkill			UMETA(DisplayName = "Character Skill"),
 
 	// Monster
