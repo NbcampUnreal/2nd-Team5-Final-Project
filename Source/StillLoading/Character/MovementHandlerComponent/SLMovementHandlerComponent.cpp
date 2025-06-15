@@ -619,8 +619,6 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 	default:
 		break;
 	}
-
-	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterWalk, OwnerCharacter->GetActorLocation());
 }
 
 void UMovementHandlerComponent::Interact()
