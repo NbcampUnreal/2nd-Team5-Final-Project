@@ -13,7 +13,7 @@ enum class EHitAnimType : uint8 // 애니메이션 기준
 	HAT_WeakHit UMETA(DisplayName = "Weak Hit"),
 	HAT_AirHit UMETA(DisplayName = "Weak Hit"),
 	HAT_HardHit UMETA(DisplayName = "Hard Hit"),
-	HAT_Exhausterd UMETA(DisplayName = "Exhausterd Hit"),
+	HAT_Exhausterd UMETA(DisplayName = "Exhausterd Hit"), // 탈진
 	HAT_FallBack UMETA(DisplayName = "FallBack Hit"),
 	HAT_AirBorne UMETA(DisplayName = "Air Borne Hit"),
 	HAT_AirUp UMETA(DisplayName = "Air Up Hit"),
