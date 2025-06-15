@@ -24,11 +24,21 @@ void ASLInteractableObject::SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandle
 	CurrentTalkHandler = TalkHandler;
 }
 
-void ASLInteractableObject::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+USLTalkHandlerBase* ASLInteractableObject::GetCurrentTalkHandler()
 {
 	if (CurrentTalkHandler.IsValid())
 	{
-		if (USLBaseTextPrintWidget* TextWidget = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Object, TargetName, CurrentTalkHandler->GetTalkName()))
+		return CurrentTalkHandler.Get();
+	}
+	CurrentTalkHandler = DefaultTalkHandler;
+	return DefaultTalkHandler;
+}
+
+void ASLInteractableObject::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+{
+	if (USLTalkHandlerBase* TalkHandler = GetCurrentTalkHandler())
+	{
+		if (USLBaseTextPrintWidget* TextWidget = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Object, TargetName, TalkHandler->GetTalkName()))
 		{
 			TextWidget->OnTalkEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentTalkEnd);
 			TextWidget->OnChoiceEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentChoiceEnd);
@@ -39,18 +49,20 @@ void ASLInteractableObject::OnInteracted(const ASLPlayerCharacterBase* InCharact
 
 void ASLInteractableObject::OnCurrentTalkEnd()
 {
-	if (CurrentTalkHandler.IsValid() && IsValid(CurrentTextWidget))
+	USLTalkHandlerBase* TalkHandler = GetCurrentTalkHandler();
+	if (TalkHandler && IsValid(CurrentTextWidget))
 	{
-		CurrentTalkHandler->OnTalkEnd();
+		TalkHandler->OnTalkEnd();
 		CurrentTextWidget->OnTalkEnded.RemoveDynamic(this, &ThisClass::OnCurrentTalkEnd);
 	}
 }
 
 void ASLInteractableObject::OnCurrentChoiceEnd(bool bResult)
 {
-	if (CurrentTalkHandler.IsValid() && IsValid(CurrentTextWidget))
+	USLTalkHandlerBase* TalkHandler = GetCurrentTalkHandler();
+	if (TalkHandler && IsValid(CurrentTextWidget))
 	{
-		CurrentTalkHandler->OnChoiceEnd(bResult);
+		TalkHandler->OnChoiceEnd(bResult);
 		CurrentTextWidget->OnChoiceEnded.RemoveDynamic(this, &ThisClass::OnCurrentChoiceEnd);
 	}
 }
