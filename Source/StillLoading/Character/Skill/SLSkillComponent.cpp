@@ -37,8 +37,6 @@ void USLSkillComponent::ActiveSpawnSkill()
 			DummyPlayerCharacter->Shield->Destroy();
 			DummyPlayerCharacter->SwordFromSky();
 
-			USlowMotionHelper::ApplySlowMotionToPawns(DummyPlayerCharacter, 0.2f, 3.0f);
-
 			const float SpawnHeight = 5000.0f;
 			const FVector SpawnLocation = DummyPlayerCharacter->GetActorLocation() + FVector(0, 0, SpawnHeight);
 

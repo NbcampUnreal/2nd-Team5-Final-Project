@@ -7,6 +7,7 @@
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
+class USLBattleSoundSubsystem;
 class UCollisionRadarComponent;
 class UCombatHandlerComponent;
 class UBattleComponent;
@@ -135,6 +136,9 @@ protected:
 	float DefaultArmLength = 300.f;
 
 private:
+	UFUNCTION()
+	USLBattleSoundSubsystem* GetBattleSoundSubSystem() const;
+	
 	void Attack();
 	void BeginAttack();
 	void Look(const FVector2D& Value);
@@ -166,6 +170,8 @@ private:
 	TObjectPtr<UBattleComponent> CachedBattleComponent;
 	UPROPERTY()
 	TObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
+	UPROPERTY()
+	TObjectPtr<USLBattleSoundSubsystem> CachedBattleSoundSubsystem;
 	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;
 	UPROPERTY()
