@@ -16,6 +16,7 @@ class STILLLOADING_API USLSoundDataAsset : public UDataAsset
 public:
 	USoundBase* GetUISoundSource(ESLUISoundType SoundType);
 	USoundBase* GetBgmSoundSource(ESLBgmSoundType SoundType);
+	USoundBase* GetBattleSoundSource(EBattleSoundType SoundType);
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -23,4 +24,7 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TMap<ESLBgmSoundType, USoundBase*> BgmSoundMap;
+
+	UPROPERTY(EditAnywhere)
+	TMap<EBattleSoundType, USoundBase*> BattleSoundMap;
 };

@@ -70,6 +70,12 @@ void UAnimationMontageComponent::PlayAttackMontage(FName Section)
 		PlayMontage(MontageData->AttackMontage, Section);
 }
 
+void UAnimationMontageComponent::PlayBluePrintableMontage(FName Section)
+{
+	if (MontageData)
+		PlayMontage(MontageData->BluePrintableMontage, Section);
+}
+
 void UAnimationMontageComponent::PlaySkillMontage(FName Section)
 {
 	if (MontageData)

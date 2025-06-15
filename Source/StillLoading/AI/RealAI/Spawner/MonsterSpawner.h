@@ -23,6 +23,15 @@ struct FMonsterSpawnInfo
 	int32 Count = 1;
 };
 
+USTRUCT(BlueprintType)
+struct FMonsterSpawnedInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<AActor> SpawnedMonster;
+};
+
 UCLASS()
 class STILLLOADING_API AMonsterSpawner : public AActor
 {
@@ -31,8 +40,11 @@ class STILLLOADING_API AMonsterSpawner : public AActor
 public:
 	AMonsterSpawner();
 
-	UFUNCTION(BlueprintPure)
-	FVector GetRandomSpawnLocation() const;
+	UFUNCTION(BlueprintCallable, Category = "Spawning")
+	void SpawnActorAtLocation(const TSubclassOf<AActor> ActorToSpawn, const FVector& SpawnLocation, FMonsterSpawnedInfo& OutMonsterInfo);
+
+	UFUNCTION(BlueprintCallable)
+	void SpawnMonstersByType();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawn")
 	TObjectPtr<UBoxComponent> SpawnArea;
@@ -46,8 +58,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintCallable)
-	void SpawnMonstersByType();
+	UFUNCTION(BlueprintPure)
+	FVector GetRandomSpawnLocation() const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> SpawnEffect;

@@ -7,6 +7,8 @@
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
+class USLSoundSubsystem;
+class USLBattleSoundSubsystem;
 class UCollisionRadarComponent;
 class UCombatHandlerComponent;
 class UBattleComponent;
@@ -108,7 +110,7 @@ protected:
 	UFUNCTION()
 	void RemoveInvulnerability() const;
 	UFUNCTION()
-	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
+	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType);
 	UFUNCTION()
 	void HitDirection(AActor* Causer);
 	UFUNCTION()
@@ -135,6 +137,9 @@ protected:
 	float DefaultArmLength = 300.f;
 
 private:
+	UFUNCTION()
+	USLSoundSubsystem* GetBattleSoundSubSystem() const;
+	
 	void Attack();
 	void BeginAttack();
 	void Look(const FVector2D& Value);
@@ -146,7 +151,7 @@ private:
 	void ToggleMenu();
 	void ToggleLockState();
 	void RotateCameraToTarget(const AActor* Target, float DeltaTime);
-	void Dodge();
+	void SpawnSword();
 	void Airborne();
 	void AirUp();
 	void AirDown();
@@ -166,6 +171,8 @@ private:
 	TObjectPtr<UBattleComponent> CachedBattleComponent;
 	UPROPERTY()
 	TObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
+	UPROPERTY()
+	TObjectPtr<USLSoundSubsystem> CachedBattleSoundSubsystem;
 	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;
 	UPROPERTY()

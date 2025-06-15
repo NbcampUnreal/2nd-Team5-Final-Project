@@ -14,11 +14,13 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/RadarComponent/CollisionRadarComponent.h"
+#include "Character/Skill/SLSkillComponent.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "Controller/SLBasePlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "SubSystem/SLSoundSubsystem.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr), CameraFocusTarget(nullptr)
 {
@@ -40,6 +42,8 @@ void UMovementHandlerComponent::BeginPlay()
 
 		CachedRadarComponent->OnActorDetectedEnhanced.
 		                      AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
+
+		CachedBattleSoundSubsystem = GetBattleSoundSubSystem();
 
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
 		BindIMCComponent();
@@ -325,7 +329,7 @@ void UMovementHandlerComponent::RemoveInvulnerability() const
 }
 
 void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
-                                              EAttackAnimType AnimType)
+                                              EHitAnimType AnimType)
 {
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)
 		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)
@@ -377,16 +381,13 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	// 피격
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable, TAG_Character_Empowered});
 	CachedMontageComponent->StopAllMontages(0.2f);
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
 
 	float RemoveDelay = 1.0f;
 
 	switch (AnimType)
 	{
-	case EAttackAnimType::AAT_Attack_01:
-	case EAttackAnimType::AAT_Attack_02:
-	case EAttackAnimType::AAT_Attack_04:
-	case EAttackAnimType::AAT_DashAttack:
-	case EAttackAnimType::AAT_ThrowStone: // 날라가는거
+	case EHitAnimType::HAT_FallBack:
 		ToggleCameraZoom(false);
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
@@ -408,7 +409,7 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Knockback);
 		}
 		return;
-	case EAttackAnimType::AAT_Attack_03: // 기절
+	case EHitAnimType::HAT_Exhausterd:
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
 			OwnerCharacter->SetActorRotation(TargetRotation);
@@ -429,17 +430,11 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Groggy);
 		}
 		return;
-	case EAttackAnimType::AAT_FootAttack_Left:
-	case EAttackAnimType::AAT_FootAttack_Right:
-	case EAttackAnimType::AAT_GroundSlam_01:
-	case EAttackAnimType::AAT_GroundSlam_02:
-	case EAttackAnimType::AAT_AISpecial:
-	case EAttackAnimType::AAT_JumpAttack: // 중간거
+	case EHitAnimType::HAT_HardHit: // 중간거
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
 		RemoveDelay = 1.0f;
 		break;
-	case EAttackAnimType::AAT_Whirlwind: // 약한거
-	case EAttackAnimType::AAT_AINormal:
+	case EHitAnimType::HAT_WeakHit:
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
 		RemoveDelay = 1.0f;
 		break;
@@ -796,7 +791,7 @@ void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool 
 		else
 		{
 			OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic3);
-			CachedCombatComponent->StartCharging();
+			//CachedCombatComponent->StartCharging();
 		}
 	}
 	else if (SectionName == "Attack2")
@@ -1039,7 +1034,7 @@ void UMovementHandlerComponent::ToggleCameraZoom(const bool bIsZoomedOut, const 
 	}
 }
 
-void UMovementHandlerComponent::Dodge()
+void UMovementHandlerComponent::SpawnSword()
 {
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_AirBlock) || OwnerCharacter->GetMovementComponent()->
 		IsFalling())
@@ -1048,9 +1043,16 @@ void UMovementHandlerComponent::Dodge()
 		return;
 	}
 
-	ToggleCameraZoom(false);
+	if (!CachedCombatComponent->IsEmpowered()) return;
+
+	if (USLSkillComponent* SkillComp = OwnerCharacter->FindComponentByClass<USLSkillComponent>())
+	{
+		SkillComp->ActivateSkill(EActiveSkillType::AST_Spawn);
+	}
+
+	ToggleCameraZoom(false, 1000.f);
 	CachedMontageComponent->PlaySkillMontage(FName("Dodge"));
-	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
+	OwnerCharacter->SetPrimaryState(TAG_Character_Attack_SpawnSword);
 }
 
 void UMovementHandlerComponent::Airborne()
@@ -1242,7 +1244,7 @@ void UMovementHandlerComponent::HandleBufferedInput(ESkillType Action)
 		Block(true);
 		break;
 	case ESkillType::ST_Dodge:
-		Dodge();
+		SpawnSword();
 		break;
 	case ESkillType::ST_Airborne:
 		Airborne();
@@ -1265,4 +1267,17 @@ void UMovementHandlerComponent::HandleBufferedInput(ESkillType Action)
 	default:
 		break;
 	}
+}
+
+USLSoundSubsystem* UMovementHandlerComponent::GetBattleSoundSubSystem() const
+{
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GameInstance = World->GetGameInstance())
+		{
+			return GameInstance->GetSubsystem<USLSoundSubsystem>();
+		}
+	}
+
+	return nullptr;
 }

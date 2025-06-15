@@ -13,6 +13,7 @@ enum class ECharacterMovementAction : uint8
 	CMA_LaunchActionSword	UMETA(DisplayName = "Launch Action Sword"),
 	CMA_LaunchActionShield	UMETA(DisplayName = "Launch Action Shield"),
 	CMA_EmpowerSword		UMETA(DisplayName = "EmpowerSword"),
+	CMA_DestroySword		UMETA(DisplayName = "DestroySword"),
 };
 
 UCLASS()

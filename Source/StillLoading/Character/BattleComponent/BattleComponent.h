@@ -13,7 +13,7 @@ class UHitEffectDataAsset;
 
 enum class EAttackAnimType : uint8;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnCharacterHited, AActor*, DamageCauser, float, DamageAmount, const FHitResult&, HitResult, EAttackAnimType, AnimType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnCharacterHited, AActor*, DamageCauser, float, DamageAmount, const FHitResult&, HitResult, EHitAnimType, HitAnimType);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UBattleComponent : public UActorComponent, public IEnemyDeathReceiver
@@ -33,6 +33,8 @@ public:
 	virtual void DoAttackSweep(EAttackAnimType AttackType);
 	UFUNCTION()
 	virtual bool DoSweep(EAttackAnimType AttackType);
+	UFUNCTION()
+	EHitAnimType ConvertAttackAnimType(EAttackAnimType AttackType);
 	UFUNCTION()
 	void ClearHitTargets();
 

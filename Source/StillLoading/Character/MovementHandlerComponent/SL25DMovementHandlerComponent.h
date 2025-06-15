@@ -47,7 +47,7 @@ protected:
 	UFUNCTION()
 	void OnActionCompleted(EInputActionType ActionType);
 	UFUNCTION()
-	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
+	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType);
 	UFUNCTION()
 	void OnDelayedAction();
 	UFUNCTION()

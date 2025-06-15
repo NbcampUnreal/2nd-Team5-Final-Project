@@ -78,6 +78,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Combat")
     FGameplayTagContainer GetAllAttackPatterns() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    FORCEINLINE ASLItem* GetSword() const { return Sword; }
+    
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    FORCEINLINE ASLItem* GetShield() const { return Shield; }
+    
     UFUNCTION(BlueprintCallable, Category = "Combat|Guard")
     void OnGuardSuccess();
 
@@ -124,7 +130,7 @@ public:
     
 protected:
     virtual void BeginPlay() override;
-    virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType) override;
+    virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType AnimType) override;
     virtual void SetHitState(bool bNewIsHit, float AutoResetTime = 0.5f) override;
     virtual void Landed(const FHitResult& Hit) override;
     void InitializePatternMapping();
@@ -141,8 +147,8 @@ protected:
     float GetRandomEvasiveAngle() const;
     float GetFlankingAngle() const;
     void SetHitStateForGuard(AActor* DamageCauser, const FHitResult& HitResult);
-    void OnPlayerAttackReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
-    void ProcessPlayerSpecificReaction(AActor* Causer, EAttackAnimType AnimType);
+    void OnPlayerAttackReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType);
+    void ProcessPlayerSpecificReaction(AActor* Causer, EHitAnimType AnimType);
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Guard")
     int32 MaxGuardCount;

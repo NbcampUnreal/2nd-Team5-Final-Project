@@ -8,6 +8,7 @@
 #include "SLPlayerCharacter.generated.h"
 
 
+class UAnimationMontageComponent;
 enum class EItemType : uint8;
 enum class EOrbitDirection : uint8;
 
@@ -52,6 +53,10 @@ public:
 	UFUNCTION()
 	void OnEmpoweredStateChanged(bool bIsEmpowered);
 
+	// Skill
+	UFUNCTION()
+	void SwordFromSky();
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<ASLItem> SwordClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
@@ -64,9 +69,13 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Landed(const FHitResult& Hit) override;
+
+	UPROPERTY()
+	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
 
 	UFUNCTION(BlueprintCallable, Category = "State")
 	bool IsBlocking() const;

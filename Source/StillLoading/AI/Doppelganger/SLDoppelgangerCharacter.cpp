@@ -353,7 +353,7 @@ float ASLDoppelgangerCharacter::GetDashDegree() const
     return CurrentDashDegree;
 }
 
-void ASLDoppelgangerCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+void ASLDoppelgangerCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType AnimType)
 {
     // 가드 브레이크 상태에서는 플레이어 공격 반응 처리 후 일반 피격 처리
     if (CurrentGuardState == EDoppelgangerGuardState::EDGS_GuardBroken)
@@ -592,7 +592,7 @@ void ASLDoppelgangerCharacter::SetHitStateForGuard(AActor* DamageCauser, const F
     }
 }
 
-void ASLDoppelgangerCharacter::OnPlayerAttackReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType)
+void ASLDoppelgangerCharacter::OnPlayerAttackReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType)
 {
     if (!Causer)
     {
@@ -602,7 +602,7 @@ void ASLDoppelgangerCharacter::OnPlayerAttackReceived(AActor* Causer, float Dama
     ProcessPlayerSpecificReaction(Causer, AnimType);
 }
 
-void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAttackAnimType AnimType)
+void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EHitAnimType AnimType)
 {
     if (!Causer)
     {
@@ -613,7 +613,7 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
     const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
     bool bIsCurrentlyInAir = GetCharacterMovement()->IsFalling() && GroundDistance > 50.0f;
     bool bIsAirborneAttack = (
-        AnimType == EAttackAnimType::AAT_Airborn || AnimType == EAttackAnimType::AAT_Skill1);
+        AnimType == EHitAnimType::HAT_AirBorne || AnimType == EHitAnimType::HAT_AirUp);
 
    
     if (!GetIsAirHit())
@@ -630,8 +630,8 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
     float KnockbackStrength = 100.0f;
     float UpwardForce = 50.0f; 
 
-    if (AnimType == EAttackAnimType::AAT_Airborn || 
-        AnimType == EAttackAnimType::AAT_Skill1)
+    if (AnimType == EHitAnimType::HAT_AirBorne || 
+        AnimType == EHitAnimType::HAT_AirUp)
     {
         KnockbackStrength = 300.0f;
         UpwardForce = 450.0f; 
@@ -642,9 +642,7 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
     
     switch (AnimType)
     {
-    case EAttackAnimType::AAT_NormalAttack1:
-    case EAttackAnimType::AAT_NormalAttack2:
-    case EAttackAnimType::AAT_NormalAttack3:
+    case EHitAnimType::HAT_WeakHit:
         {
             LaunchVelocity.Z = UpwardForce;
             
@@ -661,35 +659,31 @@ void ASLDoppelgangerCharacter::ProcessPlayerSpecificReaction(AActor* Causer, EAt
             break;
         }
 
-    case EAttackAnimType::AAT_SpecialAttack1:
-    case EAttackAnimType::AAT_SpecialAttack2:
-    case EAttackAnimType::AAT_SpecialAttack3:
+    case EHitAnimType::HAT_HardHit:
         {
             LaunchVelocity.Z = UpwardForce;  // 강한 상승력
             break;
         }
 
-    case EAttackAnimType::AAT_AirAttack1:
-    case EAttackAnimType::AAT_AirAttack2:
-    case EAttackAnimType::AAT_AirAttack3:
+    case EHitAnimType::HAT_AirHit:
         {
             LaunchVelocity.Z = UpwardForce * 0.7f;  // 공중 공격은 약간 낮은 상승력
             break;
         }
 
-    case EAttackAnimType::AAT_Airborn:
+    case EHitAnimType::HAT_AirBorne:
         {
             LaunchVelocity.Z = UpwardForce * 1.5f;  // 에어본은 높은 상승력
             break;
         }
 
-    case EAttackAnimType::AAT_Skill1:
+    case EHitAnimType::HAT_AirUp:
         {
             LaunchVelocity.Z = UpwardForce * 2.0f;  // 스킬1은 상향 공격
             break;
         }
 
-    case EAttackAnimType::AAT_Skill2:
+    case EHitAnimType::HAT_FallBack:
         {
             LaunchVelocity.Z = UpwardForce * 0.5f;  // 스킬2는 낮은 상승력
             break;

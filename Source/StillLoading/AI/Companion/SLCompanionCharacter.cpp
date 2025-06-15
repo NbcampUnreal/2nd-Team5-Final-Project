@@ -48,7 +48,7 @@ ASLCompanionCharacter::ASLCompanionCharacter()
     CurrentHealth = MaxHealth;
     
     bCanBeExecuted = false;
-    IsHitReaction = true;
+    bIsHitReaction = true;
     
     ProjectileSocketName = "hand_r";
     bIsInCombat = false;
@@ -353,14 +353,14 @@ void ASLCompanionCharacter::PerformGroundExplosion(
         GetWorld(), 
         ExplosionParams.Location, 
         2000.0f, 
-        IsDebugMode 
+        bIsDebugMode 
     ) + WarningParams.Offset;
     
     ExplosionParams.Location = USLAIFunctionLibrary::FindGroundLocation(
         GetWorld(), 
         ExplosionParams.Location, 
         2000.0f, 
-        IsDebugMode 
+        bIsDebugMode 
     ) + ExplosionParams.Offset;
     
     auto ExecuteExplosion = [this, ExplosionParams, ExplosionRadius, AttackAnimType, HitCount, HitInterval]()
@@ -406,11 +406,11 @@ void ASLCompanionCharacter::PerformGroundExplosion(
     }
 }
 
-void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType AnimType)
 {
-    if (!IsInvincibility)
+    if (!bIsInvincibility)
     {
-        CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+        SetCurrentHealth(CurrentHealth - DamageAmount);
 
         if (DamageCauser)
         {
@@ -430,7 +430,7 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
         }
     }
     
-    if (DamageCauser && ShouldPlayHitReaction(DamageAmount) && !IsDead)
+    if (DamageCauser && ShouldPlayHitReaction(DamageAmount) && !bIsDead)
     {
         FVector AttackerLocation = DamageCauser->GetActorLocation();
         FVector DirectionVector = AttackerLocation - GetActorLocation();
@@ -467,7 +467,7 @@ void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmoun
         
     }
 
-    if (HitEffectComponent && DamageCauser && !IsDead)
+    if (HitEffectComponent && DamageCauser && !bIsDead)
     {
         FVector EffectLocation = HitResult.bBlockingHit ? HitResult.ImpactPoint : HitResult.Location;
         
@@ -525,7 +525,7 @@ void ASLCompanionCharacter::ApplyExplosionDamage(FVector ExplosionLocation, floa
     }
     
     // 디버그 표시
-    if (IsDebugMode)
+    if (bIsDebugMode)
     {
         FColor DebugColor = bIsFirstHit ? FColor::Red : FColor::Orange;
         DrawDebugSphere(

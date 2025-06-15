@@ -8,6 +8,7 @@
 #include "NiagaraSystem.h"
 #include "SLPlayerCharacterBase.h"
 #include "DataAsset/AttackDataAsset.h"
+#include "UI/Struct/SLInGameDelegateBuffers.h"
 #include "SLAIBaseCharacter.generated.h"
 
 class UNiagaraComponent;
@@ -84,6 +85,8 @@ enum class EHitReactionMode : uint8
 	EHRM_Disabled       UMETA(DisplayName = "Disabled")
 };
 
+
+
 UCLASS()
 class STILLLOADING_API ASLAIBaseCharacter : public ACharacter
 {
@@ -94,6 +97,9 @@ public:
 	ASLAIBaseCharacter();
 	virtual void BeginPlay() override;
 	virtual void Landed(const FHitResult& Hit) override;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCharacterDeath, ASLAIBaseCharacter*);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPatternFinished, ASLAIBaseCharacter*);
 	
 	// --- Getters (Collision) ---
 	// 손 콜리전 컴포넌트 접근자
@@ -110,7 +116,7 @@ public:
 	FORCEINLINE float GetCurrentHealth() const { return CurrentHealth; }
 	
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE bool GetIsDead() const { return IsDead;}
+	FORCEINLINE bool GetIsDead() const { return bIsDead;}
 
 	// Getter 함수들 추가
 	UFUNCTION(BlueprintCallable)
@@ -133,6 +139,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool GetShouldLookAtPlayer() const { return bShouldLookAtPlayer; }
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	FORCEINLINE AActor* GetEquippedWeapon() const { return EquippedWeapon; }
 	
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentHealth(float NewHealth);
@@ -195,7 +204,7 @@ public:
 	EChapter GetChapter() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
-	ASLAIProjectile* SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName = NAME_None, float ProjectileSpeed = 2000.0f, EAttackAnimType AnimType = EAttackAnimType::AAT_Attack_01, bool bHorizontalOnly = false );
+	ASLAIProjectile* SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass, FVector TargetLocation, FName SocketName = NAME_None, float ProjectileSpeed = 2000.0f, EAttackAnimType AnimType = EAttackAnimType::AAT_Attack_01, bool bHorizontalOnly = false);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Projectile")
 	FRotator CalculateProjectileRotation(const FVector& StartLocation, const FVector& TargetLocation) const;
@@ -220,7 +229,7 @@ public:
 	bool CanBeExecuted() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Combat") 
-	void PlayExecutionAnimation(EAttackAnimType ExecutionType, AActor* Executor);
+	void PlayExecutionAnimation(EHitAnimType ExecutionType, AActor* Executor);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void AIJump();
@@ -247,7 +256,7 @@ public:
 	void SetIsAirHit(bool NewbIsAirHit);
 	
 	UFUNCTION(BlueprintCallable, Category = "combat")
-	FORCEINLINE bool GetIsInvincibility() const { return IsInvincibility; }
+	FORCEINLINE bool GetIsInvincibility() const { return bIsInvincibility; }
 
 	UFUNCTION(BlueprintCallable, Category = "combat")
 	void SetIsInvincibility(bool NewIsInvincibility);
@@ -277,14 +286,29 @@ public:
 	FORCEINLINE float GetAccumulatedDamage() const { return AccumulatedDamage; }
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE bool GetIsDebugMode() const { return IsDebugMode; }
+	FORCEINLINE bool GetIsDebugMode() const { return bIsDebugMode; }
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Death")
 	void OnDeath();
     
 	UFUNCTION(BlueprintCallable, Category = "Death")
 	void HandleDeath();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool GetIsSpecialPattern() const { return bIsSpecialPattern; }
+    
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetIsSpecialPattern(bool bNewIsSpecialPattern);
 	
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void NotifyPatternFinished();
+	
+	UFUNCTION(BlueprintCallable, Category = "Delegate")
+	FSLBossHpDelegateBuffer& GetBossHpChangedDelegate() { return OnBossHpChanged; }
+	
+	FOnCharacterDeath OnCharacterDeath;
+	FOnPatternFinished OnPatternFinished;
+
 protected:
 	
 #if WITH_EDITOR
@@ -297,10 +321,10 @@ protected:
 	TArray<FVector> GenerateHorizontalFanDirections(const FVector& BaseDirection, int32 Count, float FanHalfAngle) const;
 
 	UFUNCTION(BlueprintCallable)
-	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
+	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType AnimType);
 
 	virtual void OnLanded(const FHitResult& Hit);
-
+	
 	bool ShouldPlayHitReaction(float DamageAmount);
 
 	virtual void ProcessDeath();
@@ -308,9 +332,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Hit")
 	virtual void SetHitState(bool bNewIsHit, float AutoResetTime = 0.5f);
 
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void ProcessDamageOnly(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
-	
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<ASLBaseAIController> AIController;
@@ -327,16 +348,16 @@ protected:
 
 	// --- State Flags ---
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
-	bool IsHitReaction; // 피격 반응을 할건지 여부
+	bool bIsHitReaction; // 피격 반응을 할건지 여부
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
-	bool IsDead; // 사망 상태인지 여부
+	bool bIsDead; // 사망 상태인지 여부
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Debug")
-	bool IsDebugMode;
+	bool bIsDebugMode;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
-	bool IsInvincibility;
+	bool bIsInvincibility;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
 	bool bIsAirHit;
@@ -405,7 +426,7 @@ protected:
 	bool bCanBeExecuted;  // 기본값은 true, 보스는 false로 설정
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Montages")
-	TMap<EAttackAnimType, TObjectPtr<UAnimMontage>> ExecutionMontages;
+	TMap<EHitAnimType, TObjectPtr<UAnimMontage>> ExecutionMontages;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool bIsBeingExecuted;
@@ -448,10 +469,16 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|HitReaction")
 	float HitDamageThreshold;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|HitReaction")
 	float AccumulatedDamage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|HitReaction")
 	TObjectPtr<UNiagaraSystem> DissolveEffect;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsSpecialPattern;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	FSLBossHpDelegateBuffer OnBossHpChanged;
 };

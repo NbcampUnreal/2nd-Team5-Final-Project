@@ -5,6 +5,8 @@
 #include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
+class USLSoundSubsystem;
+class USLBattleSoundSubsystem;
 class AAISquadManager;
 class UTimelineComponent;
 class UWidgetComponent;
@@ -145,7 +147,7 @@ private:
 	UFUNCTION()
 	void AttachItemToHand(AActor* ItemActor, FName SocketName) const;
 	UFUNCTION()
-	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
+	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType);
 	UFUNCTION()
 	void ChangeMeshTemporarily(float Rate = 0.3f);
 	UFUNCTION()
@@ -166,6 +168,9 @@ private:
 	void StepBackward(const float DeltaTime);
 	UFUNCTION()
 	void WatchTarget(float DeltaTime);
+
+	UFUNCTION()
+	USLSoundSubsystem* GetBattleSoundSubSystem() const;
 
 	UPROPERTY()
 	TObjectPtr<AActor> LastAttacker;

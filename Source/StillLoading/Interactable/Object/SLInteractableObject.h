@@ -17,8 +17,11 @@ class STILLLOADING_API ASLInteractableObject : public ASLInteractableObjectBase
 
 public:
 	ASLInteractableObject();
+	
 	UFUNCTION(BlueprintCallable, Category = "InteractableObject")
 	void SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandler);
+	UFUNCTION(BlueprintCallable, Category = "InteractableObject")
+	USLTalkHandlerBase* GetCurrentTalkHandler();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -26,17 +29,19 @@ protected:
 	
 	UFUNCTION()
 	void OnCurrentTalkEnd();
+	UFUNCTION()
+	void OnCurrentChoiceEnd(bool bResult);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject")
 	FName TargetName;
-	UPROPERTY(VisibleInstanceOnly, Category = "InteractableObject", DisplayName = "현재 대화 핸들러", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USLTalkHandlerBase> CurrentTalkHandler;
+	UPROPERTY(VisibleInstanceOnly, Category = "InteractableObject", DisplayName = "현재 대화 핸들러")
+	TWeakObjectPtr<USLTalkHandlerBase> CurrentTalkHandler;
 	UPROPERTY()
 	TObjectPtr<USLBaseTextPrintWidget> CurrentTextWidget = nullptr;
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
 	
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USLTalkHandlerBase> BaseTalkHandler;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject", DisplayName="기본 대화 핸들러" ,meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USLTalkHandlerBase> DefaultTalkHandler;
 };

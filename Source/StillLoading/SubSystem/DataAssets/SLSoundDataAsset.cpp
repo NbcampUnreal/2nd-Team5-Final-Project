@@ -24,3 +24,14 @@ USoundBase* USLSoundDataAsset::GetBgmSoundSource(ESLBgmSoundType SoundType)
 
 	return nullptr;
 }
+
+USoundBase* USLSoundDataAsset::GetBattleSoundSource(EBattleSoundType SoundType)
+{
+	if (BattleSoundMap.Contains(SoundType) &&
+		IsValid(BattleSoundMap[SoundType]))
+	{
+		return BattleSoundMap[SoundType];
+	}
+
+	return nullptr;
+}

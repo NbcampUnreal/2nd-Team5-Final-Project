@@ -13,6 +13,7 @@
 #include "Controller/MonsterAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "SubSystem/SLSoundSubsystem.h"
 
 AMonsterAICharacter::AMonsterAICharacter()
 {
@@ -303,9 +304,11 @@ void AMonsterAICharacter::SetSquadManager(AAISquadManager* InManager)
 	}
 }
 
-void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType)
+void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType)
 {
 	AnimationComponent->StopAllMontages(0.2f);
+	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
+	
 	HitDirection(Causer);
 	RotateToHitCauser(Causer);
 	ChangeMeshTemporarily();
@@ -320,15 +323,8 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 
 	switch (AnimType)
 	{
-	case EAttackAnimType::AAT_NormalAttack1:
-	case EAttackAnimType::AAT_NormalAttack2:
-	case EAttackAnimType::AAT_NormalAttack3:
-	case EAttackAnimType::AAT_SpecialAttack1:
-	case EAttackAnimType::AAT_SpecialAttack2:
-	case EAttackAnimType::AAT_SpecialAttack3:
-	case EAttackAnimType::AAT_AirAttack1:
-	case EAttackAnimType::AAT_AirAttack2:
-	case EAttackAnimType::AAT_AirAttack3:
+	case EHitAnimType::HAT_WeakHit:
+	case EHitAnimType::HAT_HardHit:
 		{
 			const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
 			if (GetCharacterMovement()->IsFalling() && GroundDistance > 20.0f)
@@ -360,7 +356,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 			break;
 		}
 
-	case EAttackAnimType::AAT_Airborn:
+	case EHitAnimType::HAT_AirBorne:
 		AnimationComponent->PlayAIHitMontage("Airborne");
 		SetBattleState(TAG_AI_Hit);
 		if (CurrentHealth < 0.f)
@@ -369,7 +365,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 			AnimationComponent->PlayAIHitMontage("Dead");
 		}
 		break;
-	case EAttackAnimType::AAT_Skill1:
+	case EHitAnimType::HAT_AirUp:
 		AnimationComponent->PlayAIHitMontage("AirUp");
 		SetBattleState(TAG_AI_Hit);
 		if (CurrentHealth < 0.f)
@@ -378,7 +374,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 			AnimationComponent->PlayAIHitMontage("Dead");
 		}
 		break;
-	case EAttackAnimType::AAT_Skill2:
+	case EHitAnimType::HAT_FallBack:
 		AnimationComponent->PlayAIHitMontage("GroundHit");
 		RotateToHitCauser(Causer);
 		SetBattleState(TAG_AI_Hit);
@@ -388,19 +384,19 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 			AnimationComponent->PlayAIHitMontage("Dead");
 		}
 		break;
-	case EAttackAnimType::AAT_FinalAttackA:
+	case EHitAnimType::HAT_KillMotionA:
 		AnimationComponent->PlayAIHitMontage("ExecutionA");
 		SetBattleState(TAG_AI_Dead);
 		break;
-	case EAttackAnimType::AAT_FinalAttackB:
+	case EHitAnimType::HAT_KillMotionB:
 		AnimationComponent->PlayAIHitMontage("ExecutionB");
 		SetBattleState(TAG_AI_Dead);
 		break;
-	case EAttackAnimType::AAT_FinalAttackC:
+	case EHitAnimType::HAT_KillMotionC:
 		AnimationComponent->PlayAIHitMontage("ExecutionC");
 		SetBattleState(TAG_AI_Dead);
 		break;
-	case EAttackAnimType::AAT_ParryAttack:
+	case EHitAnimType::HAT_Parry:
 		break;
 	default: break;
 	}
@@ -602,4 +598,17 @@ void AMonsterAICharacter::WatchTarget(const float DeltaTime)
 
 		SetActorRotation(SmoothedRotation);
 	}
+}
+
+USLSoundSubsystem* AMonsterAICharacter::GetBattleSoundSubSystem() const
+{
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GameInstance = World->GetGameInstance())
+		{
+			return GameInstance->GetSubsystem<USLSoundSubsystem>();
+		}
+	}
+
+	return nullptr;
 }
