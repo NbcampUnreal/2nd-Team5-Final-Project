@@ -268,7 +268,7 @@ void USL25DMovementHandlerComponent::OnActionCompleted(EInputActionType ActionTy
 }
 
 void USL25DMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
-                                              EAttackAnimType AnimType)
+                                              const EHitAnimType AnimType)
 {
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)
 		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)
@@ -331,11 +331,7 @@ void USL25DMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage,
 
 	switch (AnimType)
 	{
-	case EAttackAnimType::AAT_Attack_01:
-	case EAttackAnimType::AAT_Attack_02:
-	case EAttackAnimType::AAT_Attack_04:
-	case EAttackAnimType::AAT_DashAttack:
-	case EAttackAnimType::AAT_ThrowStone: // 날라가는거
+	case EHitAnimType::HAT_FallBack:
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
 			OwnerCharacter->SetActorRotation(TargetRotation);
@@ -356,7 +352,7 @@ void USL25DMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage,
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Knockback);
 		}
 		return;
-	case EAttackAnimType::AAT_Attack_03: // 기절
+	case EHitAnimType::HAT_Exhausterd: // 기절
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
 			OwnerCharacter->SetActorRotation(TargetRotation);
@@ -377,17 +373,11 @@ void USL25DMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage,
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Groggy);
 		}
 		return;
-	case EAttackAnimType::AAT_FootAttack_Left:
-	case EAttackAnimType::AAT_FootAttack_Right:
-	case EAttackAnimType::AAT_GroundSlam_01:
-	case EAttackAnimType::AAT_GroundSlam_02:
-	case EAttackAnimType::AAT_AISpecial:
-	case EAttackAnimType::AAT_JumpAttack: // 중간거
+	case EHitAnimType::HAT_HardHit:
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
 		RemoveDelay = 1.0f;
 		break;
-	case EAttackAnimType::AAT_Whirlwind: // 약한거
-	case EAttackAnimType::AAT_AINormal:
+	case EHitAnimType::HAT_WeakHit:
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
 		RemoveDelay = 1.0f;
 		break;

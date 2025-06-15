@@ -406,7 +406,7 @@ void ASLCompanionCharacter::PerformGroundExplosion(
     }
 }
 
-void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+void ASLCompanionCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType AnimType)
 {
     if (!bIsInvincibility)
     {

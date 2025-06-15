@@ -145,7 +145,7 @@ private:
 	UFUNCTION()
 	void AttachItemToHand(AActor* ItemActor, FName SocketName) const;
 	UFUNCTION()
-	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
+	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType);
 	UFUNCTION()
 	void ChangeMeshTemporarily(float Rate = 0.3f);
 	UFUNCTION()
