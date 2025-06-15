@@ -5,6 +5,7 @@
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
+#include "UI/Widget/SLButtonWidget.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanel.h"
@@ -22,6 +23,8 @@ void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	ParentNextButton = NextButton;
 	ParentSkipButton = SkipButton;
 	ParentFastButton = FastButton;
+	ParentAcceptButton = AcceptButton;
+	ParentRejectButton = RejectButton;
 	ParentTalkText = TalkText;
 
 	Super::InitWidget(NewUISubsystem);
@@ -98,18 +101,5 @@ bool USLTalkWidget::ApplyTextBorderImage(FSlateBrush& SlateBrush)
 		NameBack->SetBrush(SlateBrush);
 	}
 	
-	return true;
-}
-
-bool USLTalkWidget::ApplyButtonImage(FButtonStyle& ButtonStyle)
-{
-	if (!Super::ApplyButtonImage(ButtonStyle))
-	{
-		return false;
-	}
-
-	SkipButton->SetStyle(ButtonStyle);
-	FastButton->SetStyle(ButtonStyle);
-
 	return true;
 }

@@ -35,26 +35,39 @@ void ASLInGameHUD::ApplyTimer(int32 SecondsValue)
 	SetTimerValue(SecondsValue);
 }
 
-void ASLInGameHUD::ApplyPlayerHp(float MaxHp)//, FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
+void ASLInGameHUD::ApplyPlayerHp(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 {
 	bIsFirstApplyHp = true;
-	//PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
+
+	if (!PlayerHpDelegate.OnPlayerHpChanged.IsAlreadyBound(this, &ThisClass::SetPlayerHpValue))
+	{
+		PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
+	}
+	
 	SetPlayerStateVisibility(true, false);
-	SetPlayerHpValue(MaxHp, MaxHp * 0.7f);
+	SetPlayerHpValue(MaxHp, MaxHp);
 }
 
-void ASLInGameHUD::ApplyPlayerSpecial(float MaxValue)//, FSLSpecialValueDelegateBuffer& SpecialValueDelegate)
+void ASLInGameHUD::ApplyPlayerSpecial(float MaxValue, FSLSpecialValueDelegateBuffer& SpecialValueDelegate)
 {
-	//SpecialValueDelegate.OnSpecialValueChanged.AddDynamic(this, &ThisClass::SetPlayerSpecialValue);
+	if (!SpecialValueDelegate.OnSpecialValueChanged.IsAlreadyBound(this, &ThisClass::SetPlayerSpecialValue))
+	{
+		SpecialValueDelegate.OnSpecialValueChanged.AddDynamic(this, &ThisClass::SetPlayerSpecialValue);
+	}
+	
 	SetPlayerStateVisibility(true, true);
 	SetPlayerSpecialValue(MaxValue, 0);
 }
 
-void ASLInGameHUD::ApplyBossHp(float MaxHp)//, FSLBossHpDelegateBuffer& BossHpDelegate)
+void ASLInGameHUD::ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer& BossHpDelegate)
 {
-	//BossHpDelegate.OnBossHpChanged.AddDynamic(this, &ThisClass::SetBossHpValue);
+	if (!BossHpDelegate.OnBossHpChanged.IsAlreadyBound(this, &ThisClass::SetBossHpValue))
+	{
+		BossHpDelegate.OnBossHpChanged.AddDynamic(this, &ThisClass::SetBossHpValue);
+	}
+
 	SetBossStateVisibility(true);
-	SetBossHpValue(MaxHp, MaxHp * 0.7f);
+	SetBossHpValue(MaxHp, MaxHp);
 }
 
 void ASLInGameHUD::ApplyHitEffect()
@@ -92,6 +105,9 @@ void ASLInGameHUD::SetPlayerHpValue(float MaxHp, float CurrentHp)
 	if (!bIsFirstApplyHp)
 	{
 		ApplyHitEffect();
+	}
+	else
+	{
 		bIsFirstApplyHp = false;
 	}
 	

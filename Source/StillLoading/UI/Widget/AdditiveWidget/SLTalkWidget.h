@@ -21,7 +21,6 @@ public:
 protected:
 	virtual void ApplyTextData() override;
 	virtual bool ApplyTextBorderImage(FSlateBrush& SlateBrush) override;
-	virtual bool ApplyButtonImage(FButtonStyle& ButtonStyle);
 
 private:
 	void UpdateTalkState(ESLTalkTargetType TalkTargetType, const FName& TargetName, const FName& TalkName);
@@ -31,10 +30,16 @@ private:
 	TObjectPtr<UButton> NextButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> SkipButton = nullptr;
+	TObjectPtr<USLButtonWidget> SkipButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> FastButton = nullptr;
+	TObjectPtr<USLButtonWidget> FastButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> AcceptButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> RejectButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> NameText = nullptr;

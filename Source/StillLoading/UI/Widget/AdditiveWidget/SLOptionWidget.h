@@ -26,8 +26,9 @@ public:
 	virtual void DeactivateWidget() override;
 
 protected:
+	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void ApplyTextData() override;
-	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush) override;
+	virtual bool ApplyOtherImage() override;
 
 	virtual void OnEndedCloseAnim() override;
 
@@ -48,7 +49,6 @@ private:
 
 	UFUNCTION()
 	void OnClickedQuit();
-
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -98,6 +98,9 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLButtonWidget> CloseButton = nullptr;
 	//
+
+	UPROPERTY()
+	TMap<ESLOptionPrivateImageType, TObjectPtr<UObject>> PrivateImageMap;
 
 	static const FName TitleTextIndex;
 	static const FName KeySettingButtonIndex;

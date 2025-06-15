@@ -107,12 +107,10 @@ void USLBaseWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivate
 void USLBaseWidget::ApplyImageData()
 {
 	FButtonStyle ButtonStyle;
-	FSliderStyle SliderStyle;
 	FSlateBrush SlateBrush;
 
 	ApplyBackgroundImage(SlateBrush);
 	ApplyButtonImage(ButtonStyle);
-	ApplySliderImage(SliderStyle);
 	ApplyBorderImage(SlateBrush);
 	ApplyTextBorderImage(SlateBrush);
 	ApplyOtherImage();
@@ -286,35 +284,6 @@ void USLBaseWidget::ApplyButtonNiagara(USLButtonWidget* ButtonWidget)
 			ButtonWidget->SetRetainerMat(EffectMat);
 		}
 	}
-}
-
-bool USLBaseWidget::ApplySliderImage(FSliderStyle& SliderStyle)
-{
-	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_SliderBack) ||
-		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_SliderBack]))
-	{
-		return false;
-	}
-
-	if (!PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_SliderBar) ||
-		!IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_SliderBar]))
-	{
-		return false;
-	}
-
-	FSlateBrush SlateBrush;
-
-	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_SliderBar]);
-	SliderStyle.SetNormalThumbImage(SlateBrush);
-	SliderStyle.SetHoveredThumbImage(SlateBrush);
-	SliderStyle.SetDisabledThumbImage(SlateBrush);
-
-	SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_SliderBack]);
-	SliderStyle.SetNormalBarImage(SlateBrush);
-	SliderStyle.SetHoveredBarImage(SlateBrush);
-	SliderStyle.SetDisabledBarImage(SlateBrush);
-
-	return true;
 }
 
 bool USLBaseWidget::ApplyBorderImage(FSlateBrush& SlateBrush)

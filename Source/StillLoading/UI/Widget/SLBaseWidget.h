@@ -57,7 +57,6 @@ protected:
 	virtual void ApplyButtonNiagara(USLButtonWidget* ButtonWidget);
 
 	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush);
-	virtual bool ApplySliderImage(FSliderStyle& SliderStyle);
 	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush);
 	virtual bool ApplyTextBorderImage(FSlateBrush& SlateBrush);
 	virtual bool ApplyOtherImage();

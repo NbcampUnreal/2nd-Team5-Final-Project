@@ -8,6 +8,7 @@
 #include "SubSystem/SLLevelTransferTypes.h"
 #include "UI/Widget/AdditiveWidget/SLBaseTextPrintWidget.h"
 #include "UI/Struct/SLWidgetActivateBuffer.h"
+#include "UI/Struct/SLInGameDelegateBuffers.h"
 #include "SLUISubsystem.generated.h"
 
 class USLAdditiveWidget;
@@ -20,6 +21,9 @@ class STILLLOADING_API USLUISubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintCallable)
+	void ActivateOption();
+
 	UFUNCTION(BlueprintCallable)
 	void ActivateFade(bool bIsFadeIn, bool bIsMoveLevel = false);
 
@@ -43,12 +47,38 @@ public:
 	UDataAsset* GetPublicImageData();
 	USLBaseTextPrintWidget* GetTalkWidget();
 
+	// Test
+	UFUNCTION(BlueprintCallable)
+	void OnPlayerHpChanged();
+
+	UFUNCTION(BlueprintCallable)
+	void OnPlayerSpecialChanged();
+
+	UFUNCTION(BlueprintCallable)
+	void OnBossHpChanged();
+
 private:
 	void SetInputModeAndCursor();
 
 	void CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void CheckValidOfUISettings();
 	void CheckValidOfWidgetDataAsset();
+	void CheckValidOfOptiondDataAsset();
+
+	// Test
+	void DecreasePlayerHp();
+	void DecreaseBossHp();
+	void IncreaseSpecialValue();
+
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FSLPlayerHpDelegateBuffer PlayerHpBuffer;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FSLSpecialValueDelegateBuffer SpecialValueBuffer;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FSLBossHpDelegateBuffer BossHpBuffer;
 
 private:
 	UPROPERTY()
@@ -66,4 +96,16 @@ private:
 	ESLChapterType CurrentDataChapter = ESLChapterType::EC_None;
 	ESLInputModeType CurrentLevelInputMode = ESLInputModeType::EIM_UIOnly;
 	bool bIsVisibleLevelCursor = true;
+
+	// Test
+	FTimerHandle PlayerHpTimer;
+	FTimerHandle SpecialValueTimer;
+	FTimerHandle BossHpTimer;
+
+	float PlayerMaxHp = 100;
+	float PlayerCurrentHp = 100;
+	float SpecialMaxValue = 100;
+	float SpecialCurrentValue = 0;
+	float BossMaxHp = 100;
+	float BossCurrentHp = 100;
 };

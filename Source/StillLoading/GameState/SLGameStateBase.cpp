@@ -7,3 +7,14 @@ ASLGameStateBase::ASLGameStateBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
 }
+
+TArray<TObjectPtr<USLObjectiveBase>>& ASLGameStateBase::GetInProgressedObjectives()
+{
+	return InProgressedObjectives;
+}
+
+void ASLGameStateBase::BeginPlay()
+{
+	Super::BeginPlay();
+
+}

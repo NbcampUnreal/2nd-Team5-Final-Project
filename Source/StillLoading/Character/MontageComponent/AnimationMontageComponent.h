@@ -37,6 +37,8 @@ public:
 	void Play2DAttackMontage(FName Section = NAME_None);
 	UFUNCTION()
 	void PlayAttackMontage(FName Section = NAME_None);
+	UFUNCTION(BlueprintCallable)
+	void PlayBluePrintableMontage(FName Section = NAME_None);
 	UFUNCTION()
 	void PlaySkillMontage(FName Section = NAME_None);
 	UFUNCTION()
