@@ -52,6 +52,16 @@ enum class EBattleSoundType : uint8
 	BST_MonsterDie				UMETA(DisplayName = "Monster Die"),
 
 	// AI
+	BST_AIBossAttack			UMETA(DisplayName = "AI Boss Attack"),
+	BST_AIBossHit				UMETA(DisplayName = "AI Boss Hit"),
+
+	BST_AICompanionAttack01		UMETA(DisplayName = "AI Companion Attack01"),
+	BST_AICompanionAttack02		UMETA(DisplayName = "AI Companion Attack02"),
+	BST_AICompanionHit			UMETA(DisplayName = "AI Companion Hit"),
+
+	FootstepDefault		UMETA(DisplayName = "Footstep Default"),
+	FootstepRock		UMETA(DisplayName = "Footstep Rock"),
+	FootstepSoil		UMETA(DisplayName = "Footstep Soil"),
 };
 
 UCLASS()
