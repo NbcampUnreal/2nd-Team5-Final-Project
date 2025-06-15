@@ -294,7 +294,7 @@ void USLUISubsystem::DecreasePlayerHp()
 		PlayerCurrentHp -= 5;
 		PlayerHpBuffer.OnPlayerHpChanged.Broadcast(PlayerMaxHp, PlayerCurrentHp);
 
-		GetWorld()->GetTimerManager().SetTimer(PlayerHpTimer, this, &ThisClass::DecreasePlayerHp, 1.0f);
+		GetWorld()->GetTimerManager().SetTimer(PlayerHpTimer, this, &ThisClass::DecreasePlayerHp, 3.0f);
 	}
 }
 

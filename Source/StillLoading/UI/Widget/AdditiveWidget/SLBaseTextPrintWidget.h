@@ -43,6 +43,7 @@ protected:
 	void PrintTalkText();
 	void ChangeTargetText();
 	void SetChoiceVisibility(bool bIsVisible);
+	void CloseTalk();
 
 public:
 	UPROPERTY(BlueprintAssignable)

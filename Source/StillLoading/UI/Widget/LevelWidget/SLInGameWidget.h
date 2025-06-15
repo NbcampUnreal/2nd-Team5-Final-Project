@@ -18,6 +18,7 @@ class STILLLOADING_API USLInGameWidget : public USLLevelWidget
 	
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void DeactivateWidget() override;
 
 	void SetIsTimerActivate(bool bIsActived);
@@ -29,6 +30,7 @@ public:
 	UFUNCTION()
 	void SetTimerText(int32 TimeSeconds);
 	void SetHpValue(float MaxHp, float CurrentHp);
+	void SetEffectValue(float MaxHp, float CurrentHp);
 	void SetSpecialValue(float MaxValue, float CurrentValue);
 	void SetBossHpValue(float MaxHp, float CurrentHp);
 	void SetObjectiveText(const FName& ObjectiveName);
@@ -51,6 +53,9 @@ private:
 protected:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> HitEffectImg = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> TimerBack = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> TimerBorder = nullptr;
@@ -114,6 +119,9 @@ protected:
 
 	UPROPERTY()
 	TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>> PrivateImageMap;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> EffectDynamicMat = nullptr;
 
 	bool bIsObjectiveVisible = false;
 	bool bIsExistHitEffect = false;

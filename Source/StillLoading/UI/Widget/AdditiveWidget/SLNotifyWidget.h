@@ -22,7 +22,7 @@ protected:
 	virtual void OnEndedOpenAnim() override;
 	virtual void OnEndedCloseAnim() override;
 
-	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush) override;
+	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush) override;
 
 private:
 	void UpdateNotifyText(ESLGameMapType MapType, const FName& NotiName);
