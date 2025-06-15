@@ -73,7 +73,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
     
     AIChapter = EChapter::EC_None;
-    IsDebugMode = false;
+    bIsDebugMode = false;
 
 	bIsHit = false;
 	bIsDown = false;
@@ -81,7 +81,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	bIsAttacking = false;
 	bShouldLookAtPlayer = false;
 	HitDirection = EHitDirection::EHD_Front;
-	IsInvincibility = false;
+	bIsInvincibility = false;
 	
 	bIsJumping = false;
 	bIsLanding = false;
@@ -134,8 +134,8 @@ void ASLAIBaseCharacter::BeginPlay()
 		}
 	}
 
-	IsHitReaction = false;
-	IsDead = false;
+	bIsHitReaction = false;
+	bIsDead = false;
 	SetCurrentHealth(MaxHealth);
 	CombatPhase = ECombatPhase::ECP_Phase_None;
 	bCanBeExecuted = false;
@@ -213,7 +213,7 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 		return;
 	}
 
-	if (IsDebugMode)
+	if (bIsDebugMode)
 	{
 		// 오버랩된 컴포넌트의 크기에 맞는 디버그 박스 그리기
 		if (UBoxComponent* BoxComp = Cast<UBoxComponent>(OverlappedComponent))
@@ -276,7 +276,7 @@ void ASLAIBaseCharacter::SetCurrentHealth(float NewHealth)
 
 void ASLAIBaseCharacter::SetIsHitReaction(bool bNewIsHitReaction)
 {
-	IsHitReaction = bNewIsHitReaction;
+	bIsHitReaction = bNewIsHitReaction;
 }
 
 void ASLAIBaseCharacter::SetIsHit(bool bNewIsHit)
@@ -795,8 +795,8 @@ bool ASLAIBaseCharacter::CanBeExecuted() const
     
 	// 체력이 10% 이하인지 확인
 	float HealthPercentage = GetHealthPercentage();
-	//return HealthPercentage <= 10.0f && !IsDead;
-	return !IsDead;
+	//return HealthPercentage <= 10.0f && !bIsDead;
+	return !bIsDead;
 }
 
 void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, AActor* Executor)
@@ -809,7 +809,7 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
         return;
     }
     
-    if (IsDead)
+    if (bIsDead)
     {
         UE_LOG(LogTemp, Error, TEXT("Character is already dead"));
         return;
@@ -875,7 +875,7 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
             {
                 // 처형 완료 후 직접 사망 처리
                 CurrentHealth = 0.0f;
-                IsDead = true;
+                bIsDead = true;
                 
                 // 충돌 비활성화
                 GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -886,7 +886,7 @@ void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, A
                 {
                     if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
                     {
-                        BlackboardComponent->SetValueAsBool(FName("Isdead"), IsDead);
+                        BlackboardComponent->SetValueAsBool(FName("Isdead"), bIsDead);
                     }
                 }
                 
@@ -930,7 +930,7 @@ bool ASLAIBaseCharacter::CanAIJump() const
 		return false;
 	}
     
-	return GetCharacterMovement()->IsMovingOnGround() && !bIsJumping && !bIsLanding && !GetCharacterMovement()->IsFalling() &&!IsDead;
+	return GetCharacterMovement()->IsMovingOnGround() && !bIsJumping && !bIsLanding && !GetCharacterMovement()->IsFalling() &&!bIsDead;
 }
 
 void ASLAIBaseCharacter::SetIsLoop(bool NewLoop)
@@ -962,7 +962,7 @@ void ASLAIBaseCharacter::SetIsAirHit(bool NewbIsAirHit)
 
 void ASLAIBaseCharacter::SetIsInvincibility(bool NewIsInvincibility)
 {
-	IsInvincibility = NewIsInvincibility;
+	bIsInvincibility = NewIsInvincibility;
 }
 
 void ASLAIBaseCharacter::SetPreparedProjectile(ASLAIProjectile* NewPreparedProjectile)
@@ -1090,7 +1090,7 @@ bool ASLAIBaseCharacter::ShouldPlayHitReaction(float DamageAmount)
 
 void ASLAIBaseCharacter::HandleDeath()
 {
-	if (!IsDead)
+	if (!bIsDead)
 	{
 		ProcessDeath();
 	}
@@ -1098,12 +1098,12 @@ void ASLAIBaseCharacter::HandleDeath()
 
 void ASLAIBaseCharacter::ProcessDeath()
 {
-	if (IsDead)
+	if (bIsDead)
 	{
 		return;
 	}
     
-	IsDead = true;
+	bIsDead = true;
     
 	// 충돌 비활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);

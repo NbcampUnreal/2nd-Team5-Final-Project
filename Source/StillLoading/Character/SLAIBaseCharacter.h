@@ -116,7 +116,7 @@ public:
 	FORCEINLINE float GetCurrentHealth() const { return CurrentHealth; }
 	
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE bool GetIsDead() const { return IsDead;}
+	FORCEINLINE bool GetIsDead() const { return bIsDead;}
 
 	// Getter 함수들 추가
 	UFUNCTION(BlueprintCallable)
@@ -256,7 +256,7 @@ public:
 	void SetIsAirHit(bool NewbIsAirHit);
 	
 	UFUNCTION(BlueprintCallable, Category = "combat")
-	FORCEINLINE bool GetIsInvincibility() const { return IsInvincibility; }
+	FORCEINLINE bool GetIsInvincibility() const { return bIsInvincibility; }
 
 	UFUNCTION(BlueprintCallable, Category = "combat")
 	void SetIsInvincibility(bool NewIsInvincibility);
@@ -286,7 +286,7 @@ public:
 	FORCEINLINE float GetAccumulatedDamage() const { return AccumulatedDamage; }
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE bool GetIsDebugMode() const { return IsDebugMode; }
+	FORCEINLINE bool GetIsDebugMode() const { return bIsDebugMode; }
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Death")
 	void OnDeath();
@@ -308,6 +308,7 @@ public:
 	
 	FOnCharacterDeath OnCharacterDeath;
 	FOnPatternFinished OnPatternFinished;
+
 protected:
 	
 #if WITH_EDITOR
@@ -347,16 +348,16 @@ protected:
 
 	// --- State Flags ---
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
-	bool IsHitReaction; // 피격 반응을 할건지 여부
+	bool bIsHitReaction; // 피격 반응을 할건지 여부
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
-	bool IsDead; // 사망 상태인지 여부
+	bool bIsDead; // 사망 상태인지 여부
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Debug")
-	bool IsDebugMode;
+	bool bIsDebugMode;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
-	bool IsInvincibility;
+	bool bIsInvincibility;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
 	bool bIsAirHit;
