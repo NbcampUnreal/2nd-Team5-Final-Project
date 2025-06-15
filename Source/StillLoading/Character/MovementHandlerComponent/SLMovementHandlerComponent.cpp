@@ -543,6 +543,7 @@ void UMovementHandlerComponent::Jump()
 	if (OwnerCharacter)
 	{
 		OwnerCharacter->Jump();
+		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterSpirit, OwnerCharacter->GetActorLocation());
 	}
 
 	CachedCombatComponent->ResetCombo();
