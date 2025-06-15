@@ -14,6 +14,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "IO/IoChunkEncoding.h"
+#include "SubSystem/SLSoundSubsystem.h"
+#include "SubSystem/SLSoundTypes.h"
 
 
 USL25DMovementHandlerComponent::USL25DMovementHandlerComponent()
@@ -47,6 +49,7 @@ void USL25DMovementHandlerComponent::BeginPlay()
 		CachedRadarComponent = OwnerCharacter->FindComponentByClass<UCollisionRadarComponent>();
 		CachedRadarComponent->OnActorDetectedEnhanced.
 							  AddDynamic(this, &USL25DMovementHandlerComponent::OnRadarDetectedActor);
+		CachedBattleSoundSubsystem = GetBattleSoundSubSystem();
 		CachedSkeletalMesh = OwnerCharacter->GetMesh();
 
 		BindIMCComponent();
@@ -282,13 +285,14 @@ void USL25DMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage,
 
 	if (OwnerCharacter->IsInPrimaryState(TAG_Character_Defense_Block) && !bIsFromBack)
 	{
-		if (BlockCount >= FIoChunkEncoding::MaxBlockCount && !OwnerCharacter->HasSecondaryState(TAG_Character_HitReaction_Block_Break))
+		if (BlockCount >= MaxBlockCount && !OwnerCharacter->HasSecondaryState(TAG_Character_HitReaction_Block_Break))
 		{
 			OwnerCharacter->ClearAllStateTags();
 			OwnerCharacter->AddSecondaryState(TAG_Character_HitReaction_Block_Break);
 			CachedMontageComponent->PlayBlockMontage(FName("BlockBreak"));
 			BlockCount = 0;
 			LastBlockTime = 0;
+			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuardBreak, OwnerCharacter->GetActorLocation());
 
 			if (!GetWorld()->GetTimerManager().IsTimerActive(DelayTimerHandle))
 			{
@@ -310,6 +314,7 @@ void USL25DMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage,
 
 			CachedMontageComponent->PlayBlockMontage(FName("BlockHit"));
 			++BlockCount;
+			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuard, OwnerCharacter->GetActorLocation());
 		}
 		return;
 	}
@@ -326,6 +331,7 @@ void USL25DMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage,
 	// 피격
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable, TAG_Character_Empowered});
 	CachedMontageComponent->StopAllMontages(0.2f);
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
 
 	float RemoveDelay = 1.0f;
 
@@ -636,6 +642,8 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 	default:
 		break;
 	}
+
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterWalk, OwnerCharacter->GetActorLocation());
 }
 
 void USL25DMovementHandlerComponent::FaceToMouse()
@@ -751,4 +759,17 @@ void USL25DMovementHandlerComponent::OnAttackStageFinished(const ECharacterMonta
 
 	StopFacingMouse();
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Idle);
+}
+
+USLSoundSubsystem* USL25DMovementHandlerComponent::GetBattleSoundSubSystem() const
+{
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GameInstance = World->GetGameInstance())
+		{
+			return GameInstance->GetSubsystem<USLSoundSubsystem>();
+		}
+	}
+
+	return nullptr;
 }
