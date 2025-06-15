@@ -15,8 +15,17 @@ const FSLMapListData& USLMapListPrivateDataAsset::GetMapDataByChapter(ESLChapter
 	return MapDataMap[ChapterType];
 }
 
-const FSLInGameImageData& USLInGamePrivateDataAsset::GetInGameImageByChapter(ESLChapterType ChapterType)
+const TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>>& USLInGamePrivateDataAsset::GetBrushDataMap() const
 {
-	checkf(InGameImageMap.Contains(ChapterType), TEXT("InGame Image Type Not Contains"));
-	return InGameImageMap[ChapterType];
+	return InGameImageMap;
+}
+
+const TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>>& USLTitlePrivateDataAsset::GetBrushDataMap() const
+{
+	return TitleImageMap;
+}
+
+const TMap<ESLOptionPrivateImageType, TObjectPtr<UObject>>& USLOptionPrivateDataAsset::GetBrushDataMap() const
+{
+	return OptionImageMap;
 }

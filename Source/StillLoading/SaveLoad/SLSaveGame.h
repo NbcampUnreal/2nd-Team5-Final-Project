@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
 #include "SLSaveDataStructs.h"
+#include "Objective/SLObjectiveDataAsset.h"
 #include "SubSystem/SLLevelTransferTypes.h"
 #include "SLSaveGame.generated.h"
 
@@ -31,4 +32,9 @@ public:
 	UPROPERTY()
 	FWidgetSaveData WidgetSaveData;
 
+	UPROPERTY()
+	TMap<ESLChapterType, FSLObjectiveRuntimeData> ChapterObjectiveSaveData;
+	
+	UPROPERTY()
+	TArray<TObjectPtr<USLObjectiveBase>> InProgressedObjectiveSaveData;
 };

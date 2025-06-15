@@ -11,9 +11,9 @@
 #include "UI/Widget/SLButtonWidget.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
+#include "UI/Widget/SLWidgetPrivateDataAsset.h"
 #include "NiagaraSystem.h"
 #include "Components/CanvasPanelSlot.h"
-#include "Components/RetainerBox.h"
 
 const FName USLTitleWidget::TitleTextIndex = "TitleText";
 const FName USLTitleWidget::StartButtonIndex = "StartButton";
@@ -45,6 +45,18 @@ void USLTitleWidget::DeactivateWidget()
 	OnEndedCloseAnim();
 }
 
+void USLTitleWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
+{
+	Super::FindWidgetData(WidgetActivateBuffer);
+
+	if (IsValid(WidgetActivateBuffer.WidgetPrivateData))
+	{
+		USLTitlePrivateDataAsset* PrivateData = Cast<USLTitlePrivateDataAsset>(WidgetActivateBuffer.WidgetPrivateData);
+		PrivateImageMap.Empty();
+		PrivateImageMap = PrivateData->GetBrushDataMap();
+	}
+}
+
 void USLTitleWidget::ApplyTextData()
 {
 	Super::ApplyTextData();
@@ -72,27 +84,23 @@ void USLTitleWidget::ApplyTextData()
 	QuitButton->SetButtonText(OptionTextMap[QuitButtonIndex]);
 }
 
-bool USLTitleWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
-{
-	if (!Super::ApplyBackgroundImage(SlateBrush))
-	{
-		return false;
-	}
-
-	BackgroundBorder->SetBrush(SlateBrush);
-
-	return true;
-}
-
 bool USLTitleWidget::ApplyOtherImage()
 {
 	Super::ApplyOtherImage();
 
-	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_Logo) &&
-		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Logo]))
+	FSlateBrush SlateBrush;
+
+	if (PrivateImageMap.Contains(ESLTitlePrivateImageType::ETPI_Background) &&
+		IsValid(PrivateImageMap[ESLTitlePrivateImageType::ETPI_Background]))
 	{
-		FSlateBrush SlateBrush;
-		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_Logo]);
+		SlateBrush.SetResourceObject(PrivateImageMap[ESLTitlePrivateImageType::ETPI_Background]);
+		BackgroundBorder->SetBrush(SlateBrush);
+	}
+
+	if (PrivateImageMap.Contains(ESLTitlePrivateImageType::ETPI_Logo) &&
+		IsValid(PrivateImageMap[ESLTitlePrivateImageType::ETPI_Logo]))
+	{
+		SlateBrush.SetResourceObject(PrivateImageMap[ESLTitlePrivateImageType::ETPI_Logo]);
 		TitleTextImg->SetBrush(SlateBrush);
 		TitleText->SetVisibility(ESlateVisibility::Collapsed);
 	}
@@ -108,7 +116,8 @@ void USLTitleWidget::OnClickedStartButton()
 
 void USLTitleWidget::OnClickedOptionButton()
 {
-	RequestAddedWidgetToUISubsystem(ESLAdditiveWidgetType::EAW_OptionWidget);
+	CheckValidOfUISubsystem();
+	UISubsystem->ActivateOption();
 	PlayUISound(ESLUISoundType::EUS_Click);
 }
 

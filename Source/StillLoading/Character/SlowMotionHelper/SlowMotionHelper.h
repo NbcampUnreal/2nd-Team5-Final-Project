@@ -48,6 +48,9 @@ public:
 	static void ApplySelectiveSlowMotion(AActor* SelfActor, float TimeScale, float Duration);
 
 	UFUNCTION(BlueprintCallable, Category = "SlowMotion")
+	static void ApplySlowMotionToPawns(AActor* SelfActor, float TimeScale, float Duration);
+	
+	UFUNCTION(BlueprintCallable, Category = "SlowMotion")
 	static void ApplyZoomWithSlowMotion(UObject* WorldContextObject, float TimeScale = 0.1f, float Duration = 0.3f, float ZoomFOV = 60.0f);
 
 	UFUNCTION(BlueprintCallable, Category = "SlowMotion")

@@ -77,18 +77,10 @@ enum class ESLPublicWidgetImageType : uint8
 	EPWI_TextBorder,
 	EPWI_Button,
 	EPWI_ButtonHover,
-	EPWI_SliderBack,
-	EPWI_SliderBar,
-	EPWI_Expandable,
-	EPWI_ExpandedButton,
-	EPWI_ListBack,
-	EPWI_LeftArrow,
-	EPWI_RightArrow,
-	EPWI_Background,
-	EPWI_Fade,
-	EPWI_Logo,
 	EPWI_ButtonEffect,
-	EPWI_ButtonRetainer
+	EPWI_ButtonRetainer,
+	EPWI_Background,
+	EPWI_Fade
 };
 
 UENUM(BlueprintType)
@@ -107,11 +99,25 @@ enum class ESLInGamePrivateImageType : uint8
 };
 
 UENUM(BlueprintType)
-enum class ESLTilePrivateImageType : uint8
+enum class ESLTitlePrivateImageType : uint8
 {
 	ETPI_None = 0,
 	ETPI_Background,
 	ETPI_Logo
+};
+
+UENUM(BlueprintType)
+enum class ESLOptionPrivateImageType : uint8
+{
+	EOPI_None = 0,
+	EOPI_SliderBack,
+	EOPI_SliderBar,
+	EOPI_Expandable,
+	EOPI_ExpandedButton,
+	EOPI_ListBack,
+	EOPI_LeftArrow,
+	EOPI_RightArrow,
+	EOPI_Background
 };
 
 UCLASS()

@@ -23,35 +23,68 @@ void USlowMotionHelper::ApplyActorSlowMotion(AActor* TargetActor, float TimeScal
 {
 	if (!TargetActor) return;
 	TargetActor->CustomTimeDilation = TimeScale;
+
+	TWeakObjectPtr<AActor> WeakTargetActor = TargetActor;
 	
 	FTimerHandle TimerHandle;
-	TargetActor->GetWorldTimerManager().SetTimer(TimerHandle, [TargetActor]() {
-		if (TargetActor)
-			TargetActor->CustomTimeDilation = 1.0f;
+	TargetActor->GetWorldTimerManager().SetTimer(TimerHandle, [WeakTargetActor]() {
+		if (WeakTargetActor.IsValid())
+		{
+			WeakTargetActor->CustomTimeDilation = 1.0f;
+		}
 	}, Duration, false);
 }
 
 void USlowMotionHelper::ApplySelectiveSlowMotion(AActor* SelfActor, float TimeScale, float Duration)
 {
-	if (!SelfActor) return;
-	
+	if (!SelfActor || !SelfActor->GetWorld()) return;
+    
 	UWorld* World = SelfActor->GetWorld();
-	if (!World) return;
 
-	for (TActorIterator<AActor> It(World); It; ++It)
-	{
-		AActor* OtherActor = *It;
-		if (OtherActor && OtherActor != SelfActor)
-			OtherActor->CustomTimeDilation = TimeScale;
-	}
+	UGameplayStatics::SetGlobalTimeDilation(World, TimeScale);
+
+	SelfActor->CustomTimeDilation = 1.0f / TimeScale;
+
+	TWeakObjectPtr<AActor> WeakSelfActor = SelfActor;
 
 	FTimerHandle TimerHandle;
-	World->GetTimerManager().SetTimer(TimerHandle, [World, SelfActor]() {
-		for (TActorIterator<AActor> It(World); It; ++It)
+	World->GetTimerManager().SetTimer(TimerHandle, [World, WeakSelfActor]() {
+		UGameplayStatics::SetGlobalTimeDilation(World, 1.0f);
+
+		if (WeakSelfActor.IsValid())
 		{
-			AActor* OtherActor = *It;
-			if (OtherActor && OtherActor != SelfActor)
-				OtherActor->CustomTimeDilation = 1.0f;
+			WeakSelfActor->CustomTimeDilation = 1.0f;
+		}
+	}, Duration, false);
+}
+
+void USlowMotionHelper::ApplySlowMotionToPawns(AActor* SelfActor, float TimeScale, float Duration)
+{
+	if (!SelfActor || !SelfActor->GetWorld()) return;
+
+	UWorld* World = SelfActor->GetWorld();
+
+	for (TActorIterator<APawn> It(World); It; ++It)
+	{
+		APawn* Pawn = *It;
+		
+		if (Pawn && Pawn != SelfActor)
+		{
+			Pawn->CustomTimeDilation = TimeScale;
+		}
+	}
+
+	TWeakObjectPtr<AActor> WeakSelfActor = SelfActor;
+
+	FTimerHandle TimerHandle;
+	World->GetTimerManager().SetTimer(TimerHandle, [World, WeakSelfActor]() {
+		for (TActorIterator<APawn> It(World); It; ++It)
+		{
+			APawn* Pawn = *It;
+			if (Pawn && Pawn != WeakSelfActor.Get())
+			{
+				Pawn->CustomTimeDilation = 1.0f;
+			}
 		}
 	}, Duration, false);
 }

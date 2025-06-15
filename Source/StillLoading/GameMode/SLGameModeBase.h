@@ -7,7 +7,11 @@
 #include "SLGameModeBase.generated.h"
 
 
+class USLObjectiveBase;
 class ASLGameStateBase;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInProgressObjectiveAdded, USLObjectiveBase*, Objective);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInProgressObjectiveRemoved, USLObjectiveBase*, Objective);
 
 UCLASS()
 class STILLLOADING_API ASLGameModeBase : public AGameMode
@@ -16,11 +20,23 @@ class STILLLOADING_API ASLGameModeBase : public AGameMode
 
 public:
 	ASLGameModeBase();
+	UFUNCTION(BlueprintCallable)
+	void AddInProgressObjective(USLObjectiveBase* Objective);
+	UFUNCTION(BlueprintCallable)
+	USLObjectiveBase* GetPrimaryInProgressObjective();
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnInProgressObjectiveAdded OnInProgressObjectiveAdded;
+	UPROPERTY(BlueprintAssignable)
+	FOnInProgressObjectiveRemoved OnInProgressObjectiveRemoved;
 	
 protected:
 	virtual void BeginPlay() override;
 	virtual void LoadGame();
 
 private:
-	TSoftObjectPtr<ASLGameStateBase> SLGameState;
+	void LoadInProgressObjectives();
+	
+	UPROPERTY()
+	TObjectPtr<ASLGameStateBase> SLGameState;
 };

@@ -146,7 +146,7 @@ private:
 	void ToggleMenu();
 	void ToggleLockState();
 	void RotateCameraToTarget(const AActor* Target, float DeltaTime);
-	void Dodge();
+	void SpawnSword();
 	void Airborne();
 	void AirUp();
 	void AirDown();
@@ -155,6 +155,8 @@ private:
 	void Block(const bool bIsBlocking);
 	void RotateToHitCauser(const AActor* Causer, FRotator &TargetRotation, bool &bIsHitFromBack);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
+
+	void Test();
 
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;

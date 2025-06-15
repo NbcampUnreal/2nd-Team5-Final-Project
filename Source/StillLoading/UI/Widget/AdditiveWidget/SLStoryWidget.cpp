@@ -17,12 +17,12 @@ void USLStoryWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	WidgetOrder = 12;
 	bIsVisibleCursor = true;
 
-	ParentNamePanel = NamePanel;
-	ParentNameText = NameText;
-	ParentNextButton = NextButton;
-	ParentSkipButton = SkipButton;
-	ParentFastButton = FastButton;
-	ParentTalkText = StoryText;
+	//ParentNamePanel = NamePanel;
+	//ParentNameText = NameText;
+	//ParentNextButton = NextButton;
+	//ParentSkipButton = SkipButton;
+	//ParentFastButton = FastButton;
+	//ParentTalkText = StoryText;
 
 	Super::InitWidget(NewUISubsystem);
 }

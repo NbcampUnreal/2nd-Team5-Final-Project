@@ -41,6 +41,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airborne, "Character.Attack.Airborne
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airup, "Character.Attack.Airup");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Airdown, "Character.Attack.Airdown");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_Blast, "Character.Attack.Blast");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack_SpawnSword, "Character.Attack.SpawnSword");
 
 // Charge
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Charge, "Character.Charge");
