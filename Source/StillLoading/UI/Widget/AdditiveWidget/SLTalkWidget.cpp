@@ -10,6 +10,7 @@
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanel.h"
 #include "Components/Image.h"
+#include "Components/WidgetSwitcher.h"
 
 void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -18,21 +19,20 @@ void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	WidgetOrder = 10;
 	bIsVisibleCursor = true;
 
-	ParentNamePanel = NamePanel;
-	ParentNameText = NameText;
 	ParentNextButton = NextButton;
 	ParentSkipButton = SkipButton;
 	ParentFastButton = FastButton;
 	ParentAcceptButton = AcceptButton;
 	ParentRejectButton = RejectButton;
-	ParentTalkText = TalkText;
 
 	Super::InitWidget(NewUISubsystem);
 }
 
 void USLTalkWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
+	ChangeTalkLayer(WidgetActivateBuffer.CurrentChapter);
 	UpdateTalkState(WidgetActivateBuffer.TargetTalk, WidgetActivateBuffer.TargetName, WidgetActivateBuffer.TalkName);
+
 	Super::ActivateWidget(WidgetActivateBuffer);	
 }
 
@@ -70,6 +70,26 @@ void USLTalkWidget::UpdateTalkState(ESLTalkTargetType TalkTargetType, const FNam
 	}
 }
 
+void USLTalkWidget::ChangeTalkLayer(ESLChapterType ChapterType)
+{
+	if (ChapterType == ESLChapterType::EC_Chapter3)
+	{
+		ParentNamePanel = MidNamePanel;
+		ParentNameText = MidNameText;
+		ParentTalkText = MidTalkText;
+
+		WidgetSwitcher->SetActiveWidgetIndex(1);
+	}
+	else
+	{
+		ParentNamePanel = LeftNamePanel;
+		ParentNameText = LeftNameText;
+		ParentTalkText = LeftTalkText;
+
+		WidgetSwitcher->SetActiveWidgetIndex(0);
+	}
+}
+
 void USLTalkWidget::ApplyTextData()
 {
 	Super::ApplyTextData();
@@ -92,13 +112,15 @@ bool USLTalkWidget::ApplyTextBorderImage(FSlateBrush& SlateBrush)
 		return false;
 	}
 	
-	TalkBack->SetBrush(SlateBrush);
+	LeftTalkBack->SetBrush(SlateBrush);
+	MidTalkBack->SetBrush(SlateBrush);
 	
 	if (PublicAssetMap.Contains(ESLPublicWidgetImageType::EPWI_NameBorder) &&
 		IsValid(PublicAssetMap[ESLPublicWidgetImageType::EPWI_NameBorder]))
 	{
 		SlateBrush.SetResourceObject(PublicAssetMap[ESLPublicWidgetImageType::EPWI_NameBorder]);
-		NameBack->SetBrush(SlateBrush);
+		LeftNameBack->SetBrush(SlateBrush);
+		MidNameBack->SetBrush(SlateBrush);
 	}
 	
 	return true;

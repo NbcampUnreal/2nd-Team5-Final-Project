@@ -70,9 +70,16 @@ void ASLInGameHUD::ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer& BossHpDeleg
 	SetBossHpValue(MaxHp, MaxHp);
 }
 
-void ASLInGameHUD::ApplyHitEffect()
+void ASLInGameHUD::ApplyHitEffect(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 {
-	InGameWidget->SetIsHitEffectActivate(true);
+	bIsFirstApplyHp = true;
+
+	if (!PlayerHpDelegate.OnPlayerHpChanged.IsAlreadyBound(this, &ThisClass::SetPlayerHpValue))
+	{
+		PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
+	}
+
+	SetHitEffectValue(MaxHp, MaxHp);
 }
 
 void ASLInGameHUD::SetTimerVisibility(bool bIsVisible)
@@ -104,7 +111,7 @@ void ASLInGameHUD::SetPlayerHpValue(float MaxHp, float CurrentHp)
 {
 	if (!bIsFirstApplyHp)
 	{
-		ApplyHitEffect();
+		SetHitEffectValue(MaxHp, CurrentHp);
 	}
 	else
 	{
@@ -132,4 +139,10 @@ void ASLInGameHUD::SetObjectiveCounter(const FName& ObjectiveName, int32 MaxCoun
 void ASLInGameHUD::SetBossHpValue(float MaxHp, float CurrentHp)
 {
 	InGameWidget->SetBossHpValue(MaxHp, CurrentHp);
+}
+
+void ASLInGameHUD::SetHitEffectValue(float MaxHp, float CurrentHp)
+{
+	InGameWidget->SetEffectValue(MaxHp, CurrentHp);
+	InGameWidget->SetIsHitEffectActivate(true);
 }

@@ -36,7 +36,7 @@ public:
 	void ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer& BossHpDelegate);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyHitEffect();
+	void ApplyHitEffect(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
 
 
 	UFUNCTION(BlueprintCallable)
@@ -69,6 +69,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetBossHpValue(float MaxHp, float CurrentHp);
+
+	UFUNCTION(BlueprintCallable)
+	void SetHitEffectValue(float MaxHp, float CurrentHp);
 
 protected:
 	virtual void OnStartedHUD() override;

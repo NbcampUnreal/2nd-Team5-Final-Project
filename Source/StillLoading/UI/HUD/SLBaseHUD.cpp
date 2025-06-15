@@ -48,7 +48,6 @@ void ASLBaseHUD::OnStartedHUD()
 	CheckValidOfLevelWidget();
 
 	LevelWidgetObj->InitWidget(UISubsystem);
-	ApplyLevelWidgetInputMode();
 
 	USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
 	checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
@@ -70,6 +69,8 @@ void ASLBaseHUD::OnStartedHUD()
 
 	LevelWidgetObj->ActivateWidget(ActivateBuffer);
 	LevelWidgetObj->AddToViewport(0);
+
+	ApplyLevelWidgetInputMode();
 }
 
 void ASLBaseHUD::ApplyLevelWidgetInputMode()
