@@ -57,6 +57,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Animation|Getters")
 	FVector GetDamagePosition() const;
+
 protected:
 	UFUNCTION(BlueprintPure, meta = (BlueprintThreadSafe))
 	bool DoesOwnerHaveTag(FName TagToCheck) const;
@@ -110,6 +111,7 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|Movement")
 	bool bIsJump;
+
 	// --- Anim Data | Aiming & Looking ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AnimData|Movement")	// 수정 예정
 	float Angle;
@@ -125,7 +127,7 @@ protected:
 
 	// --- Anim Data | State ---
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State")
-	bool IsAttacking = false; 
+	bool IsAttacking; 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AnimData|State") 
     bool bIsHit;

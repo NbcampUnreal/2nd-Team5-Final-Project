@@ -292,8 +292,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USLCompanionFlyingComponent> FlyingComponent;
-private:
 
+private:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	bool bIsInCombat;
 

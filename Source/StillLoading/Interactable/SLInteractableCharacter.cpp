@@ -16,11 +16,12 @@ ASLInteractableCharacter::ASLInteractableCharacter()
 
 void ASLInteractableCharacter::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
-	if (IsValid(CurrentTalkHandler))
+	if (USLTalkHandlerBase* TalkHandler = GetCurrentTalkHandler())
 	{
-		if (USLBaseTextPrintWidget* TextWidget = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, TargetName, CurrentTalkHandler->GetTalkName()))
+		if (USLBaseTextPrintWidget* TextWidget = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, TargetName, TalkHandler->GetTalkName()))
 		{
-			TextWidget->OnTalkEnded.AddUniqueDynamic(this, &ASLInteractableCharacter::OnCurrentTalkEnd);
+			TextWidget->OnTalkEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentTalkEnd);
+			TextWidget->OnChoiceEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentChoiceEnd);
 			CurrentTextWidget = TextWidget;
 		}
 	}

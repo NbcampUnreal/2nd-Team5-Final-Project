@@ -17,10 +17,13 @@ class STILLLOADING_API ASLInteractableBreakable : public ASLInteractableObjectBa
 public:
 	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType);
 
-private:
+protected:
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> DestroyEffect;
 
-	int8 MaxHp;
-	int8 CurrentHp;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Info", meta = (ClampMin = "0"))
+	int32 MaxHp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Info", meta = (ClampMin = "0"))
+	int32 CurrentHp;
 };
