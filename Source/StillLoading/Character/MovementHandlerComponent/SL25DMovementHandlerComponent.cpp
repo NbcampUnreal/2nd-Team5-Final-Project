@@ -643,7 +643,7 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 		break;
 	}
 
-	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterWalk, OwnerCharacter->GetActorLocation());
+	//CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterWalk, OwnerCharacter->GetActorLocation());
 }
 
 void USL25DMovementHandlerComponent::FaceToMouse()
