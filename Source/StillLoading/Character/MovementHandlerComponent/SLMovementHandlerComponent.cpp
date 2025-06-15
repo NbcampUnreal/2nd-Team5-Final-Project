@@ -20,6 +20,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "SubSystem/SLBattleSoundSettings.h"
+#include "SubSystem/SLBattleSoundSubsystem.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr), CameraFocusTarget(nullptr)
 {
@@ -41,6 +43,8 @@ void UMovementHandlerComponent::BeginPlay()
 
 		CachedRadarComponent->OnActorDetectedEnhanced.
 		                      AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
+
+		CachedBattleSoundSubsystem = GetBattleSoundSubSystem();
 
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
 		BindIMCComponent();
@@ -1273,4 +1277,17 @@ void UMovementHandlerComponent::HandleBufferedInput(ESkillType Action)
 	default:
 		break;
 	}
+}
+
+USLBattleSoundSubsystem* UMovementHandlerComponent::GetBattleSoundSubSystem() const
+{
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GameInstance = World->GetGameInstance())
+		{
+			return GameInstance->GetSubsystem<USLBattleSoundSubsystem>();
+		}
+	}
+
+	return nullptr;
 }

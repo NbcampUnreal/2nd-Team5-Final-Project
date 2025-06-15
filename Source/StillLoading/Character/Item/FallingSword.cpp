@@ -5,6 +5,7 @@
 #include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
+#include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -47,6 +48,14 @@ void AFallingSword::BeginPlay()
 		&AFallingSword::ApplySweepDamage,
 		DamageInterval,
 		true);
+
+	AActor* DamageCauser = GetInstigator(); 
+	if (!DamageCauser)
+	{
+		DamageCauser = this; 
+		UE_LOG(LogTemp, Warning, TEXT("FallingSword has no Instigator. Falling back to self."));
+	}
+	USlowMotionHelper::ApplySlowMotionToPawns(DamageCauser, 0.2f, 3.0f);
 }
 
 void AFallingSword::ApplySweepDamage()
