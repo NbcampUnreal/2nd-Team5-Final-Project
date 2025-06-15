@@ -57,6 +57,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
 	float AcceleratingBlend;
+
 	// 상태
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|State")
 	bool bIsRunning;
