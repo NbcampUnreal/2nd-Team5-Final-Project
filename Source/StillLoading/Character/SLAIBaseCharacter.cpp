@@ -442,7 +442,7 @@ UBattleComponent* ASLAIBaseCharacter::GetBattleComponent()
 	return BattleComponent;
 }
 
-void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType)
+void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType AnimType)
 {
     // 이미 처형 중이면 무시
     if (bIsBeingExecuted)
@@ -451,9 +451,9 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
     }
     
     // 처형 공격인지 확인
-    if (AnimType == EAttackAnimType::AAT_FinalAttackA || 
-        AnimType == EAttackAnimType::AAT_FinalAttackB || 
-        AnimType == EAttackAnimType::AAT_FinalAttackC)
+    if (AnimType == EHitAnimType::HAT_KillMotionA || 
+        AnimType == EHitAnimType::HAT_KillMotionB || 
+        AnimType == EHitAnimType::HAT_KillMotionC)
     {
         if (CanBeExecuted())
         {
@@ -799,7 +799,7 @@ bool ASLAIBaseCharacter::CanBeExecuted() const
 	return !bIsDead;
 }
 
-void ASLAIBaseCharacter::PlayExecutionAnimation(EAttackAnimType ExecutionType, AActor* Executor)
+void ASLAIBaseCharacter::PlayExecutionAnimation(EHitAnimType ExecutionType, AActor* Executor)
 {
     UE_LOG(LogTemp, Warning, TEXT("PlayExecutionAnimation Called - ExecutionType: %s"), *UEnum::GetValueAsString(ExecutionType));
     

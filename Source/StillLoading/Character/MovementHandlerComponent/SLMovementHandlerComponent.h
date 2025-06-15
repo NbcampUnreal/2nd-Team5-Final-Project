@@ -109,7 +109,7 @@ protected:
 	UFUNCTION()
 	void RemoveInvulnerability() const;
 	UFUNCTION()
-	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EAttackAnimType AnimType);
+	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType);
 	UFUNCTION()
 	void HitDirection(AActor* Causer);
 	UFUNCTION()

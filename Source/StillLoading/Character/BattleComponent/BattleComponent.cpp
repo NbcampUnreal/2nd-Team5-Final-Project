@@ -40,12 +40,13 @@ void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitRes
 		// 맞은자가 Pawn일때 TeamID 비교
 		if (const APawn* HitTargetPawn = Cast<APawn>(HitTarget))
 		{
-			if (const IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(HitTargetPawn->GetController()))
+			if (const IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(
+				HitTargetPawn->GetController()))
 			{
 				if (TeamAgentInterface->GetGenericTeamId() == OwnerGenericTeamID->GetGenericTeamId()) return;
 			}
 		}
-		
+
 		if (const ASLPlayerCharacter* APlayerCharacter = Cast<ASLPlayerCharacter>(OwnerActor))
 		{
 			if (ASLBattlePlayerState* PlayerState = APlayerCharacter->GetPlayerState<ASLBattlePlayerState>())
@@ -53,7 +54,7 @@ void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitRes
 				PlayerState->IncreaseBurningGage(IncreaseBurningGageAmount);
 			}
 		}
-		
+
 		if (HitTarget)
 		{
 			if (UBattleComponent* TargetBattleComp = HitTarget->FindComponentByClass<UBattleComponent>())
@@ -71,7 +72,7 @@ void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitRes
 }
 
 void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult,
-                                        EAttackAnimType AnimType)
+                                        const EAttackAnimType AnimType)
 {
 	if (const AActor* OwnerActor = GetOwner())
 	{
@@ -85,7 +86,7 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 		       *UEnum::GetValueAsString(AnimType)
 		);
 
-		OnCharacterHited.Broadcast(DamageCauser, GetDamageByType(AnimType), HitResult, AnimType);
+		OnCharacterHited.Broadcast(DamageCauser, GetDamageByType(AnimType), HitResult, ConvertAttackAnimType(AnimType));
 
 		if (OwnerActor->IsA(AMonsterAICharacter::StaticClass())
 			|| OwnerActor->IsA(ASLAIBaseCharacter::StaticClass()))
@@ -94,7 +95,8 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 			{
 				UNiagaraSystem* EffectToSpawn = HitEffectData->DefaultEffect;
 
-				if (const UCombatHandlerComponent* CombatHandler = DamageCauser->FindComponentByClass<UCombatHandlerComponent>())
+				if (const UCombatHandlerComponent* CombatHandler = DamageCauser->FindComponentByClass<
+					UCombatHandlerComponent>())
 				{
 					if (CombatHandler->IsEmpowered())
 					{
@@ -208,8 +210,8 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 			AActor* HitActor = Hit.GetActor();
 
 			if (AttackType == EAttackAnimType::AAT_FinalAttackA
-						|| AttackType == EAttackAnimType::AAT_FinalAttackB
-						|| AttackType == EAttackAnimType::AAT_FinalAttackC)
+				|| AttackType == EAttackAnimType::AAT_FinalAttackB
+				|| AttackType == EAttackAnimType::AAT_FinalAttackC)
 			{
 				if (UBattleComponent* TargetBattleComp = HitActor->FindComponentByClass<UBattleComponent>())
 				{
@@ -235,7 +237,7 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 bool UBattleComponent::DoSweep(EAttackAnimType AttackType)
 {
 	bool bIsExistAvailTarget = false;
-	
+
 	if (AActor* OwnerActor = GetOwner())
 	{
 		const FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 100);
@@ -300,6 +302,224 @@ bool UBattleComponent::DoSweep(EAttackAnimType AttackType)
 	}
 
 	return bIsExistAvailTarget;
+}
+
+EHitAnimType UBattleComponent::ConvertAttackAnimType(EAttackAnimType AttackType)
+{
+	switch (AttackType)
+	{
+	case EAttackAnimType::AAT_NormalAttack1:
+	case EAttackAnimType::AAT_NormalAttack2:
+	case EAttackAnimType::AAT_NormalAttack3:
+		return EHitAnimType::HAT_WeakHit;
+	case EAttackAnimType::AAT_SpecialAttack1:
+	case EAttackAnimType::AAT_SpecialAttack2:
+	case EAttackAnimType::AAT_SpecialAttack3:
+		return EHitAnimType::HAT_HardHit;
+	case EAttackAnimType::AAT_AirAttack1:
+	case EAttackAnimType::AAT_AirAttack2:
+	case EAttackAnimType::AAT_AirAttack3:
+		return EHitAnimType::HAT_AirHit;
+	case EAttackAnimType::AAT_Airborn:
+		return EHitAnimType::HAT_AirBorne;
+	case EAttackAnimType::AAT_Skill1:
+		return EHitAnimType::HAT_AirUp;
+	case EAttackAnimType::AAT_Skill2:
+		return EHitAnimType::HAT_FallBack;
+	case EAttackAnimType::AAT_Attack_01:
+		break;
+	case EAttackAnimType::AAT_Attack_02:
+		break;
+	case EAttackAnimType::AAT_Attack_03:
+		break;
+	case EAttackAnimType::AAT_Attack_04:
+		break;
+	case EAttackAnimType::AAT_DashAttack:
+		break;
+	case EAttackAnimType::AAT_FootAttack_Left:
+		break;
+	case EAttackAnimType::AAT_FootAttack_Right:
+		break;
+	case EAttackAnimType::AAT_GroundSlam_02:
+		break;
+	case EAttackAnimType::AAT_GroundSlam_01:
+		break;
+	case EAttackAnimType::AAT_JumpAttack:
+		break;
+	case EAttackAnimType::AAT_ThrowStone:
+		break;
+	case EAttackAnimType::AAT_Whirlwind:
+		break;
+	case EAttackAnimType::AAT_AIProjectile:
+		break;
+	case EAttackAnimType::AAT_Attack_Plunge:
+		break;
+	case EAttackAnimType::AAT_Attack_Air:
+		break;
+	case EAttackAnimType::AAT_BM_MeleeCombo1:
+		break;
+	case EAttackAnimType::AAT_BM_MeleeCombo2:
+		break;
+	case EAttackAnimType::AAT_BM_MeleeCombo3:
+		break;
+	case EAttackAnimType::AAT_BM_QuickCombo1:
+		break;
+	case EAttackAnimType::AAT_BM_HeavyCombo1:
+		break;
+	case EAttackAnimType::AAT_BM_FinisherCombo1:
+		break;
+	case EAttackAnimType::AAT_BM_Attack01:
+		break;
+	case EAttackAnimType::AAT_BM_Attack02:
+		break;
+	case EAttackAnimType::AAT_BM_Attack03:
+		break;
+	case EAttackAnimType::AAT_BM_Attack04:
+		break;
+	case EAttackAnimType::AAT_BM_Attack05:
+		break;
+	case EAttackAnimType::AAT_BM_Attack06:
+		break;
+	case EAttackAnimType::AAT_BM_Attack07:
+		break;
+	case EAttackAnimType::AAT_BM_Attack08:
+		break;
+	case EAttackAnimType::AAT_BM_Attack09:
+		break;
+	case EAttackAnimType::AAT_BM_Attack10:
+		break;
+	case EAttackAnimType::AAT_BM_Attack11:
+		break;
+	case EAttackAnimType::AAT_BM_Attack12:
+		break;
+	case EAttackAnimType::AAT_BM_Attack13:
+		break;
+	case EAttackAnimType::AAT_BM_Attack14:
+		break;
+	case EAttackAnimType::AAT_BM_Attack15:
+		break;
+	case EAttackAnimType::AAT_BM_Attack16:
+		break;
+	case EAttackAnimType::AAT_BM_Attack17:
+		break;
+	case EAttackAnimType::AAT_BM_Attack18:
+		break;
+	case EAttackAnimType::AAT_WZ_MeleeCombo1:
+		break;
+	case EAttackAnimType::AAT_WZ_MeleeCombo2:
+		break;
+	case EAttackAnimType::AAT_WZ_RangeCombo1:
+		break;
+	case EAttackAnimType::AAT_WZ_RangeCombo2:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack01:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack02:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack03:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack04:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack05:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack06:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack07:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack08:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack09:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack10:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack11:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack12:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack13:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack14:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack15:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack16:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack17:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack18:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack19:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack20:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack21:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack22:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack23:
+		break;
+	case EAttackAnimType::AAT_WZ_Loop_Attack04:
+		break;
+	case EAttackAnimType::AAT_WZ_Special_Patterns1:
+		break;
+	case EAttackAnimType::AAT_WZ_Special_Patterns2:
+		break;
+	case EAttackAnimType::AAT_WZ_Special_Patterns3:
+		break;
+	case EAttackAnimType::AAT_WZ_Special_Patterns4:
+		break;
+	case EAttackAnimType::AAT_WZ_Special_Patterns5:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack_Aim01:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack_Aim02:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack_Aim03:
+		break;
+	case EAttackAnimType::AAT_WZ_Attack_Aim04:
+		break;
+	case EAttackAnimType::AAT_DG_Combo_Attack_01:
+		break;
+	case EAttackAnimType::AAT_DG_Combo_Attack_02:
+		break;
+	case EAttackAnimType::AAT_DG_Combo_Attack_03:
+		break;
+	case EAttackAnimType::AAT_DG_Combo_Attack_04:
+		break;
+	case EAttackAnimType::AAT_DG_Combo_Attack_Air:
+		break;
+	case EAttackAnimType::AAT_DG_Attack_Up_01:
+		break;
+	case EAttackAnimType::AAT_DG_Attack_Up_Floor_To_Air_02:
+		break;
+	case EAttackAnimType::AAT_DG_Attack_Air_To_Floor:
+		break;
+	case EAttackAnimType::AAT_DG_Run_Attack_02:
+		break;
+	case EAttackAnimType::AAT_DG_Dash_Air_Attack:
+		break;
+	case EAttackAnimType::AAT_DG_Parry:
+		break;
+	case EAttackAnimType::AAT_AINormal:
+		return EHitAnimType::HAT_WeakHit;
+	case EAttackAnimType::AAT_AISpecial:
+		return EHitAnimType::HAT_HardHit;
+	case EAttackAnimType::AAT_Dead:
+		break;
+	case EAttackAnimType::AAT_Activate:
+		break;
+	case EAttackAnimType::AAT_FinalAttackA:
+		return EHitAnimType::HAT_KillMotionA;
+	case EAttackAnimType::AAT_FinalAttackB:
+		return EHitAnimType::HAT_KillMotionB;
+	case EAttackAnimType::AAT_FinalAttackC:
+		return EHitAnimType::HAT_KillMotionC;
+	case EAttackAnimType::AAT_ParryAttack:
+		return EHitAnimType::HAT_Parry;
+	default: break;
+	}
+
+	return EHitAnimType::HAT_None;
 }
 
 void UBattleComponent::ClearHitTargets()

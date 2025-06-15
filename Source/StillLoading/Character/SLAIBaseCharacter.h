@@ -229,7 +229,7 @@ public:
 	bool CanBeExecuted() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Combat") 
-	void PlayExecutionAnimation(EAttackAnimType ExecutionType, AActor* Executor);
+	void PlayExecutionAnimation(EHitAnimType ExecutionType, AActor* Executor);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void AIJump();
@@ -321,7 +321,7 @@ protected:
 	TArray<FVector> GenerateHorizontalFanDirections(const FVector& BaseDirection, int32 Count, float FanHalfAngle) const;
 
 	UFUNCTION(BlueprintCallable)
-	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EAttackAnimType AnimType);
+	virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType AnimType);
 
 	virtual void OnLanded(const FHitResult& Hit);
 	
@@ -426,7 +426,7 @@ protected:
 	bool bCanBeExecuted;  // 기본값은 true, 보스는 false로 설정
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Montages")
-	TMap<EAttackAnimType, TObjectPtr<UAnimMontage>> ExecutionMontages;
+	TMap<EHitAnimType, TObjectPtr<UAnimMontage>> ExecutionMontages;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool bIsBeingExecuted;

@@ -5,6 +5,27 @@
 #include "AttackDataAsset.generated.h"
 
 UENUM(BlueprintType)
+enum class EHitAnimType : uint8 // 애니메이션 기준
+{
+	HAT_None,
+	
+	// Character
+	HAT_WeakHit UMETA(DisplayName = "Weak Hit"),
+	HAT_AirHit UMETA(DisplayName = "Weak Hit"),
+	HAT_HardHit UMETA(DisplayName = "Hard Hit"),
+	HAT_Exhausterd UMETA(DisplayName = "Exhausterd Hit"),
+	HAT_FallBack UMETA(DisplayName = "FallBack Hit"),
+	HAT_AirBorne UMETA(DisplayName = "Air Borne Hit"),
+	HAT_AirUp UMETA(DisplayName = "Air Up Hit"),
+
+	// AI
+	HAT_KillMotionA UMETA(DisplayName = "Kill MotionA"),
+	HAT_KillMotionB UMETA(DisplayName = "Kill MotionB"),
+	HAT_KillMotionC UMETA(DisplayName = "Kill MotionC"),
+	HAT_Parry UMETA(DisplayName = "Parry Hit"),
+};
+
+UENUM(BlueprintType)
 enum class EAttackAnimType : uint8 // 애니메이션 기준
 {
 	// Character
@@ -48,7 +69,7 @@ enum class EAttackAnimType : uint8 // 애니메이션 기준
     AAT_BM_QuickCombo1          UMETA(DisplayName = "BM Quick Combo 1"),// BM 10->11->12
     AAT_BM_HeavyCombo1          UMETA(DisplayName = "BM Heavy Combo 1"),// BM 13->14->15->16
     AAT_BM_FinisherCombo1       UMETA(DisplayName = "BM Finisher Combo 1"),// BM 17->18
-
+	
     AAT_BM_Attack01             UMETA(DisplayName = "BM Attack 01"), // 약한거
     AAT_BM_Attack02             UMETA(DisplayName = "BM Attack 02"), // 약한거
     AAT_BM_Attack03             UMETA(DisplayName = "BM Attack 03"), // 약한거
