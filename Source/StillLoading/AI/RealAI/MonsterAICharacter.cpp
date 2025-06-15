@@ -13,6 +13,7 @@
 #include "Controller/MonsterAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "SubSystem/SLSoundSubsystem.h"
 
 AMonsterAICharacter::AMonsterAICharacter()
 {
@@ -306,6 +307,8 @@ void AMonsterAICharacter::SetSquadManager(AAISquadManager* InManager)
 void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType)
 {
 	AnimationComponent->StopAllMontages(0.2f);
+	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
+	
 	HitDirection(Causer);
 	RotateToHitCauser(Causer);
 	ChangeMeshTemporarily();
@@ -595,4 +598,17 @@ void AMonsterAICharacter::WatchTarget(const float DeltaTime)
 
 		SetActorRotation(SmoothedRotation);
 	}
+}
+
+USLSoundSubsystem* AMonsterAICharacter::GetBattleSoundSubSystem() const
+{
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GameInstance = World->GetGameInstance())
+		{
+			return GameInstance->GetSubsystem<USLSoundSubsystem>();
+		}
+	}
+
+	return nullptr;
 }

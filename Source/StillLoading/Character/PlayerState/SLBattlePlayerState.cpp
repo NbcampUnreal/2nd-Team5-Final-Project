@@ -87,7 +87,7 @@ void ASLBattlePlayerState::IncreaseBurningGage(const float Amount)
 
 	BurningGage += Amount;
 
-	if (BurningGage >= 100.f)
+	if (BurningGage >= MaxBurningGage)
 	{
 		if (UMovementHandlerComponent* MoveComp = Pawn->FindComponentByClass<UMovementHandlerComponent>())
 		{
@@ -109,7 +109,7 @@ void ASLBattlePlayerState::OnRep_Health()
 {
 	UE_LOG(LogTemp, Log, TEXT("Health Replicated: %.1f"), Health);
 	// TODO: UI 연동, 사망처리 등
-	
+	HPDelegate.OnPlayerHpChanged.Broadcast(MaxHealth, Health);
 }
 
 void ASLBattlePlayerState::OnRep_IsWalking()
@@ -142,13 +142,14 @@ void ASLBattlePlayerState::OnRep_BurningGage()
 	if (ASLDefaultSword* SwordActor = Cast<ASLDefaultSword>(PlayerCharacter->Sword))
 	{
 		SwordActor->UpdateMaterialByGauge(BurningGage);
+		GageDelegate.OnSpecialValueChanged.Broadcast(MaxBurningGage, BurningGage);
 	}
 }
 
 void ASLBattlePlayerState::UpdateGauge()
 {
 	if (BurningGage <= 0) return;
-	BurningGage = FMath::Clamp(BurningGage - 1.f, 0.f, 100.f);
+	BurningGage = FMath::Clamp(BurningGage - 1.f, 0.f, MaxBurningGage);
 	UE_LOG(LogTemp, Warning, TEXT("UpdateGauge [%f]"), BurningGage);
 	// 싱글에선 직접 호출
 	OnRep_BurningGage();

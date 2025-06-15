@@ -20,8 +20,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "SubSystem/SLBattleSoundSettings.h"
-#include "SubSystem/SLBattleSoundSubsystem.h"
+#include "SubSystem/SLSoundSubsystem.h"
 
 UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr), CameraFocusTarget(nullptr)
 {
@@ -382,6 +381,7 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	// 피격
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable, TAG_Character_Empowered});
 	CachedMontageComponent->StopAllMontages(0.2f);
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
 
 	float RemoveDelay = 1.0f;
 
@@ -1269,13 +1269,13 @@ void UMovementHandlerComponent::HandleBufferedInput(ESkillType Action)
 	}
 }
 
-USLBattleSoundSubsystem* UMovementHandlerComponent::GetBattleSoundSubSystem() const
+USLSoundSubsystem* UMovementHandlerComponent::GetBattleSoundSubSystem() const
 {
 	if (const UWorld* World = GetWorld())
 	{
 		if (const UGameInstance* GameInstance = World->GetGameInstance())
 		{
-			return GameInstance->GetSubsystem<USLBattleSoundSubsystem>();
+			return GameInstance->GetSubsystem<USLSoundSubsystem>();
 		}
 	}
 
