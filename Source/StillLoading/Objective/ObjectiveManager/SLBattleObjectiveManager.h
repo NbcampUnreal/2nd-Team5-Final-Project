@@ -38,4 +38,7 @@ protected:
 protected:
 	UPROPERTY()
 	TObjectPtr<ASLBattlePlayerState> PlayerState = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective", meta = (AllowPrivateAccess = "true"))
+	bool bIsBossBattle = false;
 };
