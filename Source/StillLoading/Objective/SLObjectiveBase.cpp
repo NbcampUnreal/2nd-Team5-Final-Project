@@ -3,6 +3,8 @@
 
 #include "SLObjectiveBase.h"
 
+#include "GameMode/SLGameModeBase.h"
+
 void USLObjectiveBase::AddObjectiveProgress(const int32 Count)
 {
 	ObjectiveProgressCount += Count;
@@ -23,6 +25,18 @@ void USLObjectiveBase::ObjectiveFail()
 void USLObjectiveBase::SetObjectiveState(const ESLObjectiveState InState)
 {
 	ObjectiveState = InState;
+	switch (InState)
+	{
+		default:
+		break;
+		case ESLObjectiveState::InProgress:
+			GetWorld()->GetAuthGameMode<ASLGameModeBase>()->AddInProgressObjective(this);
+			break;
+		case ESLObjectiveState::Complete:
+		case ESLObjectiveState::Fail:
+			GetWorld()->GetAuthGameMode<ASLGameModeBase>()->RemoveInProgressObjective(this);
+		break;
+	}
 	OnObjectiveStateChanged.Broadcast(ObjectiveState);
 }
 

@@ -18,6 +18,12 @@ void ASLGameModeBase::AddInProgressObjective(USLObjectiveBase* Objective)
 	OnInProgressObjectiveAdded.Broadcast(Objective);
 }
 
+void ASLGameModeBase::RemoveInProgressObjective(USLObjectiveBase* Objective)
+{
+	SLGameState->GetInProgressedObjectives().Remove(Objective);
+	OnInProgressObjectiveRemoved.Broadcast(Objective);
+}
+
 USLObjectiveBase* ASLGameModeBase::GetPrimaryInProgressObjective()
 {
 	return SLGameState->GetInProgressedObjectives().Top();
