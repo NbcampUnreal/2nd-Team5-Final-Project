@@ -62,7 +62,8 @@ protected:
 private:
 	UFUNCTION()
 	void OnTriggeredNode(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
+
+	void AddTriggerDelegate();
 	FVector GetDirectionVector(EGridDirection Direction) const;
 	float CalculateTriggerThickness(UBoxComponent* InTriggerVolume, EGridDirection Direction) const;
 	float CalculateSafeDistance(const UCapsuleComponent* CharacterCapsule, float TriggerThickness, EGridDirection Direction) const;

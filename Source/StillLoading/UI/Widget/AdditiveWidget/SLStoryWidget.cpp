@@ -46,6 +46,7 @@ void USLStoryWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivat
 	Super::ActivateWidget(WidgetActivateBuffer);
 
 	CurrentTextIndex = 0;
+	SetStoryVisibility(true);
 	ChangeTargetText();
 }
 
@@ -70,6 +71,7 @@ void USLStoryWidget::SetNextStoryText()
 		return;
 	}
 
+	SetStoryVisibility(true);
 	ChangeTargetText();
 }
 
@@ -83,6 +85,11 @@ void USLStoryWidget::SetStoryVisibility(bool bIsVisible)
 	{
 		WidgetSwitcher->SetVisibility(ESlateVisibility::Collapsed);
 	}
+}
+
+int32 USLStoryWidget::GetTextSize() const
+{
+	return NameArray.Num();
 }
 
 void USLStoryWidget::UpdateStoryState(ESLStoryType TargetStoryType, const FName& StoryName)

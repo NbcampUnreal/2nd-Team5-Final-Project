@@ -7,6 +7,7 @@
 #include "SLInGameHUD.generated.h"
 
 class USLInGameWidget;
+class USLObjectiveBase;
 struct FSLPlayerHpDelegateBuffer;
 struct FSLSpecialValueDelegateBuffer;
 struct FSLBossHpDelegateBuffer;
@@ -18,25 +19,26 @@ class STILLLOADING_API ASLInGameHUD : public ASLBaseHUD
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	void ApplyObjective(const FName& ObjectiveName);
-
-	UFUNCTION(BlueprintCallable) // Need Delegate
-	void ApplyObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount);
+	void ApplyObjective();
 
 	UFUNCTION(BlueprintCallable)
 	void ApplyTimer(int32 SecondsValue);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyPlayerHp(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
+	void ApplyPlayerHp(FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyPlayerSpecial(float MaxValue, FSLSpecialValueDelegateBuffer& SpecialValueDelegate);
+	void ApplyPlayerSpecial(FSLSpecialValueDelegateBuffer& SpecialValueDelegate);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer& BossHpDelegate);
+	void ApplyBossHp(FSLBossHpDelegateBuffer& BossHpDelegate);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyHitEffect(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
+	void ApplyHitEffect(FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
+
+
+	UFUNCTION(BlueprintCallable)
+	bool GetIsActivated(ESLInGameActivateType TargetType);
 
 
 	UFUNCTION(BlueprintCallable)
@@ -76,10 +78,23 @@ public:
 protected:
 	virtual void OnStartedHUD() override;
 
+private:
+	UFUNCTION()
+	void OnAddObjective(USLObjectiveBase* TargetObjective);
+
+	UFUNCTION()
+	void OnRemoveObjective(USLObjectiveBase* TargetObjective);
+
+	UFUNCTION()
+	void OnObjectiveCountChanged(int32 Count);
+
 protected:
 	UPROPERTY()
 	TObjectPtr<USLInGameWidget> InGameWidget = nullptr;
 
 private:
 	bool bIsFirstApplyHp = true;
+
+	FName CurrentObjectiveName = "";
+	int32 ObjectiveMaxCount = 0;
 };

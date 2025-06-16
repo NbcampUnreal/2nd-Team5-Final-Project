@@ -325,6 +325,11 @@ void ASLAIBaseCharacter::SetCombatPhase(ECombatPhase NewCombatPhase)
 	CombatPhase = NewCombatPhase;
 }
 
+void ASLAIBaseCharacter::SetIsBoss(bool NewIsBoss)
+{
+	bIsBoss = NewIsBoss;
+}
+
 ECombatPhase ASLAIBaseCharacter::GetCombatPhase()
 {
 	return CombatPhase;
