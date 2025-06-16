@@ -187,6 +187,12 @@ void UMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, F
 
 	//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnActionTriggered → %s"), *EnumName);
 
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
+		return;
+	}
+
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_Look:
@@ -211,6 +217,12 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 	//EnumName.RemoveFromStart("EInputActionType::");
 
 	//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnActionStarted → %s"), *EnumName);
+
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
+		return;
+	}
 
 	switch (ActionType)
 	{
@@ -253,11 +265,6 @@ void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 		}
 	case EInputActionType::EIAT_PointMove:
 	case EInputActionType::EIAT_Block:
-		if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
-		{
-			//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
-			return;
-		}
 		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
 		{
 			BufferComp->OnIMCActionStarted(ActionType);

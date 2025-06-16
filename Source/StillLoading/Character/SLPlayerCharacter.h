@@ -52,6 +52,8 @@ public:
 	void BeginBlast(const EItemType ItemType);
 	UFUNCTION()
 	void OnEmpoweredStateChanged(bool bIsEmpowered);
+	UFUNCTION(BlueprintCallable)
+	void DisableWeapons();
 
 	// Skill
 	UFUNCTION()

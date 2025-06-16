@@ -85,6 +85,12 @@ void USL2DMovementHandlerComponent::BindIMCComponent()
 
 void USL2DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
 {
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
+		return;
+	}
+	
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_Look: break;
@@ -102,6 +108,12 @@ void USL2DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionTyp
 
 void USL2DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 {
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
+		return;
+	}
+	
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_Attack:
