@@ -34,10 +34,14 @@ class STILLLOADING_API USLInGamePrivateDataAsset : public UDataAsset
 
 public:
 	const TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>>& GetBrushDataMap() const;
+	const TMap<ESLInGameActivateType, bool>& GetActivateUIMap() const;
 
 private:
 	UPROPERTY(EditAnywhere)
 	TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>> InGameImageMap;
+
+	UPROPERTY(EditAnywhere)
+	TMap<ESLInGameActivateType, bool> ActivateUIMap;
 };
 
 UCLASS()

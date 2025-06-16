@@ -36,6 +36,8 @@ public:
 	void SetObjectiveText(const FName& ObjectiveName);
 	void SetObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount, int32 CurrentCount);
 
+	const TMap<ESLInGameActivateType, bool>& GetActivateUIMap();
+
 protected:
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 
@@ -119,6 +121,9 @@ protected:
 
 	UPROPERTY()
 	TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>> PrivateImageMap;
+
+	UPROPERTY()
+	TMap<ESLInGameActivateType, bool> ActivateUIMap;
 
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> EffectDynamicMat = nullptr;
