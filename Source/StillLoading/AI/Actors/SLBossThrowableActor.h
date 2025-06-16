@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Character/DataAsset/AttackDataAsset.h"
 #include "GameFramework/Actor.h"
 #include "SLBossThrowableActor.generated.h"
 
@@ -78,5 +79,7 @@ protected:
 
 private:
     UPROPERTY()
-    TSet<AActor*> HitActors;
+    TSet<TObjectPtr<AActor>> HitActors;
+
+
 };
