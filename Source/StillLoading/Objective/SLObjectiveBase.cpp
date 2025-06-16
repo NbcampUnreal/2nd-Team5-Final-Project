@@ -40,6 +40,15 @@ void USLObjectiveBase::SetObjectiveState(const ESLObjectiveState InState)
 	OnObjectiveStateChanged.Broadcast(ObjectiveState);
 }
 
+void USLObjectiveBase::SetObjectiveStateDelayed(const ESLObjectiveState InState, const float DelayTime)
+{
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, InState]
+	{
+		SetObjectiveState(InState);
+	}, DelayTime, false);
+}
+
 void USLObjectiveBase::ObjectiveComplete()
 {
 	ObjectiveState = ESLObjectiveState::Complete;
