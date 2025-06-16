@@ -20,6 +20,8 @@ ASLLaunchableWall::ASLLaunchableWall()
 	RootComponent = RootSceneComponent;
 
 	RotationTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("RotationTimeline"));
+	YMovementTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("YMovementTimeline"));
+	SpacingTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("SpacingTimeline"));
 
 	// 기본값 설정
 	NumberOfWallParts = 5;
@@ -36,6 +38,19 @@ ASLLaunchableWall::ASLLaunchableWall()
 	RotationDuration = 0.5f;
 	RotationCurve = nullptr;
 	
+	// 스폰 회전 설정
+	SpawnRotation = FRotator::ZeroRotator;
+	bApplySpawnRotationOnConstruction = true;
+	
+	// Pre-Launch Animation 설정
+	bEnablePreLaunchAnimation = true;
+	YMovementDistance = 100.0f;
+	SpacingExpansionDistance = 50.0f;
+	YMovementDuration = 0.5f;
+	SpacingAnimationDuration = 0.5f;
+	YMovementCurve = nullptr;
+	SpacingAnimationCurve = nullptr;
+	
 	// 이펙트 설정
 	CharacterHitEffect = nullptr;
 	CharacterHitSound = nullptr;
@@ -50,6 +65,8 @@ ASLLaunchableWall::ASLLaunchableWall()
 	CurrentLaunchIndex = 0;
 	LaunchedPartsCount = 0;
 	bIsLaunching = false;
+	bIsYMovementAnimating = false;
+	bIsSpacingAnimating = false;
 	
 	// Timeline 회전 변수 초기화
 	CurrentRotatingPartIndex = -1;
@@ -78,7 +95,54 @@ void ASLLaunchableWall::BeginPlay()
 		RotationTimeline->SetLooping(false);
 	}
 	
+	// YMovementTimeline 설정
+	if (YMovementTimeline)
+	{
+		YMovementTimelineUpdateDelegate.BindUFunction(this, FName("OnYMovementTimelineUpdate"));
+		YMovementTimelineFinishedDelegate.BindUFunction(this, FName("OnYMovementTimelineFinished"));
+		
+		if (YMovementCurve)
+		{
+			YMovementTimeline->AddInterpFloat(YMovementCurve, YMovementTimelineUpdateDelegate);
+		}
+		YMovementTimeline->SetTimelineFinishedFunc(YMovementTimelineFinishedDelegate);
+		YMovementTimeline->SetTimelineLength(YMovementDuration);
+		YMovementTimeline->SetLooping(false);
+	}
+	
+	// SpacingTimeline 설정
+	if (SpacingTimeline)
+	{
+		SpacingTimelineUpdateDelegate.BindUFunction(this, FName("OnSpacingTimelineUpdate"));
+		SpacingTimelineFinishedDelegate.BindUFunction(this, FName("OnSpacingTimelineFinished"));
+		
+		if (SpacingAnimationCurve)
+		{
+			SpacingTimeline->AddInterpFloat(SpacingAnimationCurve, SpacingTimelineUpdateDelegate);
+		}
+		SpacingTimeline->SetTimelineFinishedFunc(SpacingTimelineFinishedDelegate);
+		SpacingTimeline->SetTimelineLength(SpacingAnimationDuration);
+		SpacingTimeline->SetLooping(false);
+	}
+	
 	SetupWallParts();
+	
+	// 원본 위치 저장
+	OriginalWallPartPositions.Empty();
+	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
+	for (int32 i = 0; i < ActiveParts && i < WallParts.Num(); i++)
+	{
+		if (WallParts[i])
+		{
+			OriginalWallPartPositions.Add(WallParts[i]->GetRelativeLocation());
+		}
+	}
+	
+	// BeginPlay에서 스폰 회전 적용
+	if (bApplySpawnRotationOnConstruction)
+	{
+		ApplySpawnRotation();
+	}
 }
 
 void ASLLaunchableWall::OnConstruction(const FTransform& Transform)
@@ -95,6 +159,22 @@ void ASLLaunchableWall::OnConstruction(const FTransform& Transform)
 	{
 		RotationTimeline->SetTimelineLength(RotationDuration);
 	}
+	
+	if (YMovementTimeline)
+	{
+		YMovementTimeline->SetTimelineLength(YMovementDuration);
+	}
+	
+	if (SpacingTimeline)
+	{
+		SpacingTimeline->SetTimelineLength(SpacingAnimationDuration);
+	}
+	
+	// Construction에서 스폰 회전 적용 (에디터 미리보기용)
+	if (bApplySpawnRotationOnConstruction)
+	{
+		ApplySpawnRotation();
+	}
 }
 
 void ASLLaunchableWall::LaunchWallToPlayer()
@@ -107,14 +187,157 @@ void ASLLaunchableWall::LaunchWallToPlayer()
 	bIsLaunching = true;
 	CurrentLaunchIndex = 0;
 	
-	// 첫 번째 파트 발사
-	LaunchNextPart();
+	// Pre-Launch 애니메이션이 활성화되어 있으면 애니메이션부터 시작
+	if (bEnablePreLaunchAnimation)
+	{
+		StartPreLaunchAnimation();
+	}
+	else
+	{
+		// 애니메이션 없이 바로 발사
+		LaunchNextPart();
+	}
 }
 
 bool ASLLaunchableWall::CanLaunch() const
 {
 	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
-	return !bIsLaunching && WallParts.Num() > 0 && LaunchedPartsCount < ActiveParts;
+	return !bIsLaunching && !bIsYMovementAnimating && !bIsSpacingAnimating && WallParts.Num() > 0 && LaunchedPartsCount < ActiveParts;
+}
+
+void ASLLaunchableWall::StartPreLaunchAnimation()
+{
+	// Y방향 이동부터 시작
+	StartYMovementAnimation();
+}
+
+void ASLLaunchableWall::StartYMovementAnimation()
+{
+	if (!YMovementTimeline)
+	{
+		// Timeline이 없으면 바로 간격 확장으로
+		StartSpacingAnimation();
+		return;
+	}
+	
+	bIsYMovementAnimating = true;
+	
+	// 원본 위치 저장
+	OriginalWallPartPositions.Empty();
+	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
+	for (int32 i = 0; i < ActiveParts && i < WallParts.Num(); i++)
+	{
+		if (WallParts[i])
+		{
+			OriginalWallPartPositions.Add(WallParts[i]->GetRelativeLocation());
+		}
+	}
+	
+	YMovementTimeline->PlayFromStart();
+}
+
+void ASLLaunchableWall::OnYMovementTimelineUpdate(float Value)
+{
+	UpdateWallPartsYPosition(Value);
+}
+
+void ASLLaunchableWall::OnYMovementTimelineFinished()
+{
+	bIsYMovementAnimating = false;
+	
+	// Y 이동 완료 후 Y 이동된 위치를 저장
+	YMovedWallPartPositions.Empty();
+	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
+	for (int32 i = 0; i < ActiveParts && i < WallParts.Num(); i++)
+	{
+		if (WallParts[i])
+		{
+			YMovedWallPartPositions.Add(WallParts[i]->GetRelativeLocation());
+		}
+	}
+	
+	// 간격 확장 애니메이션 시작
+	StartSpacingAnimation();
+}
+
+void ASLLaunchableWall::StartSpacingAnimation()
+{
+	if (!SpacingTimeline)
+	{
+		// Timeline이 없으면 바로 발사 시작
+		LaunchNextPart();
+		return;
+	}
+	
+	bIsSpacingAnimating = true;
+	SpacingTimeline->PlayFromStart();
+}
+
+void ASLLaunchableWall::OnSpacingTimelineUpdate(float Value)
+{
+	UpdateWallPartsSpacing(Value);
+}
+
+void ASLLaunchableWall::OnSpacingTimelineFinished()
+{
+	bIsSpacingAnimating = false;
+	
+	// 간격 확장 완료 후 실제 발사 시작
+	LaunchNextPart();
+}
+
+void ASLLaunchableWall::UpdateWallPartsYPosition(float AnimationProgress)
+{
+	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
+	
+	for (int32 i = 0; i < ActiveParts && i < WallParts.Num() && i < OriginalWallPartPositions.Num(); i++)
+	{
+		if (WallParts[i])
+		{
+			FVector OriginalPos = OriginalWallPartPositions[i];
+			
+			// Y 방향 이동만
+			float YOffset = YMovementDistance * AnimationProgress;
+			
+			FVector NewPosition = OriginalPos;
+			NewPosition.Y += YOffset;
+			WallParts[i]->SetRelativeLocation(NewPosition);
+		}
+	}
+}
+
+void ASLLaunchableWall::UpdateWallPartsSpacing(float AnimationProgress)
+{
+	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
+	
+	for (int32 i = 0; i < ActiveParts && i < WallParts.Num() && i < YMovedWallPartPositions.Num(); i++)
+	{
+		if (WallParts[i])
+		{
+			FVector YMovedPos = YMovedWallPartPositions[i];
+			
+			// 간격 확장만
+			float SpacingOffset = 0.0f;
+			if (bArrangeHorizontally)
+			{
+				// 가로 배치일 때 X축 간격 확장
+				SpacingOffset = (i - (ActiveParts - 1) * 0.5f) * SpacingExpansionDistance * AnimationProgress;
+				
+				FVector NewPosition = YMovedPos;
+				NewPosition.X += SpacingOffset;
+				WallParts[i]->SetRelativeLocation(NewPosition);
+			}
+			else
+			{
+				// 세로 배치일 때 Z축 간격 확장
+				SpacingOffset = (i - (ActiveParts - 1) * 0.5f) * SpacingExpansionDistance * AnimationProgress;
+				
+				FVector NewPosition = YMovedPos;
+				NewPosition.Z += SpacingOffset;
+				WallParts[i]->SetRelativeLocation(NewPosition);
+			}
+		}
+	}
 }
 
 void ASLLaunchableWall::RefreshWallMeshes()
@@ -160,6 +383,43 @@ void ASLLaunchableWall::RefreshWallLayout()
 			WallParts[i]->SetRelativeScale3D(WallPartScale);
 		}
 	}
+	
+	// 레이아웃 변경 후 스폰 회전 다시 적용
+	if (bApplySpawnRotationOnConstruction)
+	{
+		ApplySpawnRotation();
+	}
+}
+
+void ASLLaunchableWall::ApplySpawnRotation()
+{
+	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
+	
+	for (int32 i = 0; i < ActiveParts && i < WallParts.Num(); i++)
+	{
+		if (WallParts[i])
+		{
+			ApplySpawnRotationToWallPart(WallParts[i], i);
+		}
+	}
+}
+
+void ASLLaunchableWall::SetSpawnRotation(const FRotator& NewRotation)
+{
+	SpawnRotation = NewRotation;
+	
+	// 즉시 회전 적용
+	ApplySpawnRotation();
+}
+
+void ASLLaunchableWall::ApplySpawnRotationToWallPart(UStaticMeshComponent* WallPart, int32 PartIndex)
+{
+	if (!WallPart)
+	{
+		return;
+	}
+	
+	WallPart->SetRelativeRotation(SpawnRotation);
 }
 
 void ASLLaunchableWall::OnWallPartHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
@@ -209,7 +469,6 @@ void ASLLaunchableWall::OnWallPartHit(UPrimitiveComponent* HitComponent, AActor*
 		DestroyWallPart(WallPartIndex);
 		return;
 	}
-
 }
 
 void ASLLaunchableWall::SetupWallParts()
@@ -378,15 +637,48 @@ void ASLLaunchableWall::StartSmoothRotation()
 	CurrentRotatingPartIndex = CurrentLaunchIndex;
 	StartRotation = CurrentPart->GetRelativeRotation();
 	
-	// 플레이어를 향하는 회전 계산
-	FVector PlayerLocation = GetPlayerLocation();
-	FVector WallPartLocation = CurrentPart->GetComponentLocation();
-	FVector DirectionToPlayer = (PlayerLocation - WallPartLocation).GetSafeNormal();
-	TargetRotation = UKismetMathLibrary::MakeRotFromZ(DirectionToPlayer);
+	// 벽이 앞으로 넘어지도록 Pitch 90도 설정
+	TargetRotation = StartRotation;
+	TargetRotation.Roll = 90.0f;
 
 	RotationTimeline->SetTimelineLength(RotationDuration);
 	
 	RotationTimeline->PlayFromStart();
+}
+
+void ASLLaunchableWall::OnRotationTimelineUpdate(float Value)
+{
+	if (CurrentRotatingPartIndex < 0 || CurrentRotatingPartIndex >= WallParts.Num() || !WallParts[CurrentRotatingPartIndex])
+	{
+		return;
+	}
+
+	UStaticMeshComponent* CurrentPart = WallParts[CurrentRotatingPartIndex];
+	
+	// 커브 값에 따른 회전 보간 (0.0~1.0)
+	FRotator CurrentRotation = FMath::Lerp(StartRotation, TargetRotation, Value);
+	CurrentPart->SetWorldRotation(CurrentRotation);
+}
+
+void ASLLaunchableWall::OnRotationTimelineFinished()
+{
+	// 최종 회전 적용 (정확성 보장)
+	if (CurrentRotatingPartIndex >= 0 && CurrentRotatingPartIndex < WallParts.Num() && WallParts[CurrentRotatingPartIndex])
+	{
+		WallParts[CurrentRotatingPartIndex]->SetWorldRotation(TargetRotation);
+	}
+
+	// 초기화
+	CurrentRotatingPartIndex = -1;
+
+	// 회전 완료 후 잠시 딜레이를 두고 실제 발사
+	GetWorldTimerManager().SetTimer(
+		RotationTimerHandle,
+		this,
+		&ASLLaunchableWall::LaunchCurrentPart,
+		RotationDelay,
+		false
+	);
 }
 
 void ASLLaunchableWall::ApplyDamageToPlayer(AActor* PlayerActor, const FHitResult& HitResult, int32 WallPartIndex)
@@ -550,43 +842,6 @@ void ASLLaunchableWall::SetWallPartTopFaceToPlayer(UStaticMeshComponent* WallPar
 	FRotator WallRotation = UKismetMathLibrary::MakeRotFromZ(DirectionToPlayer);
 	
 	WallPart->SetWorldRotation(WallRotation);
-}
-
-void ASLLaunchableWall::OnRotationTimelineUpdate(float Value)
-{
-	if (CurrentRotatingPartIndex < 0 || 
-		CurrentRotatingPartIndex >= WallParts.Num() || 
-		!WallParts[CurrentRotatingPartIndex])
-	{
-		return;
-	}
-
-	UStaticMeshComponent* CurrentPart = WallParts[CurrentRotatingPartIndex];
-	
-	// 커브 값에 따른 회전 보간 (0.0~1.0)
-	FRotator CurrentRotation = FMath::Lerp(StartRotation, TargetRotation, Value);
-	CurrentPart->SetWorldRotation(CurrentRotation);
-}
-
-void ASLLaunchableWall::OnRotationTimelineFinished()
-{
-	// 최종 회전 적용 (정확성 보장)
-	if (CurrentRotatingPartIndex >= 0 && CurrentRotatingPartIndex < WallParts.Num() && WallParts[CurrentRotatingPartIndex])
-	{
-		WallParts[CurrentRotatingPartIndex]->SetWorldRotation(TargetRotation);
-	}
-
-	// 초기화
-	CurrentRotatingPartIndex = -1;
-
-	// 회전 완료 후 잠시 딜레이를 두고 실제 발사
-	GetWorldTimerManager().SetTimer(
-		RotationTimerHandle,
-		this,
-		&ASLLaunchableWall::LaunchCurrentPart,
-		RotationDelay,
-		false
-	);
 }
 
 void ASLLaunchableWall::CreateWallParts()

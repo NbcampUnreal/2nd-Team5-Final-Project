@@ -23,7 +23,7 @@ UCLASS()
 class STILLLOADING_API ASLLaunchableWall : public AActor
 {
 	GENERATED_BODY()
-	
+
 public:
 	ASLLaunchableWall();
 
@@ -39,6 +39,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Wall Layout")
 	void RefreshWallLayout();
 
+	UFUNCTION(BlueprintCallable, Category = "Spawn Rotation")
+	void ApplySpawnRotation();
+
+	UFUNCTION(BlueprintCallable, Category = "Spawn Rotation")
+	void SetSpawnRotation(const FRotator& NewRotation);
+
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FSLOnAllWallPartsLaunched OnAllWallPartsLaunched;
 
@@ -49,12 +55,35 @@ protected:
 	UFUNCTION()
 	void OnWallPartHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
 
+	UFUNCTION()
+	void OnRotationTimelineUpdate(float Value);
+	
+	UFUNCTION()
+	void OnRotationTimelineFinished();
+
+	UFUNCTION()
+	void OnYMovementTimelineUpdate(float Value);
+	
+	UFUNCTION()
+	void OnYMovementTimelineFinished();
+	
+	UFUNCTION()
+	void OnSpacingTimelineUpdate(float Value);
+	
+	UFUNCTION()
+	void OnSpacingTimelineFinished();
+
 	void SetupWallParts();
 	void LaunchNextPart();
 	void CheckAllPartsLaunched();
 	void RotateCurrentPart();
 	void LaunchCurrentPart();
 	void StartSmoothRotation();
+	void StartPreLaunchAnimation();
+	void StartYMovementAnimation();
+	void StartSpacingAnimation();
+	void UpdateWallPartsYPosition(float AnimationProgress);
+	void UpdateWallPartsSpacing(float AnimationProgress);
 	void ApplyDamageToPlayer(AActor* PlayerActor, const FHitResult& HitResult, int32 WallPartIndex);
 	void PlayCharacterHitEffects(const FVector& HitLocation, AActor* HitActor);
 	void PlayGroundHitEffects(const FVector& HitLocation);
@@ -62,12 +91,7 @@ protected:
 	FVector GetPlayerLocation() const;
 	FVector GetPlayerDirection() const;
 	void SetWallPartTopFaceToPlayer(UStaticMeshComponent* WallPart) const;
-	
-	UFUNCTION()
-	void OnRotationTimelineUpdate(float Value);
-	
-	UFUNCTION()
-	void OnRotationTimelineFinished();
+	void ApplySpawnRotationToWallPart(UStaticMeshComponent* WallPart, int32 PartIndex);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> RootSceneComponent;
@@ -80,6 +104,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UTimelineComponent> RotationTimeline;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UTimelineComponent> YMovementTimeline;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UTimelineComponent> SpacingTimeline;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings", meta = (ClampMin = "1", ClampMax = "20"))
 	int32 NumberOfWallParts;
@@ -114,6 +144,33 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation Settings")
 	TObjectPtr<UCurveFloat> RotationCurve;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Rotation")
+	FRotator SpawnRotation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Rotation")
+	bool bApplySpawnRotationOnConstruction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation")
+	bool bEnablePreLaunchAnimation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation"))
+	float YMovementDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation"))
+	float SpacingExpansionDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation", ClampMin = "0.1", ClampMax = "3.0"))
+	float YMovementDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation", ClampMin = "0.1", ClampMax = "3.0"))
+	float SpacingAnimationDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation"))
+	TObjectPtr<UCurveFloat> YMovementCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation"))
+	TObjectPtr<UCurveFloat> SpacingAnimationCurve;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects|Character")
 	TObjectPtr<UNiagaraSystem> CharacterHitEffect;
 
@@ -142,17 +199,28 @@ private:
 	UStaticMesh* GetMeshForPart(int32 Index) const;
 
 	static const int32 MaxWallParts = 5;
+
 	int32 CurrentLaunchIndex;
 	int32 LaunchedPartsCount;
 	bool bIsLaunching;
+	bool bIsYMovementAnimating;
+	bool bIsSpacingAnimating;
+	int32 CurrentRotatingPartIndex;
+
 	FTimerHandle LaunchTimerHandle;
 	FTimerHandle RotationTimerHandle;
+
 	TArray<EWallPartState> WallPartStates;
-	
-	// Timeline Rotation Variables
+	TArray<FVector> OriginalWallPartPositions;
+	TArray<FVector> YMovedWallPartPositions;
+
 	FOnTimelineFloat RotationTimelineUpdateDelegate;
 	FOnTimelineEvent RotationTimelineFinishedDelegate;
+	FOnTimelineFloat YMovementTimelineUpdateDelegate;
+	FOnTimelineEvent YMovementTimelineFinishedDelegate;
+	FOnTimelineFloat SpacingTimelineUpdateDelegate;
+	FOnTimelineEvent SpacingTimelineFinishedDelegate;
+
 	FRotator StartRotation;
 	FRotator TargetRotation;
-	int32 CurrentRotatingPartIndex;
 };
