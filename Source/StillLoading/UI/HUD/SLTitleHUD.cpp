@@ -3,7 +3,19 @@
 
 #include "UI/HUD/SLTitleHUD.h"
 #include "UI/SLUISubsystem.h"
-#include "UI/Widget/LevelWidget/SLLevelWidget.h"
+#include "UI/Widget/LevelWidget/SLTitleWidget.h"
+
+void ASLTitleHUD::MoveToStartMap()
+{
+	CheckValidOfLevelWidget();
+	
+	USLTitleWidget* TitleWidget = Cast<USLTitleWidget>(LevelWidgetObj);
+
+	if (IsValid(TitleWidget))
+	{
+		TitleWidget->OnClickedStartButton();
+	}
+}
 
 void ASLTitleHUD::NotifyTalkEnded()
 {

@@ -46,6 +46,7 @@ void USLStoryWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivat
 	Super::ActivateWidget(WidgetActivateBuffer);
 
 	CurrentTextIndex = 0;
+	SetStoryVisibility(true);
 	ChangeTargetText();
 }
 

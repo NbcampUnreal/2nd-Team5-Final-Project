@@ -32,7 +32,7 @@ public:
 	void ActivateNotify(ESLGameMapType MapType, const FName NotiName);
 
 	UFUNCTION(BlueprintCallable)
-	USLStoryWidget* ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName);
+	USLStoryWidget* ActivateStory(ESLStoryType TargetStoryType);
 
 	UFUNCTION(BlueprintCallable)
 	USLBaseTextPrintWidget* ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName);
@@ -59,7 +59,7 @@ public:
 	void OnBossHpChanged();
 
 private:
-	void SetInputModeAndCursor();
+	void SetInputModeAndCursor(bool bIsRemove);
 
 	void CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void CheckValidOfUISettings();

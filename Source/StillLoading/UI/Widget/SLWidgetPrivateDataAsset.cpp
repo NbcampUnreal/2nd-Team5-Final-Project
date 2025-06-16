@@ -25,6 +25,11 @@ const TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>>& USLTitlePrivateDataAs
 	return TitleImageMap;
 }
 
+ESLLevelNameType USLTitlePrivateDataAsset::GetStartLevelType() const
+{
+	return StartLevelType;
+}
+
 const TMap<ESLOptionPrivateImageType, TObjectPtr<UObject>>& USLOptionPrivateDataAsset::GetBrushDataMap() const
 {
 	return OptionImageMap;

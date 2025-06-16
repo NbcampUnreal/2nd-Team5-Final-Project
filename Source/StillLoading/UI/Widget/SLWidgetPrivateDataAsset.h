@@ -47,10 +47,14 @@ class STILLLOADING_API USLTitlePrivateDataAsset : public UDataAsset
 
 public:
 	const TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>>& GetBrushDataMap() const;
+	ESLLevelNameType GetStartLevelType() const;
 
 private:
 	UPROPERTY(EditAnywhere)
 	TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>> TitleImageMap;
+
+	UPROPERTY(EditAnywhere)
+	ESLLevelNameType StartLevelType = ESLLevelNameType::ELN_None;
 };
 
 UCLASS()
