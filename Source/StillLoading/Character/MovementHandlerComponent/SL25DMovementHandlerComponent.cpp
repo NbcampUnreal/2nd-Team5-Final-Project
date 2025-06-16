@@ -144,6 +144,12 @@ void USL25DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionTy
 
 	//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnActionTriggered → %s"), *EnumName);
 
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
+		return;
+	}
+	
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_Look:
@@ -167,6 +173,12 @@ void USL25DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType
 
 	//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnActionStarted → %s"), *EnumName);
 
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
+		return;
+	}
+	
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_Jump:
