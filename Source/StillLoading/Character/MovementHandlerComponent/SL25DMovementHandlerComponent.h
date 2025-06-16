@@ -9,6 +9,7 @@
 #include "SL25DMovementHandlerComponent.generated.h"
 
 
+class USLSoundSubsystem;
 class UCollisionRadarComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -73,6 +74,8 @@ protected:
 	UFUNCTION()
 	void FaceToMouse();
 
+	USLSoundSubsystem* GetBattleSoundSubSystem() const;
+
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
 	
@@ -86,6 +89,8 @@ protected:
 	TSoftObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
 	UPROPERTY()
 	TObjectPtr<USkeletalMeshComponent> CachedSkeletalMesh;
+	UPROPERTY()
+	TObjectPtr<USLSoundSubsystem> CachedBattleSoundSubsystem;
 
 	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;
@@ -113,4 +118,8 @@ protected:
 	int BlockCount = 0;
 	UPROPERTY()
 	float LastBlockTime = 0.f;
+
+	// 막기용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Block")
+	int MaxBlockCount = 5;
 };

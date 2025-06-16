@@ -85,7 +85,7 @@ public:
 
 	// 막기용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Block")
-	int MaxBlockCount = 5;
+	int MaxBlockCount = 3;
 
 	// AttackState 카운트용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")

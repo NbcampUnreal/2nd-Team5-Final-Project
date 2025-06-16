@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "SLSoundTypes.generated.h"
 
 UENUM(BlueprintType)
@@ -42,8 +41,10 @@ enum class EBattleSoundType : uint8
 	BST_CharacterAttack			UMETA(DisplayName = "Character Attack"),
 	BST_CharacterHit			UMETA(DisplayName = "Character Hit"),
 	BST_CharacterWalk			UMETA(DisplayName = "Character Walk"),
+	BST_CharacterDodge			UMETA(DisplayName = "Character Dodge"),
 	BST_CharacterSpirit			UMETA(DisplayName = "Character Spirit"),
 	BST_CharacterGuard			UMETA(DisplayName = "Character Guard"),
+	BST_CharacterGuardBreak		UMETA(DisplayName = "Character GuardBreak"),
 	BST_CharacterSkill			UMETA(DisplayName = "Character Skill"),
 
 	// Monster
@@ -52,6 +53,16 @@ enum class EBattleSoundType : uint8
 	BST_MonsterDie				UMETA(DisplayName = "Monster Die"),
 
 	// AI
+	BST_AIBossAttack			UMETA(DisplayName = "AI Boss Attack"),
+	BST_AIBossHit				UMETA(DisplayName = "AI Boss Hit"),
+
+	BST_AICompanionAttack01		UMETA(DisplayName = "AI Companion Attack01"),
+	BST_AICompanionAttack02		UMETA(DisplayName = "AI Companion Attack02"),
+	BST_AICompanionHit			UMETA(DisplayName = "AI Companion Hit"),
+
+	FootstepDefault		UMETA(DisplayName = "Footstep Default"),
+	FootstepRock		UMETA(DisplayName = "Footstep Rock"),
+	FootstepSoil		UMETA(DisplayName = "Footstep Soil"),
 };
 
 UCLASS()
