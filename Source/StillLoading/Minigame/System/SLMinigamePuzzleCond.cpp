@@ -21,7 +21,6 @@ void ASLMinigamePuzzleCond::UpdateStatueState(int8 InStatueIndex, int8 Submitted
 		if (CurrentStates.IsValidIndex(InStatueIndex))
 		{
 			CurrentStates[InStatueIndex] = SubmittedValue;
-			TryCount++;
 		}
 		SubmittedAnswer();
 		break;
@@ -65,9 +64,10 @@ void ASLMinigamePuzzleCond::SubmittedAnswer()
 	{
 		SendCondition(ESLMinigameResult::EMR_Success);
 	}
-	else if (TryCount > 5) // 임시
+	else if (PuzzleType == ESLPuzzleType::LightPuzzle && TryCount >= 5)
 	{
 		DeactivateAllStatue();
+
 	}
 	/*else
 	{
