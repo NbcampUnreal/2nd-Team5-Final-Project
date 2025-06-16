@@ -18,11 +18,11 @@ void ASLInteractableCharacter::OnInteracted(const ASLPlayerCharacterBase* InChar
 {
 	if (USLTalkHandlerBase* TalkHandler = GetCurrentTalkHandler())
 	{
-		if (USLBaseTextPrintWidget* TextWidget = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, TargetName, TalkHandler->GetTalkName()))
+		if (USLBaseTextPrintWidget* TextWidget = UISubsystem->GetTalkWidget())
 		{
 			TextWidget->OnTalkEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentTalkEnd);
 			TextWidget->OnChoiceEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentChoiceEnd);
-			CurrentTextWidget = TextWidget;
+			UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_NPC, TargetName, TalkHandler->GetTalkName());
 		}
 	}
 }
