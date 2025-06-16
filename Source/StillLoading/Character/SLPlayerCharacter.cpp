@@ -100,6 +100,21 @@ void ASLPlayerCharacter::OnEmpoweredStateChanged(const bool bIsEmpowered)
 	}
 }
 
+void ASLPlayerCharacter::DisableWeapons()
+{
+	if (Sword)
+	{
+		Sword->Destroy();
+		Sword = nullptr;
+	}
+
+	if (Shield)
+	{
+		Shield->Destroy();
+		Shield = nullptr;
+	}
+}
+
 void ASLPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
