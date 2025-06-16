@@ -25,16 +25,16 @@ public:
 	void ApplyTimer(int32 SecondsValue);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyPlayerHp(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
+	void ApplyPlayerHp(FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyPlayerSpecial(float MaxValue, FSLSpecialValueDelegateBuffer& SpecialValueDelegate);
+	void ApplyPlayerSpecial(FSLSpecialValueDelegateBuffer& SpecialValueDelegate);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer& BossHpDelegate);
+	void ApplyBossHp(FSLBossHpDelegateBuffer& BossHpDelegate);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyHitEffect(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
+	void ApplyHitEffect(FSLPlayerHpDelegateBuffer& PlayerHpDelegate);
 
 
 	UFUNCTION(BlueprintCallable)

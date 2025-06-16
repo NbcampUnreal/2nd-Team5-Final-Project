@@ -54,6 +54,7 @@ void USLTitleWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivat
 		USLTitlePrivateDataAsset* PrivateData = Cast<USLTitlePrivateDataAsset>(WidgetActivateBuffer.WidgetPrivateData);
 		PrivateImageMap.Empty();
 		PrivateImageMap = PrivateData->GetBrushDataMap();
+		NextLevelType = PrivateData->GetStartLevelType();
 	}
 }
 
@@ -111,7 +112,7 @@ bool USLTitleWidget::ApplyOtherImage()
 void USLTitleWidget::OnClickedStartButton()
 {
 	PlayUISound(ESLUISoundType::EUS_Click);
-	MoveToLevelByType(ESLLevelNameType::ELN_MapList);
+	MoveToLevelByType(NextLevelType);
 }
 
 void USLTitleWidget::OnClickedOptionButton()

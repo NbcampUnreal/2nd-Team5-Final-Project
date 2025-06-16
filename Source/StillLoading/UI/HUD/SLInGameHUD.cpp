@@ -73,7 +73,7 @@ void ASLInGameHUD::ApplyTimer(int32 SecondsValue)
 	SetTimerValue(SecondsValue);
 }
 
-void ASLInGameHUD::ApplyPlayerHp(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
+void ASLInGameHUD::ApplyPlayerHp(FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 {
 	bIsFirstApplyHp = true;
 
@@ -81,12 +81,12 @@ void ASLInGameHUD::ApplyPlayerHp(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerH
 	{
 		PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
 	}
-	
+
 	SetPlayerStateVisibility(true, false);
-	SetPlayerHpValue(MaxHp, MaxHp);
+	SetPlayerHpValue(100, 100);
 }
 
-void ASLInGameHUD::ApplyPlayerSpecial(float MaxValue, FSLSpecialValueDelegateBuffer& SpecialValueDelegate)
+void ASLInGameHUD::ApplyPlayerSpecial(FSLSpecialValueDelegateBuffer& SpecialValueDelegate)
 {
 	if (!SpecialValueDelegate.OnSpecialValueChanged.IsAlreadyBound(this, &ThisClass::SetPlayerSpecialValue))
 	{
@@ -94,10 +94,10 @@ void ASLInGameHUD::ApplyPlayerSpecial(float MaxValue, FSLSpecialValueDelegateBuf
 	}
 	
 	SetPlayerStateVisibility(true, true);
-	SetPlayerSpecialValue(MaxValue, 0);
+	SetPlayerSpecialValue(100, 0);
 }
 
-void ASLInGameHUD::ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer& BossHpDelegate)
+void ASLInGameHUD::ApplyBossHp(FSLBossHpDelegateBuffer& BossHpDelegate)
 {
 	if (!BossHpDelegate.OnBossHpChanged.IsAlreadyBound(this, &ThisClass::SetBossHpValue))
 	{
@@ -105,10 +105,10 @@ void ASLInGameHUD::ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer& BossHpDeleg
 	}
 
 	SetBossStateVisibility(true);
-	SetBossHpValue(MaxHp, MaxHp);
+	SetBossHpValue(100, 100);
 }
 
-void ASLInGameHUD::ApplyHitEffect(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
+void ASLInGameHUD::ApplyHitEffect(FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 {
 	bIsFirstApplyHp = true;
 
@@ -117,7 +117,7 @@ void ASLInGameHUD::ApplyHitEffect(float MaxHp, FSLPlayerHpDelegateBuffer& Player
 		PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
 	}
 
-	SetHitEffectValue(MaxHp, MaxHp);
+	SetHitEffectValue(100, 100);
 }
 
 void ASLInGameHUD::SetTimerVisibility(bool bIsVisible)
