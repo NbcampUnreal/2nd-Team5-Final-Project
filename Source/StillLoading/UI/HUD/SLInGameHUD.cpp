@@ -5,6 +5,8 @@
 #include "UI/SLUISubsystem.h"
 #include "UI/Widget/LevelWidget/SLInGameWidget.h"
 #include "UI/Struct/SLInGameDelegateBuffers.h"
+#include "GameMode/SLGameModeBase.h"
+#include "Objective/SLObjectiveBase.h"
 
 void ASLInGameHUD::OnStartedHUD()
 {
@@ -15,17 +17,53 @@ void ASLInGameHUD::OnStartedHUD()
 
 	InGameWidget = Cast<USLInGameWidget>(LevelWidgetObj);
 	checkf(IsValid(InGameWidget), TEXT("Cast Fail. Level Widget To InGame Widget"));
+
+	ASLGameModeBase* GM = Cast<ASLGameModeBase>(GetWorld()->GetAuthGameMode());
+
+	if (IsValid(GM))
+	{
+		GM->OnInProgressObjectiveAdded.AddDynamic(this, &ThisClass::OnAddObjective);
+		GM->OnInProgressObjectiveRemoved.AddDynamic(this, &ThisClass::OnRemoveObjective);
+	}
 }
 
-void ASLInGameHUD::ApplyObjective(const FName& ObjectiveName) // 게임 모드의 델리게이트 구독
+void ASLInGameHUD::OnAddObjective(USLObjectiveBase* TargetObjective)
 {
-	SetObjectiveName(ObjectiveName);
-	SetObjectiveVisibility();
+	if (IsValid(TargetObjective))
+	{
+		FName ObjectiveName = TargetObjective->GetObjectiveName();
+		int32 CompleteCount = TargetObjective->GetObjectiveCompleteCount();
+
+		CurrentObjectiveName = ObjectiveName;
+
+		if (CompleteCount == 1)
+		{
+			SetObjectiveName(ObjectiveName);
+		}
+		else
+		{
+			ObjectiveMaxCount = CompleteCount;
+			SetObjectiveCounter(ObjectiveName, CompleteCount, 0);
+			TargetObjective->OnObjectiveProgressChanged.AddDynamic(this, &ThisClass::OnObjectiveCountChanged);
+		}
+	}
 }
 
-void ASLInGameHUD::ApplyObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount)
+void ASLInGameHUD::OnRemoveObjective(USLObjectiveBase* TargetObjective)
 {
-	SetObjectiveCounter(ObjectiveName, MaxCount, 0);
+	if (TargetObjective->OnObjectiveProgressChanged.IsAlreadyBound(this, &ThisClass::OnObjectiveCountChanged))
+	{
+		TargetObjective->OnObjectiveProgressChanged.RemoveDynamic(this, &ThisClass::OnObjectiveCountChanged);
+	}
+}
+
+void ASLInGameHUD::OnObjectiveCountChanged(int32 Count)
+{
+	SetObjectiveCounter(CurrentObjectiveName, ObjectiveMaxCount, Count);
+}
+
+void ASLInGameHUD::ApplyObjective()
+{
 	SetObjectiveVisibility();
 }
 
