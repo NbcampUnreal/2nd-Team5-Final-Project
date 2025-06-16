@@ -3,7 +3,6 @@
 #include "NiagaraFunctionLibrary.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "Character/SLAIBaseCharacter.h"
-#include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -12,7 +11,7 @@
 
 AFallingSword::AFallingSword()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	SwordMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SwordMesh"));
 	RootComponent = SwordMesh;
@@ -38,10 +37,6 @@ void AFallingSword::BeginPlay()
 		                                             FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, true);
 	}
 
-	FScriptDelegate StopDelegate;
-	StopDelegate.BindUFunction(this, "OnSwordImpact");
-	ProjectileMovement->OnProjectileStop.Add(StopDelegate);
-
 	GetWorld()->GetTimerManager().SetTimer(
 		DamageTimerHandle,
 		this,
@@ -55,7 +50,51 @@ void AFallingSword::BeginPlay()
 		DamageCauser = this; 
 		UE_LOG(LogTemp, Warning, TEXT("FallingSword has no Instigator. Falling back to self."));
 	}
+	TargetActor = DamageCauser;
 	USlowMotionHelper::ApplySlowMotionToPawns(DamageCauser, 0.2f, 3.0f);
+}
+
+void AFallingSword::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (bImpactTriggered || !TargetActor.IsValid())
+	{
+		return;
+	}
+
+	if (GetActorLocation().Z + 300.f <= TargetActor->GetActorLocation().Z)
+	{
+		bImpactTriggered = true;
+        
+		TriggerImpact();
+
+		SetActorTickEnabled(false);
+	}
+}
+
+void AFallingSword::TriggerImpact()
+{
+	GetWorld()->GetTimerManager().ClearTimer(DamageTimerHandle);
+
+	ApplySweepDamage();
+
+	if (ImpactEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ImpactEffect, GetActorLocation(),
+													   GetActorRotation());
+	}
+	if (ImpactSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, GetActorLocation());
+	}
+
+	ProjectileMovement->StopMovementImmediately();
+	
+	SwordMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	SwordMesh->SetSimulatePhysics(false);
+
+	SetLifeSpan(2.0f);
 }
 
 void AFallingSword::ApplySweepDamage()
@@ -91,32 +130,10 @@ void AFallingSword::ApplySweepDamage()
 			{
 				if (UBattleComponent* BattleComp = HitActor->FindComponentByClass<UBattleComponent>())
 				{
-					BattleComp->ReceiveHitResult(50, DamageCauser, Hit, EAttackAnimType::AAT_SpecialAttack3);
+					BattleComp->ReceiveHitResult(5, DamageCauser, Hit, EAttackAnimType::AAT_SpecialAttack3);
 				}
 			}
 		}
 	}
 }
 
-void AFallingSword::OnSwordImpact(const FHitResult& HitResult)
-{
-	GetWorld()->GetTimerManager().ClearTimer(DamageTimerHandle);
-
-	ApplySweepDamage();
-
-	if (ImpactEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ImpactEffect, GetActorLocation(),
-		                                               GetActorRotation());
-	}
-	if (ImpactSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, GetActorLocation());
-	}
-
-	ProjectileMovement->StopMovementImmediately();
-	SwordMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	SwordMesh->SetSimulatePhysics(false);
-
-	SetLifeSpan(3.0f);
-}
