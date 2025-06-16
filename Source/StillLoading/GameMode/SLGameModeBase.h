@@ -23,6 +23,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddInProgressObjective(USLObjectiveBase* Objective);
 	UFUNCTION(BlueprintCallable)
+	void RemoveInProgressObjective(USLObjectiveBase* Objective);
+	UFUNCTION(BlueprintCallable)
 	USLObjectiveBase* GetPrimaryInProgressObjective();
 	
 	UPROPERTY(BlueprintAssignable)

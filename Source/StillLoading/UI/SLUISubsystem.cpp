@@ -82,7 +82,7 @@ void USLUISubsystem::ActivateFade(bool bIsFadeIn, bool bIsMoveLevel)
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
 }
 
-void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, const FName& NotiName)
+void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, const FName NotiName)
 {
 	WidgetActivateBuffer.TargetMap = MapType;
 	WidgetActivateBuffer.TargetNotify = NotiName;
