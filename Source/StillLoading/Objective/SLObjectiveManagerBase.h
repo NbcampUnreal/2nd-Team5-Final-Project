@@ -18,14 +18,6 @@ public:
 	ASLObjectiveManagerBase();
 
 protected:
-	//UFUNCTION(BlueprintNativeEvent, Category = "ObjectiveManager")
-	//void ActivateInGameUI();
-	//virtual void ActivateInGameUI_Implementation() {};
-
-	//UFUNCTION(BlueprintNativeEvent, Category = "ObjectiveManager")
-	//void DeactivateInGameUI();
-	//virtual void DeactivateInGameUI_Implementation() {};
-
 	virtual void BeginPlay() override;
 
 protected:

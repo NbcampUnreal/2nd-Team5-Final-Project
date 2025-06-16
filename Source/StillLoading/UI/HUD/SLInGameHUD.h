@@ -38,6 +38,10 @@ public:
 
 
 	UFUNCTION(BlueprintCallable)
+	bool GetIsActivated(ESLInGameActivateType TargetType);
+
+
+	UFUNCTION(BlueprintCallable)
 	void SetTimerVisibility(bool bIsVisible);
 
 	UFUNCTION(BlueprintCallable)

@@ -120,6 +120,18 @@ void ASLInGameHUD::ApplyHitEffect(FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 	SetHitEffectValue(100, 100);
 }
 
+bool ASLInGameHUD::GetIsActivated(ESLInGameActivateType TargetType)
+{
+	CheckValidOfLevelWidget();
+	
+	if (InGameWidget->GetActivateUIMap().Contains(TargetType))
+	{
+		return InGameWidget->GetActivateUIMap()[TargetType];
+	}
+	
+	return false;
+}
+
 void ASLInGameHUD::SetTimerVisibility(bool bIsVisible)
 {
 	InGameWidget->SetIsTimerActivate(bIsVisible);

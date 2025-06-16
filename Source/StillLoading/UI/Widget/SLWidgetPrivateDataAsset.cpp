@@ -20,6 +20,11 @@ const TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>>& USLInGamePrivateData
 	return InGameImageMap;
 }
 
+const TMap<ESLInGameActivateType, bool>& USLInGamePrivateDataAsset::GetActivateUIMap() const
+{
+	return ActivateUIMap;
+}
+
 const TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>>& USLTitlePrivateDataAsset::GetBrushDataMap() const
 {
 	return TitleImageMap;

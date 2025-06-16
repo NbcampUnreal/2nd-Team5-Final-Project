@@ -99,6 +99,16 @@ enum class ESLInGamePrivateImageType : uint8
 };
 
 UENUM(BlueprintType)
+enum class ESLInGameActivateType : uint8
+{
+	EIGA_None = 0,
+	EIGA_PlayerHpBar,
+	EIGA_PlayerSpecialBar,
+	EIGA_PlayerHitEffect,
+	EIGA_BossHpBar
+};
+
+UENUM(BlueprintType)
 enum class ESLTitlePrivateImageType : uint8
 {
 	ETPI_None = 0,
