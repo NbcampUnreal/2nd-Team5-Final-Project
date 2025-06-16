@@ -4,9 +4,10 @@
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUISettings.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
+#include "UI/Widget/AdditiveWidget/SLStoryWidget.h"
 #include "UI/HUD/SLInGameHUD.h"
 
-void USLUISubsystem::SetInputModeAndCursor()
+void USLUISubsystem::SetInputModeAndCursor(bool bIsRemove)
 {
 	ESLInputModeType TargetInputMode = ESLInputModeType::EIM_UIOnly;
 	bool bIsVisibleTargetCursor = true;
@@ -43,7 +44,11 @@ void USLUISubsystem::SetInputModeAndCursor()
 	}
 
 	CurrentPC->SetShowMouseCursor(bIsVisibleTargetCursor);
-	CurrentPC->FlushPressedKeys();
+
+	if (!bIsRemove)
+	{
+		CurrentPC->FlushPressedKeys();
+	}
 }
 
 void USLUISubsystem::SetChapterToUI(ESLChapterType ChapterType)
@@ -81,7 +86,7 @@ void USLUISubsystem::ActivateFade(bool bIsFadeIn, bool bIsMoveLevel)
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_FadeWidget);
 }
 
-void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, const FName& NotiName)
+void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, const FName NotiName)
 {
 	WidgetActivateBuffer.TargetMap = MapType;
 	WidgetActivateBuffer.TargetNotify = NotiName;
@@ -89,12 +94,13 @@ void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, const FName& NotiNam
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_NotifyWidget);
 }
 
-void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName)
+USLStoryWidget* USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType)
 {
 	WidgetActivateBuffer.TargetStory = TargetStoryType;
-	WidgetActivateBuffer.TalkName = StoryName;
 
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
+
+	return Cast<USLStoryWidget>(AdditiveWidgetMap[ESLAdditiveWidgetType::EAW_StoryWidget]);
 }
 
 USLBaseTextPrintWidget* USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName)
@@ -125,7 +131,7 @@ void USLUISubsystem::AddAdditiveWidget(ESLAdditiveWidgetType WidgetType)
 	}
 
 	AdditiveWidgetMap[WidgetType]->ActivateWidget(WidgetActivateBuffer);
-	SetInputModeAndCursor();
+	SetInputModeAndCursor(false);
 }
 
 void USLUISubsystem::RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType)
@@ -143,7 +149,7 @@ void USLUISubsystem::RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetTyp
 
 	AdditiveWidgetMap[WidgetType]->DeactivateWidget();
 	ActiveAdditiveWidgets.Remove(AdditiveWidgetMap[WidgetType]);
-	SetInputModeAndCursor();
+	SetInputModeAndCursor(true);
 }
 
 void USLUISubsystem::RemoveAllAdditveWidget()
@@ -157,7 +163,7 @@ void USLUISubsystem::RemoveAllAdditveWidget()
 	}
 
 	ActiveAdditiveWidgets.Empty();
-	SetInputModeAndCursor();
+	SetInputModeAndCursor(true);
 }
 
 UDataAsset* USLUISubsystem::GetPublicImageData()
@@ -185,7 +191,7 @@ void USLUISubsystem::OnPlayerHpChanged()
 		if (IsValid(HUD))
 		{
 			PlayerCurrentHp = PlayerMaxHp;
-			HUD->ApplyPlayerHp(PlayerMaxHp, PlayerHpBuffer);
+			HUD->ApplyPlayerHp(PlayerHpBuffer);
 			DecreasePlayerHp();
 		}
 	}
@@ -202,7 +208,7 @@ void USLUISubsystem::OnPlayerSpecialChanged()
 		if (IsValid(HUD))
 		{
 			SpecialCurrentValue = 0;
-			HUD->ApplyPlayerSpecial(SpecialMaxValue, SpecialValueBuffer);
+			HUD->ApplyPlayerSpecial(SpecialValueBuffer);
 			IncreaseSpecialValue();
 		}
 	}
@@ -219,7 +225,7 @@ void USLUISubsystem::OnBossHpChanged()
 		if (IsValid(HUD))
 		{
 			BossCurrentHp = BossMaxHp;
-			HUD->ApplyBossHp(BossMaxHp, BossHpBuffer);
+			HUD->ApplyBossHp(BossHpBuffer);
 			DecreaseBossHp();
 		}
 	}
@@ -272,7 +278,7 @@ void USLUISubsystem::CheckValidOfWidgetDataAsset()
 	CurrentDataChapter = WidgetActivateBuffer.CurrentChapter;
 
 	CheckValidOfUISettings();
-
+	
 	checkf(UISettings->ChapterWidgetPublicDataMap.Contains(CurrentDataChapter), TEXT("Widget Public Data Map is not contains"));
 	WidgetActivateBuffer.WidgetPublicData = UISettings->ChapterWidgetPublicDataMap[CurrentDataChapter].LoadSynchronous();
 	checkf(IsValid(WidgetActivateBuffer.WidgetPublicData), TEXT("Widget ImageData is invalid"));
@@ -294,7 +300,7 @@ void USLUISubsystem::DecreasePlayerHp()
 		PlayerCurrentHp -= 5;
 		PlayerHpBuffer.OnPlayerHpChanged.Broadcast(PlayerMaxHp, PlayerCurrentHp);
 
-		GetWorld()->GetTimerManager().SetTimer(PlayerHpTimer, this, &ThisClass::DecreasePlayerHp, 1.0f);
+		GetWorld()->GetTimerManager().SetTimer(PlayerHpTimer, this, &ThisClass::DecreasePlayerHp, 3.0f);
 	}
 }
 

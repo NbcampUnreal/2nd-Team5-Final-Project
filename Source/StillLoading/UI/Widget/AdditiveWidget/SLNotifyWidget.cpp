@@ -41,7 +41,11 @@ void USLNotifyWidget::UpdateNotifyText(ESLGameMapType MapType, const FName& Noti
 	{
 		if (NotifyData->TextMap.Contains(MapType))
 		{
-			NotifyText->SetText(NotifyData->TextMap[MapType].NotifyMap[NotiName]);
+			if (NotifyData->TextMap[MapType].NotifyMap.Contains(NotiName))
+			{
+				NotifyText->SetText(NotifyData->TextMap[MapType].NotifyMap[NotiName]);
+			}
+			
 			break;
 		}
 	}
@@ -61,9 +65,9 @@ void USLNotifyWidget::OnEndedCloseAnim()
 	CloseWidget();
 }
 
-bool USLNotifyWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
+bool USLNotifyWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
 {
-	if (!Super::ApplyBackgroundImage(SlateBrush))
+	if (!Super::ApplyBorderImage(SlateBrush))
 	{
 		return false;
 	}

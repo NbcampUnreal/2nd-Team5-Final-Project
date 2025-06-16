@@ -78,10 +78,9 @@ void USLBaseTextPrintWidget::OnClickedNextButton()
 
 	if (TargetTextIndex >= TalkArray.Num())
 	{
-		TalkArray.Empty();
-		OnTalkEnded.Broadcast();
+		CloseTalk();
 		OnChoiceEnded.Broadcast(false);
-		CloseWidget();
+
 		return;
 	}
 
@@ -99,10 +98,8 @@ void USLBaseTextPrintWidget::OnClickedSkipButton()
 	}
 	else
 	{
-		TalkArray.Empty();
-		OnTalkEnded.Broadcast();
+		CloseTalk();
 		OnChoiceEnded.Broadcast(false);
-		CloseWidget();
 	}
 }
 
@@ -125,14 +122,14 @@ void USLBaseTextPrintWidget::OnClickedFastButton()
 
 void USLBaseTextPrintWidget::OnClickedAcceptButton()
 {
+	CloseTalk();
 	OnChoiceEnded.Broadcast(true);
-	CloseWidget();
 }
 
 void USLBaseTextPrintWidget::OnClickedRejectButton()
 {
+	CloseTalk();
 	OnChoiceEnded.Broadcast(false);
-	CloseWidget();
 }
 
 void USLBaseTextPrintWidget::PrintTalkText()
@@ -161,7 +158,7 @@ void USLBaseTextPrintWidget::ChangeTargetText()
 {
 	ParentTalkText->SetText(FText::GetEmpty());
 
-	TargetText = TalkArray[TargetTextIndex];;
+	TargetText = TalkArray[TargetTextIndex];
 	CurrentTextIndex = TalkArray[TargetTextIndex].ToString().Len() - 1;
 
 	FName TargetName = NameArray[TargetTextIndex];
@@ -202,4 +199,11 @@ void USLBaseTextPrintWidget::SetChoiceVisibility(bool bIsVisible)
 		ParentSkipButton->SetVisibility(ESlateVisibility::Visible);
 		ParentNextButton->SetVisibility(ESlateVisibility::Visible);
 	}
+}
+
+void USLBaseTextPrintWidget::CloseTalk()
+{
+	TalkArray.Empty();
+	OnTalkEnded.Broadcast();
+	CloseWidget();
 }

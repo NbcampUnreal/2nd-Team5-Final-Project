@@ -17,10 +17,10 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 
-	// 칼이 어딘가에 부딪혔을 때 호출될 함수
 	UFUNCTION()
-	void OnSwordImpact(const FHitResult& HitResult);
+	void TriggerImpact();
 
 	// 일정 간격으로 피해를 주기 위한 스윕을 실행하는 함수
 	UFUNCTION()
@@ -64,4 +64,9 @@ public:
 private:
 	// 피해를 주기 위한 타이머 핸들
 	FTimerHandle DamageTimerHandle;
+
+	UPROPERTY()
+	TWeakObjectPtr<AActor> TargetActor;
+
+	bool bImpactTriggered = false;
 };

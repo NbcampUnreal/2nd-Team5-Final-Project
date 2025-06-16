@@ -40,9 +40,12 @@ void USLGridNode::UpdateTriggerVolume()
 void USLGridNode::BeginPlay()
 {
 	Super::BeginPlay();
-	TriggerVolume->OnComponentBeginOverlap.AddDynamic(this, &USLGridNode::OnTriggeredNode);
-
+    
     UpdateTriggerVolume();
+
+    // 시작하자마자 트리거에 걸려서 팅기는 현상 제어
+    FTimerHandle TimerHandle;
+    GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &USLGridNode::AddTriggerDelegate, 0.1f, true);
 }
 
 #if WITH_EDITOR
@@ -340,6 +343,11 @@ void USLGridNode::OnTriggeredNode(UPrimitiveComponent* OverlappedComp, AActor* O
     // 캐릭터 이동 및 카메라 전환
     Character->SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
     SwitchToVolumeCamera(PlayerController, TargetVolume);
+}
+
+void USLGridNode::AddTriggerDelegate()
+{
+    TriggerVolume->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnTriggeredNode);
 }
 
 void USLGridNode::SwitchToVolumeCamera(APlayerController* PlayerController, ASLGridVolume* TargetVolume)

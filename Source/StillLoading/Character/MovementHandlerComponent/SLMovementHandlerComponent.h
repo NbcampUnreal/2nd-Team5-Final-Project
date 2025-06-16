@@ -136,6 +136,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
 	float DefaultArmLength = 300.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Jump")
+	float JumpForwardImpulse = 500.0f;
+
 private:
 	UFUNCTION()
 	USLSoundSubsystem* GetBattleSoundSubSystem() const;

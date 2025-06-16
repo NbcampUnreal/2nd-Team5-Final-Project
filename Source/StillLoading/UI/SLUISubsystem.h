@@ -14,6 +14,7 @@
 class USLAdditiveWidget;
 class USLUISettings;
 class UAudioComponent;
+class USLStoryWidget;
 
 UCLASS()
 class STILLLOADING_API USLUISubsystem : public UGameInstanceSubsystem
@@ -28,10 +29,10 @@ public:
 	void ActivateFade(bool bIsFadeIn, bool bIsMoveLevel = false);
 
 	UFUNCTION(BlueprintCallable)
-	void ActivateNotify(ESLGameMapType MapType, const FName& NotiName);
+	void ActivateNotify(ESLGameMapType MapType, const FName NotiName);
 
 	UFUNCTION(BlueprintCallable)
-	void ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName);
+	USLStoryWidget* ActivateStory(ESLStoryType TargetStoryType);
 
 	UFUNCTION(BlueprintCallable)
 	USLBaseTextPrintWidget* ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName);
@@ -58,7 +59,7 @@ public:
 	void OnBossHpChanged();
 
 private:
-	void SetInputModeAndCursor();
+	void SetInputModeAndCursor(bool bIsRemove);
 
 	void CheckValidOfAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void CheckValidOfUISettings();

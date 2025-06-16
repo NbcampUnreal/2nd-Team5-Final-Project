@@ -22,6 +22,17 @@ void USLInGameWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 }
 
+void USLInGameWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
+{
+	if (WidgetActivateBuffer.CurrentChapter == ESLChapterType::EC_Chapter2)
+	{
+		bIsVisibleCursor = true;
+		WidgetInputMode = ESLInputModeType::EIM_GameAndUI;
+	}
+
+	Super::ActivateWidget(WidgetActivateBuffer);
+}
+
 void USLInGameWidget::DeactivateWidget()
 {
 	Super::DeactivateWidget();
@@ -111,6 +122,27 @@ void USLInGameWidget::SetHpValue(float MaxHp, float CurrentHp)
 	HpBar->SetPercent(PerHp);
 }
 
+void USLInGameWidget::SetEffectValue(float MaxHp, float CurrentHp)
+{
+	float Opacity = 1 - (CurrentHp / MaxHp);
+
+	UMaterialInterface* EffectMaterial = Cast<UMaterialInterface>(HitEffectImg->GetBrush().GetResourceObject());
+
+	if (IsValid(EffectMaterial))
+	{
+		if (!IsValid(EffectDynamicMat))
+		{
+			EffectDynamicMat = UMaterialInstanceDynamic::Create(EffectMaterial, this);
+
+			FSlateBrush NewBrush;
+			NewBrush.SetResourceObject(EffectDynamicMat);
+			HitEffectImg->SetBrush(NewBrush);
+		}
+		
+		EffectDynamicMat->SetScalarParameterValue("MaxOpacity", Opacity);
+	}
+}
+
 void USLInGameWidget::SetSpecialValue(float MaxValue, float CurrentValue)
 {
 	float PerHp = CurrentValue / MaxValue;
@@ -151,6 +183,11 @@ void USLInGameWidget::SetObjectiveByCounter(const FName& ObjectiveName, int32 Ma
 	GameStateText->SetText(FText::FromString(TargetString));
 }
 
+const TMap<ESLInGameActivateType, bool>& USLInGameWidget::GetActivateUIMap()
+{
+	return ActivateUIMap;
+}
+
 void USLInGameWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
 	Super::FindWidgetData(WidgetActivateBuffer);
@@ -160,6 +197,7 @@ void USLInGameWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActiva
 		USLInGamePrivateDataAsset* PrivateData = Cast<USLInGamePrivateDataAsset>(WidgetActivateBuffer.WidgetPrivateData);
 		PrivateImageMap.Empty();
 		PrivateImageMap = PrivateData->GetBrushDataMap();
+		ActivateUIMap = PrivateData->GetActivateUIMap();
 	}
 }
 
@@ -175,8 +213,8 @@ bool USLInGameWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
 		return false;
 	}
 
-	/*TimerBack->SetBrush(SlateBrush);
-	GameStateBack->SetBrush(SlateBrush);*/
+	TimerBack->SetBrush(SlateBrush);
+	GameStateBack->SetBrush(SlateBrush);
 
 	return true;
 }

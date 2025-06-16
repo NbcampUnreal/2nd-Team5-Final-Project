@@ -118,6 +118,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool GetIsDead() const { return bIsDead;}
 
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetISBoss() const { return bIsBoss; }
+	
 	// Getter 함수들 추가
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool GetIsHit() const { return bIsHit; }
@@ -167,6 +170,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetCombatPhase(ECombatPhase NewCombatPhase);
 
+	UFUNCTION(BlueprintCallable)
+	void SetIsBoss(bool NewIsBoss);
+	
 	UFUNCTION(BlueprintCallable)
 	ECombatPhase GetCombatPhase();
 
@@ -361,6 +367,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
 	bool bIsAirHit;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "State")
+	bool bIsBoss;
 	
 	// --- Chapter Info ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Chapter", meta = (AllowPrivateAccess = "true"))

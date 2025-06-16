@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SLGameModeBase.h"
@@ -16,6 +16,12 @@ void ASLGameModeBase::AddInProgressObjective(USLObjectiveBase* Objective)
 {
 	SLGameState->GetInProgressedObjectives().AddUnique(Objective);
 	OnInProgressObjectiveAdded.Broadcast(Objective);
+}
+
+void ASLGameModeBase::RemoveInProgressObjective(USLObjectiveBase* Objective)
+{
+	SLGameState->GetInProgressedObjectives().Remove(Objective);
+	OnInProgressObjectiveRemoved.Broadcast(Objective);
 }
 
 USLObjectiveBase* ASLGameModeBase::GetPrimaryInProgressObjective()
