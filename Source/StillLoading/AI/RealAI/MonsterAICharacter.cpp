@@ -448,6 +448,7 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	case EAttackAnimType::AAT_FinalAttackB:
 	case EAttackAnimType::AAT_FinalAttackC:
 	case EAttackAnimType::AAT_Dead:
+		GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterDie, GetActorLocation());
 		Dead(LastAttacker, true);
 		break;
 	case EAttackAnimType::AAT_ParryAttack:
