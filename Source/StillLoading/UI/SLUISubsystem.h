@@ -29,7 +29,7 @@ public:
 	void ActivateFade(bool bIsFadeIn, bool bIsMoveLevel = false);
 
 	UFUNCTION(BlueprintCallable)
-	void ActivateNotify(ESLGameMapType MapType, const FName& NotiName);
+	void ActivateNotify(ESLGameMapType MapType, const FName NotiName);
 
 	UFUNCTION(BlueprintCallable)
 	USLStoryWidget* ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName);
