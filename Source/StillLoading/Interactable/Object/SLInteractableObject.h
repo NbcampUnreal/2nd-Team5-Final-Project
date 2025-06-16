@@ -37,8 +37,6 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, Category = "InteractableObject", DisplayName = "현재 대화 핸들러")
 	TWeakObjectPtr<USLTalkHandlerBase> CurrentTalkHandler;
 	UPROPERTY()
-	TObjectPtr<USLBaseTextPrintWidget> CurrentTextWidget = nullptr;
-	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
 	
 private:
