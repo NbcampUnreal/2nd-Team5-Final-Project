@@ -14,6 +14,7 @@
 class USLAdditiveWidget;
 class USLUISettings;
 class UAudioComponent;
+class USLStoryWidget;
 
 UCLASS()
 class STILLLOADING_API USLUISubsystem : public UGameInstanceSubsystem
@@ -31,7 +32,7 @@ public:
 	void ActivateNotify(ESLGameMapType MapType, const FName& NotiName);
 
 	UFUNCTION(BlueprintCallable)
-	void ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName);
+	USLStoryWidget* ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName);
 
 	UFUNCTION(BlueprintCallable)
 	USLBaseTextPrintWidget* ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName);

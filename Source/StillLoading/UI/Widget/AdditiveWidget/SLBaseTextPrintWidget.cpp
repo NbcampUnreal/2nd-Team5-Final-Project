@@ -158,7 +158,7 @@ void USLBaseTextPrintWidget::ChangeTargetText()
 {
 	ParentTalkText->SetText(FText::GetEmpty());
 
-	TargetText = TalkArray[TargetTextIndex];;
+	TargetText = TalkArray[TargetTextIndex];
 	CurrentTextIndex = TalkArray[TargetTextIndex].ToString().Len() - 1;
 
 	FName TargetName = NameArray[TargetTextIndex];
