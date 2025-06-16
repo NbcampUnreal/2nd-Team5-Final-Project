@@ -4,6 +4,7 @@
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUISettings.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
+#include "UI/Widget/AdditiveWidget/SLStoryWidget.h"
 #include "UI/HUD/SLInGameHUD.h"
 
 void USLUISubsystem::SetInputModeAndCursor()
@@ -89,12 +90,14 @@ void USLUISubsystem::ActivateNotify(ESLGameMapType MapType, const FName& NotiNam
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_NotifyWidget);
 }
 
-void USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName)
+USLStoryWidget* USLUISubsystem::ActivateStory(ESLStoryType TargetStoryType, const FName& StoryName)
 {
 	WidgetActivateBuffer.TargetStory = TargetStoryType;
 	WidgetActivateBuffer.TalkName = StoryName;
 
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_StoryWidget);
+
+	return Cast<USLStoryWidget>(AdditiveWidgetMap[ESLAdditiveWidgetType::EAW_StoryWidget]);
 }
 
 USLBaseTextPrintWidget* USLUISubsystem::ActivateTalk(ESLTalkTargetType TalkTargetType, FName TargetName, FName TalkName)
@@ -272,7 +275,7 @@ void USLUISubsystem::CheckValidOfWidgetDataAsset()
 	CurrentDataChapter = WidgetActivateBuffer.CurrentChapter;
 
 	CheckValidOfUISettings();
-
+	
 	checkf(UISettings->ChapterWidgetPublicDataMap.Contains(CurrentDataChapter), TEXT("Widget Public Data Map is not contains"));
 	WidgetActivateBuffer.WidgetPublicData = UISettings->ChapterWidgetPublicDataMap[CurrentDataChapter].LoadSynchronous();
 	checkf(IsValid(WidgetActivateBuffer.WidgetPublicData), TEXT("Widget ImageData is invalid"));
