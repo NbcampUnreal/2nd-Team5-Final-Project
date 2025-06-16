@@ -10,7 +10,6 @@
 
 void ASLBattleObjectiveManager::ActivateBattleUI(USLObjectiveHandlerBase* Component)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Activate Battle UI"));
 	if (IsValid(HUD))
 	{
 		if (HUD->GetIsActivated(ESLInGameActivateType::EIGA_PlayerHpBar))
@@ -27,7 +26,7 @@ void ASLBattleObjectiveManager::ActivateBattleUI(USLObjectiveHandlerBase* Compon
 			ActivatePlayerSpecialUI();
 		}
 
-		if (HUD->GetIsActivated(ESLInGameActivateType::EIGA_BossHpBar))
+		if (bIsBossBattle && HUD->GetIsActivated(ESLInGameActivateType::EIGA_BossHpBar))
 		{
 			ActivateBossHpUI();
 		}
@@ -49,7 +48,6 @@ void ASLBattleObjectiveManager::ActivatePlayerHpUI()
 
 	if (IsValid(PlayerState))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Activate Player Hp"));
 		HUD->ApplyPlayerHp(PlayerState->GetHPDelegate());
 	}
 }
