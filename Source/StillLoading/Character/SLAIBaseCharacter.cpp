@@ -253,6 +253,12 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 	//히트 이펙트 재생
 }
 
+void ASLAIBaseCharacter::SetMaxHealth(float NewMaxHealth)
+{
+	MaxHealth = NewMaxHealth;
+	SetCurrentHealth(MaxHealth);
+}
+
 void ASLAIBaseCharacter::SetCurrentHealth(float NewHealth)
 {
 	float PreviousHealth = CurrentHealth;
