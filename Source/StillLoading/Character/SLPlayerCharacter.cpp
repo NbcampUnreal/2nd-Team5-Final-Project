@@ -115,6 +115,21 @@ void ASLPlayerCharacter::DisableWeapons()
 	}
 }
 
+void ASLPlayerCharacter::ChangeVisibilityWeapons(bool bIsVisible)
+{
+	const bool bShouldBeHidden = !bIsVisible;
+
+	if (Sword)
+	{
+		Sword->SetActorHiddenInGame(bShouldBeHidden);
+	}
+
+	if (Shield)
+	{
+		Shield->SetActorHiddenInGame(bShouldBeHidden);
+	}
+}
+
 void ASLPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
