@@ -120,6 +120,7 @@ void AMonsterSpawner::SpawnMonstersByType()
 	}
 
 	TotalMonsterCount = SpawnedMonsters.Num();
+	LastMonsterCount = TotalMonsterCount;
 
 	if (Leader && SpawnedMonsters.Num() > 1)
 	{
@@ -153,7 +154,9 @@ void AMonsterSpawner::MonsterDied(AActor* DiedMonsterRef)
 
 	if (OnMonstersUpdated.IsBound())
 	{
-		OnMonstersUpdated.Broadcast(SpawnedMonsters, TotalMonsterCount);
+		int32 DecreaseCount = LastMonsterCount - SpawnedMonsters.Num();
+		OnMonstersUpdated.Broadcast(DecreaseCount);
+		LastMonsterCount = SpawnedMonsters.Num();
 	}
 }
 
