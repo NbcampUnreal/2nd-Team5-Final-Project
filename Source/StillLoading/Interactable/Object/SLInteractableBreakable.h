@@ -7,7 +7,11 @@
 
 #include "SLInteractableBreakable.generated.h"
 
+enum class EHitAnimType : uint8;
+class UBattleComponent;
 class UNiagaraSystem;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnObjectBreaked);
 
 UCLASS()
 class STILLLOADING_API ASLInteractableBreakable : public ASLInteractableObjectBase
@@ -15,12 +19,23 @@ class STILLLOADING_API ASLInteractableBreakable : public ASLInteractableObjectBa
 	GENERATED_BODY()
 	
 public:
-	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType);
+	ASLInteractableBreakable();
+	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType TriggerType) override;
+	virtual void BeginPlay() override;
 
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnObjectBreaked OnObjectBreaked;
+	
 protected:
+	UFUNCTION()
+	virtual void OnHited(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType);
+	
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> DestroyEffect;
-
+	
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBattleComponent> BattleComponent;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Info", meta = (ClampMin = "0"))
 	int32 MaxHp;
 
