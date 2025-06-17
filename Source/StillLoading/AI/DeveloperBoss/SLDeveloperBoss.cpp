@@ -3,7 +3,7 @@
 #include "Character/SLBossCharacter.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
-#include "AI/Actors/SLDeveloperBossLine.h"
+#include "AI/Actors/SLDeveloperRoomCable.h"
 #include "AI/Actors/SLLaunchableWall.h"
 
 ASLDeveloperBoss::ASLDeveloperBoss()
@@ -369,7 +369,7 @@ void ASLDeveloperBoss::ChangePhase(EDeveloperBossPhase NewPhase)
 
 void ASLDeveloperBoss::ResetBossLines()
 {
-    for (ASLDeveloperBossLine* Line : BossLines)
+    for (ASLDeveloperRoomCable* Line : BossLines)
     {
         if (IsValid(Line))
         {

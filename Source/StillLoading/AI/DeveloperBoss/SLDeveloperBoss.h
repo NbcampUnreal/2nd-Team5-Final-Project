@@ -6,7 +6,7 @@
 
 class ASLAIBaseCharacter;
 class ASLBossCharacter;
-class ASLDeveloperBossLine;
+class ASLDeveloperRoomCable;
 class ASLLaunchableWall;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossCharacterDeath, ASLAIBaseCharacter*, DeadCharacter);
@@ -137,7 +137,7 @@ protected:
     TArray<ASLAIBaseCharacter*> SpawnedBosses;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Lines")
-    TArray<ASLDeveloperBossLine*> BossLines;
+    TArray<ASLDeveloperRoomCable*> BossLines;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Wall")
     TArray<ASLLaunchableWall*> LaunchableWalls;

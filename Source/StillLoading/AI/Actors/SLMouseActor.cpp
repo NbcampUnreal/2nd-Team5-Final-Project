@@ -8,76 +8,51 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
-#include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Engine/Engine.h"
 
 ASLMouseActor::ASLMouseActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Root Component Setup
+	// Components Setup
 	RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
 	RootComponent = RootSceneComponent;
 
-	// Mesh Component
 	MouseMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MouseMeshComponent"));
 	MouseMeshComponent->SetupAttachment(RootComponent);
 	MouseMeshComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
-	// Collision Component
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));
 	CollisionComponent->SetupAttachment(RootComponent);
 	CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 	CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
 
-	// Battle Component
 	BattleComponent = CreateDefaultSubobject<UBattleComponent>(TEXT("BattleComponent"));
 
 	// Initialize values
 	ChaseSpeed = 600.0f;
-	AttackDamage = 15.0f;
-	AttackRange = 150.0f;
-	GrabForce = 1000.0f;
-	MaxHealth = 100.0f;
-	ThreatEffectInterval = 2.0f;
-	RotationSpeed = 5.0f;
-	AttackCooldown = 1.5f;
-	
-	// Periodic Grab Settings
-	bEnablePeriodicGrab = true;
-	GrabIntervalMin = 3.0f;
-	GrabIntervalMax = 7.0f;
-	GrabProbability = 0.7f; // 70% chance
-	GrabLocationRadius = 800.0f;
-	MinGrabDistance = 200.0f;
-	MaxGrabDistance = 1000.0f;
-	
+	GrabDistance = 500.0f;
+	GrabHeight = 300.0f;
+	GrabDamage = 20.0f;
+	GrabDuration = 1.5f;
+	GrabCooldown = 3.0f;
+	MaxHealth = 30.0f;
+	DetectionRange = 100.0f;
+
 	// Runtime values
-	CurrentHealth = MaxHealth;
 	CurrentState = EMouseActorState::Inactive;
+	CurrentHealth = MaxHealth;
 	TargetPlayer = nullptr;
-	LastPlayerLocation = FVector::ZeroVector;
-	TargetLocation = FVector::ZeroVector;
-	bCanAttack = true;
-	bIsGrabbing = false;
-	bPeriodicGrabActive = false;
+	GrabStartLocation = FVector::ZeroVector;
+	GrabTargetLocation = FVector::ZeroVector;
+	bCanGrab = true;
 
-	// Debug Settings
-	bShowDebugInfo = false;
-	bDrawDebugLines = false;
-	DebugLineThickness = 3.0f;
-	DebugLineDuration = 0.1f;
-
-	// Effects and Materials
-	ChaseEffect = nullptr;
-	AttackEffect = nullptr;
+	// Effects
+	GrabEffect = nullptr;
 	DestroyEffect = nullptr;
-	ThreatEffect = nullptr;
-	ChaseSound = nullptr;
-	AttackSound = nullptr;
+	GrabSound = nullptr;
 	DestroySound = nullptr;
-	NormalMaterial = nullptr;
-	ThreatMaterial = nullptr;
 }
 
 void ASLMouseActor::BeginPlay()
@@ -88,7 +63,7 @@ void ASLMouseActor::BeginPlay()
 	if (CollisionComponent)
 	{
 		CollisionComponent->OnComponentHit.AddDynamic(this, &ASLMouseActor::OnCollisionHit);
-		CollisionComponent->SetSphereRadius(AttackRange);
+		CollisionComponent->SetSphereRadius(DetectionRange);
 	}
 
 	// Setup battle component
@@ -99,55 +74,42 @@ void ASLMouseActor::BeginPlay()
 
 	// Find initial target
 	TargetPlayer = FindPlayerCharacter();
+	CurrentHealth = MaxHealth;
+	bCanGrab = true;
 }
 
 void ASLMouseActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// Enhanced null checks for safer execution
-	if (!IsValid(TargetPlayer))
+	if (CurrentState == EMouseActorState::Destroyed)
 	{
-		TargetPlayer = FindPlayerCharacter();
-		if (!IsValid(TargetPlayer))
-		{
-			if (bShowDebugInfo)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Mouse Actor: No valid player found!"));
-			}
-			return; // Exit early if no valid player found
-		}
+		return;
 	}
 
-	if (CurrentState == EMouseActorState::Chasing || CurrentState == EMouseActorState::Attacking)
+	// Update target if needed
+	UpdateChaseTarget();
+
+	if (CurrentState == EMouseActorState::Chasing && IsValid(TargetPlayer))
 	{
-		UpdateChaseTarget();
 		MoveTowardsPlayer(DeltaTime);
 		
-		if (IsPlayerInAttackRange() && bCanAttack)
+		// Check if player is in grab range and can grab
+		if (IsPlayerInRange() && CanGrabPlayer())
 		{
-			AttackPlayer();
-		}
-		
-		// Debug state information
-		if (bShowDebugInfo)
-		{
-			static float DebugTimer = 0.0f;
-			DebugTimer += DeltaTime;
-			
-			if (DebugTimer >= 1.0f) // Log every second
-			{
-				DebugTimer = 0.0f;
-				float Distance = GetDistanceToPlayer();
-				UE_LOG(LogTemp, Log, TEXT("Mouse Actor Status: State=%d, Distance=%.1f, CanAttack=%s, Target=%s"), 
-					(int32)CurrentState, Distance, bCanAttack ? TEXT("Yes") : TEXT("No"), 
-					IsValid(TargetPlayer) ? *TargetPlayer->GetName() : TEXT("None"));
-			}
+			StartGrabPlayer();
 		}
 	}
 	else if (CurrentState == EMouseActorState::Grabbing)
 	{
-		HandlePlayerGrabbing();
+		// Move towards grab target location while holding player
+		MoveTowardsGrabTarget(DeltaTime);
+	}
+
+	// Update mesh rotation to look at player
+	if (IsValid(TargetPlayer))
+	{
+		UpdateMeshRotation(DeltaTime);
 	}
 }
 
@@ -161,68 +123,31 @@ void ASLMouseActor::StartChasing()
 	SetMouseActorState(EMouseActorState::Chasing);
 	TargetPlayer = FindPlayerCharacter();
 	
-	if (!IsValid(TargetPlayer))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Mouse Actor: Cannot start chasing - no valid player found"));
-		return;
-	}
-
-	// Start threat effects
-	if (IsValid(GetWorld()))
-	{
-		GetWorldTimerManager().SetTimer(
-			ThreatEffectTimerHandle,
-			this,
-			&ASLMouseActor::UpdateThreatEffects,
-			ThreatEffectInterval,
-			true
-		);
-	}
-
-	// Start periodic grab system
-	if (bEnablePeriodicGrab)
-	{
-		StartPeriodicGrab();
-	}
-
-	// Play chase effect
-	if (IsValid(ChaseEffect) && IsValid(GetWorld()))
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			ChaseEffect,
-			GetActorLocation(),
-			GetActorRotation()
-		);
-	}
-
-	// Play chase sound
-	if (IsValid(ChaseSound) && IsValid(GetWorld()))
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			ChaseSound,
-			GetActorLocation()
-		);
-	}
-
 	UE_LOG(LogTemp, Log, TEXT("Mouse Actor started chasing player"));
 }
 
 void ASLMouseActor::StopChasing()
 {
-	SetMouseActorState(EMouseActorState::Inactive);
-	
-	// Clear timers safely
-	if (IsValid(GetWorld()))
+	// Release player if currently grabbing
+	if (CurrentState == EMouseActorState::Grabbing && IsValid(TargetPlayer))
 	{
-		GetWorldTimerManager().ClearTimer(ThreatEffectTimerHandle);
-		GetWorldTimerManager().ClearTimer(AttackCooldownHandle);
-		GetWorldTimerManager().ClearTimer(PeriodicGrabTimerHandle);
+		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		
+		// Re-enable player movement
+		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
+		{
+			MovementComp->SetDefaultMovementMode();
+		}
 	}
 
-	// Stop periodic grab
-	StopPeriodicGrab();
+	SetMouseActorState(EMouseActorState::Inactive);
+	
+	// Clear timers
+	if (IsValid(GetWorld()))
+	{
+		GetWorldTimerManager().ClearTimer(GrabTimerHandle);
+		GetWorldTimerManager().ClearTimer(GrabCooldownTimerHandle);
+	}
 
 	UE_LOG(LogTemp, Log, TEXT("Mouse Actor stopped chasing"));
 }
@@ -234,19 +159,46 @@ void ASLMouseActor::DestroyMouseActor()
 		return;
 	}
 
-	SetMouseActorState(EMouseActorState::Destroyed);
-	PlayDestroyEffects();
-
-	// Clear all timers safely
-	if (IsValid(GetWorld()))
+	// Release player if currently grabbing
+	if (CurrentState == EMouseActorState::Grabbing && IsValid(TargetPlayer))
 	{
-		GetWorldTimerManager().ClearTimer(ThreatEffectTimerHandle);
-		GetWorldTimerManager().ClearTimer(AttackCooldownHandle);
-		GetWorldTimerManager().ClearTimer(PeriodicGrabTimerHandle);
+		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		
+		// Re-enable player movement
+		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
+		{
+			MovementComp->SetDefaultMovementMode();
+		}
 	}
 
-	// Stop periodic grab
-	StopPeriodicGrab();
+	SetMouseActorState(EMouseActorState::Destroyed);
+
+	// Play destroy effects
+	if (IsValid(DestroyEffect) && IsValid(GetWorld()))
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			DestroyEffect,
+			GetActorLocation(),
+			GetActorRotation()
+		);
+	}
+
+	if (IsValid(DestroySound) && IsValid(GetWorld()))
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			DestroySound,
+			GetActorLocation()
+		);
+	}
+
+	// Clear timers
+	if (IsValid(GetWorld()))
+	{
+		GetWorldTimerManager().ClearTimer(GrabTimerHandle);
+		GetWorldTimerManager().ClearTimer(GrabCooldownTimerHandle);
+	}
 
 	// Broadcast destruction
 	if (OnMouseActorDestroyed.IsBound())
@@ -254,78 +206,12 @@ void ASLMouseActor::DestroyMouseActor()
 		OnMouseActorDestroyed.Broadcast(this);
 	}
 
-	// Hide and disable collision
+	// Hide and disable
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
 	SetActorTickEnabled(false);
 
 	UE_LOG(LogTemp, Log, TEXT("Mouse Actor destroyed"));
-}
-
-void ASLMouseActor::GrabAndMovePlayer(const FVector& NewLocation)
-{
-	if (!IsValid(TargetPlayer) || CurrentState == EMouseActorState::Destroyed)
-	{
-		return;
-	}
-
-	SetMouseActorState(EMouseActorState::Grabbing);
-	TargetLocation = NewLocation;
-	bIsGrabbing = true;
-
-	// More robust player movement handling
-	if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
-	{
-		FVector LaunchDirection = (NewLocation - TargetPlayer->GetActorLocation()).GetSafeNormal();
-		
-		// Ensure we have a valid direction
-		if (!LaunchDirection.IsZero())
-		{
-			FVector LaunchVelocity = LaunchDirection * GrabForce;
-			MovementComp->Launch(LaunchVelocity);
-		}
-	}
-	else
-	{
-		// Fallback: Try to move using physics or direct location setting
-		if (UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(TargetPlayer->GetRootComponent()))
-		{
-			if (RootPrimitive->IsSimulatingPhysics())
-			{
-				FVector LaunchDirection = (NewLocation - TargetPlayer->GetActorLocation()).GetSafeNormal();
-				if (!LaunchDirection.IsZero())
-				{
-					FVector LaunchVelocity = LaunchDirection * GrabForce;
-					RootPrimitive->AddImpulse(LaunchVelocity, NAME_None, true);
-				}
-			}
-		}
-	}
-
-	// Return to chasing after grab
-	FTimerHandle GrabRecoveryHandle;
-	GetWorldTimerManager().SetTimer(
-		GrabRecoveryHandle,
-		[this]() 
-		{ 
-			bIsGrabbing = false;
-			SetMouseActorState(EMouseActorState::Chasing); 
-		},
-		2.0f,
-		false
-	);
-
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor grabbed and moved player"));
-}
-
-void ASLMouseActor::SetChaseSpeed(float NewSpeed)
-{
-	ChaseSpeed = FMath::Max(0.0f, NewSpeed);
-}
-
-void ASLMouseActor::SetAttackDamage(float NewDamage)
-{
-	AttackDamage = FMath::Max(0.0f, NewDamage);
 }
 
 EMouseActorState ASLMouseActor::GetCurrentState() const
@@ -353,6 +239,20 @@ void ASLMouseActor::TakeDamage(float DamageAmount)
 	}
 }
 
+void ASLMouseActor::SetChaseSpeed(float NewSpeed)
+{
+	ChaseSpeed = FMath::Max(0.0f, NewSpeed);
+}
+
+void ASLMouseActor::SetGrabSettings(float NewGrabDistance, float NewGrabHeight, float NewGrabDamage, float NewGrabDuration, float NewGrabCooldown)
+{
+	GrabDistance = FMath::Max(0.0f, NewGrabDistance);
+	GrabHeight = FMath::Max(0.0f, NewGrabHeight);
+	GrabDamage = FMath::Max(0.0f, NewGrabDamage);
+	GrabDuration = FMath::Max(0.1f, NewGrabDuration);
+	GrabCooldown = FMath::Max(0.1f, NewGrabCooldown);
+}
+
 void ASLMouseActor::OnCollisionHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (!IsValid(OtherActor) || CurrentState == EMouseActorState::Destroyed)
@@ -362,9 +262,9 @@ void ASLMouseActor::OnCollisionHit(UPrimitiveComponent* HitComponent, AActor* Ot
 
 	if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(OtherActor))
 	{
-		if (IsValid(PlayerCharacter))
+		if (IsValid(PlayerCharacter) && CurrentState == EMouseActorState::Chasing && CanGrabPlayer())
 		{
-			AttackPlayer();
+			StartGrabPlayer();
 		}
 	}
 }
@@ -379,166 +279,6 @@ void ASLMouseActor::UpdateChaseTarget()
 	if (!IsValid(TargetPlayer))
 	{
 		TargetPlayer = FindPlayerCharacter();
-		if (!IsValid(TargetPlayer))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Mouse Actor: Unable to find valid player target"));
-		}
-	}
-}
-
-void ASLMouseActor::ChasePlayer()
-{
-	if (!TargetPlayer)
-	{
-		return;
-	}
-
-	FVector PlayerLocation = TargetPlayer->GetActorLocation();
-	LastPlayerLocation = PlayerLocation;
-}
-
-void ASLMouseActor::AttackPlayer()
-{
-	if (!TargetPlayer || !bCanAttack || CurrentState == EMouseActorState::Destroyed)
-	{
-		return;
-	}
-
-	SetMouseActorState(EMouseActorState::Attacking);
-	bCanAttack = false;
-
-	// Apply damage through BattleComponent with enhanced null checks
-	if (IsValid(TargetPlayer))
-	{
-		if (UBattleComponent* PlayerBattleComp = TargetPlayer->FindComponentByClass<UBattleComponent>())
-		{
-			FHitResult HitResult;
-			HitResult.ImpactPoint = TargetPlayer->GetActorLocation();
-			HitResult.Location = TargetPlayer->GetActorLocation();
-			HitResult.ImpactNormal = (GetActorLocation() - TargetPlayer->GetActorLocation()).GetSafeNormal();
-			HitResult.Distance = FVector::Dist(GetActorLocation(), TargetPlayer->GetActorLocation());
-			HitResult.TraceStart = GetActorLocation();
-			HitResult.TraceEnd = TargetPlayer->GetActorLocation();
-			
-			// Use ReceiveHitResult directly instead of SendHitResult to avoid Owner issues
-			PlayerBattleComp->ReceiveHitResult(AttackDamage, this, HitResult, EAttackAnimType::AAT_AISpecial);
-			
-			UE_LOG(LogTemp, Log, TEXT("Mouse Actor applied damage: %f to %s"), AttackDamage, *TargetPlayer->GetName());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Target player does not have BattleComponent"));
-		}
-	}
-
-	// Play attack effects
-	if (AttackEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			AttackEffect,
-			GetActorLocation(),
-			GetActorRotation()
-		);
-	}
-
-	if (AttackSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			AttackSound,
-			GetActorLocation()
-		);
-	}
-
-	// Set attack cooldown
-	GetWorldTimerManager().SetTimer(
-		AttackCooldownHandle,
-		this,
-		&ASLMouseActor::ResetAttackCooldown,
-		AttackCooldown,
-		false
-	);
-
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor attacked player"));
-}
-
-void ASLMouseActor::UpdateThreatEffects()
-{
-	if (CurrentState == EMouseActorState::Destroyed)
-	{
-		return;
-	}
-
-	// Spawn threat effect
-	if (IsValid(ThreatEffect) && IsValid(GetWorld()))
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			ThreatEffect,
-			GetActorLocation(),
-			GetActorRotation()
-		);
-	}
-
-	// Change material temporarily
-	if (IsValid(MouseMeshComponent) && IsValid(ThreatMaterial))
-	{
-		MouseMeshComponent->SetMaterial(0, ThreatMaterial);
-		
-		// Reset to normal material after a short time
-		if (IsValid(GetWorld()))
-		{
-			FTimerHandle MaterialResetHandle;
-			GetWorldTimerManager().SetTimer(
-				MaterialResetHandle,
-				[this]() 
-				{ 
-					if (IsValid(MouseMeshComponent) && IsValid(NormalMaterial))
-					{
-						MouseMeshComponent->SetMaterial(0, NormalMaterial);
-					}
-				},
-				0.5f,
-				false
-			);
-		}
-	}
-}
-
-void ASLMouseActor::PlayDestroyEffects()
-{
-	if (!IsValid(GetWorld()))
-	{
-		return;
-	}
-
-	if (IsValid(DestroyEffect))
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			DestroyEffect,
-			GetActorLocation(),
-			GetActorRotation()
-		);
-	}
-
-	if (IsValid(DestroySound))
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			DestroySound,
-			GetActorLocation()
-		);
-	}
-}
-
-void ASLMouseActor::SetMouseActorState(EMouseActorState NewState)
-{
-	if (CurrentState != NewState)
-	{
-		CurrentState = NewState;
-		UE_LOG(LogTemp, Log, TEXT("Mouse Actor state changed to: %d"), (int32)NewState);
 	}
 }
 
@@ -551,91 +291,210 @@ void ASLMouseActor::MoveTowardsPlayer(float DeltaTime)
 
 	FVector PlayerLocation = TargetPlayer->GetActorLocation();
 	FVector CurrentLocation = GetActorLocation();
-	
-	// Check for valid locations
-	if (PlayerLocation.IsZero() || CurrentLocation.IsZero())
-	{
-		return;
-	}
-	
 	FVector DirectionToPlayer = (PlayerLocation - CurrentLocation).GetSafeNormal();
 	
-	// Ensure we have a valid direction
 	if (DirectionToPlayer.IsZero())
 	{
 		return;
 	}
 
-	// Calculate movement
+	// Move towards player
 	FVector MovementDelta = DirectionToPlayer * ChaseSpeed * DeltaTime;
 	FVector NewLocation = CurrentLocation + MovementDelta;
-	
-	// Apply movement
 	SetActorLocation(NewLocation);
 
 	// Rotate to face player
 	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(CurrentLocation, PlayerLocation);
-	FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), LookAtRotation, DeltaTime, RotationSpeed);
+	FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), LookAtRotation, DeltaTime, 5.0f);
 	SetActorRotation(NewRotation);
+}
 
-	LastPlayerLocation = PlayerLocation;
-
-	// Debug Information
-	if (bShowDebugInfo)
+void ASLMouseActor::MoveTowardsGrabTarget(float DeltaTime)
+{
+	FVector CurrentLocation = GetActorLocation();
+	FVector DirectionToTarget = (GrabTargetLocation - CurrentLocation).GetSafeNormal();
+	
+	if (DirectionToTarget.IsZero())
 	{
-		float DistanceToPlayer = FVector::Dist(CurrentLocation, PlayerLocation);
-		UE_LOG(LogTemp, Warning, TEXT("MouseActor Moving: Pos(%s) → Player(%s), Distance=%.1f, Speed=%.1f"), 
-			*CurrentLocation.ToString(), *PlayerLocation.ToString(), DistanceToPlayer, ChaseSpeed);
+		return;
 	}
 
-	// Debug Visual Lines
-	if (bDrawDebugLines && IsValid(GetWorld()))
+	// Move towards grab target location
+	FVector MovementDelta = DirectionToTarget * ChaseSpeed * DeltaTime;
+	FVector NewLocation = CurrentLocation + MovementDelta;
+	SetActorLocation(NewLocation);
+
+	// Rotate towards target
+	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(CurrentLocation, GrabTargetLocation);
+	FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), LookAtRotation, DeltaTime, 5.0f);
+	SetActorRotation(NewRotation);
+
+	// 목표 위치에 도달했는지 확인
+	float DistanceToTarget = FVector::Dist(CurrentLocation, GrabTargetLocation);
+	if (DistanceToTarget <= 50.0f) // 충분한 임계값에 근접
 	{
-		// Draw line from mouse to player
-		DrawDebugLine(
-			GetWorld(),
-			CurrentLocation,
-			PlayerLocation,
-			FColor::Red,
-			false,
-			DebugLineDuration,
-			0,
-			DebugLineThickness
-		);
+		CompleteGrabPlayer();
+	}
+}
 
-		// Draw movement vector
-		DrawDebugLine(
-			GetWorld(),
-			CurrentLocation,
-			NewLocation,
-			FColor::Green,
-			false,
-			DebugLineDuration,
-			0,
-			DebugLineThickness * 2.0f
-		);
+void ASLMouseActor::UpdateMeshRotation(float DeltaTime)
+{
+	if (!IsValid(MouseMeshComponent) || !IsValid(TargetPlayer))
+	{
+		return;
+	}
 
-		// Draw mouse position sphere
-		DrawDebugSphere(
-			GetWorld(),
-			CurrentLocation,
-			25.0f,
-			8,
-			FColor::Yellow,
-			false,
-			DebugLineDuration
-		);
+	FVector MeshLocation = MouseMeshComponent->GetComponentLocation();
+	FVector PlayerLocation = TargetPlayer->GetActorLocation();
+	
+	// Calculate direction to player
+	FVector DirectionToPlayer = (PlayerLocation - MeshLocation).GetSafeNormal();
+	
+	// Create rotation that tilts the mesh 45 degrees toward the player
+	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(MeshLocation, PlayerLocation);
+	
+	// Add 45 degree tilt (pitch down toward player)
+	LookAtRotation.Pitch -= 45.0f;
+	
+	// Smoothly interpolate to the target rotation
+	FRotator CurrentRotation = MouseMeshComponent->GetComponentRotation();
+	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, LookAtRotation, DeltaTime, 3.0f);
+	
+	MouseMeshComponent->SetWorldRotation(NewRotation);
+}
 
-		// Draw player position sphere
-		DrawDebugSphere(
+void ASLMouseActor::StartGrabPlayer()
+{
+	if (!IsValid(TargetPlayer) || CurrentState != EMouseActorState::Chasing || !CanGrabPlayer())
+	{
+		return;
+	}
+
+	SetMouseActorState(EMouseActorState::Grabbing);
+	bCanGrab = false;
+
+	// Calculate grab target location (high in the air, away from current position)
+	GrabStartLocation = GetActorLocation();
+	FVector DirectionFromPlayer = (GrabStartLocation - TargetPlayer->GetActorLocation()).GetSafeNormal();
+	GrabTargetLocation = GrabStartLocation + (DirectionFromPlayer * GrabDistance);
+	GrabTargetLocation.Z += GrabHeight; // Move to higher location
+
+	// Attach player to mouse actor
+	TargetPlayer->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+
+	// Disable player movement while grabbed
+	if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
+	{
+		MovementComp->DisableMovement();
+	}
+
+	// Play grab effects
+	if (IsValid(GrabEffect) && IsValid(GetWorld()))
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 			GetWorld(),
-			PlayerLocation,
-			30.0f,
-			8,
-			FColor::Blue,
-			false,
-			DebugLineDuration
+			GrabEffect,
+			GetActorLocation(),
+			GetActorRotation()
 		);
+	}
+
+	if (IsValid(GrabSound) && IsValid(GetWorld()))
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			GrabSound,
+			GetActorLocation()
+		);
+	}
+
+	// Set backup timer in case something goes wrong with movement
+	GetWorldTimerManager().SetTimer(
+		GrabTimerHandle,
+		this,
+		&ASLMouseActor::CompleteGrabPlayer,
+		GrabDuration * 2.0f, // Backup timer - twice the expected duration
+		false
+	);
+
+	UE_LOG(LogTemp, Log, TEXT("Mouse Actor grabbed player"));
+}
+
+void ASLMouseActor::CompleteGrabPlayer()
+{
+	if (CurrentState != EMouseActorState::Grabbing)
+	{
+		return;
+	}
+
+	// Clear the backup timer
+	if (IsValid(GetWorld()))
+	{
+		GetWorldTimerManager().ClearTimer(GrabTimerHandle);
+	}
+
+	// Detach player from mouse actor
+	if (IsValid(TargetPlayer))
+	{
+		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		
+		// Re-enable player movement
+		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
+		{
+			MovementComp->SetDefaultMovementMode();
+		}
+	}
+
+	// Apply damage to player
+	ApplyGrabDamage();
+
+	// Start grab cooldown
+	GetWorldTimerManager().SetTimer(
+		GrabCooldownTimerHandle,
+		[this]()
+		{
+			bCanGrab = true;
+			UE_LOG(LogTemp, Log, TEXT("Mouse Actor grab cooldown finished"));
+		},
+		GrabCooldown,
+		false
+	);
+
+	// Return to chasing state
+	SetMouseActorState(EMouseActorState::Chasing);
+
+	UE_LOG(LogTemp, Log, TEXT("Mouse Actor completed grab and released player - cooldown started"));
+}
+
+void ASLMouseActor::ApplyGrabDamage()
+{
+	if (!IsValid(TargetPlayer))
+	{
+		return;
+	}
+
+	if (UBattleComponent* PlayerBattleComp = TargetPlayer->FindComponentByClass<UBattleComponent>())
+	{
+		FHitResult HitResult;
+		HitResult.ImpactPoint = TargetPlayer->GetActorLocation();
+		HitResult.Location = TargetPlayer->GetActorLocation();
+		HitResult.ImpactNormal = (GetActorLocation() - TargetPlayer->GetActorLocation()).GetSafeNormal();
+		HitResult.Distance = FVector::Dist(GetActorLocation(), TargetPlayer->GetActorLocation());
+		HitResult.TraceStart = GetActorLocation();
+		HitResult.TraceEnd = TargetPlayer->GetActorLocation();
+		
+		PlayerBattleComp->ReceiveHitResult(GrabDamage, this, HitResult, EAttackAnimType::AAT_AISpecial);
+		
+		UE_LOG(LogTemp, Log, TEXT("Mouse Actor applied grab damage: %f"), GrabDamage);
+	}
+}
+
+void ASLMouseActor::SetMouseActorState(EMouseActorState NewState)
+{
+	if (CurrentState != NewState)
+	{
+		CurrentState = NewState;
+		UE_LOG(LogTemp, Log, TEXT("Mouse Actor state changed to: %d"), (int32)NewState);
 	}
 }
 
@@ -658,11 +517,10 @@ ASLPlayerCharacter* ASLMouseActor::FindPlayerCharacter()
 		return nullptr;
 	}
 
-	ASLPlayerCharacter* PlayerChar = Cast<ASLPlayerCharacter>(PlayerPawn);
-	return PlayerChar; // Cast can return nullptr, which is fine
+	return Cast<ASLPlayerCharacter>(PlayerPawn);
 }
 
-bool ASLMouseActor::IsPlayerInAttackRange()
+bool ASLMouseActor::IsPlayerInRange() const
 {
 	if (!IsValid(TargetPlayer))
 	{
@@ -670,222 +528,10 @@ bool ASLMouseActor::IsPlayerInAttackRange()
 	}
 
 	float DistanceToPlayer = FVector::Dist(GetActorLocation(), TargetPlayer->GetActorLocation());
-	return DistanceToPlayer <= AttackRange && DistanceToPlayer > 0.0f;
+	return DistanceToPlayer <= DetectionRange;
 }
 
-void ASLMouseActor::HandlePlayerGrabbing()
+bool ASLMouseActor::CanGrabPlayer() const
 {
-	if (!bIsGrabbing || !IsValid(TargetPlayer))
-	{
-		return;
-	}
-
-	// Continue following player during grab state with enhanced safety
-	if (IsValid(GetWorld()))
-	{
-		MoveTowardsPlayer(GetWorld()->GetDeltaSeconds());
-	}
-}
-
-void ASLMouseActor::ResetAttackCooldown()
-{
-	bCanAttack = true;
-	SetMouseActorState(EMouseActorState::Chasing);
-}
-
-void ASLMouseActor::EnablePeriodicGrab(bool bEnable)
-{
-	bEnablePeriodicGrab = bEnable;
-	
-	if (bEnable && CurrentState == EMouseActorState::Chasing)
-	{
-		StartPeriodicGrab();
-	}
-	else if (!bEnable)
-	{
-		StopPeriodicGrab();
-	}
-}
-
-void ASLMouseActor::SetGrabSettings(float MinInterval, float MaxInterval, float GrabChance, float GrabRadius)
-{
-	GrabIntervalMin = FMath::Max(0.5f, MinInterval);
-	GrabIntervalMax = FMath::Max(GrabIntervalMin, MaxInterval);
-	GrabProbability = FMath::Clamp(GrabChance, 0.0f, 1.0f);
-	GrabLocationRadius = FMath::Max(100.0f, GrabRadius);
-}
-
-void ASLMouseActor::StartPeriodicGrab()
-{
-	if (!bEnablePeriodicGrab || bPeriodicGrabActive || CurrentState == EMouseActorState::Destroyed)
-	{
-		return;
-	}
-
-	bPeriodicGrabActive = true;
-	ScheduleNextGrab();
-	
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor: Periodic grab system started"));
-}
-
-void ASLMouseActor::StopPeriodicGrab()
-{
-	if (!bPeriodicGrabActive)
-	{
-		return;
-	}
-
-	bPeriodicGrabActive = false;
-	
-	if (IsValid(GetWorld()))
-	{
-		GetWorldTimerManager().ClearTimer(PeriodicGrabTimerHandle);
-	}
-	
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor: Periodic grab system stopped"));
-}
-
-void ASLMouseActor::ExecutePeriodicGrab()
-{
-	if (!bPeriodicGrabActive || CurrentState == EMouseActorState::Destroyed || bIsGrabbing)
-	{
-		return;
-	}
-
-	// Check probability
-	float RandomChance = FMath::FRand();
-	if (RandomChance > GrabProbability)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Mouse Actor: Grab skipped due to probability (%.2f > %.2f)"), RandomChance, GrabProbability);
-		ScheduleNextGrab();
-		return;
-	}
-
-	// Get random grab location
-	FVector GrabLocation = GetRandomGrabLocation();
-	
-	if (IsSafeGrabLocation(GrabLocation))
-	{
-		UE_LOG(LogTemp, Log, TEXT("Mouse Actor: Executing periodic grab to location: %s"), *GrabLocation.ToString());
-		GrabAndMovePlayer(GrabLocation);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Mouse Actor: Unsafe grab location, skipping"));
-	}
-
-	// Schedule next grab
-	ScheduleNextGrab();
-}
-
-FVector ASLMouseActor::GetRandomGrabLocation()
-{
-	if (!IsValid(TargetPlayer))
-	{
-		return GetActorLocation();
-	}
-
-	FVector PlayerLocation = TargetPlayer->GetActorLocation();
-	
-	// Generate random angle and distance
-	float RandomAngle = FMath::FRandRange(0.0f, 360.0f);
-	float RandomDistance = FMath::FRandRange(MinGrabDistance, MaxGrabDistance);
-	
-	// Calculate direction from angle
-	FVector RandomDirection = FVector(
-		FMath::Cos(FMath::DegreesToRadians(RandomAngle)),
-		FMath::Sin(FMath::DegreesToRadians(RandomAngle)),
-		0.0f
-	);
-	
-	// Calculate final location
-	FVector GrabLocation = PlayerLocation + (RandomDirection * RandomDistance);
-	
-	// Add some height variation
-	float HeightVariation = FMath::FRandRange(-100.0f, 200.0f);
-	GrabLocation.Z += HeightVariation;
-	
-	return GrabLocation;
-}
-
-bool ASLMouseActor::IsSafeGrabLocation(const FVector& Location)
-{
-	if (!IsValid(GetWorld()))
-	{
-		return false;
-	}
-
-	// Basic bounds check
-	if (Location.Z < -1000.0f || Location.Z > 2000.0f)
-	{
-		return false;
-	}
-
-	// Check if location is too close to current player position
-	if (IsValid(TargetPlayer))
-	{
-		float DistanceToPlayer = FVector::Dist(Location, TargetPlayer->GetActorLocation());
-		if (DistanceToPlayer < MinGrabDistance)
-		{
-			return false;
-		}
-	}
-
-	// Optional: Add more sophisticated checks like ground collision, obstacles, etc.
-	// For now, we'll keep it simple
-
-	return true;
-}
-
-void ASLMouseActor::ScheduleNextGrab()
-{
-	if (!bPeriodicGrabActive || !IsValid(GetWorld()))
-	{
-		return;
-	}
-
-	// Calculate random interval
-	float NextGrabInterval = FMath::FRandRange(GrabIntervalMin, GrabIntervalMax);
-	
-	// Set timer for next grab
-	GetWorldTimerManager().SetTimer(
-		PeriodicGrabTimerHandle,
-		this,
-		&ASLMouseActor::ExecutePeriodicGrab,
-		NextGrabInterval,
-		false
-	);
-	
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor: Next grab scheduled in %.1f seconds"), NextGrabInterval);
-}
-
-void ASLMouseActor::SetDebugMode(bool bEnable)
-{
-	bShowDebugInfo = bEnable;
-	bDrawDebugLines = bEnable;
-	
-	UE_LOG(LogTemp, Warning, TEXT("Mouse Actor Debug Mode: %s"), bEnable ? TEXT("ENABLED") : TEXT("DISABLED"));
-}
-
-FVector ASLMouseActor::GetPlayerDirection() const
-{
-	if (!IsValid(TargetPlayer))
-	{
-		return FVector::ZeroVector;
-	}
-
-	FVector CurrentLocation = GetActorLocation();
-	FVector PlayerLocation = TargetPlayer->GetActorLocation();
-	
-	return (PlayerLocation - CurrentLocation).GetSafeNormal();
-}
-
-float ASLMouseActor::GetDistanceToPlayer() const
-{
-	if (!IsValid(TargetPlayer))
-	{
-		return -1.0f;
-	}
-
-	return FVector::Dist(GetActorLocation(), TargetPlayer->GetActorLocation());
+	return bCanGrab && CurrentState == EMouseActorState::Chasing;
 }
