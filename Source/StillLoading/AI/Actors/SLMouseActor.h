@@ -54,6 +54,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
 	void TakeDamage(float DamageAmount);
 
+	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
+	void EnablePeriodicGrab(bool bEnable);
+
+	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
+	void SetGrabSettings(float MinInterval, float MaxInterval, float GrabChance, float GrabRadius);
+
+	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
+	void SetDebugMode(bool bEnable);
+
+	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
+	FVector GetPlayerDirection() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
+	float GetDistanceToPlayer() const;
+
 	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
 	FSLOnMouseActorDestroyed OnMouseActorDestroyed;
 
@@ -74,6 +89,12 @@ protected:
 	void PlayDestroyEffects();
 	void SetMouseActorState(EMouseActorState NewState);
 	void MoveTowardsPlayer(float DeltaTime);
+	void StartPeriodicGrab();
+	void StopPeriodicGrab();
+	void ExecutePeriodicGrab();
+	FVector GetRandomGrabLocation();
+	bool IsSafeGrabLocation(const FVector& Location);
+	void ScheduleNextGrab();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> RootSceneComponent;
@@ -110,6 +131,39 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
 	float AttackCooldown;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
+	bool bEnablePeriodicGrab;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
+	float GrabIntervalMin;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
+	float GrabIntervalMax;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
+	float GrabProbability;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
+	float GrabLocationRadius;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
+	float MinGrabDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
+	float MaxGrabDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	bool bShowDebugInfo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	bool bDrawDebugLines;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	float DebugLineThickness;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	float DebugLineDuration;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> ChaseEffect;
@@ -149,8 +203,10 @@ private:
 	TObjectPtr<ASLPlayerCharacter> TargetPlayer;
 	FTimerHandle ThreatEffectTimerHandle;
 	FTimerHandle AttackCooldownHandle;
+	FTimerHandle PeriodicGrabTimerHandle;
 	FVector LastPlayerLocation;
 	FVector TargetLocation;
 	bool bCanAttack;
 	bool bIsGrabbing;
+	bool bPeriodicGrabActive;
 };
