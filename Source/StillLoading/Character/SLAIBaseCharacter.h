@@ -145,6 +145,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	FORCEINLINE AActor* GetEquippedWeapon() const { return EquippedWeapon; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetMaxHealth(float NewMaxHealth);
 	
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentHealth(float NewHealth);
@@ -260,6 +263,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "combat")
 	void SetIsAirHit(bool NewbIsAirHit);
+
+	UFUNCTION(BlueprintCallable, Category = "combat")
+	void SetIsAIActivation(bool NewbIsAIActivation);
+
 	
 	UFUNCTION(BlueprintCallable, Category = "combat")
 	FORCEINLINE bool GetIsInvincibility() const { return bIsInvincibility; }
@@ -470,6 +477,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool bIsLoop;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool bIsAIActivation;
+	
 	UPROPERTY(Transient)
 	TObjectPtr<ASLAIProjectile> PreparedProjectile;
 

@@ -12,7 +12,11 @@ class STILLLOADING_API ASLBasePlayerController : public APlayerController, publi
 
 public:
 	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
 	virtual FGenericTeamId GetGenericTeamId() const override;
+
+	UFUNCTION(BlueprintCallable)
+	void BindIMC(APawn* InPawn);
 
 private:
 	FGenericTeamId playerTeamId;

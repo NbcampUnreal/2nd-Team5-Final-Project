@@ -91,6 +91,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	MaxHealth = 100.f;
 	CurrentHealth = MaxHealth;
 	bIsSpecialPattern = false;
+	bIsAIActivation = true;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -251,6 +252,12 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 	BattleComponent->SendHitResult(OtherActor, HitResult, CurrentAttackType);
     
 	//히트 이펙트 재생
+}
+
+void ASLAIBaseCharacter::SetMaxHealth(float NewMaxHealth)
+{
+	MaxHealth = NewMaxHealth;
+	SetCurrentHealth(MaxHealth);
 }
 
 void ASLAIBaseCharacter::SetCurrentHealth(float NewHealth)
@@ -961,6 +968,19 @@ void ASLAIBaseCharacter::SetIsAirHit(bool NewbIsAirHit)
 		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
 		{
 			BlackboardComponent->SetValueAsBool(FName("IsAirHit"), bIsAirHit);
+		}
+	}
+}
+
+void ASLAIBaseCharacter::SetIsAIActivation(bool NewbIsAIActivation)
+{
+	bIsAIActivation = NewbIsAIActivation;
+
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("IsAIActivation"), bIsAIActivation);
 		}
 	}
 }
