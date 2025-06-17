@@ -1,13 +1,8 @@
 #include "SLDeveloperBossLine.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
-#include "NiagaraFunctionLibrary.h"
-#include "Kismet/GameplayStatics.h"
 #include "Character/SLPlayerCharacterBase.h"
-#include "Character/BattleComponent/BattleComponent.h"
-#include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
-#include "CollisionQueryParams.h"
 
 ASLDeveloperBossLine::ASLDeveloperBossLine()
 {
@@ -22,19 +17,9 @@ ASLDeveloperBossLine::ASLDeveloperBossLine()
 	CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComponent"));
 	CollisionComponent->SetupAttachment(RootComponent);
 
-	// BattleComponent 추가
-	BattleComponent = CreateDefaultSubobject<UBattleComponent>(TEXT("BattleComponent"));
-
-	CurrentState = EBossLineState::Inactive;
-	CurrentHealth = 0.0f;
-	LineIndex = -1;
-	MaxHealth = 10.0f;
 	LineMesh = nullptr;
 	InactiveMaterial = nullptr;
 	ActiveMaterial = nullptr;
-	DestroyEffect = nullptr;
-	DestroySound = nullptr;
-	ActivationSound = nullptr;
 }
 
 void ASLDeveloperBossLine::BeginPlay()
@@ -44,97 +29,37 @@ void ASLDeveloperBossLine::BeginPlay()
 	if (CollisionComponent)
 	{
 		CollisionComponent->OnComponentHit.AddDynamic(this, &ASLDeveloperBossLine::OnLineHit);
-		// BattleComponent 스윕에 반응하도록 충돌 설정
-		CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
-	}
-
-	// BattleComponent 델리게이트 바인딩
-	if (BattleComponent)
-	{
-		BattleComponent->OnCharacterHited.AddDynamic(this, &ASLDeveloperBossLine::OnBattleComponentHit);
 	}
 
 	if (LineMesh && LineMeshComponent)
 	{
 		LineMeshComponent->SetStaticMesh(LineMesh);
 	}
-
-	UpdateLineVisuals();
 }
 
 void ASLDeveloperBossLine::ActivateLine()
 {
-	if (CurrentState == EBossLineState::Destroyed)
-	{
-		return;
-	}
-
-	SetLineState(EBossLineState::Active);
-	CurrentHealth = MaxHealth;
-
-	if (ActivationSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			ActivationSound,
-			GetActorLocation()
-		);
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("Boss Line %d activated"), LineIndex);
+	ActivateActor();
 }
 
 void ASLDeveloperBossLine::DeactivateLine()
 {
-	if (CurrentState == EBossLineState::Destroyed)
-	{
-		return;
-	}
-
-	SetLineState(EBossLineState::Inactive);
-	CurrentHealth = 0.0f;
-
-	UE_LOG(LogTemp, Log, TEXT("Boss Line %d deactivated"), LineIndex);
+	DeactivateActor();
 }
 
 void ASLDeveloperBossLine::DestroyLine()
 {
-	if (CurrentState == EBossLineState::Destroyed)
-	{
-		return;
-	}
-
-	SetLineState(EBossLineState::Destroyed);
-	CurrentHealth = 0.0f;
-
-	PlayDestroyEffects();
-
-	if (OnBossLineDestroyed.IsBound())
-	{
-		OnBossLineDestroyed.Broadcast(LineIndex);
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("Boss Line %d destroyed"), LineIndex);
-}
-
-bool ASLDeveloperBossLine::CanBeDestroyed() const
-{
-	return CurrentState == EBossLineState::Active && CurrentHealth > 0.0f;
+	DestroyActor();
 }
 
 void ASLDeveloperBossLine::SetLineIndex(int32 Index)
 {
-	LineIndex = Index;
+	SetActorIndex(Index);
 }
 
 int32 ASLDeveloperBossLine::GetLineIndex() const
 {
-	return LineIndex;
-}
-
-EBossLineState ASLDeveloperBossLine::GetCurrentState() const
-{
-	return CurrentState;
+	return GetActorIndex();
 }
 
 void ASLDeveloperBossLine::OnLineHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
@@ -147,54 +72,24 @@ void ASLDeveloperBossLine::OnLineHit(UPrimitiveComponent* HitComponent, AActor* 
 	// 플레이어의 직접적인 물리 충돌 처리 (기존 방식 유지)
 	if (ASLPlayerCharacterBase* PlayerCharacter = Cast<ASLPlayerCharacterBase>(OtherActor))
 	{
-		float Damage = 1.0f;
-		CurrentHealth -= Damage;
-
-		if (CurrentHealth <= 0.0f)
-		{
-			DestroyLine();
-		}
-		else
-		{
-			UE_LOG(LogTemp, Log, TEXT("Boss Line %d damaged by collision. Health: %f"), LineIndex, CurrentHealth);
-		}
+		float Damage = 50.0f;
+		TakeDamage(Damage);
+		UE_LOG(LogTemp, Log, TEXT("Boss Line %d damaged by collision"), GetLineIndex());
 	}
 }
 
-void ASLDeveloperBossLine::OnBattleComponentHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType)
-{
-	if (!CanBeDestroyed())
-	{
-		return;
-	}
-
-	// 플레이어의 BattleComponent를 통한 공격 처리
-	if (ASLPlayerCharacterBase* PlayerCharacter = Cast<ASLPlayerCharacterBase>(DamageCauser))
-	{
-		CurrentHealth -= DamageAmount;
-
-		if (CurrentHealth <= 0.0f)
-		{
-			DestroyLine();
-		}
-		else
-		{
-			UE_LOG(LogTemp, Log, TEXT("Boss Line %d damaged by BattleComponent. Damage: %f, Health: %f"), 
-				LineIndex, DamageAmount, CurrentHealth);
-		}
-	}
-}
-
-void ASLDeveloperBossLine::UpdateLineVisuals()
+void ASLDeveloperBossLine::UpdateActorVisuals()
 {
 	if (!LineMeshComponent)
 	{
 		return;
 	}
 
-	switch (CurrentState)
+	EDestructibleState State = GetCurrentState();
+
+	switch (State)
 	{
-	case EBossLineState::Inactive:
+	case EDestructibleState::Inactive:
 		LineMeshComponent->SetVisibility(false);
 		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		if (InactiveMaterial)
@@ -203,7 +98,7 @@ void ASLDeveloperBossLine::UpdateLineVisuals()
 		}
 		break;
 
-	case EBossLineState::Active:
+	case EDestructibleState::Active:
 		LineMeshComponent->SetVisibility(true);
 		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		if (ActiveMaterial)
@@ -212,50 +107,19 @@ void ASLDeveloperBossLine::UpdateLineVisuals()
 		}
 		break;
 
-	case EBossLineState::Destroyed:
+	case EDestructibleState::Destroyed:
 		LineMeshComponent->SetVisibility(false);
 		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
 	}
 }
 
-void ASLDeveloperBossLine::PlayDestroyEffects()
+void ASLDeveloperBossLine::OnActorDestroyed()
 {
-	if (!GetWorld())
+	Super::OnActorDestroyed();
+	
+	if (OnBossLineDestroyed.IsBound())
 	{
-		return;
-	}
-
-	if (DestroyEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			DestroyEffect,
-			GetActorLocation(),
-			FRotator::ZeroRotator,
-			FVector(1.0f),
-			true,
-			true,
-			ENCPoolMethod::None,
-			true
-		);
-	}
-
-	if (DestroySound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			DestroySound,
-			GetActorLocation()
-		);
-	}
-}
-
-void ASLDeveloperBossLine::SetLineState(EBossLineState NewState)
-{
-	if (CurrentState != NewState)
-	{
-		CurrentState = NewState;
-		UpdateLineVisuals();
+		OnBossLineDestroyed.Broadcast(GetLineIndex());
 	}
 }
