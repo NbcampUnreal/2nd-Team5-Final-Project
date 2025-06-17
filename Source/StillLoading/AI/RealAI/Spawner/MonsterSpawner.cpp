@@ -4,6 +4,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "AI/RealAI/AISquadManager.h"
 #include "AI/RealAI/MonsterAICharacter.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/BoxComponent.h"
 
 AMonsterSpawner::AMonsterSpawner()
@@ -48,6 +49,7 @@ void AMonsterSpawner::BeginPlay()
 	Super::BeginPlay();
 
 	//SpawnMonstersByType();
+	SpawnMonstersWithoutLeader();
 }
 
 void AMonsterSpawner::SpawnMonstersByType()
@@ -147,6 +149,91 @@ void AMonsterSpawner::SpawnMonstersByType()
 		{
 			MyNewSquadManager->InitializeSquad(SpawnedMonsters);
 			Leader->SetSquadManager(MyNewSquadManager);
+		}
+	}
+}
+
+void AMonsterSpawner::SpawnMonstersWithoutLeader()
+{
+	FVector Origin = SpawnArea->Bounds.Origin;
+	FVector Extent = SpawnArea->Bounds.BoxExtent;
+
+	FVector StartLocation = Origin - FVector(Extent.X, Extent.Y, 0.f) + FVector(SpawnSpacing, SpawnSpacing, 0.f);
+
+	int32 Row = 0;
+	int32 Col = 0;
+
+	for (const FMonsterSpawnInfo& Info : SpawnInfos)
+	{
+		if (!Info.Monster) continue;
+
+		for (int32 i = 0; i < Info.Count; ++i)
+		{
+			FVector SpawnLocation = StartLocation + FVector(Col * SpawnSpacing, Row * SpawnSpacing, 0.f);
+			FVector CapsuleHalf = FVector(0.f, 0.f, 88.f);
+			float CapsuleRadius = 34.f;
+
+			FVector CapsuleCenter = SpawnLocation + CapsuleHalf;
+
+			FCollisionShape CapsuleShape = FCollisionShape::MakeCapsule(CapsuleRadius, 88.f);
+			bool bBlocked = GetWorld()->OverlapBlockingTestByChannel(
+				CapsuleCenter,
+				FQuat::Identity,
+				ECC_Pawn,
+				CapsuleShape
+			);
+
+			if (bDrawDebugSpawnCapsules)
+			{
+				FColor CapsuleColor = bBlocked ? FColor::Red : FColor::Green;
+				DrawDebugCapsule(GetWorld(), CapsuleCenter, 88.f, CapsuleRadius, FQuat::Identity, CapsuleColor, false,
+				                 3.0f);
+			}
+
+			if (!bBlocked)
+			{
+				FActorSpawnParameters Params;
+				Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+				AActor* Monster = GetWorld()->SpawnActor<AActor>(
+					Info.Monster,
+					SpawnLocation,
+					FRotator::ZeroRotator,
+					Params
+				);
+
+				if (AMonsterAICharacter* AIMonster = Cast<AMonsterAICharacter>(Monster))
+				{
+					SpawnFloorEffect(AIMonster);
+					AIMonster->BeginSpawning(SpawnLocation, RiseHeight);
+					SpawnedMonsters.Add(AIMonster);
+				}
+			}
+
+			Col++;
+			if (Col * SpawnSpacing > Extent.X * 2)
+			{
+				Col = 0;
+				Row++;
+			}
+		}
+	}
+
+	TotalMonsterCount = SpawnedMonsters.Num();
+	LastMonsterCount = TotalMonsterCount;
+
+	if (SpawnedMonsters.Num() > 1)
+	{
+		for (TObjectPtr<AActor> SpawnedMonster : SpawnedMonsters)
+		{
+			if (AMonsterAICharacter* AIMonster = Cast<AMonsterAICharacter>(SpawnedMonster))
+			{
+				if (!AIMonster->OnMonsterDied.IsAlreadyBound(this, &AMonsterSpawner::MonsterDied))
+				{
+					AIMonster->OnMonsterDied.AddDynamic(this, &AMonsterSpawner::MonsterDied);
+					AIMonster->SetStrategyState(TAG_JOBMOB_ATTACK);
+				}
+			}
 		}
 	}
 }
