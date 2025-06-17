@@ -50,9 +50,11 @@ class STILLLOADING_API UDynamicIMCComponent : public UActorComponent
 public:
 	UDynamicIMCComponent();
 
-
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	void BindDefaultSetting();
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void BindCurrentSetting(UInputMappingContext* NewIMC, int32 Priority);
 	
 	UFUNCTION()
 	void SetKeyForAction(EInputActionType ActionType, const FKey& NewKey);
@@ -89,5 +91,5 @@ private:
 	UPROPERTY()
 	TMap<EInputActionType, UInputAction*> ActionMap;
 	UPROPERTY()
-	UInputMappingContext* CurrentIMC;
+	TObjectPtr<UInputMappingContext> CurrentIMC;
 };
