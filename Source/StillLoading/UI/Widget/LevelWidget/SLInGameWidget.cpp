@@ -178,7 +178,7 @@ void USLInGameWidget::SetObjectiveByCounter(const FName& ObjectiveName, int32 Ma
 	SetObjectiveText(ObjectiveName);
 
 	FText CurrentText = GameStateText->GetText();
-	FString TargetString = FString::Printf(TEXT("%s (%d / %d)"), *CurrentText.ToString(), CurrentCount, MaxCount);
+	FString TargetString = FString::Printf(TEXT("%s \n(%d / %d)"), *CurrentText.ToString(), CurrentCount, MaxCount);
 
 	GameStateText->SetText(FText::FromString(TargetString));
 }
