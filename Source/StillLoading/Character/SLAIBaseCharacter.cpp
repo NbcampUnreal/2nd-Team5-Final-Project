@@ -91,6 +91,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	MaxHealth = 100.f;
 	CurrentHealth = MaxHealth;
 	bIsSpecialPattern = false;
+	bIsAIActivation = true;
 }
 
 void ASLAIBaseCharacter::BeginPlay()
@@ -967,6 +968,19 @@ void ASLAIBaseCharacter::SetIsAirHit(bool NewbIsAirHit)
 		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
 		{
 			BlackboardComponent->SetValueAsBool(FName("IsAirHit"), bIsAirHit);
+		}
+	}
+}
+
+void ASLAIBaseCharacter::SetIsAIActivation(bool NewbIsAIActivation)
+{
+	bIsAIActivation = NewbIsAIActivation;
+
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("IsAIActivation"), bIsAIActivation);
 		}
 	}
 }
