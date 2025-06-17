@@ -32,6 +32,8 @@ enum class EMonsterType : uint8
 	MT_SkullH	UMETA(DisplayName = "Skull H"),
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMonsterDied, AActor*, DiedMonster);
+
 UCLASS()
 class STILLLOADING_API AMonsterAICharacter : public ACharacter
 {
@@ -39,6 +41,9 @@ class STILLLOADING_API AMonsterAICharacter : public ACharacter
 
 public:
 	AMonsterAICharacter();
+
+	UPROPERTY(BlueprintAssignable, Category = "Delegate | Battle")
+	FOnMonsterDied OnMonsterDied;
 
 	UFUNCTION()
 	void SetSquadManager(AAISquadManager* InManager);

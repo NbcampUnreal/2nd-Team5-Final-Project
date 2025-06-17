@@ -32,6 +32,8 @@ struct FMonsterSpawnedInfo
 	TObjectPtr<AActor> SpawnedMonster;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSpawnedMonstersUpdated, const TArray<AActor*>&, RemainingMonsters, int32, TotalCount);
+
 UCLASS()
 class STILLLOADING_API AMonsterSpawner : public AActor
 {
@@ -40,11 +42,17 @@ class STILLLOADING_API AMonsterSpawner : public AActor
 public:
 	AMonsterSpawner();
 
+	UPROPERTY(BlueprintAssignable, Category = "Monster Spawner | Events")
+	FOnSpawnedMonstersUpdated OnMonstersUpdated;
+
 	UFUNCTION(BlueprintCallable, Category = "Spawning")
 	void SpawnActorAtLocation(const TSubclassOf<AActor> ActorToSpawn, const FVector& SpawnLocation, FMonsterSpawnedInfo& OutMonsterInfo);
 
 	UFUNCTION(BlueprintCallable)
 	void SpawnMonstersByType();
+
+	UFUNCTION(BlueprintCallable)
+	void MonsterDied(AActor* DiedMonsterRef);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawn")
 	TObjectPtr<UBoxComponent> SpawnArea;
@@ -76,4 +84,7 @@ private:
 	
 	UPROPERTY()
 	TArray<TObjectPtr<AActor>> SpawnedMonsters;
+
+	UPROPERTY()
+	int32 TotalMonsterCount = 0;
 };

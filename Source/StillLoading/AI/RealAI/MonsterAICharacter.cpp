@@ -509,6 +509,11 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 		if (UBattleComponent* AttackerBattleComp = Attacker->FindComponentByClass<UBattleComponent>())
 		{
 			IEnemyDeathReceiver::Execute_OnEnemyDeath(AttackerBattleComp, this);
+
+			if (OnMonsterDied.IsBound())
+			{
+				OnMonsterDied.Broadcast(this);
+			}
 		}
 	}
 }
