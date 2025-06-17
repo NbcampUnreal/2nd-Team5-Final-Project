@@ -54,6 +54,8 @@ public:
 	void OnEmpoweredStateChanged(bool bIsEmpowered);
 	UFUNCTION(BlueprintCallable)
 	void DisableWeapons();
+	UFUNCTION(BlueprintCallable)
+	void ChangeVisibilityWeapons(bool bIsVisible);
 
 	// Skill
 	UFUNCTION()
