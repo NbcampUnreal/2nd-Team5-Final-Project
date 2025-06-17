@@ -27,14 +27,17 @@ void USLGridNode::UpdateTriggerVolume()
 {
     if (!TriggerVolume) return;
 
-    TriggerVolume->SetCollisionProfileName(TEXT("BlockAllDynamic"));
-    TriggerVolume->SetCollisionResponseToAllChannels(ECR_Block);
-    TriggerVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    
     if (ConnectedVolume.IsValid())
     {
-        TriggerVolume->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+        TriggerVolume->SetCollisionProfileName(TEXT("Custom"));
+        TriggerVolume->SetCollisionResponseToAllChannels(ECR_Overlap);
     }
+    else
+    {
+        TriggerVolume->SetCollisionProfileName(TEXT("Custom"));
+        TriggerVolume->SetCollisionResponseToAllChannels(ECR_Block);
+    }
+    TriggerVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
 void USLGridNode::BeginPlay()
