@@ -46,6 +46,9 @@ public:
 	FOnSpawnedMonstersUpdated OnMonstersUpdated;
 
 	UFUNCTION(BlueprintCallable, Category = "Spawning")
+	int32 GetSpawnCount() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Spawning")
 	void SpawnActorAtLocation(const TSubclassOf<AActor> ActorToSpawn, const FVector& SpawnLocation, FMonsterSpawnedInfo& OutMonsterInfo);
 
 	UFUNCTION(BlueprintCallable)

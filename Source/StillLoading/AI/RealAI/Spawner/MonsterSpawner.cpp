@@ -17,6 +17,11 @@ AMonsterSpawner::AMonsterSpawner()
 	SpawnArea->SetCollisionResponseToAllChannels(ECR_Ignore);
 }
 
+int32 AMonsterSpawner::GetSpawnCount() const
+{
+	return TotalMonsterCount;
+}
+
 void AMonsterSpawner::SpawnActorAtLocation(const TSubclassOf<AActor> ActorToSpawn, const FVector& SpawnLocation, FMonsterSpawnedInfo& OutMonsterInfo)
 {
 	if (!GetWorld() || !ActorToSpawn)
@@ -42,7 +47,7 @@ void AMonsterSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SpawnMonstersByType();
+	//SpawnMonstersByType();
 }
 
 void AMonsterSpawner::SpawnMonstersByType()
@@ -128,7 +133,10 @@ void AMonsterSpawner::SpawnMonstersByType()
 		{
 			if (AMonsterAICharacter* AIMonster = Cast<AMonsterAICharacter>(SpawnedMonster))
 			{
-				AIMonster->OnMonsterDied.AddDynamic(this, &AMonsterSpawner::MonsterDied);
+				if (!AIMonster->OnMonsterDied.IsAlreadyBound(this, &AMonsterSpawner::MonsterDied))
+				{
+					AIMonster->OnMonsterDied.AddDynamic(this, &AMonsterSpawner::MonsterDied);
+				}
 			}
 		}
 		
