@@ -145,6 +145,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	FORCEINLINE AActor* GetEquippedWeapon() const { return EquippedWeapon; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetMaxHealth(float NewMaxHealth);
 	
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentHealth(float NewHealth);
