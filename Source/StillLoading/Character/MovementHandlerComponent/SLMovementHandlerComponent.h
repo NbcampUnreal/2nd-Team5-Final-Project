@@ -43,6 +43,9 @@ class STILLLOADING_API UMovementHandlerComponent : public UActorComponent
 
 public:
 	UMovementHandlerComponent();
+
+	UFUNCTION(BlueprintCallable)
+	void BindIMCComponent();
 	
 	// 애니매이션 노티 확인용
 	UFUNCTION()
@@ -50,6 +53,7 @@ public:
 	// 버퍼 출력 처리용
 	UFUNCTION()
 	void HandleBufferedInput(ESkillType Action);
+	UFUNCTION()
 	void OnLanded(const FHitResult& Hit);
 	UFUNCTION()
 	void StartKnockback(float Speed, float Duration);
@@ -105,8 +109,6 @@ protected:
 	void OnActionStarted(EInputActionType ActionType);
 	UFUNCTION()
 	void OnActionCompleted(EInputActionType ActionType);
-	UFUNCTION()
-	void BindIMCComponent();
 	UFUNCTION()
 	void RemoveInvulnerability() const;
 	UFUNCTION()
