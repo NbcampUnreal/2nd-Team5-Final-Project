@@ -13,11 +13,14 @@ UDynamicIMCComponent::UDynamicIMCComponent()
 void UDynamicIMCComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	
 	BindDefaultSetting();
 }
 
 void UDynamicIMCComponent::BindDefaultSetting()
 {
+	if (IsValid(CurrentIMC)) return;
+	
 	for (const FInputBindingData& Binding : ActionBindings)
 	{
 		if (Binding.Action)
@@ -47,6 +50,48 @@ void UDynamicIMCComponent::BindDefaultSetting()
 			BindInputForAction(Action, ActionType, InputComp);
 		}
 	}
+}
+
+void UDynamicIMCComponent::BindCurrentSetting(UInputMappingContext* NewIMC, const int32 Priority)
+{
+	if (!IsValid(NewIMC) || CurrentIMC == NewIMC)
+	{
+		return;
+	}
+
+	const ACharacter* OwnerChar = Cast<ACharacter>(GetOwner());
+	const APlayerController* PC = OwnerChar ? Cast<APlayerController>(OwnerChar->GetController()) : nullptr;
+	if (!PC) return;
+
+	auto* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
+	if (!Subsystem) return;
+
+	if (IsValid(CurrentIMC))
+	{
+		Subsystem->RemoveMappingContext(CurrentIMC);
+	}
+    
+	if (UEnhancedInputComponent* InputComp = Cast<UEnhancedInputComponent>(PC->InputComponent))
+	{
+		InputComp->ClearActionBindings();
+	}
+
+	Subsystem->AddMappingContext(NewIMC, Priority);
+	CurrentIMC = NewIMC;
+
+	if (UEnhancedInputComponent* InputComp = Cast<UEnhancedInputComponent>(PC->InputComponent))
+	{
+		for (const auto& Pair : ActionMap)
+		{
+			const EInputActionType ActionType = Pair.Key;
+			UInputAction* Action = Pair.Value;
+			if (!Action) continue;
+
+			BindInputForAction(Action, ActionType, InputComp);
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Input Mapping Context Switched To: %s"), *NewIMC->GetName());
 }
 
 void UDynamicIMCComponent::SetKeyForAction(EInputActionType ActionType, const FKey& NewKey)
