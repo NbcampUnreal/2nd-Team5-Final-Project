@@ -32,7 +32,7 @@ struct FMonsterSpawnedInfo
 	TObjectPtr<AActor> SpawnedMonster;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSpawnedMonstersUpdated, const TArray<AActor*>&, RemainingMonsters, int32, TotalCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpawnedMonstersUpdated, int32, DecreaseCount);
 
 UCLASS()
 class STILLLOADING_API AMonsterSpawner : public AActor
@@ -87,4 +87,7 @@ private:
 
 	UPROPERTY()
 	int32 TotalMonsterCount = 0;
+
+	UPROPERTY()
+	int32 LastMonsterCount = 0;
 };
