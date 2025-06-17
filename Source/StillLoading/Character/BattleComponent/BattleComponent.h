@@ -1,4 +1,5 @@
 #pragma once
+#include "Character/DataAsset/AttackDataAsset.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBattleComponent, Log, All);
 
