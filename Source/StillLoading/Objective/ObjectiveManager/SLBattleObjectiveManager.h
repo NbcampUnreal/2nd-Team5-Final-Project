@@ -15,21 +15,13 @@ class STILLLOADING_API ASLBattleObjectiveManager : public ASLObjectiveManagerBas
 	
 protected:
 	UFUNCTION(BlueprintCallable)
-	void ActivateBattleUI(USLObjectiveHandlerBase* Component);
+	virtual void ActivateBattleUI(USLObjectiveHandlerBase* Component);
 
 	UFUNCTION(BlueprintCallable)
-	void DeactivateBattleUI(USLObjectiveHandlerBase* Component);
+	virtual void DeactivateBattleUI(USLObjectiveHandlerBase* Component);
 
-	UFUNCTION(BlueprintCallable)
 	void ActivatePlayerHpUI();
-
-	UFUNCTION(BlueprintCallable)
 	void ActivatePlayerSpecialUI();
-
-	UFUNCTION(BlueprintCallable)
-	void ActivateBossHpUI();
-
-	UFUNCTION(BlueprintCallable)
 	void ActivateHitEffectUI();
 
 	virtual void BeginPlay() override;
@@ -38,7 +30,4 @@ protected:
 protected:
 	UPROPERTY()
 	TObjectPtr<ASLBattlePlayerState> PlayerState = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective", meta = (AllowPrivateAccess = "true"))
-	bool bIsBossBattle = false;
 };
