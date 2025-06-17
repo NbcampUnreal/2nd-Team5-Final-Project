@@ -11,6 +11,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Invulnerable, "Character.Invulnerable");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_OnBuff, "Character.OnBuff");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Dead, "Character.Dead");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Empowered, "Character.Empowered");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_EnterCinematic, "Character.EnterCinematic");
 
 // Hit Reactions
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction, "Character.HitReaction");

@@ -5,6 +5,8 @@
 #include "UI/SLUISubsystem.h"
 #include "UI/Widget/LevelWidget/SLInGameWidget.h"
 #include "UI/Struct/SLInGameDelegateBuffers.h"
+#include "GameMode/SLGameModeBase.h"
+#include "Objective/SLObjectiveBase.h"
 
 void ASLInGameHUD::OnStartedHUD()
 {
@@ -15,17 +17,53 @@ void ASLInGameHUD::OnStartedHUD()
 
 	InGameWidget = Cast<USLInGameWidget>(LevelWidgetObj);
 	checkf(IsValid(InGameWidget), TEXT("Cast Fail. Level Widget To InGame Widget"));
+
+	ASLGameModeBase* GM = Cast<ASLGameModeBase>(GetWorld()->GetAuthGameMode());
+
+	if (IsValid(GM))
+	{
+		GM->OnInProgressObjectiveAdded.AddDynamic(this, &ThisClass::OnAddObjective);
+		GM->OnInProgressObjectiveRemoved.AddDynamic(this, &ThisClass::OnRemoveObjective);
+	}
 }
 
-void ASLInGameHUD::ApplyObjective(const FName& ObjectiveName) // 게임 모드의 델리게이트 구독
+void ASLInGameHUD::OnAddObjective(USLObjectiveBase* TargetObjective)
 {
-	SetObjectiveName(ObjectiveName);
-	SetObjectiveVisibility();
+	if (IsValid(TargetObjective))
+	{
+		FName ObjectiveName = TargetObjective->GetObjectiveName();
+		int32 CompleteCount = TargetObjective->GetObjectiveCompleteCount();
+
+		CurrentObjectiveName = ObjectiveName;
+
+		if (CompleteCount == 1)
+		{
+			SetObjectiveName(ObjectiveName);
+		}
+		else
+		{
+			ObjectiveMaxCount = CompleteCount;
+			SetObjectiveCounter(ObjectiveName, CompleteCount, 0);
+			TargetObjective->OnObjectiveProgressChanged.AddDynamic(this, &ThisClass::OnObjectiveCountChanged);
+		}
+	}
 }
 
-void ASLInGameHUD::ApplyObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount)
+void ASLInGameHUD::OnRemoveObjective(USLObjectiveBase* TargetObjective)
 {
-	SetObjectiveCounter(ObjectiveName, MaxCount, 0);
+	if (TargetObjective->OnObjectiveProgressChanged.IsAlreadyBound(this, &ThisClass::OnObjectiveCountChanged))
+	{
+		TargetObjective->OnObjectiveProgressChanged.RemoveDynamic(this, &ThisClass::OnObjectiveCountChanged);
+	}
+}
+
+void ASLInGameHUD::OnObjectiveCountChanged(int32 Count)
+{
+	SetObjectiveCounter(CurrentObjectiveName, ObjectiveMaxCount, Count);
+}
+
+void ASLInGameHUD::ApplyObjective()
+{
 	SetObjectiveVisibility();
 }
 
@@ -35,7 +73,7 @@ void ASLInGameHUD::ApplyTimer(int32 SecondsValue)
 	SetTimerValue(SecondsValue);
 }
 
-void ASLInGameHUD::ApplyPlayerHp(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
+void ASLInGameHUD::ApplyPlayerHp(FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 {
 	bIsFirstApplyHp = true;
 
@@ -43,12 +81,12 @@ void ASLInGameHUD::ApplyPlayerHp(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerH
 	{
 		PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
 	}
-	
+
 	SetPlayerStateVisibility(true, false);
-	SetPlayerHpValue(MaxHp, MaxHp);
+	SetPlayerHpValue(100, 100);
 }
 
-void ASLInGameHUD::ApplyPlayerSpecial(float MaxValue, FSLSpecialValueDelegateBuffer& SpecialValueDelegate)
+void ASLInGameHUD::ApplyPlayerSpecial(FSLSpecialValueDelegateBuffer& SpecialValueDelegate)
 {
 	if (!SpecialValueDelegate.OnSpecialValueChanged.IsAlreadyBound(this, &ThisClass::SetPlayerSpecialValue))
 	{
@@ -56,10 +94,10 @@ void ASLInGameHUD::ApplyPlayerSpecial(float MaxValue, FSLSpecialValueDelegateBuf
 	}
 	
 	SetPlayerStateVisibility(true, true);
-	SetPlayerSpecialValue(MaxValue, 0);
+	SetPlayerSpecialValue(100, 0);
 }
 
-void ASLInGameHUD::ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer& BossHpDelegate)
+void ASLInGameHUD::ApplyBossHp(FSLBossHpDelegateBuffer& BossHpDelegate)
 {
 	if (!BossHpDelegate.OnBossHpChanged.IsAlreadyBound(this, &ThisClass::SetBossHpValue))
 	{
@@ -67,10 +105,10 @@ void ASLInGameHUD::ApplyBossHp(float MaxHp, FSLBossHpDelegateBuffer& BossHpDeleg
 	}
 
 	SetBossStateVisibility(true);
-	SetBossHpValue(MaxHp, MaxHp);
+	SetBossHpValue(100, 100);
 }
 
-void ASLInGameHUD::ApplyHitEffect(float MaxHp, FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
+void ASLInGameHUD::ApplyHitEffect(FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 {
 	bIsFirstApplyHp = true;
 
@@ -79,7 +117,19 @@ void ASLInGameHUD::ApplyHitEffect(float MaxHp, FSLPlayerHpDelegateBuffer& Player
 		PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
 	}
 
-	SetHitEffectValue(MaxHp, MaxHp);
+	SetHitEffectValue(100, 100);
+}
+
+bool ASLInGameHUD::GetIsActivated(ESLInGameActivateType TargetType)
+{
+	CheckValidOfLevelWidget();
+	
+	if (InGameWidget->GetActivateUIMap().Contains(TargetType))
+	{
+		return InGameWidget->GetActivateUIMap()[TargetType];
+	}
+	
+	return false;
 }
 
 void ASLInGameHUD::SetTimerVisibility(bool bIsVisible)

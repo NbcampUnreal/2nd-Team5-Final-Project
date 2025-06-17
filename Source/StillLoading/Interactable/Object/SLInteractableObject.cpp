@@ -38,11 +38,11 @@ void ASLInteractableObject::OnInteracted(const ASLPlayerCharacterBase* InCharact
 {
 	if (USLTalkHandlerBase* TalkHandler = GetCurrentTalkHandler())
 	{
-		if (USLBaseTextPrintWidget* TextWidget = UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Object, TargetName, TalkHandler->GetTalkName()))
+		if (USLBaseTextPrintWidget* TextWidget = UISubsystem->GetTalkWidget())
 		{
 			TextWidget->OnTalkEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentTalkEnd);
 			TextWidget->OnChoiceEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentChoiceEnd);
-			CurrentTextWidget = TextWidget;
+			UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Object, TargetName, TalkHandler->GetTalkName());
 		}
 	}
 }
@@ -50,20 +50,22 @@ void ASLInteractableObject::OnInteracted(const ASLPlayerCharacterBase* InCharact
 void ASLInteractableObject::OnCurrentTalkEnd()
 {
 	USLTalkHandlerBase* TalkHandler = GetCurrentTalkHandler();
-	if (TalkHandler && IsValid(CurrentTextWidget))
+	USLBaseTextPrintWidget* TextWidget = UISubsystem->GetTalkWidget();
+	if (TalkHandler && TextWidget)
 	{
 		TalkHandler->OnTalkEnd();
-		CurrentTextWidget->OnTalkEnded.RemoveDynamic(this, &ThisClass::OnCurrentTalkEnd);
+		TextWidget->OnTalkEnded.RemoveDynamic(this, &ThisClass::OnCurrentTalkEnd);
 	}
 }
 
 void ASLInteractableObject::OnCurrentChoiceEnd(bool bResult)
 {
 	USLTalkHandlerBase* TalkHandler = GetCurrentTalkHandler();
-	if (TalkHandler && IsValid(CurrentTextWidget))
+	USLBaseTextPrintWidget* TextWidget = UISubsystem->GetTalkWidget();
+	if (TalkHandler && TextWidget)
 	{
 		TalkHandler->OnChoiceEnd(bResult);
-		CurrentTextWidget->OnChoiceEnded.RemoveDynamic(this, &ThisClass::OnCurrentChoiceEnd);
+		TextWidget->OnChoiceEnded.RemoveDynamic(this, &ThisClass::OnCurrentChoiceEnd);
 	}
 }
 

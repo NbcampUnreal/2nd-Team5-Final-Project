@@ -119,8 +119,19 @@ void AMonsterSpawner::SpawnMonstersByType()
 		}
 	}
 
+	TotalMonsterCount = SpawnedMonsters.Num();
+	LastMonsterCount = TotalMonsterCount;
+
 	if (Leader && SpawnedMonsters.Num() > 1)
 	{
+		for (TObjectPtr<AActor> SpawnedMonster : SpawnedMonsters)
+		{
+			if (AMonsterAICharacter* AIMonster = Cast<AMonsterAICharacter>(SpawnedMonster))
+			{
+				AIMonster->OnMonsterDied.AddDynamic(this, &AMonsterSpawner::MonsterDied);
+			}
+		}
+		
 		FVector SpawnLocation = FVector(100.f, 100.f, 100.f);
 		FRotator SpawnRotation = FRotator::ZeroRotator;
 
@@ -130,8 +141,23 @@ void AMonsterSpawner::SpawnMonstersByType()
 			Leader->SetSquadManager(MyNewSquadManager);
 		}
 	}
+}
 
-	SpawnedMonsters.Reset();
+void AMonsterSpawner::MonsterDied(AActor* DiedMonsterRef)
+{
+	if (!DiedMonsterRef)
+	{
+		return;
+	}
+
+	SpawnedMonsters.Remove(DiedMonsterRef);
+
+	if (OnMonstersUpdated.IsBound())
+	{
+		int32 DecreaseCount = LastMonsterCount - SpawnedMonsters.Num();
+		OnMonstersUpdated.Broadcast(DecreaseCount);
+		LastMonsterCount = SpawnedMonsters.Num();
+	}
 }
 
 void AMonsterSpawner::SpawnFloorEffect(const AMonsterAICharacter* MonsterActor)

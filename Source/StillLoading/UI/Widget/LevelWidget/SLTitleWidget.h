@@ -20,6 +20,9 @@ class STILLLOADING_API USLTitleWidget : public USLLevelWidget
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION()
+	void OnClickedStartButton();
+
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void DeactivateWidget() override;
 
@@ -29,9 +32,6 @@ protected:
 	virtual bool ApplyOtherImage() override;
 
 private:
-	UFUNCTION()
-	void OnClickedStartButton();
-
 	UFUNCTION()
 	void OnClickedOptionButton();
 
@@ -69,6 +69,9 @@ private:
 
 	UPROPERTY()
 	TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>> PrivateImageMap;
+
+	UPROPERTY()
+	ESLLevelNameType NextLevelType = ESLLevelNameType::ELN_None;
 
 	static const FName TitleTextIndex;
 	static const FName StartButtonIndex;

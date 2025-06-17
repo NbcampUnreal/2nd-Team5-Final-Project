@@ -44,6 +44,8 @@ public:
 	ESLObjectiveState GetObjectiveState() const { return ObjectiveState; }
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	void SetObjectiveState(const ESLObjectiveState InState);
+	UFUNCTION(BlueprintCallable, Category = "Objective")
+	void SetObjectiveStateDelayed(const ESLObjectiveState InState, const float DelayTime = 0.1f);
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	int32 GetObjectiveProgressCount() const { return ObjectiveProgressCount; }

@@ -183,6 +183,11 @@ void USLInGameWidget::SetObjectiveByCounter(const FName& ObjectiveName, int32 Ma
 	GameStateText->SetText(FText::FromString(TargetString));
 }
 
+const TMap<ESLInGameActivateType, bool>& USLInGameWidget::GetActivateUIMap()
+{
+	return ActivateUIMap;
+}
+
 void USLInGameWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
 	Super::FindWidgetData(WidgetActivateBuffer);
@@ -192,6 +197,7 @@ void USLInGameWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActiva
 		USLInGamePrivateDataAsset* PrivateData = Cast<USLInGamePrivateDataAsset>(WidgetActivateBuffer.WidgetPrivateData);
 		PrivateImageMap.Empty();
 		PrivateImageMap = PrivateData->GetBrushDataMap();
+		ActivateUIMap = PrivateData->GetActivateUIMap();
 	}
 }
 

@@ -12,6 +12,9 @@ class STILLLOADING_API ASLTitleHUD : public ASLBaseHUD
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintCallable)
+	void MoveToStartMap();
+
 	UFUNCTION()
 	void NotifyTalkEnded();
 

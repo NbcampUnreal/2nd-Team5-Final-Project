@@ -24,6 +24,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetStoryVisibility(bool bIsVisible);
 
+	UFUNCTION(BlueprintCallable)
+	int32 GetTextSize() const;
+
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void DeactivateWidget() override;
