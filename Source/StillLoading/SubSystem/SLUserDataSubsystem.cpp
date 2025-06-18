@@ -11,6 +11,9 @@
 #include "SaveLoad/SLSaveGameSubsystem.h"
 #include "InputMappingContext.h"
 #include "SaveLoad/SLSaveDataStructs.h"
+#include "Sound/SoundClass.h"
+#include "Sound/SoundMix.h"
+#include "Kismet/GameplayStatics.h"
 
 float USLUserDataSubsystem::GetCurrentScreenWidthSize()
 {
@@ -186,8 +189,6 @@ void USLUserDataSubsystem::ApplyEffectVolume()
 {
 	CheckValidOfSoundSubsystem();
 	SoundSubsystem->SetEffectVolume(EffectVolume);
-	/*CheckValidOfUISubsystem();
-	UISubsystem->SetEffectVolume(EffectVolume);*/
 }
 
 void USLUserDataSubsystem::ApplyResolution()

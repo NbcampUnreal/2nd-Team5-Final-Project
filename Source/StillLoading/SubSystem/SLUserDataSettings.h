@@ -10,6 +10,7 @@
 #include "SLUserDataSettings.generated.h"
 
 class UInputMappingContext;
+class USoundMix;
 
 UCLASS(Config = UserDataSettings, DefaultConfig, meta = (DisplayName = "UserData Subsystem Settings"))
 class STILLLOADING_API USLUserDataSettings : public UDeveloperSettings

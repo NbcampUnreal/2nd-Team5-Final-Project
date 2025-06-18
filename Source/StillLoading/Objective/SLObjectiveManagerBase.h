@@ -18,6 +18,9 @@ public:
 	ASLObjectiveManagerBase();
 
 protected:
+	UFUNCTION(BlueprintImplementableEvent, meta = (AllowPrivateAccess = "true"))
+	void ResetCurrentGame();
+
 	virtual void BeginPlay() override;
 
 protected:

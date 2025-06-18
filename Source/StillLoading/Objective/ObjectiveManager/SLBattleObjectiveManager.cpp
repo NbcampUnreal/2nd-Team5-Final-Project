@@ -34,6 +34,14 @@ void ASLBattleObjectiveManager::DeactivateBattleUI(USLObjectiveHandlerBase* Comp
 	}
 }
 
+void ASLBattleObjectiveManager::CheckPlayerDied(float MaxHp, float CurrentHp)
+{
+	if (CurrentHp <= 0)
+	{
+		PostPlayerDied();
+	}
+}
+
 void ASLBattleObjectiveManager::ActivatePlayerHpUI()
 {
 	GetPlayerState();
@@ -41,6 +49,11 @@ void ASLBattleObjectiveManager::ActivatePlayerHpUI()
 	if (IsValid(PlayerState))
 	{
 		HUD->ApplyPlayerHp(PlayerState->GetHPDelegate());
+
+		if (!PlayerState->GetHPDelegate().OnPlayerHpChanged.IsAlreadyBound(this, &ThisClass::CheckPlayerDied))
+		{
+			PlayerState->GetHPDelegate().OnPlayerHpChanged.AddDynamic(this, &ThisClass::CheckPlayerDied);
+		}
 	}
 }
 
@@ -61,6 +74,11 @@ void ASLBattleObjectiveManager::ActivateHitEffectUI()
 	if (IsValid(PlayerState))
 	{
 		HUD->ApplyHitEffect(PlayerState->GetHPDelegate());
+
+		if (!PlayerState->GetHPDelegate().OnPlayerHpChanged.IsAlreadyBound(this, &ThisClass::CheckPlayerDied))
+		{
+			PlayerState->GetHPDelegate().OnPlayerHpChanged.AddDynamic(this, &ThisClass::CheckPlayerDied);
+		}
 	}
 }
 
@@ -70,6 +88,7 @@ void ASLBattleObjectiveManager::BeginPlay()
 
 	ObjectiveHandler->OnObjectiveInProgressedDelegate.AddDynamic(this, &ThisClass::ActivateBattleUI);
 	ObjectiveHandler->OnObjectiveCompletedDelegate.AddDynamic(this, &ThisClass::DeactivateBattleUI);
+	ObjectiveHandler->OnObjectiveFailedDelegate.AddDynamic(this, &ThisClass::DeactivateBattleUI);
 }
 
 void ASLBattleObjectiveManager::GetPlayerState()
