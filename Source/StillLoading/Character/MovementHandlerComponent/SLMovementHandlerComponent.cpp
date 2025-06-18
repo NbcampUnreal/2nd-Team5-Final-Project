@@ -36,6 +36,7 @@ void UMovementHandlerComponent::BeginPlay()
 		DesiredArmLength = DefaultArmLength;
 		
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
+		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
 	}
 
 	if (CachedRadarComponent)
@@ -533,6 +534,25 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 		return;
 	}
 
+	if (OwnerCharacter->IsInPrimaryState(TAG_Character_Movement_Dodge))
+	{
+		switch (ActionType)
+		{
+		case EInputActionType::EIAT_MoveUp:
+		case EInputActionType::EIAT_MoveDown:
+			BufferedDodgeInputAxis.Y = (ActionType == EInputActionType::EIAT_MoveDown) ? -AxisValue : AxisValue;
+			break;
+		case EInputActionType::EIAT_MoveLeft:
+		case EInputActionType::EIAT_MoveRight:
+			BufferedDodgeInputAxis.X = (ActionType == EInputActionType::EIAT_MoveLeft) ? -AxisValue : AxisValue;
+			break;
+		default:
+			break;
+		}
+		// 입력을 버퍼링했으므로, 아래의 실제 이동 로직을 실행하지 않고 함수를 종료합니다.
+		return;
+	}
+
 	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
 
 	AController* Controller = OwnerCharacter->GetController();
@@ -841,6 +861,8 @@ void UMovementHandlerComponent::DodgeLoco()
 		return;
 	}
 
+	BufferedDodgeInputAxis = FVector2D::ZeroVector;
+
 	ToggleCameraZoom(false);
 	
 	FVector DesiredDodgeDirection;
@@ -1104,6 +1126,28 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 	case ECharacterMontageState::ECS_Falling:
 		break;
 	case ECharacterMontageState::ECS_Dodging:
+		{
+		if (!BufferedDodgeInputAxis.IsNearlyZero())
+		{
+			if (AController* Controller = OwnerCharacter->GetController())
+			{
+				const FRotator YawRotation(0, Controller->GetControlRotation().Yaw, 0);
+				const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+				const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+				if (!FMath::IsNearlyZero(BufferedDodgeInputAxis.Y))
+				{
+					OwnerCharacter->AddMovementInput(ForwardDirection, BufferedDodgeInputAxis.Y);
+				}
+				if (!FMath::IsNearlyZero(BufferedDodgeInputAxis.X))
+				{
+					OwnerCharacter->AddMovementInput(RightDirection, BufferedDodgeInputAxis.X);
+				}
+			}
+		}
+
+		BufferedDodgeInputAxis = FVector2D::ZeroVector;
+		}
 		break;
 	case ECharacterMontageState::ECS_Dead:
 		break;

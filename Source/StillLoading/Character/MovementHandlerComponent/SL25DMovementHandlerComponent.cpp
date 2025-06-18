@@ -38,6 +38,8 @@ void USL25DMovementHandlerComponent::BeginPlay()
 		OwnerCharacter->CameraBoom->bEnableCameraLag = false;
 		OwnerCharacter->CameraBoom->bEnableCameraRotationLag = false;
 		OwnerCharacter->CameraBoom->bDoCollisionTest = false;
+
+		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
 	}
 }
 
