@@ -34,6 +34,11 @@ void ASLBattleObjectiveManager::DeactivateBattleUI(USLObjectiveHandlerBase* Comp
 	}
 }
 
+void ASLBattleObjectiveManager::PostPlayerDiedTest()
+{
+	PostPlayerDied();
+}
+
 void ASLBattleObjectiveManager::CheckPlayerDied(float MaxHp, float CurrentHp)
 {
 	if (CurrentHp <= 0)

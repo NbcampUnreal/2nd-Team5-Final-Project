@@ -58,6 +58,9 @@ public:
 	void SpawnMonstersWithoutLeader();
 
 	UFUNCTION(BlueprintCallable)
+	void ResetSpawnedMonster();
+
+	UFUNCTION(BlueprintCallable)
 	void MonsterDied(AActor* DiedMonsterRef);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawn")

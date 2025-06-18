@@ -18,6 +18,9 @@ public:
 	ASLObjectiveManagerBase();
 
 protected:
+	UFUNCTION(BlueprintCallable)
+	void ResetCurrentObjective();
+
 	UFUNCTION(BlueprintImplementableEvent, meta = (AllowPrivateAccess = "true"))
 	void ResetCurrentGame();
 
