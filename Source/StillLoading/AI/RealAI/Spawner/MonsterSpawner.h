@@ -17,7 +17,7 @@ struct FMonsterSpawnInfo
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AMonsterAICharacter> Monster;
+	TSubclassOf<AActor> Monster;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1", ClampMax = "100"))
 	int32 Count = 1;
@@ -30,6 +30,14 @@ struct FMonsterSpawnedInfo
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<AActor> SpawnedMonster;
+};
+
+UENUM(BlueprintType)
+enum class ESpawnType : uint8
+{
+	ST_None 	UMETA(DisplayName = "None"),
+	ST_Leader	UMETA(DisplayName = "With Leader"),
+	ST_NoLeader	UMETA(DisplayName = "Without Leader"),
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpawnedMonstersUpdated, int32, DecreaseCount);
@@ -83,6 +91,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	TArray<FMonsterSpawnInfo> SpawnInfos;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+	ESpawnType SpawnType = ESpawnType::ST_None;
 
 private:
 	UFUNCTION()

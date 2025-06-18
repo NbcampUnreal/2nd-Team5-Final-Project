@@ -31,39 +31,26 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void TriggerReact(ASLPlayerCharacterBase* InCharacter, const ESLReactiveTriggerType InComingType);
 
-	UFUNCTION()
-	virtual void OnDetected();
-	UFUNCTION()
-	virtual void OnUndetected();
+	UFUNCTION(BlueprintNativeEvent)
+	void OnDetected();
+	virtual void OnDetected_Implementation();
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void OnUndetected();
+	virtual void OnUndetected_Implementation();
 	
 protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
 	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType);
-
-	UFUNCTION()
-	virtual void BeginOverlapCollision(
-		UPrimitiveComponent* OverlappedComponent, 
-		AActor* OtherActor, 
-		UPrimitiveComponent* OtherComp, 
-		int32 OtherBodyIndex, 
-		bool bFromSweep, 
-		const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void EndOverlapCollision(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex
-	);
+	
 private:
 	UFUNCTION()
 	bool IsTriggerTypeAllowed(ESLReactiveTriggerType InComingType);
 
 protected:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<UStaticMeshComponent> StaticMeshComp = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Reactive")

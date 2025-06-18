@@ -2,9 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Character/BattleComponent/SLTargetableInterface.h"
 #include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
+class ASLBasePlayerController;
 class USLSoundSubsystem;
 class USLBattleSoundSubsystem;
 class AAISquadManager;
@@ -35,7 +37,7 @@ enum class EMonsterType : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMonsterDied, AActor*, DiedMonster);
 
 UCLASS()
-class STILLLOADING_API AMonsterAICharacter : public ACharacter
+class STILLLOADING_API AMonsterAICharacter : public ACharacter, public ISLTargetableInterface
 {
 	GENERATED_BODY()
 
@@ -121,6 +123,9 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Landed(const FHitResult& Hit) override;
+
+	virtual void OnHoveredByCursor_Implementation(ASLBasePlayerController* InstigatingController) override;
+	virtual void OnUnhoveredByCursor_Implementation(ASLBasePlayerController* InstigatingController) override;
 
 	UFUNCTION()
 	void OnHitByCharacter(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,

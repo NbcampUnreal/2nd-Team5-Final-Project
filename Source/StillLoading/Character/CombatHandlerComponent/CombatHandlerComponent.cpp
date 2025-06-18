@@ -20,6 +20,11 @@ void UCombatHandlerComponent::BeginPlay()
 
 	OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
 	GenerateChargingWidget();
+
+	if (bUnlimitedEmpowered)
+	{
+		SetUnlimitedEmpoweredCombatMode();
+	}
 }
 
 void UCombatHandlerComponent::SetEmpoweredCombatMode(const float Duration)
@@ -47,6 +52,12 @@ void UCombatHandlerComponent::SetEmpoweredCombatMode(const float Duration)
 		TotalDuration,
 		false
 	);
+}
+
+void UCombatHandlerComponent::SetUnlimitedEmpoweredCombatMode()
+{
+	OwnerCharacter->AddSecondaryState(TAG_Character_Empowered);
+	CurrentMode = ECharacterComboState::CCS_Empowered;
 }
 
 void UCombatHandlerComponent::ResetCombatMode()

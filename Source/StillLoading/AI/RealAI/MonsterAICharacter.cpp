@@ -14,6 +14,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "SubSystem/SLSoundSubsystem.h"
+#include "Controller/SLBasePlayerController.h"
 
 AMonsterAICharacter::AMonsterAICharacter()
 {
@@ -245,6 +246,22 @@ void AMonsterAICharacter::Landed(const FHitResult& Hit)
 	Super::Landed(Hit);
 
 	StopFlyingState();
+}
+
+void AMonsterAICharacter::OnHoveredByCursor_Implementation(ASLBasePlayerController* InstigatingController)
+{
+	if (InstigatingController)
+	{
+		InstigatingController->SetEnemyCursor();
+	}
+}
+
+void AMonsterAICharacter::OnUnhoveredByCursor_Implementation(ASLBasePlayerController* InstigatingController)
+{
+	if (InstigatingController)
+	{
+		InstigatingController->SetDefaultCursor();
+	}
 }
 
 void AMonsterAICharacter::SetChasing(bool bEnable)

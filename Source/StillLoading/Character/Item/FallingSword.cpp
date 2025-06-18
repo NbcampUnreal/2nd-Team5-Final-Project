@@ -18,10 +18,10 @@ AFallingSword::AFallingSword()
 	SwordMesh->SetCollisionProfileName(TEXT("NoCollision"));
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
-	ProjectileMovement->InitialSpeed = 50.f;
-	ProjectileMovement->MaxSpeed = 5000.f;
+	ProjectileMovement->InitialSpeed = 500.f;
+	ProjectileMovement->MaxSpeed = 10000.f;
 	ProjectileMovement->bRotationFollowsVelocity = false;
-	ProjectileMovement->ProjectileGravityScale = 2.0f;
+	ProjectileMovement->ProjectileGravityScale = 5.0f;
 	ProjectileMovement->SetUpdatedComponent(RootComponent);
 }
 
@@ -35,6 +35,11 @@ void AFallingSword::BeginPlay()
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAttached(TrailEffect, RootComponent, NAME_None, FVector::ZeroVector,
 		                                             FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, true);
+	}
+
+	if (BeginSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), BeginSound, GetActorLocation());
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(
@@ -84,6 +89,7 @@ void AFallingSword::TriggerImpact()
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ImpactEffect, GetActorLocation(),
 													   GetActorRotation());
 	}
+	
 	if (ImpactSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, GetActorLocation());
