@@ -12,6 +12,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_OnBuff, "Character.OnBuff");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Dead, "Character.Dead");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Empowered, "Character.Empowered");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_EnterCinematic, "Character.EnterCinematic");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_BlockBreak, "Character.BlockBreak");
 
 // Hit Reactions
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction, "Character.HitReaction");
@@ -22,7 +23,6 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Airborne, "Character.HitReactio
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Groggy, "Character.HitReaction.Groggy");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Knockback, "Character.HitReaction.Knockback");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Falling, "Character.HitReaction.Falling");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Character_HitReaction_Block_Break, "Character.HitReaction.Block.Break");
 
 // Attacks
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Attack, "Character.Attack");

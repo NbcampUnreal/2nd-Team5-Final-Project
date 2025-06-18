@@ -88,6 +88,22 @@ void ASLPlayerCharacter::SwordFromSky()
 	}
 }
 
+void ASLPlayerCharacter::CharacterDragged(const bool bIsDragged)
+{
+	if (!bIsDragged)
+	{
+		SetPrimaryState(TAG_Character_Movement_Idle);
+	}
+	else
+	{
+		SetPrimaryState(TAG_Character_EnterCinematic);
+		if (CachedMontageComponent)
+		{
+			CachedMontageComponent->PlayTrickMontage("Dragged");
+		}
+	}
+}
+
 void ASLPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
@@ -143,11 +159,12 @@ void ASLPlayerCharacter::ChangeVisibilityWeapons(bool bIsVisible)
 	}
 }
 
-void ASLPlayerCharacter::ResetState() const
+void ASLPlayerCharacter::ResetState()
 {
 	if (CashedPlayerState)
 	{
 		CashedPlayerState->ResetState();
+		SetPrimaryState(TAG_Character_Movement_Idle);	
 	}
 }
 
@@ -170,6 +187,7 @@ void ASLPlayerCharacter::DisableLockOnMode()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	RemoveSecondaryState(TAG_Character_LockOn);
+	RemoveSecondaryState(TAG_Character_PrepareLockOn);
 }
 
 void ASLPlayerCharacter::Landed(const FHitResult& Hit)

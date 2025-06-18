@@ -60,11 +60,14 @@ public:
 	void ChangeVisibilityWeapons(bool bIsVisible);
 
 	UFUNCTION(BlueprintCallable)
-	void ResetState() const;
+	void ResetState();
 
 	// Skill
 	UFUNCTION()
 	void SwordFromSky();
+
+	UFUNCTION()
+	void CharacterDragged(bool bIsDragged);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<ASLItem> SwordClass;
