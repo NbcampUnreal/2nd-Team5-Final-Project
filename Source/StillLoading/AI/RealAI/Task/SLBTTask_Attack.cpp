@@ -41,7 +41,8 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(Target);
 	if (!PlayerCharacter) return EBTNodeResult::Failed;
 
-	if (AICharacter->HasBattleState(TAG_AI_Hit)) return EBTNodeResult::Failed;
+	if (AICharacter->HasBattleState(TAG_AI_Hit)
+		|| AICharacter->HasBattleState(TAG_AI_IsAttacking)) return EBTNodeResult::Failed;
 
 	if (AttackType == EAttackAnimType::AAT_AINormal)
 	{
@@ -61,7 +62,5 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	
 	AICharacter->SetBattleState(TAG_AI_IsAttacking);
 	
-	BlackboardComp->SetValueAsFloat("LastAttackTime", GetWorld()->GetTimeSeconds());
-
 	return EBTNodeResult::Succeeded;
 }
