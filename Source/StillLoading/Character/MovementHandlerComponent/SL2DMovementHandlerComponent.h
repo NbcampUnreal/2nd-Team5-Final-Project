@@ -1,23 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SLMovementComponentBase.h"
 #include "Components/ActorComponent.h"
 #include "SL2DMovementHandlerComponent.generated.h"
 
-class USLInteractionComponent;
-class ASLInteractableObjectBase;
-class ISLInteractableBase;
-class UCollisionRadarComponent;
-class ASLPlayerCharacter;
-class UCombatHandlerComponent;
-class UBattleComponent;
-class UAnimationMontageComponent;
-enum class EInputActionType : uint8;
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class STILLLOADING_API USL2DMovementHandlerComponent : public UActorComponent
+class STILLLOADING_API USL2DMovementHandlerComponent : public USLMovementComponentBase
 {
 	GENERATED_BODY()
 
@@ -36,32 +25,13 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-private:
-	UFUNCTION()
-	void BindIMCComponent();
-	UFUNCTION()
-	void OnActionTriggered(EInputActionType ActionType, FInputActionValue Value);
-	UFUNCTION()
-	void OnActionStarted(EInputActionType ActionType);
-	UFUNCTION()
-	void OnActionCompleted(EInputActionType ActionType);
+	virtual void OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value) override;
+	virtual void OnActionStarted_Implementation(EInputActionType ActionType) override;
+	virtual void OnActionCompleted_Implementation(EInputActionType ActionType) override;
+	virtual void OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType) override;
 	
+private:
 	void Move(const float AxisValue, const EInputActionType ActionType);
 	void Attack();
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
-	void Interaction();
-	
-	UPROPERTY()
-	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
-	UPROPERTY()
-	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
-	UPROPERTY()
-	TObjectPtr<UBattleComponent> CachedBattleComponent;
-	UPROPERTY()
-	TObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
-	UPROPERTY()
-	TObjectPtr<USkeletalMeshComponent> CachedSkeletalMesh;
-	UPROPERTY()
-	TObjectPtr<USLInteractionComponent> CachedInteractionComponent;
 };
