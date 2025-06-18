@@ -61,6 +61,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
 	TObjectPtr<USoundBase> ImpactSound;
 
+	// 시작 했을 때 재생될 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
+	TObjectPtr<USoundBase> BeginSound;
+
 private:
 	// 피해를 주기 위한 타이머 핸들
 	FTimerHandle DamageTimerHandle;

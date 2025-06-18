@@ -74,6 +74,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Empowered", meta = (ClampMin = "0.1", ClampMax = "30.0"))
     float MaxEmpoweredDuration = 50.f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Cheat")
+    bool bUnlimitedEmpowered;
+
     UPROPERTY(BlueprintAssignable, Category = "Combat")
     FOnEmpoweredStateChanged OnEmpoweredStateChanged;
 
@@ -153,6 +156,10 @@ public:
     TSubclassOf<AChargingWidgetActor> ChargingWidgetActorClass;
 
 private:
+    /** Cheat Empowered 설정 */
+    UFUNCTION()
+    void SetUnlimitedEmpoweredCombatMode();
+    
     /** 현재 생성된 Charging Widget Actor */
     UPROPERTY()
     TObjectPtr<AChargingWidgetActor> ChargingWidgetActor;

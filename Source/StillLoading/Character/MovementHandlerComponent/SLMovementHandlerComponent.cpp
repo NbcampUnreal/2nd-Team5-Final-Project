@@ -516,6 +516,7 @@ void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
 	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_OnAir);
 	CachedCombatComponent->ResetCombo();
 	AttackStateCount = 0;
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterOnGround, OwnerCharacter->GetActorLocation());
 }
 
 void UMovementHandlerComponent::StartKnockback(float Speed, float Duration)
@@ -1026,14 +1027,11 @@ void UMovementHandlerComponent::SpawnSword()
 
 	if (!CachedCombatComponent->IsEmpowered()) return;
 
-	if (USLSkillComponent* SkillComp = OwnerCharacter->FindComponentByClass<USLSkillComponent>())
-	{
-		SkillComp->ActivateSkill(EActiveSkillType::AST_Spawn);
-	}
-
 	ToggleCameraZoom(false, 1000.f);
-	CachedMontageComponent->PlaySkillMontage(FName("Dodge"));
+	CachedMontageComponent->PlaySkillMontage("SwordFromSky");
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack_SpawnSword);
+
+	USlowMotionHelper::ApplyActorSlowMotion(OwnerCharacter, 0.2f, 1.0f);
 }
 
 void UMovementHandlerComponent::Airborne()
@@ -1086,10 +1084,12 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 	if (bIsBlocking && !OwnerCharacter->GetCharacterMovement()->IsFalling())
 	{
 		OwnerCharacter->SetPrimaryState(TAG_Character_Defense_Block);
+		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterBeginDefence, OwnerCharacter->GetActorLocation());
 	}
 	else
 	{
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Defense_Block);
+		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterEndDefence, OwnerCharacter->GetActorLocation());
 	}
 }
 
@@ -1207,6 +1207,15 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		break;
 	case ECharacterMontageState::ECS_ETC:
 		OwnerCharacter->ChangeVisibilityWeapons(true);
+		break;
+	case ECharacterMontageState::ECS_Attack_SpawnSword:
+		if (USLSkillComponent* SkillComp = OwnerCharacter->FindComponentByClass<USLSkillComponent>())
+		{
+			SkillComp->ActivateSkill(EActiveSkillType::AST_Spawn);
+		}
+		CachedMontageComponent->PlaySkillMontage("Dodge");
+		break;
+	case ECharacterMontageState::ECS_Attack_SpawnSwordDodge:
 		break;
 	default:
 		break;

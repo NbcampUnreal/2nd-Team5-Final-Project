@@ -50,6 +50,7 @@ enum class ECharacterMontageState : uint8
 	ECS_Attack_BlastSword UMETA(DisplayName = "Attack BlastSword"),
 	ECS_Attack_BlastShield UMETA(DisplayName = "Attack BlastShield"),
 	ECS_Attack_SpawnSword UMETA(DisplayName = "Attack SpawnSword"),
+	ECS_Attack_SpawnSwordDodge UMETA(DisplayName = "Attack SpawnSword Dodge"),
 
 	// 버트 모션
 	ECS_Buff UMETA(DisplayName = "Buff"),
