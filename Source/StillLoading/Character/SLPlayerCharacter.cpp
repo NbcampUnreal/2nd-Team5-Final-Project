@@ -164,7 +164,8 @@ void ASLPlayerCharacter::ResetState()
 	if (CashedPlayerState)
 	{
 		CashedPlayerState->ResetState();
-		SetPrimaryState(TAG_Character_Movement_Idle);	
+		SetPrimaryState(TAG_Character_Movement_Idle);
+		CachedMontageComponent->StopAllMontages(0.2);
 	}
 }
 

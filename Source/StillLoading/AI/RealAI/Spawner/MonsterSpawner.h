@@ -17,7 +17,7 @@ struct FMonsterSpawnInfo
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AMonsterAICharacter> Monster;
+	TSubclassOf<AActor> Monster;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1", ClampMax = "100"))
 	int32 Count = 1;
