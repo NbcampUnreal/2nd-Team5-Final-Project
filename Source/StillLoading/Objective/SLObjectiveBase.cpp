@@ -24,6 +24,11 @@ void USLObjectiveBase::ObjectiveFail()
 
 void USLObjectiveBase::SetObjectiveState(const ESLObjectiveState InState)
 {
+	if (ObjectiveState == InState)
+	{
+		return;
+	}
+	
 	ObjectiveState = InState;
 	switch (InState)
 	{
