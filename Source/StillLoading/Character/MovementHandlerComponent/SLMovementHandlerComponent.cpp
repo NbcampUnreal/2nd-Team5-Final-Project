@@ -394,11 +394,11 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 		return;
 	case EHitAnimType::HAT_HardHit: // 중간거
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
-		RemoveDelay = 1.0f;
+		RemoveDelay = 2.0f;
 		break;
 	case EHitAnimType::HAT_WeakHit:
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
-		RemoveDelay = 1.0f;
+		RemoveDelay = 1.5f;
 		break;
 	default: break;
 	}
