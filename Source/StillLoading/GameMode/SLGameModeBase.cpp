@@ -16,12 +16,19 @@ void ASLGameModeBase::AddInProgressObjective(USLObjectiveBase* Objective)
 {
 	SLGameState->GetInProgressedObjectives().AddUnique(Objective);
 	OnInProgressObjectiveAdded.Broadcast(Objective);
+	OnPrimaryInProgressObjectiveChanged.Broadcast(Objective);
 }
 
 void ASLGameModeBase::RemoveInProgressObjective(USLObjectiveBase* Objective)
 {
-	SLGameState->GetInProgressedObjectives().Remove(Objective);
+	TArray<TObjectPtr<USLObjectiveBase>>& InProgressedObjectives = SLGameState->GetInProgressedObjectives();
+	InProgressedObjectives.Remove(Objective);
 	OnInProgressObjectiveRemoved.Broadcast(Objective);
+
+	if (InProgressedObjectives.IsEmpty() == false)
+	{
+		OnPrimaryInProgressObjectiveChanged.Broadcast(InProgressedObjectives.Top());
+	}
 }
 
 USLObjectiveBase* ASLGameModeBase::GetPrimaryInProgressObjective()
