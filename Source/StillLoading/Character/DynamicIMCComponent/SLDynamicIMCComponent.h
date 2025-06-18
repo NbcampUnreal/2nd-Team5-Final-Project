@@ -23,6 +23,7 @@ enum class EInputActionType : uint8
 	EIAT_PointMove UMETA(DisplayName = "PointMove"),
 	EIAT_Menu UMETA(DisplayName = "Menu"),
 	EIAT_LockObject UMETA(DisplayName = "LockObject"),
+	EIAT_Special UMETA(DisplayName = "Special"),
 	EIAT_Max UMETA(DisplayName = "Max")
 };
 

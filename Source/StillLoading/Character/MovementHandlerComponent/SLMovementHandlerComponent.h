@@ -1,51 +1,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SLMovementComponentBase.h"
 #include "Character/Animation/SLAnimNotify.h"
 #include "Character/Buffer/InputBufferComponent.h"
-#include "Character/DataAsset/AttackDataAsset.h"
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
-class USLSoundSubsystem;
-class USLBattleSoundSubsystem;
-class UCollisionRadarComponent;
-class UCombatHandlerComponent;
-class UBattleComponent;
-class UAnimationMontageComponent;
-class ASLPlayerCharacter;
-class ASLPlayerCharacterBase;
-struct FInputActionValue;
-enum class EInputActionType : uint8;
-
-class UInputAction;
-class UDynamicIMCComponent;
-
-UENUM(BlueprintType)
-enum class ECharacterState : uint8
-{
-	ECS_Idle UMETA(DisplayName = "Idle"),
-	ECS_Cinematic UMETA(DisplayName = "Cinematic"),
-	ECS_Moving UMETA(DisplayName = "Moving"),
-	ECS_Jumping UMETA(DisplayName = "Jumping"),
-	ECS_Falling UMETA(DisplayName = "Falling"),
-	ECS_Attacking UMETA(DisplayName = "Attacking"),
-	ECS_Dodging UMETA(DisplayName = "Dodging"),
-	ECS_Stunned UMETA(DisplayName = "Stunned"),
-	ECS_Dead UMETA(DisplayName = "Dead"),
-	ECS_InputLocked UMETA(DisplayName = "Input Locked")
-};
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class STILLLOADING_API UMovementHandlerComponent : public UActorComponent
+class STILLLOADING_API UMovementHandlerComponent : public USLMovementComponentBase
 {
 	GENERATED_BODY()
 
 public:
 	UMovementHandlerComponent();
-
-	UFUNCTION(BlueprintCallable)
-	void BindIMCComponent();
 	
 	// 애니매이션 노티 확인용
 	UFUNCTION()
@@ -102,17 +70,13 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value) override;
+	virtual void OnActionStarted_Implementation(EInputActionType ActionType) override;
+	virtual void OnActionCompleted_Implementation(EInputActionType ActionType) override;
+	virtual void OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType) override;
 	
 	UFUNCTION()
-	void OnActionTriggered(EInputActionType ActionType, FInputActionValue Value);
-	UFUNCTION()
-	void OnActionStarted(EInputActionType ActionType);
-	UFUNCTION()
-	void OnActionCompleted(EInputActionType ActionType);
-	UFUNCTION()
 	void RemoveInvulnerability() const;
-	UFUNCTION()
-	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType);
 	UFUNCTION()
 	void HitDirection(AActor* Causer);
 	UFUNCTION()
@@ -142,18 +106,14 @@ protected:
 	float JumpForwardImpulse = 500.0f;
 
 private:
-	UFUNCTION()
-	USLSoundSubsystem* GetBattleSoundSubSystem() const;
-	
 	void Attack();
 	void BeginAttack();
 	void Look(const FVector2D& Value);
 	void Jump();
 	void Move(const float AxisValue, const EInputActionType ActionType);
-	void Interact();
+	void ParryCheck();
 	void PointMove();
 	void DodgeLoco();
-	void ToggleMenu();
 	void ToggleLockState();
 	void RotateCameraToTarget(const AActor* Target, float DeltaTime);
 	void SpawnSword();
@@ -165,19 +125,7 @@ private:
 	void Block(const bool bIsBlocking);
 	void RotateToHitCauser(const AActor* Causer, FRotator &TargetRotation, bool &bIsHitFromBack);
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
-
-	UPROPERTY()
-	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
-	UPROPERTY()
-	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
-	UPROPERTY()
-	TObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
-	UPROPERTY()
-	TObjectPtr<UBattleComponent> CachedBattleComponent;
-	UPROPERTY()
-	TObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
-	UPROPERTY()
-	TObjectPtr<USLSoundSubsystem> CachedBattleSoundSubsystem;
+	
 	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;
 	UPROPERTY()
@@ -207,6 +155,5 @@ private:
 	UPROPERTY()
 	bool bDidBeginAttack = false;
 
-	float DesiredArmLength;
-	
+	float DesiredArmLength = 0;
 };

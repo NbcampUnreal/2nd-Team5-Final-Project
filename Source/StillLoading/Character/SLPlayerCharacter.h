@@ -8,6 +8,7 @@
 #include "SLPlayerCharacter.generated.h"
 
 
+class ASLBattlePlayerState;
 class UAnimationMontageComponent;
 enum class EItemType : uint8;
 enum class EOrbitDirection : uint8;
@@ -25,6 +26,7 @@ enum class EQueryType : uint8 // enum class 는 앞에 안붙이는게 더 낫�
 	EQT_LockOnBlock UMETA(DisplayName = "LockOn Block"),
 	EQT_FacingBlock UMETA(DisplayName = "Facing Block"),
 	EQT_DogeBlock UMETA(DisplayName = "Doge Block"),
+	EQT_HitBlock UMETA(DisplayName = "Hit Block"),
 };
 
 USTRUCT(BlueprintType)
@@ -57,9 +59,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ChangeVisibilityWeapons(bool bIsVisible);
 
+	UFUNCTION(BlueprintCallable)
+	void ResetState() const;
+
 	// Skill
 	UFUNCTION()
 	void SwordFromSky();
+
+	UFUNCTION()
+	void CharacterDragged(bool bIsDragged);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<ASLItem> SwordClass;
@@ -74,7 +82,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Landed(const FHitResult& Hit) override;
 
@@ -89,6 +96,9 @@ protected:
 
 private:
 	UFUNCTION()
+	void OnPlayerHpChanged(float MaxHp, float CurrentHp);
+	
+	UFUNCTION()
 	void AttachItemToHand(AActor* ItemActor, const FName SocketName) const;
 
 	UFUNCTION()
@@ -100,6 +110,11 @@ private:
 
 	UFUNCTION()
 	void OnItemSweeped(AActor* OverlappedActor, FHitResult Hit);
+
+	UPROPERTY()
+	TObjectPtr<ASLBattlePlayerState> CashedPlayerState = nullptr;
+
+	bool bIsAlreadyDied = false;
 	
 public:
 	// 상태 태그 추가/제거 함수
