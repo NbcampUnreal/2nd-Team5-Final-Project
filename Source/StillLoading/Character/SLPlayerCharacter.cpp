@@ -78,6 +78,8 @@ void ASLPlayerCharacter::BeginPlay()
 			}
 		}
 	}
+
+	CharacterDragged();
 }
 
 void ASLPlayerCharacter::SwordFromSky()
@@ -85,6 +87,15 @@ void ASLPlayerCharacter::SwordFromSky()
 	if (CachedMontageComponent)
 	{
 		CachedMontageComponent->PlaySkillMontage("SwordFromSky");
+	}
+}
+
+void ASLPlayerCharacter::CharacterDragged()
+{
+	SetPrimaryState(TAG_Character_EnterCinematic);
+	if (CachedMontageComponent)
+	{
+		CachedMontageComponent->PlayTrickMontage("Dragged");
 	}
 }
 
