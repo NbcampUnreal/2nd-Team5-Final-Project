@@ -49,7 +49,7 @@ void AMonsterSpawner::BeginPlay()
 	Super::BeginPlay();
 
 	//SpawnMonstersByType();
-	SpawnMonstersWithoutLeader();
+	//SpawnMonstersWithoutLeader();
 }
 
 void AMonsterSpawner::SpawnMonstersByType()
