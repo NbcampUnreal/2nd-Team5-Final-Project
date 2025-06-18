@@ -1,6 +1,8 @@
 #include "SLMovementHandlerComponent.h"
 
 #include "MotionWarpingComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "AI/RealAI/Controller/MonsterAIController.h"
 #include "Character/SLAIBaseCharacter.h"
@@ -34,7 +36,7 @@ void UMovementHandlerComponent::BeginPlay()
 	{
 		DefaultArmLength = OwnerCharacter->CameraBoom->TargetArmLength;
 		DesiredArmLength = DefaultArmLength;
-		
+
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
 		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
 	}
@@ -42,7 +44,7 @@ void UMovementHandlerComponent::BeginPlay()
 	if (CachedRadarComponent)
 	{
 		CachedRadarComponent->OnActorDetectedEnhanced.
-							  AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
+		                      AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
 	}
 }
 
@@ -91,12 +93,12 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick T
 		{
 			return;
 		}
-		
+
 		OwnerCharacter->CameraBoom->TargetArmLength = FMath::FInterpTo(
 			OwnerCharacter->CameraBoom->TargetArmLength, // 현재 값
-			DesiredArmLength,                            // 목표 값
-			DeltaTime,                                   // 프레임 시간
-			CameraZoomInterpSpeed                        // 보간 속도
+			DesiredArmLength, // 목표 값
+			DeltaTime, // 프레임 시간
+			CameraZoomInterpSpeed // 보간 속도
 		);
 	}
 }
@@ -187,7 +189,7 @@ void UMovementHandlerComponent::OnActionCompleted_Implementation(EInputActionTyp
 	case EInputActionType::EIAT_MoveRight:
 		break;
 	case EInputActionType::EIAT_Walk:
-		
+
 		break;
 	case EInputActionType::EIAT_Jump:
 		break;
@@ -211,19 +213,21 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 	if (!OwnerCharacter->HasSecondaryState(TAG_Character_PrepareLockOn)) return;
 
 	if (DetectedActor->IsA(AMonsterAICharacter::StaticClass())
-			|| DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
+		|| DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
 	{
 		if (const ASLAIBaseCharacter* DetectedActorTemp = Cast<ASLAIBaseCharacter>(DetectedActor))
 		{
-			if (const IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(DetectedActorTemp->GetController()))
+			if (const IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(
+				DetectedActorTemp->GetController()))
 			{
-				if (const ASLBasePlayerController* PlayerController = Cast<ASLBasePlayerController>(OwnerCharacter->GetController()))
+				if (const ASLBasePlayerController* PlayerController = Cast<ASLBasePlayerController>(
+					OwnerCharacter->GetController()))
 				{
 					if (TeamAgentInterface->GetGenericTeamId() == PlayerController->GetGenericTeamId()) return;
 				}
 			}
 		}
-		
+
 		if (Distance <= FocusMaxDistance && IsValid(DetectedActor))
 		{
 			if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn)) return;
@@ -281,7 +285,7 @@ void UMovementHandlerComponent::RemoveInvulnerability() const
 }
 
 void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult,
-                                              EHitAnimType AnimType)
+                                                             EHitAnimType AnimType)
 {
 	Super::OnHitReceived_Implementation(Causer, Damage, HitResult, AnimType);
 
@@ -290,16 +294,27 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 		//UE_LOG(LogTemp, Warning, TEXT("USLMovementComponentBase: Hit Blocked"));
 		return;
 	}
-	
+
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)
 		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)
-		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast)) return;
-	
+		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast))
+		return;
+
 	OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
 
 	bool bIsFromBack = false;
 	FRotator TargetRotation;
 	RotateToHitCauser(Causer, TargetRotation, bIsFromBack);
+
+	if (CachedCombatComponent->IsEmpowered())
+	{
+		bIsFromBack = false;
+		MaxBlockCount = 20;
+	}
+	else
+	{
+		MaxBlockCount = 3;
+	}
 
 	if (OwnerCharacter->IsInPrimaryState(TAG_Character_Defense_Block) && !bIsFromBack)
 	{
@@ -310,7 +325,8 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 			CachedMontageComponent->PlayBlockMontage(FName("BlockBreak"));
 			BlockCount = 0;
 			LastBlockTime = 0;
-			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuardBreak, OwnerCharacter->GetActorLocation());
+			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuardBreak,
+			                                            OwnerCharacter->GetActorLocation());
 
 			if (!GetWorld()->GetTimerManager().IsTimerActive(DelayTimerHandle))
 			{
@@ -322,14 +338,20 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 					false
 				);
 			}
+
+			if (ActiveShieldEffectComponent)
+			{
+				ActiveShieldEffectComponent->DestroyComponent();
+				ActiveShieldEffectComponent = nullptr;
+			}
 		}
 		else
 		{
-			// Parry
 			HitDirection(Causer);
 			const float CurrentTime = GetWorld()->GetTimeSeconds();
 			LastBlockTime = CurrentTime;
-			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuard, OwnerCharacter->GetActorLocation());
+			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuard,
+			                                            OwnerCharacter->GetActorLocation());
 
 			CachedMontageComponent->PlayBlockMontage(FName("BlockHit"));
 			++BlockCount;
@@ -341,7 +363,10 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Invulnerable) && InvulnerableDuration > 0) return;
 
 	// 피격
-	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable, TAG_Character_Empowered});
+	OwnerCharacter->ClearStateTags({}, {
+		                               TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
+		                               TAG_Character_Empowered
+	                               });
 	CachedMontageComponent->StopAllMontages(0.2f);
 	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
 
@@ -423,8 +448,8 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 	OwnerCharacter->GetWorldTimerManager().PauseTimer(InvulnerabilityTimerHandle);
 	OwnerCharacter->GetWorldTimerManager().ClearTimer(InvulnerabilityTimerHandle);
 	OwnerCharacter->GetWorldTimerManager().SetTimer(InvulnerabilityTimerHandle, this,
-													&UMovementHandlerComponent::RemoveInvulnerability,
-													InvulnerableDuration, false);
+	                                                &UMovementHandlerComponent::RemoveInvulnerability,
+	                                                InvulnerableDuration, false);
 }
 
 void UMovementHandlerComponent::HitDirection(AActor* Causer)
@@ -503,7 +528,8 @@ void UMovementHandlerComponent::Jump()
 	if (OwnerCharacter)
 	{
 		OwnerCharacter->Jump();
-		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterSpirit, OwnerCharacter->GetActorLocation());
+		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterSpirit,
+		                                            OwnerCharacter->GetActorLocation());
 	}
 
 	CachedCombatComponent->ResetCombo();
@@ -516,7 +542,8 @@ void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
 	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_OnAir);
 	CachedCombatComponent->ResetCombo();
 	AttackStateCount = 0;
-	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterOnGround, OwnerCharacter->GetActorLocation());
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterOnGround,
+	                                            OwnerCharacter->GetActorLocation());
 }
 
 void UMovementHandlerComponent::StartKnockback(float Speed, float Duration)
@@ -602,7 +629,7 @@ void UMovementHandlerComponent::ParryCheck()
 			OwnerCharacter->AddSecondaryState(TAG_Character_Defense_Parry);
 			BlockCount = 0;
 		}
-				
+
 		USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
 
 		// 전체 슬로우 (자기 자신 포함)
@@ -626,10 +653,12 @@ void UMovementHandlerComponent::Attack()
 		const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
 		const float Distance = FVector::Dist(OwnerCharacter->GetActorLocation(), CameraFocusTarget->GetActorLocation());
 
-		if (!bIsFalling && OwnerCharacter->HasSecondaryState(TAG_Character_LockOn) && Distance < ExecuteDistanceThreshold)
+		if (!bIsFalling && OwnerCharacter->HasSecondaryState(TAG_Character_LockOn) && Distance <
+			ExecuteDistanceThreshold)
 		{
 			const FVector TargetForward = CameraFocusTarget->GetActorForwardVector();
-			const FVector ToOwner = (OwnerCharacter->GetActorLocation() - CameraFocusTarget->GetActorLocation()).GetSafeNormal();
+			const FVector ToOwner = (OwnerCharacter->GetActorLocation() - CameraFocusTarget->GetActorLocation()).
+				GetSafeNormal();
 
 			const float Dot = FVector::DotProduct(TargetForward, ToOwner);
 			if (Dot < -0.94f)
@@ -741,7 +770,7 @@ void UMovementHandlerComponent::Blast(const EItemType ItemType)
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Blast Blocked"));
 		return;
 	}
-	
+
 	switch (ItemType)
 	{
 	case EItemType::IT_Sword:
@@ -844,7 +873,7 @@ void UMovementHandlerComponent::DodgeLoco()
 	}
 
 	ToggleCameraZoom(false);
-	
+
 	FVector DesiredDodgeDirection;
 	const FVector InputDirection = OwnerCharacter->GetCharacterMovement()->GetCurrentAcceleration().GetSafeNormal();
 	if (!InputDirection.IsNearlyZero())
@@ -857,69 +886,78 @@ void UMovementHandlerComponent::DodgeLoco()
 	}
 
 	const FVector CharacterForward = OwnerCharacter->GetActorForwardVector();
-    const FVector CharacterRight = OwnerCharacter->GetActorRightVector();
+	const FVector CharacterRight = OwnerCharacter->GetActorRightVector();
 
-    const double ForwardDotTemp = FVector::DotProduct(CharacterForward, DesiredDodgeDirection);
-    const double RightDotTemp = FVector::DotProduct(CharacterRight, DesiredDodgeDirection);
+	const double ForwardDotTemp = FVector::DotProduct(CharacterForward, DesiredDodgeDirection);
+	const double RightDotTemp = FVector::DotProduct(CharacterRight, DesiredDodgeDirection);
 
-    constexpr double AngleThreshold45 = 0.707;
-    
-    EDodgeDirection DirectionEnum;
+	constexpr double AngleThreshold45 = 0.707;
 
-    if (ForwardDotTemp > AngleThreshold45)
-    {
-        DirectionEnum = EDodgeDirection::Forward;
-    }
-    else if (ForwardDotTemp < -AngleThreshold45)
-    {
-        DirectionEnum = EDodgeDirection::Backward;
-    }
-    else
-    {
-        if (RightDotTemp > 0)
-        {
-            DirectionEnum = EDodgeDirection::Right;
-        }
-        else
-        {
-            DirectionEnum = EDodgeDirection::Left;
-        }
-    }
+	EDodgeDirection DirectionEnum;
 
-    const double AngleRad = FMath::Acos(ForwardDotTemp);
-    double AngleDeg = FMath::RadiansToDegrees(AngleRad);
+	if (ForwardDotTemp > AngleThreshold45)
+	{
+		DirectionEnum = EDodgeDirection::Forward;
+	}
+	else if (ForwardDotTemp < -AngleThreshold45)
+	{
+		DirectionEnum = EDodgeDirection::Backward;
+	}
+	else
+	{
+		if (RightDotTemp > 0)
+		{
+			DirectionEnum = EDodgeDirection::Right;
+		}
+		else
+		{
+			DirectionEnum = EDodgeDirection::Left;
+		}
+	}
 
-    if (RightDotTemp < 0)
-    {
-        AngleDeg *= -1.0;
-    }
+	const double AngleRad = FMath::Acos(ForwardDotTemp);
+	double AngleDeg = FMath::RadiansToDegrees(AngleRad);
 
-    if (AngleDeg >= -22.5 && AngleDeg < 22.5) DirectionEnum = EDodgeDirection::Forward;
-    else if (AngleDeg >= 22.5 && AngleDeg < 67.5) DirectionEnum = EDodgeDirection::ForwardRight;
-    else if (AngleDeg >= 67.5 && AngleDeg < 112.5) DirectionEnum = EDodgeDirection::Right;
-    else if (AngleDeg >= 112.5 && AngleDeg < 157.5) DirectionEnum = EDodgeDirection::BackwardRight;
-    else if (AngleDeg >= 157.5 || AngleDeg < -157.5) DirectionEnum = EDodgeDirection::Backward;
-    else if (AngleDeg >= -157.5 && AngleDeg < -112.5) DirectionEnum = EDodgeDirection::BackwardLeft;
-    else if (AngleDeg >= -112.5 && AngleDeg < -67.5) DirectionEnum = EDodgeDirection::Left;
-    else if (AngleDeg >= -67.5 && AngleDeg < -22.5) DirectionEnum = EDodgeDirection::ForwardLeft;
+	if (RightDotTemp < 0)
+	{
+		AngleDeg *= -1.0;
+	}
 
-    FName MontageToPlay = "";
-    switch (DirectionEnum)
-    {
-        case EDodgeDirection::Forward:        MontageToPlay = "Forward"; break;
-        case EDodgeDirection::ForwardRight:   MontageToPlay = "ForwardRight"; break;
-        case EDodgeDirection::Right:          MontageToPlay = "Right"; break;
-        case EDodgeDirection::BackwardRight:  MontageToPlay = "BackwardRight"; break;
-        case EDodgeDirection::Backward:       MontageToPlay = "Backward"; break;
-        case EDodgeDirection::BackwardLeft:   MontageToPlay = "BackwardLeft"; break;
-        case EDodgeDirection::Left:           MontageToPlay = "Left"; break;
-        case EDodgeDirection::ForwardLeft:    MontageToPlay = "ForwardLeft"; break;
-    }
+	if (AngleDeg >= -22.5 && AngleDeg < 22.5) DirectionEnum = EDodgeDirection::Forward;
+	else if (AngleDeg >= 22.5 && AngleDeg < 67.5) DirectionEnum = EDodgeDirection::ForwardRight;
+	else if (AngleDeg >= 67.5 && AngleDeg < 112.5) DirectionEnum = EDodgeDirection::Right;
+	else if (AngleDeg >= 112.5 && AngleDeg < 157.5) DirectionEnum = EDodgeDirection::BackwardRight;
+	else if (AngleDeg >= 157.5 || AngleDeg < -157.5) DirectionEnum = EDodgeDirection::Backward;
+	else if (AngleDeg >= -157.5 && AngleDeg < -112.5) DirectionEnum = EDodgeDirection::BackwardLeft;
+	else if (AngleDeg >= -112.5 && AngleDeg < -67.5) DirectionEnum = EDodgeDirection::Left;
+	else if (AngleDeg >= -67.5 && AngleDeg < -22.5) DirectionEnum = EDodgeDirection::ForwardLeft;
+
+	FName MontageToPlay = "";
+	switch (DirectionEnum)
+	{
+	case EDodgeDirection::Forward: MontageToPlay = "Forward";
+		break;
+	case EDodgeDirection::ForwardRight: MontageToPlay = "ForwardRight";
+		break;
+	case EDodgeDirection::Right: MontageToPlay = "Right";
+		break;
+	case EDodgeDirection::BackwardRight: MontageToPlay = "BackwardRight";
+		break;
+	case EDodgeDirection::Backward: MontageToPlay = "Backward";
+		break;
+	case EDodgeDirection::BackwardLeft: MontageToPlay = "BackwardLeft";
+		break;
+	case EDodgeDirection::Left: MontageToPlay = "Left";
+		break;
+	case EDodgeDirection::ForwardLeft: MontageToPlay = "ForwardLeft";
+		break;
+	}
 
 	CachedMontageComponent->PlayDodgeMontage(MontageToPlay);
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
-	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterDodge, OwnerCharacter->GetActorLocation());
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterDodge,
+	                                            OwnerCharacter->GetActorLocation());
 }
 
 void UMovementHandlerComponent::ToggleLockState()
@@ -1003,7 +1041,8 @@ void UMovementHandlerComponent::RotateCameraToTarget(const AActor* Target, float
 
 void UMovementHandlerComponent::ToggleCameraZoom(const bool bIsZoomedOut, const float ZoomedOutArmLength)
 {
-	if (!OwnerCharacter->CameraBoom || !OwnerCharacter->CameraBoom || OwnerCharacter->HasSecondaryState(TAG_Character_LockOn))
+	if (!OwnerCharacter->CameraBoom || !OwnerCharacter->CameraBoom || OwnerCharacter->HasSecondaryState(
+		TAG_Character_LockOn))
 		return;
 
 	if (bIsZoomedOut)
@@ -1041,7 +1080,7 @@ void UMovementHandlerComponent::Airborne()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
 		return;
 	}
-	
+
 	ToggleCameraZoom(false);
 	CachedMontageComponent->PlaySkillMontage(FName("Airborne"));
 
@@ -1080,16 +1119,42 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Defence Blocked"));
 		return;
 	}
-	
+
 	if (bIsBlocking && !OwnerCharacter->GetCharacterMovement()->IsFalling())
 	{
 		OwnerCharacter->SetPrimaryState(TAG_Character_Defense_Block);
-		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterBeginDefence, OwnerCharacter->GetActorLocation());
+		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterBeginDefence,
+		                                            OwnerCharacter->GetActorLocation());
+
+		if (EmpoweredShieldEffect)
+		{
+			if (ActiveShieldEffectComponent)
+			{
+				ActiveShieldEffectComponent->DestroyComponent();
+			}
+
+			ActiveShieldEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+				EmpoweredShieldEffect,
+				OwnerCharacter->GetRootComponent(),
+				NAME_None,
+				FVector::ZeroVector,
+				FRotator::ZeroRotator,
+				EAttachLocation::KeepRelativeOffset,
+				true
+			);
+		}
 	}
 	else
 	{
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Defense_Block);
-		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterEndDefence, OwnerCharacter->GetActorLocation());
+		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterEndDefence,
+		                                            OwnerCharacter->GetActorLocation());
+
+		if (ActiveShieldEffectComponent)
+		{
+			ActiveShieldEffectComponent->DestroyComponent();
+			ActiveShieldEffectComponent = nullptr;
+		}
 	}
 }
 
