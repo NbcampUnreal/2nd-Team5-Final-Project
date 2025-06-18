@@ -261,10 +261,10 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 
 	if (OwnerCharacter->IsInPrimaryState(TAG_Character_Defense_Block) && !bIsFromBack)
 	{
-		if (BlockCount >= MaxBlockCount && !OwnerCharacter->HasSecondaryState(TAG_Character_HitReaction_Block_Break))
+		if (BlockCount >= MaxBlockCount && !OwnerCharacter->HasSecondaryState(TAG_Character_BlockBreak))
 		{
 			OwnerCharacter->ClearAllStateTags();
-			OwnerCharacter->AddSecondaryState(TAG_Character_HitReaction_Block_Break);
+			OwnerCharacter->AddSecondaryState(TAG_Character_BlockBreak);
 			CachedMontageComponent->PlayBlockMontage(FName("BlockBreak"));
 			BlockCount = 0;
 			LastBlockTime = 0;
@@ -384,7 +384,7 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 
 void USL25DMovementHandlerComponent::OnDelayedAction()
 {
-	OwnerCharacter->RemoveSecondaryState(TAG_Character_HitReaction_Block_Break);
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_BlockBreak);
 	GetWorld()->GetTimerManager().ClearTimer(DelayTimerHandle);
 }
 
