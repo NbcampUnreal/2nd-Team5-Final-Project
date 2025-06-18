@@ -187,6 +187,7 @@ void ASLPlayerCharacter::DisableLockOnMode()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	RemoveSecondaryState(TAG_Character_LockOn);
+	RemoveSecondaryState(TAG_Character_PrepareLockOn);
 }
 
 void ASLPlayerCharacter::Landed(const FHitResult& Hit)
