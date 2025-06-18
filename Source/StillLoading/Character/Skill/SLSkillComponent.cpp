@@ -2,7 +2,6 @@
 
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Item/FallingSword.h"
-#include "Character/SlowMotionHelper/SlowMotionHelper.h"
 
 USLSkillComponent::USLSkillComponent()
 {
@@ -53,12 +52,29 @@ void USLSkillComponent::ActiveSpawnSkill()
 	}
 }
 
+void USLSkillComponent::ActiveSpawnSkillTemp()
+{
+	const float SpawnHeight = 5000.0f;
+	const FVector SpawnLocation = GetOwner()->GetActorLocation() + FVector(0, 0, SpawnHeight);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = GetOwner();
+	SpawnParams.Instigator = Cast<APawn>(GetOwner());
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	if (GetWorld())
+	{
+		GetWorld()->SpawnActor<AFallingSword>(SwordClassToSpawn, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+	}
+}
+
 void USLSkillComponent::ActivateSkill(EActiveSkillType SkillType)
 {
 	switch (SkillType)
 	{
 	case EActiveSkillType::AST_Spawn:
-		ActiveSpawnSkill();
+		//ActiveSpawnSkill();
+		ActiveSpawnSkillTemp();
 		break;
 	}
 	
