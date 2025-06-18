@@ -1,22 +1,15 @@
-
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Character/MovementHandlerComponent/SL2DMovementHandlerComponent.h"
 
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/SLAnimNotify.h"
-#include "Character/BattleComponent/BattleComponent.h"
 #include "Character/CameraManagerComponent/CameraManagerComponent.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
-#include "Character/Interaction/SLInteractionComponent.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Interactable/SLInteractableObjectBase.h"
 
-USL2DMovementHandlerComponent::USL2DMovementHandlerComponent(): OwnerCharacter(nullptr), CachedSkeletalMesh(nullptr)
+USL2DMovementHandlerComponent::USL2DMovementHandlerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
@@ -35,6 +28,9 @@ void USL2DMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState
 	case ECharacterMontageState::ECS_Attack_Basic3:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Basic3);
 		break;
+	case ECharacterMontageState::ECS_ETC:
+		OwnerCharacter->ChangeVisibilityWeapons(true);
+		break;
 	default:
 		break;
 	}
@@ -46,17 +42,9 @@ void USL2DMovementHandlerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
-
 	if (OwnerCharacter)
 	{
-		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
-		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
-		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
-		CachedInteractionComponent = OwnerCharacter->FindComponentByClass<USLInteractionComponent>();
 		CachedSkeletalMesh = OwnerCharacter->GetMesh();
-
-		BindIMCComponent();
 	}
 
 	if (auto* CMC = GetOwner()->FindComponentByClass<UCameraManagerComponent>())
@@ -73,17 +61,7 @@ void USL2DMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick Ti
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void USL2DMovementHandlerComponent::BindIMCComponent()
-{
-	if (auto* IMC = GetOwner()->FindComponentByClass<UDynamicIMCComponent>())
-	{
-		IMC->OnActionTriggered.AddDynamic(this, &ThisClass::OnActionTriggered);
-		IMC->OnActionStarted.AddDynamic(this, &ThisClass::OnActionStarted);
-		IMC->OnActionCompleted.AddDynamic(this, &ThisClass::OnActionCompleted);
-	}
-}
-
-void USL2DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
+void USL2DMovementHandlerComponent::OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value)
 {
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
 	{
@@ -106,8 +84,10 @@ void USL2DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionTyp
 	}
 }
 
-void USL2DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
+void USL2DMovementHandlerComponent::OnActionStarted_Implementation(EInputActionType ActionType)
 {
+	Super::OnActionStarted_Implementation(ActionType);
+	
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
@@ -119,17 +99,26 @@ void USL2DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
 	case EInputActionType::EIAT_Attack:
 		Attack();
 		break;
-	case EInputActionType::EIAT_Interaction:
-		Interaction();
-		break;
 	default:
 		break;
 	}
 }
 
-void USL2DMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
+void USL2DMovementHandlerComponent::OnActionCompleted_Implementation(EInputActionType ActionType)
 {
 	
+}
+
+void USL2DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, float Damage,
+	const FHitResult& HitResult, EHitAnimType AnimType)
+{
+	Super::OnHitReceived_Implementation(Causer, Damage, HitResult, AnimType);
+
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_HitBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("USLMovementComponentBase: Hit Blocked"));
+		return;
+	}
 }
 
 void USL2DMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)
@@ -239,16 +228,5 @@ void USL2DMovementHandlerComponent::ApplyAttackState(const FName& SectionName, b
 	else if (SectionName == "Attack1")
 	{
 		OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic1);
-	}
-}
-
-void USL2DMovementHandlerComponent::Interaction()
-{
-	if (ASLInteractableObjectBase* InteractableObject = CachedInteractionComponent->GetInteractableObject())
-	{
-		if (ASLPlayerCharacterBase* PlayerCharacter = Cast<ASLPlayerCharacterBase>(GetOwner()))
-		{
-			InteractableObject->TriggerReact(PlayerCharacter, ESLReactiveTriggerType::ERT_InteractKey);
-		}
 	}
 }

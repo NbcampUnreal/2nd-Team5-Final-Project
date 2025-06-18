@@ -12,7 +12,7 @@ class USLSoundSubsystem;
 class UCollisionRadarComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class STILLLOADING_API USL25DMovementHandlerComponent : public UActorComponent
+class STILLLOADING_API USL25DMovementHandlerComponent : public USLMovementComponentBase
 {
 	GENERATED_BODY()
 
@@ -28,6 +28,10 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value) override;
+	virtual void OnActionStarted_Implementation(EInputActionType ActionType) override;
+	virtual void OnActionCompleted_Implementation(EInputActionType ActionType) override;
+	virtual void OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement|Rotation")
 	void StartFacingMouse();
@@ -36,18 +40,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Movement|Rotation")
 	void StopFacingMouse();
 
-	UFUNCTION()
-	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
-	UFUNCTION()
-	void BindIMCComponent();
-	UFUNCTION()
-	void OnActionTriggered(EInputActionType ActionType, FInputActionValue Value);
-	UFUNCTION()
-	void OnActionStarted(EInputActionType ActionType);
-	UFUNCTION()
-	void OnActionCompleted(EInputActionType ActionType);
-	UFUNCTION()
-	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType);
 	UFUNCTION()
 	void OnDelayedAction();
 	UFUNCTION()
@@ -63,8 +55,6 @@ protected:
 	UFUNCTION()
 	void Block(bool bIsBlocking);
 	UFUNCTION()
-	void Interact();
-	UFUNCTION()
 	void Attack();
 	UFUNCTION()
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
@@ -72,24 +62,6 @@ protected:
 	void Move(float AxisValue, EInputActionType ActionType);
 	UFUNCTION()
 	void FaceToMouse();
-
-	USLSoundSubsystem* GetBattleSoundSubSystem() const;
-
-	UPROPERTY()
-	TObjectPtr<ASLPlayerCharacter> OwnerCharacter;
-	
-	UPROPERTY()
-	TSoftObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
-	UPROPERTY()
-	TSoftObjectPtr<UCombatHandlerComponent> CachedCombatComponent;
-	UPROPERTY()
-	TSoftObjectPtr<UBattleComponent> CachedBattleComponent;
-	UPROPERTY()
-	TSoftObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
-	UPROPERTY()
-	TObjectPtr<USkeletalMeshComponent> CachedSkeletalMesh;
-	UPROPERTY()
-	TObjectPtr<USLSoundSubsystem> CachedBattleSoundSubsystem;
 
 	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;
