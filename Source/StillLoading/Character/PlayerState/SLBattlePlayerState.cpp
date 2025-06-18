@@ -105,11 +105,18 @@ void ASLBattlePlayerState::IncreaseBurningGage(const float Amount)
 	OnRep_BurningGage();
 }
 
+void ASLBattlePlayerState::ResetState()
+{
+	BurningGage = 0.f;
+	Health = MaxHealth;
+}
+
 void ASLBattlePlayerState::OnRep_Health()
 {
 	UE_LOG(LogTemp, Log, TEXT("Health Replicated: %.1f"), Health);
 	// TODO: UI 연동, 사망처리 등
 	HPDelegate.OnPlayerHpChanged.Broadcast(MaxHealth, Health);
+	OnPlayerHpChanged.Broadcast(MaxHealth, Health);
 }
 
 void ASLBattlePlayerState::OnRep_IsWalking()

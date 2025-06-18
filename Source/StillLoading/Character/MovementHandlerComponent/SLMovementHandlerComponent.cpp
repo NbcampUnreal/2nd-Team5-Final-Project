@@ -1,13 +1,14 @@
 #include "SLMovementHandlerComponent.h"
 
 #include "MotionWarpingComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "AI/RealAI/Controller/MonsterAIController.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/SLAnimNotify.h"
-#include "Character/BattleComponent/BattleComponent.h"
 #include "Character/Buffer/InputBufferComponent.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
@@ -22,7 +23,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "SubSystem/SLSoundSubsystem.h"
 
-UMovementHandlerComponent::UMovementHandlerComponent(): OwnerCharacter(nullptr), CameraFocusTarget(nullptr)
+UMovementHandlerComponent::UMovementHandlerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
@@ -31,28 +32,19 @@ void UMovementHandlerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
-
-	if (OwnerCharacter)
-	{
-		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
-		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
-		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
-		CachedRadarComponent = OwnerCharacter->FindComponentByClass<UCollisionRadarComponent>();
-
-		CachedRadarComponent->OnActorDetectedEnhanced.
-		                      AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
-
-		CachedBattleSoundSubsystem = GetBattleSoundSubSystem();
-
-		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
-		BindIMCComponent();
-	}
-
 	if (OwnerCharacter && OwnerCharacter->CameraBoom)
 	{
 		DefaultArmLength = OwnerCharacter->CameraBoom->TargetArmLength;
 		DesiredArmLength = DefaultArmLength;
+
+		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
+		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
+	}
+
+	if (CachedRadarComponent)
+	{
+		CachedRadarComponent->OnActorDetectedEnhanced.
+		                      AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
 	}
 }
 
@@ -101,13 +93,118 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick T
 		{
 			return;
 		}
-		
+
 		OwnerCharacter->CameraBoom->TargetArmLength = FMath::FInterpTo(
 			OwnerCharacter->CameraBoom->TargetArmLength, // 현재 값
-			DesiredArmLength,                            // 목표 값
-			DeltaTime,                                   // 프레임 시간
-			CameraZoomInterpSpeed                        // 보간 속도
+			DesiredArmLength, // 목표 값
+			DeltaTime, // 프레임 시간
+			CameraZoomInterpSpeed // 보간 속도
 		);
+	}
+}
+
+void UMovementHandlerComponent::OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value)
+{
+	//FString EnumName = StaticEnum<EInputActionType>()->GetNameStringByValue(static_cast<int64>(ActionType));
+	//EnumName.RemoveFromStart("EInputActionType::");
+
+	//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnActionTriggered → %s"), *EnumName);
+
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
+		return;
+	}
+
+	switch (ActionType)
+	{
+	case EInputActionType::EIAT_Look:
+		Look(Value.Get<FVector2D>());
+		break;
+	case EInputActionType::EIAT_MoveUp:
+	case EInputActionType::EIAT_MoveDown:
+	case EInputActionType::EIAT_MoveLeft:
+	case EInputActionType::EIAT_MoveRight:
+		Move(Value.Get<float>(), ActionType);
+		//Move(Value.Get<float>(), ActionType);
+		break;
+
+	default:
+		break;
+	}
+}
+
+void UMovementHandlerComponent::OnActionStarted_Implementation(EInputActionType ActionType)
+{
+	Super::OnActionStarted_Implementation(ActionType);
+	//FString EnumName = StaticEnum<EInputActionType>()->GetNameStringByValue(static_cast<int64>(ActionType));
+	//EnumName.RemoveFromStart("EInputActionType::");
+
+	//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnActionStarted → %s"), *EnumName);
+
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
+		return;
+	}
+
+	switch (ActionType)
+	{
+	case EInputActionType::EIAT_Jump:
+		Jump();
+		break;
+	case EInputActionType::EIAT_Attack:
+		ParryCheck();
+	case EInputActionType::EIAT_PointMove:
+	case EInputActionType::EIAT_Block:
+		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
+		{
+			BufferComp->OnIMCActionStarted(ActionType);
+		}
+		break;
+	case EInputActionType::EIAT_Walk:
+		DodgeLoco();
+		break;
+	case EInputActionType::EIAT_LockObject:
+		ToggleLockState();
+		break;
+
+	default:
+		break;
+	}
+}
+
+void UMovementHandlerComponent::OnActionCompleted_Implementation(EInputActionType ActionType)
+{
+	//FString EnumName = StaticEnum<EInputActionType>()->GetNameStringByValue(static_cast<int64>(ActionType));
+	//EnumName.RemoveFromStart("EInputActionType::");
+
+	//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnActionCompleted → %s"), *EnumName);
+
+	switch (ActionType)
+	{
+	case EInputActionType::EIAT_MoveUp:
+	case EInputActionType::EIAT_MoveDown:
+	case EInputActionType::EIAT_MoveLeft:
+	case EInputActionType::EIAT_MoveRight:
+		break;
+	case EInputActionType::EIAT_Walk:
+
+		break;
+	case EInputActionType::EIAT_Jump:
+		break;
+	case EInputActionType::EIAT_Interaction:
+	case EInputActionType::EIAT_Attack:
+		break;
+	case EInputActionType::EIAT_PointMove:
+	case EInputActionType::EIAT_Menu:
+		break;
+	case EInputActionType::EIAT_Block:
+		Block(false);
+		break;
+
+	default:
+		break;
 	}
 }
 
@@ -116,19 +213,21 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 	if (!OwnerCharacter->HasSecondaryState(TAG_Character_PrepareLockOn)) return;
 
 	if (DetectedActor->IsA(AMonsterAICharacter::StaticClass())
-			|| DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
+		|| DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
 	{
 		if (const ASLAIBaseCharacter* DetectedActorTemp = Cast<ASLAIBaseCharacter>(DetectedActor))
 		{
-			if (const IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(DetectedActorTemp->GetController()))
+			if (const IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(
+				DetectedActorTemp->GetController()))
 			{
-				if (const ASLBasePlayerController* PlayerController = Cast<ASLBasePlayerController>(OwnerCharacter->GetController()))
+				if (const ASLBasePlayerController* PlayerController = Cast<ASLBasePlayerController>(
+					OwnerCharacter->GetController()))
 				{
 					if (TeamAgentInterface->GetGenericTeamId() == PlayerController->GetGenericTeamId()) return;
 				}
 			}
 		}
-		
+
 		if (Distance <= FocusMaxDistance && IsValid(DetectedActor))
 		{
 			if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn)) return;
@@ -180,184 +279,54 @@ void UMovementHandlerComponent::FixCharacterVelocity()
 	OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f;
 }
 
-void UMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
-{
-	//FString EnumName = StaticEnum<EInputActionType>()->GetNameStringByValue(static_cast<int64>(ActionType));
-	//EnumName.RemoveFromStart("EInputActionType::");
-
-	//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnActionTriggered → %s"), *EnumName);
-
-	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
-		return;
-	}
-
-	switch (ActionType)
-	{
-	case EInputActionType::EIAT_Look:
-		Look(Value.Get<FVector2D>());
-		break;
-	case EInputActionType::EIAT_MoveUp:
-	case EInputActionType::EIAT_MoveDown:
-	case EInputActionType::EIAT_MoveLeft:
-	case EInputActionType::EIAT_MoveRight:
-		Move(Value.Get<float>(), ActionType);
-		//Move(Value.Get<float>(), ActionType);
-		break;
-
-	default:
-		break;
-	}
-}
-
-void UMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
-{
-	//FString EnumName = StaticEnum<EInputActionType>()->GetNameStringByValue(static_cast<int64>(ActionType));
-	//EnumName.RemoveFromStart("EInputActionType::");
-
-	//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnActionStarted → %s"), *EnumName);
-
-	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
-		return;
-	}
-
-	switch (ActionType)
-	{
-	case EInputActionType::EIAT_Jump:
-		Jump();
-		break;
-	case EInputActionType::EIAT_Interaction:
-		Interact();
-		break;
-	case EInputActionType::EIAT_Attack:
-		// 패링 진입
-		{
-			const float CurrentTime = GetWorld()->GetTimeSeconds();
-			if (CurrentTime - LastBlockTime <= ParryDuration)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Parring!!!"));
-
-				if (!CachedCombatComponent->IsEmpowered())
-				{
-					OwnerCharacter->ClearAllStateTags();
-
-					if (RightDot > 0.0f)
-						CachedMontageComponent->PlayBlockMontage(FName("ParryR"));
-					else
-						CachedMontageComponent->PlayBlockMontage(FName("ParryL"));
-
-					OwnerCharacter->AddSecondaryState(TAG_Character_Defense_Parry);
-					BlockCount = 0;
-				}
-				
-				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
-
-				// 전체 슬로우 (자기 자신 포함)
-				//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, nullptr, 0.2f, 0.15f, true, false);
-				// 자기 자신 제외한 모두 슬로우
-				//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, OwnerCharacter, 0.2f, 0.3f, true, true);
-
-				return;
-			}
-		}
-	case EInputActionType::EIAT_PointMove:
-	case EInputActionType::EIAT_Block:
-		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
-		{
-			BufferComp->OnIMCActionStarted(ActionType);
-		}
-		break;
-	case EInputActionType::EIAT_Walk:
-		DodgeLoco();
-		break;
-	case EInputActionType::EIAT_Menu:
-		ToggleMenu();
-	case EInputActionType::EIAT_LockObject:
-		ToggleLockState();
-		break;
-
-	default:
-		break;
-	}
-}
-
-void UMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
-{
-	//FString EnumName = StaticEnum<EInputActionType>()->GetNameStringByValue(static_cast<int64>(ActionType));
-	//EnumName.RemoveFromStart("EInputActionType::");
-
-	//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent::OnActionCompleted → %s"), *EnumName);
-
-	switch (ActionType)
-	{
-	case EInputActionType::EIAT_MoveUp:
-	case EInputActionType::EIAT_MoveDown:
-	case EInputActionType::EIAT_MoveLeft:
-	case EInputActionType::EIAT_MoveRight:
-		break;
-	case EInputActionType::EIAT_Walk:
-		
-		break;
-	case EInputActionType::EIAT_Jump:
-		break;
-	case EInputActionType::EIAT_Interaction:
-	case EInputActionType::EIAT_Attack:
-		break;
-	case EInputActionType::EIAT_PointMove:
-	case EInputActionType::EIAT_Menu:
-		break;
-	case EInputActionType::EIAT_Block:
-		Block(false);
-		break;
-
-	default:
-		break;
-	}
-}
-
-void UMovementHandlerComponent::BindIMCComponent()
-{
-	if (auto* IMC = GetOwner()->FindComponentByClass<UDynamicIMCComponent>())
-	{
-		IMC->OnActionTriggered.AddDynamic(this, &UMovementHandlerComponent::OnActionTriggered);
-		IMC->OnActionStarted.AddDynamic(this, &UMovementHandlerComponent::OnActionStarted);
-		IMC->OnActionCompleted.AddDynamic(this, &UMovementHandlerComponent::OnActionCompleted);
-	}
-
-	CachedBattleComponent->OnCharacterHited.AddDynamic(this, &UMovementHandlerComponent::OnHitReceived);
-}
-
 void UMovementHandlerComponent::RemoveInvulnerability() const
 {
 	OwnerCharacter->SecondaryStateTags.RemoveTag(TAG_Character_Invulnerable);
 }
 
-void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
-                                              EHitAnimType AnimType)
+void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult,
+                                                             EHitAnimType AnimType)
 {
+	Super::OnHitReceived_Implementation(Causer, Damage, HitResult, AnimType);
+
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_HitBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("USLMovementComponentBase: Hit Blocked"));
+		return;
+	}
+
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)
 		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)
-		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast)) return;
-	
+		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast))
+		return;
+
 	OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
 
 	bool bIsFromBack = false;
 	FRotator TargetRotation;
 	RotateToHitCauser(Causer, TargetRotation, bIsFromBack);
 
+	if (CachedCombatComponent->IsEmpowered())
+	{
+		bIsFromBack = false;
+		MaxBlockCount = 20;
+	}
+	else
+	{
+		MaxBlockCount = 3;
+	}
+
 	if (OwnerCharacter->IsInPrimaryState(TAG_Character_Defense_Block) && !bIsFromBack)
 	{
-		if (BlockCount >= MaxBlockCount && !OwnerCharacter->HasSecondaryState(TAG_Character_HitReaction_Block_Break))
+		if (BlockCount >= MaxBlockCount && !OwnerCharacter->HasSecondaryState(TAG_Character_BlockBreak))
 		{
 			OwnerCharacter->ClearAllStateTags();
-			OwnerCharacter->AddSecondaryState(TAG_Character_HitReaction_Block_Break);
+			OwnerCharacter->AddSecondaryState(TAG_Character_BlockBreak);
 			CachedMontageComponent->PlayBlockMontage(FName("BlockBreak"));
 			BlockCount = 0;
 			LastBlockTime = 0;
-			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuardBreak, OwnerCharacter->GetActorLocation());
+			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuardBreak,
+			                                            OwnerCharacter->GetActorLocation());
 
 			if (!GetWorld()->GetTimerManager().IsTimerActive(DelayTimerHandle))
 			{
@@ -369,14 +338,20 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 					false
 				);
 			}
+
+			if (ActiveShieldEffectComponent)
+			{
+				ActiveShieldEffectComponent->DestroyComponent();
+				ActiveShieldEffectComponent = nullptr;
+			}
 		}
 		else
 		{
-			// Parry
 			HitDirection(Causer);
 			const float CurrentTime = GetWorld()->GetTimeSeconds();
 			LastBlockTime = CurrentTime;
-			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuard, OwnerCharacter->GetActorLocation());
+			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuard,
+			                                            OwnerCharacter->GetActorLocation());
 
 			CachedMontageComponent->PlayBlockMontage(FName("BlockHit"));
 			++BlockCount;
@@ -388,7 +363,10 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Invulnerable) && InvulnerableDuration > 0) return;
 
 	// 피격
-	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable, TAG_Character_Empowered});
+	OwnerCharacter->ClearStateTags({}, {
+		                               TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
+		                               TAG_Character_Empowered
+	                               });
 	CachedMontageComponent->StopAllMontages(0.2f);
 	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
 
@@ -441,11 +419,11 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 		return;
 	case EHitAnimType::HAT_HardHit: // 중간거
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
-		RemoveDelay = 1.0f;
+		RemoveDelay = 2.0f;
 		break;
 	case EHitAnimType::HAT_WeakHit:
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
-		RemoveDelay = 1.0f;
+		RemoveDelay = 1.5f;
 		break;
 	default: break;
 	}
@@ -470,8 +448,8 @@ void UMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, cons
 	OwnerCharacter->GetWorldTimerManager().PauseTimer(InvulnerabilityTimerHandle);
 	OwnerCharacter->GetWorldTimerManager().ClearTimer(InvulnerabilityTimerHandle);
 	OwnerCharacter->GetWorldTimerManager().SetTimer(InvulnerabilityTimerHandle, this,
-													&UMovementHandlerComponent::RemoveInvulnerability,
-													InvulnerableDuration, false);
+	                                                &UMovementHandlerComponent::RemoveInvulnerability,
+	                                                InvulnerableDuration, false);
 }
 
 void UMovementHandlerComponent::HitDirection(AActor* Causer)
@@ -550,7 +528,8 @@ void UMovementHandlerComponent::Jump()
 	if (OwnerCharacter)
 	{
 		OwnerCharacter->Jump();
-		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterSpirit, OwnerCharacter->GetActorLocation());
+		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterSpirit,
+		                                            OwnerCharacter->GetActorLocation());
 	}
 
 	CachedCombatComponent->ResetCombo();
@@ -563,6 +542,8 @@ void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
 	OwnerCharacter->RemoveSecondaryState(TAG_Character_Movement_OnAir);
 	CachedCombatComponent->ResetCombo();
 	AttackStateCount = 0;
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterOnGround,
+	                                            OwnerCharacter->GetActorLocation());
 }
 
 void UMovementHandlerComponent::StartKnockback(float Speed, float Duration)
@@ -629,10 +610,35 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 	}
 }
 
-void UMovementHandlerComponent::Interact()
+void UMovementHandlerComponent::ParryCheck()
 {
-	// TODO: 인터랙션 대상 탐색 및 처리
-	BeginBuff();
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+	if (CurrentTime - LastBlockTime <= ParryDuration)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Parring!!!"));
+
+		if (!CachedCombatComponent->IsEmpowered())
+		{
+			OwnerCharacter->ClearAllStateTags();
+
+			if (RightDot > 0.0f)
+				CachedMontageComponent->PlayBlockMontage(FName("ParryR"));
+			else
+				CachedMontageComponent->PlayBlockMontage(FName("ParryL"));
+
+			OwnerCharacter->AddSecondaryState(TAG_Character_Defense_Parry);
+			BlockCount = 0;
+		}
+
+		USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
+
+		// 전체 슬로우 (자기 자신 포함)
+		//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, nullptr, 0.2f, 0.15f, true, false);
+		// 자기 자신 제외한 모두 슬로우
+		//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, OwnerCharacter, 0.2f, 0.3f, true, true);
+
+		return;
+	}
 }
 
 void UMovementHandlerComponent::Attack()
@@ -647,10 +653,12 @@ void UMovementHandlerComponent::Attack()
 		const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
 		const float Distance = FVector::Dist(OwnerCharacter->GetActorLocation(), CameraFocusTarget->GetActorLocation());
 
-		if (!bIsFalling && OwnerCharacter->HasSecondaryState(TAG_Character_LockOn) && Distance < ExecuteDistanceThreshold)
+		if (!bIsFalling && OwnerCharacter->HasSecondaryState(TAG_Character_LockOn) && Distance <
+			ExecuteDistanceThreshold)
 		{
 			const FVector TargetForward = CameraFocusTarget->GetActorForwardVector();
-			const FVector ToOwner = (OwnerCharacter->GetActorLocation() - CameraFocusTarget->GetActorLocation()).GetSafeNormal();
+			const FVector ToOwner = (OwnerCharacter->GetActorLocation() - CameraFocusTarget->GetActorLocation()).
+				GetSafeNormal();
 
 			const float Dot = FVector::DotProduct(TargetForward, ToOwner);
 			if (Dot < -0.94f)
@@ -762,7 +770,7 @@ void UMovementHandlerComponent::Blast(const EItemType ItemType)
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Blast Blocked"));
 		return;
 	}
-	
+
 	switch (ItemType)
 	{
 	case EItemType::IT_Sword:
@@ -838,7 +846,7 @@ void UMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool 
 
 void UMovementHandlerComponent::OnDelayedAction()
 {
-	OwnerCharacter->RemoveSecondaryState(TAG_Character_HitReaction_Block_Break);
+	OwnerCharacter->RemoveSecondaryState(TAG_Character_BlockBreak);
 	GetWorld()->GetTimerManager().ClearTimer(DelayTimerHandle);
 }
 
@@ -865,7 +873,7 @@ void UMovementHandlerComponent::DodgeLoco()
 	}
 
 	ToggleCameraZoom(false);
-	
+
 	FVector DesiredDodgeDirection;
 	const FVector InputDirection = OwnerCharacter->GetCharacterMovement()->GetCurrentAcceleration().GetSafeNormal();
 	if (!InputDirection.IsNearlyZero())
@@ -878,77 +886,78 @@ void UMovementHandlerComponent::DodgeLoco()
 	}
 
 	const FVector CharacterForward = OwnerCharacter->GetActorForwardVector();
-    const FVector CharacterRight = OwnerCharacter->GetActorRightVector();
+	const FVector CharacterRight = OwnerCharacter->GetActorRightVector();
 
-    const double ForwardDotTemp = FVector::DotProduct(CharacterForward, DesiredDodgeDirection);
-    const double RightDotTemp = FVector::DotProduct(CharacterRight, DesiredDodgeDirection);
+	const double ForwardDotTemp = FVector::DotProduct(CharacterForward, DesiredDodgeDirection);
+	const double RightDotTemp = FVector::DotProduct(CharacterRight, DesiredDodgeDirection);
 
-    constexpr double AngleThreshold45 = 0.707;
-    
-    EDodgeDirection DirectionEnum;
+	constexpr double AngleThreshold45 = 0.707;
 
-    if (ForwardDotTemp > AngleThreshold45)
-    {
-        DirectionEnum = EDodgeDirection::Forward;
-    }
-    else if (ForwardDotTemp < -AngleThreshold45)
-    {
-        DirectionEnum = EDodgeDirection::Backward;
-    }
-    else
-    {
-        if (RightDotTemp > 0)
-        {
-            DirectionEnum = EDodgeDirection::Right;
-        }
-        else
-        {
-            DirectionEnum = EDodgeDirection::Left;
-        }
-    }
+	EDodgeDirection DirectionEnum;
 
-    const double AngleRad = FMath::Acos(ForwardDotTemp);
-    double AngleDeg = FMath::RadiansToDegrees(AngleRad);
+	if (ForwardDotTemp > AngleThreshold45)
+	{
+		DirectionEnum = EDodgeDirection::Forward;
+	}
+	else if (ForwardDotTemp < -AngleThreshold45)
+	{
+		DirectionEnum = EDodgeDirection::Backward;
+	}
+	else
+	{
+		if (RightDotTemp > 0)
+		{
+			DirectionEnum = EDodgeDirection::Right;
+		}
+		else
+		{
+			DirectionEnum = EDodgeDirection::Left;
+		}
+	}
 
-    if (RightDotTemp < 0)
-    {
-        AngleDeg *= -1.0;
-    }
+	const double AngleRad = FMath::Acos(ForwardDotTemp);
+	double AngleDeg = FMath::RadiansToDegrees(AngleRad);
 
-    if (AngleDeg >= -22.5 && AngleDeg < 22.5) DirectionEnum = EDodgeDirection::Forward;
-    else if (AngleDeg >= 22.5 && AngleDeg < 67.5) DirectionEnum = EDodgeDirection::ForwardRight;
-    else if (AngleDeg >= 67.5 && AngleDeg < 112.5) DirectionEnum = EDodgeDirection::Right;
-    else if (AngleDeg >= 112.5 && AngleDeg < 157.5) DirectionEnum = EDodgeDirection::BackwardRight;
-    else if (AngleDeg >= 157.5 || AngleDeg < -157.5) DirectionEnum = EDodgeDirection::Backward;
-    else if (AngleDeg >= -157.5 && AngleDeg < -112.5) DirectionEnum = EDodgeDirection::BackwardLeft;
-    else if (AngleDeg >= -112.5 && AngleDeg < -67.5) DirectionEnum = EDodgeDirection::Left;
-    else if (AngleDeg >= -67.5 && AngleDeg < -22.5) DirectionEnum = EDodgeDirection::ForwardLeft;
+	if (RightDotTemp < 0)
+	{
+		AngleDeg *= -1.0;
+	}
 
-    FName MontageToPlay = "";
-    switch (DirectionEnum)
-    {
-        case EDodgeDirection::Forward:        MontageToPlay = "Forward"; break;
-        case EDodgeDirection::ForwardRight:   MontageToPlay = "ForwardRight"; break;
-        case EDodgeDirection::Right:          MontageToPlay = "Right"; break;
-        case EDodgeDirection::BackwardRight:  MontageToPlay = "BackwardRight"; break;
-        case EDodgeDirection::Backward:       MontageToPlay = "Backward"; break;
-        case EDodgeDirection::BackwardLeft:   MontageToPlay = "BackwardLeft"; break;
-        case EDodgeDirection::Left:           MontageToPlay = "Left"; break;
-        case EDodgeDirection::ForwardLeft:    MontageToPlay = "ForwardLeft"; break;
-    }
+	if (AngleDeg >= -22.5 && AngleDeg < 22.5) DirectionEnum = EDodgeDirection::Forward;
+	else if (AngleDeg >= 22.5 && AngleDeg < 67.5) DirectionEnum = EDodgeDirection::ForwardRight;
+	else if (AngleDeg >= 67.5 && AngleDeg < 112.5) DirectionEnum = EDodgeDirection::Right;
+	else if (AngleDeg >= 112.5 && AngleDeg < 157.5) DirectionEnum = EDodgeDirection::BackwardRight;
+	else if (AngleDeg >= 157.5 || AngleDeg < -157.5) DirectionEnum = EDodgeDirection::Backward;
+	else if (AngleDeg >= -157.5 && AngleDeg < -112.5) DirectionEnum = EDodgeDirection::BackwardLeft;
+	else if (AngleDeg >= -112.5 && AngleDeg < -67.5) DirectionEnum = EDodgeDirection::Left;
+	else if (AngleDeg >= -67.5 && AngleDeg < -22.5) DirectionEnum = EDodgeDirection::ForwardLeft;
+
+	FName MontageToPlay = "";
+	switch (DirectionEnum)
+	{
+	case EDodgeDirection::Forward: MontageToPlay = "Forward";
+		break;
+	case EDodgeDirection::ForwardRight: MontageToPlay = "ForwardRight";
+		break;
+	case EDodgeDirection::Right: MontageToPlay = "Right";
+		break;
+	case EDodgeDirection::BackwardRight: MontageToPlay = "BackwardRight";
+		break;
+	case EDodgeDirection::Backward: MontageToPlay = "Backward";
+		break;
+	case EDodgeDirection::BackwardLeft: MontageToPlay = "BackwardLeft";
+		break;
+	case EDodgeDirection::Left: MontageToPlay = "Left";
+		break;
+	case EDodgeDirection::ForwardLeft: MontageToPlay = "ForwardLeft";
+		break;
+	}
 
 	CachedMontageComponent->PlayDodgeMontage(MontageToPlay);
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
-	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterDodge, OwnerCharacter->GetActorLocation());
-}
-
-void UMovementHandlerComponent::ToggleMenu()
-{
-	UE_LOG(LogTemp, Log, TEXT("Menu opened or closed"));
-	// TODO: UI 호출 / Input 모드 변경 등 처리
-
-	// HUD에 OnPose
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterDodge,
+	                                            OwnerCharacter->GetActorLocation());
 }
 
 void UMovementHandlerComponent::ToggleLockState()
@@ -1032,7 +1041,8 @@ void UMovementHandlerComponent::RotateCameraToTarget(const AActor* Target, float
 
 void UMovementHandlerComponent::ToggleCameraZoom(const bool bIsZoomedOut, const float ZoomedOutArmLength)
 {
-	if (!OwnerCharacter->CameraBoom || !OwnerCharacter->CameraBoom || OwnerCharacter->HasSecondaryState(TAG_Character_LockOn))
+	if (!OwnerCharacter->CameraBoom || !OwnerCharacter->CameraBoom || OwnerCharacter->HasSecondaryState(
+		TAG_Character_LockOn))
 		return;
 
 	if (bIsZoomedOut)
@@ -1056,14 +1066,11 @@ void UMovementHandlerComponent::SpawnSword()
 
 	if (!CachedCombatComponent->IsEmpowered()) return;
 
-	if (USLSkillComponent* SkillComp = OwnerCharacter->FindComponentByClass<USLSkillComponent>())
-	{
-		SkillComp->ActivateSkill(EActiveSkillType::AST_Spawn);
-	}
-
 	ToggleCameraZoom(false, 1000.f);
-	CachedMontageComponent->PlaySkillMontage(FName("Dodge"));
+	CachedMontageComponent->PlaySkillMontage("SwordFromSky");
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack_SpawnSword);
+
+	USlowMotionHelper::ApplyActorSlowMotion(OwnerCharacter, 0.2f, 1.0f);
 }
 
 void UMovementHandlerComponent::Airborne()
@@ -1073,7 +1080,7 @@ void UMovementHandlerComponent::Airborne()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
 		return;
 	}
-	
+
 	ToggleCameraZoom(false);
 	CachedMontageComponent->PlaySkillMontage(FName("Airborne"));
 
@@ -1112,14 +1119,42 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Defence Blocked"));
 		return;
 	}
-	
+
 	if (bIsBlocking && !OwnerCharacter->GetCharacterMovement()->IsFalling())
 	{
 		OwnerCharacter->SetPrimaryState(TAG_Character_Defense_Block);
+		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterBeginDefence,
+		                                            OwnerCharacter->GetActorLocation());
+
+		if (EmpoweredShieldEffect)
+		{
+			if (ActiveShieldEffectComponent)
+			{
+				ActiveShieldEffectComponent->DestroyComponent();
+			}
+
+			ActiveShieldEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+				EmpoweredShieldEffect,
+				OwnerCharacter->GetRootComponent(),
+				NAME_None,
+				FVector::ZeroVector,
+				FRotator::ZeroRotator,
+				EAttachLocation::KeepRelativeOffset,
+				true
+			);
+		}
 	}
 	else
 	{
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Defense_Block);
+		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterEndDefence,
+		                                            OwnerCharacter->GetActorLocation());
+
+		if (ActiveShieldEffectComponent)
+		{
+			ActiveShieldEffectComponent->DestroyComponent();
+			ActiveShieldEffectComponent = nullptr;
+		}
 	}
 }
 
@@ -1235,6 +1270,18 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 	case ECharacterMontageState::ECS_Attack_BlastShield:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Blast);
 		break;
+	case ECharacterMontageState::ECS_ETC:
+		OwnerCharacter->ChangeVisibilityWeapons(true);
+		break;
+	case ECharacterMontageState::ECS_Attack_SpawnSword:
+		if (USLSkillComponent* SkillComp = OwnerCharacter->FindComponentByClass<USLSkillComponent>())
+		{
+			SkillComp->ActivateSkill(EActiveSkillType::AST_Spawn);
+		}
+		CachedMontageComponent->PlaySkillMontage("Dodge");
+		break;
+	case ECharacterMontageState::ECS_Attack_SpawnSwordDodge:
+		break;
 	default:
 		break;
 	}
@@ -1278,17 +1325,4 @@ void UMovementHandlerComponent::HandleBufferedInput(ESkillType Action)
 	default:
 		break;
 	}
-}
-
-USLSoundSubsystem* UMovementHandlerComponent::GetBattleSoundSubSystem() const
-{
-	if (const UWorld* World = GetWorld())
-	{
-		if (const UGameInstance* GameInstance = World->GetGameInstance())
-		{
-			return GameInstance->GetSubsystem<USLSoundSubsystem>();
-		}
-	}
-
-	return nullptr;
 }

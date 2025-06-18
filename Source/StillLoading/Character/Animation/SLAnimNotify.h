@@ -16,6 +16,7 @@ enum class ECharacterMontageState : uint8
 	ECS_Dodging UMETA(DisplayName = "Dodging"),
 	ECS_Dead UMETA(DisplayName = "Dead"),
 	ECS_InputLocked UMETA(DisplayName = "Input Locked"),
+	ECS_ETC UMETA(DisplayName = "ETC"),
 
 	// 피격 모션
 	ECS_Hit_Weak UMETA(DisplayName = "Hit Weak"),
@@ -49,6 +50,7 @@ enum class ECharacterMontageState : uint8
 	ECS_Attack_BlastSword UMETA(DisplayName = "Attack BlastSword"),
 	ECS_Attack_BlastShield UMETA(DisplayName = "Attack BlastShield"),
 	ECS_Attack_SpawnSword UMETA(DisplayName = "Attack SpawnSword"),
+	ECS_Attack_SpawnSwordDodge UMETA(DisplayName = "Attack SpawnSword Dodge"),
 
 	// 버트 모션
 	ECS_Buff UMETA(DisplayName = "Buff"),
