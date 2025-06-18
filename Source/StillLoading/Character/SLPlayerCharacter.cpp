@@ -166,6 +166,11 @@ void ASLPlayerCharacter::ResetState()
 		CashedPlayerState->ResetState();
 		SetPrimaryState(TAG_Character_Movement_Idle);
 		CachedMontageComponent->StopAllMontages(0.2);
+		
+		if (UMovementHandlerComponent* MoveComp = FindComponentByClass<UMovementHandlerComponent>())
+		{
+			MoveComp->ToggleCameraZoom(true);
+		}
 	}
 }
 
@@ -215,6 +220,7 @@ void ASLPlayerCharacter::OnPlayerHpChanged(float MaxHp, const float CurrentHp)
 		if (UMovementHandlerComponent* MoveComp = FindComponentByClass<UMovementHandlerComponent>())
 		{
 			MoveComp->DisableLock();
+			MoveComp->ToggleCameraZoom(false, 1000.0f);
 		}
 	}
 }
