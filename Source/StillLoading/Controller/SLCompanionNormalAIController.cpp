@@ -97,10 +97,10 @@ ETeamAttitude::Type ASLCompanionNormalAIController::GetTeamAttitudeTowards(const
         return ETeamAttitude::Friendly;
     }
     // 적 팀
-    else if (OtherTeamID == 2)
+    else if (OtherTeamID == 2 || OtherTeamID == 1)
     {
         return ETeamAttitude::Hostile;
-    }
+    } 
     
     return ETeamAttitude::Neutral;
 }
