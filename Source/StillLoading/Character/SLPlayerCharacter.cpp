@@ -159,11 +159,12 @@ void ASLPlayerCharacter::ChangeVisibilityWeapons(bool bIsVisible)
 	}
 }
 
-void ASLPlayerCharacter::ResetState() const
+void ASLPlayerCharacter::ResetState()
 {
 	if (CashedPlayerState)
 	{
 		CashedPlayerState->ResetState();
+		SetPrimaryState(TAG_Character_Movement_Idle);	
 	}
 }
 
