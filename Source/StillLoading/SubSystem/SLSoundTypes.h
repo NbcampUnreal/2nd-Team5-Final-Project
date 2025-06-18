@@ -48,6 +48,7 @@ enum class EBattleSoundType : uint8
 	BST_CharacterGuard			UMETA(DisplayName = "Character Guard"),
 	BST_CharacterGuardBreak		UMETA(DisplayName = "Character GuardBreak"),
 	BST_CharacterSkill			UMETA(DisplayName = "Character Skill"),
+	BST_CharacterDie				UMETA(DisplayName = "Character Die"),
 
 	// Monster
 	BST_MonsterAttack			UMETA(DisplayName = "Monster Attack"),

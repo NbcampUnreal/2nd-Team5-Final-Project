@@ -3,17 +3,14 @@
 #include "SLMovementHandlerComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Character/SLPlayerCharacter.h"
-#include "Character/BattleComponent/BattleComponent.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
 #include "Character/DataAsset/AttackDataAsset.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
-#include "Character/RadarComponent/CollisionRadarComponent.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "IO/IoChunkEncoding.h"
 #include "SubSystem/SLSoundSubsystem.h"
 #include "SubSystem/SLSoundTypes.h"
 
@@ -40,32 +37,7 @@ void USL25DMovementHandlerComponent::BeginPlay()
 		OwnerCharacter->bUseControllerRotationYaw = false;
 		OwnerCharacter->CameraBoom->bEnableCameraLag = false;
 		OwnerCharacter->CameraBoom->bEnableCameraRotationLag = false;
-
 		OwnerCharacter->CameraBoom->bDoCollisionTest = false;
-		
-		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
-		CachedCombatComponent = OwnerCharacter->FindComponentByClass<UCombatHandlerComponent>();
-		CachedBattleComponent = OwnerCharacter->FindComponentByClass<UBattleComponent>();
-		CachedRadarComponent = OwnerCharacter->FindComponentByClass<UCollisionRadarComponent>();
-		CachedRadarComponent->OnActorDetectedEnhanced.
-							  AddDynamic(this, &USL25DMovementHandlerComponent::OnRadarDetectedActor);
-		CachedBattleSoundSubsystem = GetBattleSoundSubSystem();
-		CachedSkeletalMesh = OwnerCharacter->GetMesh();
-
-		BindIMCComponent();
-
-		APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
-
-		if (PlayerController)
-		{
-			PlayerController->bShowMouseCursor = true;
-
-			FInputModeGameAndUI InputModeData;
-			InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-			InputModeData.SetHideCursorDuringCapture(false);
-            
-			PlayerController->SetInputMode(InputModeData);
-		}
 	}
 }
 
@@ -120,24 +92,7 @@ void USL25DMovementHandlerComponent::StopFacingMouse()
 	bShouldFaceMouse = false;
 }
 
-void USL25DMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
-{
-	
-}
-
-void USL25DMovementHandlerComponent::BindIMCComponent()
-{
-	if (auto* IMC = GetOwner()->FindComponentByClass<UDynamicIMCComponent>())
-	{
-		IMC->OnActionTriggered.AddDynamic(this, &USL25DMovementHandlerComponent::OnActionTriggered);
-		IMC->OnActionStarted.AddDynamic(this, &USL25DMovementHandlerComponent::OnActionStarted);
-		IMC->OnActionCompleted.AddDynamic(this, &USL25DMovementHandlerComponent::OnActionCompleted);
-	}
-
-	CachedBattleComponent->OnCharacterHited.AddDynamic(this, &USL25DMovementHandlerComponent::OnHitReceived);
-}
-
-void USL25DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionType, FInputActionValue Value)
+void USL25DMovementHandlerComponent::OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value)
 {
 	//FString EnumName = StaticEnum<EInputActionType>()->GetNameStringByValue(static_cast<int64>(ActionType));
 	//EnumName.RemoveFromStart("EInputActionType::");
@@ -166,8 +121,9 @@ void USL25DMovementHandlerComponent::OnActionTriggered(EInputActionType ActionTy
 	}
 }
 
-void USL25DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType)
+void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputActionType ActionType)
 {
+	Super::OnActionStarted_Implementation(ActionType);
 	//FString EnumName = StaticEnum<EInputActionType>()->GetNameStringByValue(static_cast<int64>(ActionType));
 	//EnumName.RemoveFromStart("EInputActionType::");
 
@@ -248,7 +204,7 @@ void USL25DMovementHandlerComponent::OnActionStarted(EInputActionType ActionType
 	}
 }
 
-void USL25DMovementHandlerComponent::OnActionCompleted(EInputActionType ActionType)
+void USL25DMovementHandlerComponent::OnActionCompleted_Implementation(EInputActionType ActionType)
 {
 	//FString EnumName = StaticEnum<EInputActionType>()->GetNameStringByValue(static_cast<int64>(ActionType));
 	//EnumName.RemoveFromStart("EInputActionType::");
@@ -282,9 +238,17 @@ void USL25DMovementHandlerComponent::OnActionCompleted(EInputActionType ActionTy
 	}
 }
 
-void USL25DMovementHandlerComponent::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
+void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult,
                                               const EHitAnimType AnimType)
 {
+	Super::OnHitReceived_Implementation(Causer, Damage, HitResult, AnimType);
+
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_HitBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("USLMovementComponentBase: Hit Blocked"));
+		return;
+	}
+	
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)
 		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)
 		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast)) return;
@@ -514,12 +478,6 @@ void USL25DMovementHandlerComponent::Block(const bool bIsBlocking)
 	{
 		OwnerCharacter->RemovePrimaryState(TAG_Character_Defense_Block);
 	}
-}
-
-void USL25DMovementHandlerComponent::Interact()
-{
-	// TODO: 인터랙션 대상 탐색 및 처리
-	CachedCombatComponent->SetEmpoweredCombatMode(10);
 }
 
 void USL25DMovementHandlerComponent::Attack()
@@ -765,23 +723,13 @@ void USL25DMovementHandlerComponent::OnAttackStageFinished(const ECharacterMonta
 	case ECharacterMontageState::ECS_Buff:
 		CachedCombatComponent->SetEmpoweredCombatMode(10);
 		break;
+	case ECharacterMontageState::ECS_ETC:
+		OwnerCharacter->ChangeVisibilityWeapons(true);
+		break;
 	default:
 		break;
 	}
 
 	StopFacingMouse();
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Idle);
-}
-
-USLSoundSubsystem* USL25DMovementHandlerComponent::GetBattleSoundSubSystem() const
-{
-	if (const UWorld* World = GetWorld())
-	{
-		if (const UGameInstance* GameInstance = World->GetGameInstance())
-		{
-			return GameInstance->GetSubsystem<USLSoundSubsystem>();
-		}
-	}
-
-	return nullptr;
 }
