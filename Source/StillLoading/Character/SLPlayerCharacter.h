@@ -67,7 +67,7 @@ public:
 	void SwordFromSky();
 
 	UFUNCTION()
-	void CharacterDragged();
+	void CharacterDragged(bool bIsDragged);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<ASLItem> SwordClass;

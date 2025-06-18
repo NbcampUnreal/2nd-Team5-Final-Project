@@ -78,8 +78,6 @@ void ASLPlayerCharacter::BeginPlay()
 			}
 		}
 	}
-
-	CharacterDragged();
 }
 
 void ASLPlayerCharacter::SwordFromSky()
@@ -90,12 +88,19 @@ void ASLPlayerCharacter::SwordFromSky()
 	}
 }
 
-void ASLPlayerCharacter::CharacterDragged()
+void ASLPlayerCharacter::CharacterDragged(const bool bIsDragged)
 {
-	SetPrimaryState(TAG_Character_EnterCinematic);
-	if (CachedMontageComponent)
+	if (!bIsDragged)
 	{
-		CachedMontageComponent->PlayTrickMontage("Dragged");
+		SetPrimaryState(TAG_Character_Movement_Idle);
+	}
+	else
+	{
+		SetPrimaryState(TAG_Character_EnterCinematic);
+		if (CachedMontageComponent)
+		{
+			CachedMontageComponent->PlayTrickMontage("Dragged");
+		}
 	}
 }
 
