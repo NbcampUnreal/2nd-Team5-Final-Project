@@ -156,4 +156,5 @@ private:
 	bool bDidBeginAttack = false;
 
 	float DesiredArmLength = 0;
+	FVector2D BufferedDodgeInputAxis = FVector2D::ZeroVector;
 };
