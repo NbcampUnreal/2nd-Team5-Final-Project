@@ -2,7 +2,6 @@
 
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "Character/SLPlayerCharacter.h"
-#include "Character/Animation/SLAnimNotify.h"
 
 void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                                       const FAnimNotifyEventReference& EventReference)
@@ -14,16 +13,25 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 	AMonsterAICharacter* Character = Cast<AMonsterAICharacter>(MeshComp->GetOwner());
 	if (!Character) return;
 
-	FVector LaunchVector = FVector::ZeroVector;
+	FVector LaunchVelocity = FVector::ZeroVector;
 
 	switch (MovementAction)
 	{
 	case ECharacterMovementAction::CMA_LaunchUp:
-		LaunchVector = FVector::UpVector * LaunchPower;
-		Character->LaunchCharacter(LaunchVector, true, false);
+		LaunchVelocity = FVector::UpVector * LaunchPower;
+		Character->LaunchCharacter(LaunchVelocity, true, false);
 		break;
 
 	case ECharacterMovementAction::CMA_LaunchBack:
+		const FVector ForwardDir = Character->GetActorForwardVector();
+		const FVector BackwardDir = -ForwardDir;
+
+		FVector LaunchDirection = BackwardDir + (FVector::UpVector * 0.1);
+		LaunchDirection.Normalize();
+
+		LaunchVelocity = LaunchDirection * LaunchPower;
+           
+		Character->LaunchCharacter(LaunchVelocity, true, true);
 		break;
 
 	default:
