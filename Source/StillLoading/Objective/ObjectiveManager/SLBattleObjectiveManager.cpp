@@ -34,34 +34,6 @@ void ASLBattleObjectiveManager::DeactivateBattleUI(USLObjectiveHandlerBase* Comp
 	}
 }
 
-void ASLBattleObjectiveManager::PostPlayerDiedTest()
-{
-	PostPlayerDied();
-}
-
-void ASLBattleObjectiveManager::CheckPlayerDied(float MaxHp, float CurrentHp)
-{
-	if (CurrentHp <= 0)
-	{
-		PostPlayerDied();
-	}
-}
-
-void ASLBattleObjectiveManager::ActivatePlayerHpUI()
-{
-	GetPlayerState();
-
-	if (IsValid(PlayerState))
-	{
-		HUD->ApplyPlayerHp(PlayerState->GetHPDelegate());
-
-		if (!PlayerState->GetHPDelegate().OnPlayerHpChanged.IsAlreadyBound(this, &ThisClass::CheckPlayerDied))
-		{
-			PlayerState->GetHPDelegate().OnPlayerHpChanged.AddDynamic(this, &ThisClass::CheckPlayerDied);
-		}
-	}
-}
-
 void ASLBattleObjectiveManager::ActivatePlayerSpecialUI()
 {
 	GetPlayerState();
@@ -94,19 +66,4 @@ void ASLBattleObjectiveManager::BeginPlay()
 	ObjectiveHandler->OnObjectiveInProgressedDelegate.AddDynamic(this, &ThisClass::ActivateBattleUI);
 	ObjectiveHandler->OnObjectiveCompletedDelegate.AddDynamic(this, &ThisClass::DeactivateBattleUI);
 	ObjectiveHandler->OnObjectiveFailedDelegate.AddDynamic(this, &ThisClass::DeactivateBattleUI);
-}
-
-void ASLBattleObjectiveManager::GetPlayerState()
-{
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-
-	if (IsValid(PC))
-	{
-		APlayerState* PS = PC->GetPawn()->GetPlayerState();
-
-		if (IsValid(PS))
-		{
-			PlayerState = Cast<ASLBattlePlayerState>(PS);
-		}
-	}
 }

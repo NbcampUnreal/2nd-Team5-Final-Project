@@ -8,6 +8,7 @@
 
 class USLObjectiveHandlerBase;
 class ASLInGameHUD;
+class ASLBattlePlayerState;
 
 UCLASS()
 class STILLLOADING_API ASLObjectiveManagerBase : public AActor
@@ -24,7 +25,18 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, meta = (AllowPrivateAccess = "true"))
 	void ResetCurrentGame();
 
+	UFUNCTION(BlueprintCallable)
+	void ActivatePlayerHpUI();
+
+	UFUNCTION(BlueprintImplementableEvent, meta = (AllowPrivateAccess = "true"))
+	void PostPlayerDied();
+
+	UFUNCTION()
+	void CheckPlayerDied(float MaxHp, float CurrentHp);
+
 	virtual void BeginPlay() override;
+
+	void GetPlayerState();
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -35,4 +47,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Objective", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<ASLInGameHUD> HUD = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<ASLBattlePlayerState> PlayerState = nullptr;
 };
