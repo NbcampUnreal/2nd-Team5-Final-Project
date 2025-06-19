@@ -542,7 +542,7 @@ void USL25DMovementHandlerComponent::ApplyAttackState(const FName& SectionName, 
 			OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic3);
 		}
 	}
-	else if (SectionName == "Attack2")
+	else if (SectionName == "Attack2") // 제거
 	{
 		if (bEmpowered)
 		{
