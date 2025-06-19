@@ -36,6 +36,14 @@ bool UBTDecorator_CheckDistanceToHome::CalculateRawConditionValue(UBehaviorTreeC
     const float AvailDistanceSquared = AvailDistance * AvailDistance;
 
     bResult = (DistanceToHomeSquared <= AvailDistanceSquared);
+    if (bResult)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Distance Avail"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Distance Fail"));
+    }
     return bResult;
 }
 

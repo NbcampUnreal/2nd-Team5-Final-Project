@@ -39,6 +39,7 @@ void UMovementHandlerComponent::BeginPlay()
 
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
 		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
+		OwnerCharacter->GetCharacterMovement()->MaxAcceleration = 8192.0f;
 	}
 
 	if (CachedRadarComponent)
