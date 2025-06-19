@@ -63,6 +63,6 @@ private:
 	UPROPERTY()
 	FRotator SpawnRotation;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<USphereComponent> CollisionComp;
 };

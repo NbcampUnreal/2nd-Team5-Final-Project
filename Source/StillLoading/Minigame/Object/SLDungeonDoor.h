@@ -20,7 +20,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void Activate() override;
-
 	virtual void DeActivate() override;
 
 	UPROPERTY(EditAnywhere, Category = "Door")

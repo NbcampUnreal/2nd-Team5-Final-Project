@@ -48,8 +48,14 @@ void AMonsterSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//SpawnMonstersByType();
-	//SpawnMonstersWithoutLeader();
+	if (SpawnType == ESpawnType::ST_Leader)
+	{
+		SpawnMonstersByType();
+	}
+	else if (SpawnType == ESpawnType::ST_NoLeader)
+	{
+		SpawnMonstersWithoutLeader();
+	}
 }
 
 void AMonsterSpawner::SpawnMonstersByType()
@@ -234,6 +240,17 @@ void AMonsterSpawner::SpawnMonstersWithoutLeader()
 					AIMonster->SetStrategyState(TAG_JOBMOB_ATTACK);
 				}
 			}
+		}
+	}
+}
+
+void AMonsterSpawner::ResetSpawnedMonster()
+{
+	for (AActor* SpawnedMonster : SpawnedMonsters)
+	{
+		if (IsValid(SpawnedMonster))
+		{
+			SpawnedMonster->Destroy();
 		}
 	}
 }

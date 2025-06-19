@@ -12,6 +12,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_OnBuff)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Dead)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Empowered)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_EnterCinematic)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_BlockBreak)
 
 // Hit Reactions
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction)
@@ -22,7 +23,6 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Airborne)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Groggy)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Knockback)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Falling)
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_HitReaction_Block_Break)
 
 // Attacks
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Attack)

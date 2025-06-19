@@ -32,6 +32,14 @@ struct FMonsterSpawnedInfo
 	TObjectPtr<AActor> SpawnedMonster;
 };
 
+UENUM(BlueprintType)
+enum class ESpawnType : uint8
+{
+	ST_None 	UMETA(DisplayName = "None"),
+	ST_Leader	UMETA(DisplayName = "With Leader"),
+	ST_NoLeader	UMETA(DisplayName = "Without Leader"),
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpawnedMonstersUpdated, int32, DecreaseCount);
 
 UCLASS()
@@ -58,6 +66,9 @@ public:
 	void SpawnMonstersWithoutLeader();
 
 	UFUNCTION(BlueprintCallable)
+	void ResetSpawnedMonster();
+
+	UFUNCTION(BlueprintCallable)
 	void MonsterDied(AActor* DiedMonsterRef);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawn")
@@ -80,6 +91,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	TArray<FMonsterSpawnInfo> SpawnInfos;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+	ESpawnType SpawnType = ESpawnType::ST_None;
 
 private:
 	UFUNCTION()

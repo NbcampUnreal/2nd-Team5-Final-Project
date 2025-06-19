@@ -10,10 +10,11 @@
 #include "Item/SLItem.h"
 #include "MontageComponent/AnimationMontageComponent.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
+#include "PlayerState/SLBattlePlayerState.h"
 
 ASLPlayerCharacter::ASLPlayerCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	//bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
@@ -65,6 +66,18 @@ void ASLPlayerCharacter::BeginPlay()
 	}
 
 	CachedMontageComponent = FindComponentByClass<UAnimationMontageComponent>();
+
+	if (GetController())
+	{
+		if (const APlayerController* PlayerController = Cast<APlayerController>(GetController()))
+		{
+			if (ASLBattlePlayerState* BasePlayerState = PlayerController->GetPlayerState<ASLBattlePlayerState>())
+			{
+				CashedPlayerState = BasePlayerState;
+				BasePlayerState->OnPlayerHpChanged.AddDynamic(this, &ASLPlayerCharacter::OnPlayerHpChanged);
+			}
+		}
+	}
 }
 
 void ASLPlayerCharacter::SwordFromSky()
@@ -72,6 +85,22 @@ void ASLPlayerCharacter::SwordFromSky()
 	if (CachedMontageComponent)
 	{
 		CachedMontageComponent->PlaySkillMontage("SwordFromSky");
+	}
+}
+
+void ASLPlayerCharacter::CharacterDragged(const bool bIsDragged)
+{
+	if (!bIsDragged)
+	{
+		SetPrimaryState(TAG_Character_Movement_Idle);
+	}
+	else
+	{
+		SetPrimaryState(TAG_Character_EnterCinematic);
+		if (CachedMontageComponent)
+		{
+			CachedMontageComponent->PlayTrickMontage("Dragged");
+		}
 	}
 }
 
@@ -130,9 +159,19 @@ void ASLPlayerCharacter::ChangeVisibilityWeapons(bool bIsVisible)
 	}
 }
 
-void ASLPlayerCharacter::Tick(float DeltaTime)
+void ASLPlayerCharacter::ResetState()
 {
-	Super::Tick(DeltaTime);
+	if (CashedPlayerState)
+	{
+		CashedPlayerState->ResetState();
+		SetPrimaryState(TAG_Character_Movement_Idle);
+		CachedMontageComponent->StopAllMontages(0.2);
+		
+		if (UMovementHandlerComponent* MoveComp = FindComponentByClass<UMovementHandlerComponent>())
+		{
+			MoveComp->ToggleCameraZoom(true);
+		}
+	}
 }
 
 void ASLPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -154,6 +193,7 @@ void ASLPlayerCharacter::DisableLockOnMode()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	RemoveSecondaryState(TAG_Character_LockOn);
+	RemoveSecondaryState(TAG_Character_PrepareLockOn);
 }
 
 void ASLPlayerCharacter::Landed(const FHitResult& Hit)
@@ -167,6 +207,22 @@ void ASLPlayerCharacter::Landed(const FHitResult& Hit)
 
 	LastLandTime = GetWorld()->GetTimeSeconds();
 	UE_LOG(LogTemp, Log, TEXT("Landed at time: %f"), LastLandTime);
+}
+
+void ASLPlayerCharacter::OnPlayerHpChanged(float MaxHp, const float CurrentHp)
+{
+	if (CurrentHp <= 0 && !bIsAlreadyDied)
+	{
+		CachedMontageComponent->PlayHitMontage("Death");
+		SetPrimaryState(TAG_Character_Dead);
+		bIsAlreadyDied = true;
+
+		if (UMovementHandlerComponent* MoveComp = FindComponentByClass<UMovementHandlerComponent>())
+		{
+			MoveComp->DisableLock();
+			MoveComp->ToggleCameraZoom(false, 1000.0f);
+		}
+	}
 }
 
 void ASLPlayerCharacter::AttachItemToHand(AActor* ItemActor, const FName SocketName) const

@@ -7,6 +7,8 @@
 
 class UCharacterStatData;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHpChangedLocal, float, MaxHp, float, CurrentHp);
+
 UCLASS()
 class STILLLOADING_API ASLBattlePlayerState : public APlayerState
 {
@@ -21,7 +23,7 @@ public:
 	
 	UFUNCTION()
 	void SetHealth(float NewHealth);
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void DecreaseHealth(float Amount);
 	UFUNCTION()
 	void SetWalking(bool bNewWalking);
@@ -29,6 +31,8 @@ public:
 	void SetMaxSpeed(float NewMaxSpeed);
 	UFUNCTION()
 	void IncreaseBurningGage(float Amount);
+	UFUNCTION()
+	void ResetState();
 
 	UFUNCTION()
 	FSLSpecialValueDelegateBuffer& GetGageDelegate() { return GageDelegate; }
@@ -37,6 +41,9 @@ public:
 
 	UFUNCTION()
 	FORCEINLINE float GetBurningGage() const { return BurningGage; }
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPlayerHpChangedLocal OnPlayerHpChanged;
 
 protected:
 	UFUNCTION()

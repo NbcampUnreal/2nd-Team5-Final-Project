@@ -6,8 +6,10 @@
 
 class ASLAIBaseCharacter;
 class ASLBossCharacter;
-class ASLDeveloperBossLine;
+class ASLDeveloperRoomCable;
 class ASLLaunchableWall;
+class ASLDeveloperRoomSpace;
+class ASLMouseActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossCharacterDeath, ASLAIBaseCharacter*, DeadCharacter);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossPatternFinished, ASLAIBaseCharacter*, Character);
@@ -67,6 +69,21 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Developer Boss")
     int32 GetPhase1BossesRemaining() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss")
+    void SpawnMouseActor();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss")
+    void DestroyMouseActor();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss")
+    void ActivateMouseActor();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss")
+    void DeactivateMouseActor();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss")
+    ASLMouseActor* GetMouseActor() const;
+    
     //테스트용 함수
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
     void TestSpawnRandomBoss();
@@ -89,6 +106,21 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
     void TestStartPhase1();
 
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
+    void TestSpawnMouseActor();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
+    void TestActivateMouseActor();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
+    void TestDeactivateMouseActor();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
+    void TestStartPhase3();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
+    void TestStartPhase5();
+    
     UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
     FOnBossCharacterDeath OnBossCharacterDeath;
 
@@ -130,6 +162,12 @@ protected:
     void CompletePhase1BossRush();
     void WeakenBossForPhase1(ASLAIBaseCharacter* Boss);
 
+    UFUNCTION()
+    void HandleMouseActorDestroyed(ASLMouseActor* DestroyedMouseActor);
+
+    void StartPhase3Horror();
+    void StartPhase5Final();
+    
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Developer Boss")
     TArray<TSubclassOf<ASLAIBaseCharacter>> AvailableBossClasses;
     
@@ -137,7 +175,7 @@ protected:
     TArray<ASLAIBaseCharacter*> SpawnedBosses;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Lines")
-    TArray<ASLDeveloperBossLine*> BossLines;
+    TArray<ASLDeveloperRoomCable*> BossLines;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Wall")
     TArray<ASLLaunchableWall*> LaunchableWalls;
@@ -157,10 +195,21 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase1")
     FVector Phase1BossSpawnOffset;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase2")
+    TObjectPtr<ASLDeveloperRoomSpace> Phase2Room;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Mouse Actor")
+    TObjectPtr<ASLMouseActor> MouseActor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Mouse Actor")
+    TSubclassOf<ASLMouseActor> MouseActorClass;
+    
 private:
     void ResetBossLines();
     void ResetCurrentWall();
-
+    void StartPhase2HackSlash();
+    void HandlePhase2RoomEscape(ASLDeveloperRoomSpace* Room);
+    
     static const int32 MaxBossLines = 5;
 
     EDeveloperBossPhase CurrentPhase;
@@ -173,4 +222,11 @@ private:
     int32 Phase1CurrentBossIndex;
     int32 Phase1TotalBossCount;
     FTimerHandle Phase1SpawnTimer;
+
+    bool bIsPhase2Active;
+
+    bool bIsPhase3Active;
+    bool bIsPhase5Active;
+    FTimerHandle Phase3SurvivalTimer;
+    float Phase3SurvivalTime;
 };

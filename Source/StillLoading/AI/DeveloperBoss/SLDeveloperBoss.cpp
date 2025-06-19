@@ -3,8 +3,10 @@
 #include "Character/SLBossCharacter.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
-#include "AI/Actors/SLDeveloperBossLine.h"
+#include "AI/Actors/SLDeveloperRoomCable.h"
+#include "AI/Actors/SLDeveloperRoomSpace.h"
 #include "AI/Actors/SLLaunchableWall.h"
+#include "AI/Actors/SLMouseActor.h"
 
 ASLDeveloperBoss::ASLDeveloperBoss()
 {
@@ -24,6 +26,14 @@ ASLDeveloperBoss::ASLDeveloperBoss()
     bIsPhase1Active = false;
     Phase1CurrentBossIndex = 0;
     Phase1TotalBossCount = 0;
+
+    bIsPhase2Active = false;
+
+    MouseActor = nullptr;
+    MouseActorClass = nullptr;
+    bIsPhase3Active = false;
+    bIsPhase5Active = false;
+    Phase3SurvivalTime = 10.0f;
 }
 
 void ASLDeveloperBoss::BeginPlay()
@@ -31,16 +41,30 @@ void ASLDeveloperBoss::BeginPlay()
     Super::BeginPlay();
     
     SetupBossLines();
+
+    if (MouseActorClass && !IsValid(MouseActor))
+    {
+        SpawnMouseActor();
+    }
 }
 
 void ASLDeveloperBoss::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    // 타이머들 정리
+    // 기존 타이머들 정리
     GetWorldTimerManager().ClearTimer(WallCooldownTimer);
     GetWorldTimerManager().ClearTimer(Phase1SpawnTimer);
+    GetWorldTimerManager().ClearTimer(Phase3SurvivalTimer);
     
-    // Phase1 상태 정리
+    // 상태 정리
     bIsPhase1Active = false;
+    bIsPhase3Active = false;
+    bIsPhase5Active = false;
+    
+    // 마우스 액터 정리
+    if (IsValid(MouseActor))
+    {
+        MouseActor->OnMouseActorDestroyed.RemoveAll(this);
+    }
     
     ResetBossLines();
     ResetCurrentWall();
@@ -316,43 +340,32 @@ void ASLDeveloperBoss::StartPhasePattern(EDeveloperBossPhase Phase)
     switch (Phase)
     {
     case EDeveloperBossPhase::Phase0_Start:
-        // 시작 페이즈 - 특별한 패턴 없음
-        // 첫 번째 선이 파괴되면 자동으로 Phase1으로 전환됨
         break;
 
     case EDeveloperBossPhase::Phase1_BossRush:
-        // 추억의 보스 러시 패턴
         UE_LOG(LogTemp, Display, TEXT("Starting Phase 1: Boss Rush"));
         StartPhase1BossRush();
         break;
 
     case EDeveloperBossPhase::Phase2_HackSlash:
-        // 핵앤슬래시 패턴
         UE_LOG(LogTemp, Display, TEXT("Starting Phase 2: Hack & Slash"));
-        // TODO: 특정 공간으로 이동
-        // TODO: NPC들 스폰하여 플레이어 추격
-        // TODO: 맵 끝의 벽을 부수면 LaunchWallAttack() 호출
+        StartPhase2HackSlash();
         break;
 
     case EDeveloperBossPhase::Phase3_Horror:
-        // 공포 게임 패턴
         UE_LOG(LogTemp, Display, TEXT("Starting Phase 3: Horror"));
-        // TODO: 어두워지고 마우스 무서운 형상 컷신
-        // TODO: 컷신 끝날 때 N초 후 LaunchWallAttack() 예약
-        // TODO: 마우스가 빠르게 추격, N초 버티면 선이 드러남
+        StartPhase3Horror();
         break;
 
     case EDeveloperBossPhase::Phase4_Platformer:
-        // 점프맵 패턴
         UE_LOG(LogTemp, Display, TEXT("Starting Phase 4: Platformer"));
-        // TODO: 땅 파괴하고 발판 소환
-        // TODO: 발판이 전부 원래 자리까지 올라가면 LaunchWallAttack() 호출
+        // TODO: 점프맵 구현
+        LaunchWallAttack(); // 임시로 바로 다음 벽 발사
         break;
 
     case EDeveloperBossPhase::Phase5_Final:
-        // 최종 페이즈 - 마우스 액터
         UE_LOG(LogTemp, Display, TEXT("Starting Phase 5: Final - Mouse Actor"));
-        // TODO: 마우스를 공격할 수 있게 됨
+        StartPhase5Final();
         break;
     }
 }
@@ -369,7 +382,7 @@ void ASLDeveloperBoss::ChangePhase(EDeveloperBossPhase NewPhase)
 
 void ASLDeveloperBoss::ResetBossLines()
 {
-    for (ASLDeveloperBossLine* Line : BossLines)
+    for (ASLDeveloperRoomCable* Line : BossLines)
     {
         if (IsValid(Line))
         {
@@ -677,4 +690,230 @@ int32 ASLDeveloperBoss::GetPhase1BossesRemaining() const
     int32 SpawnedBossesAlive = SpawnedBosses.Num();
     
     return BossesToSpawn + SpawnedBossesAlive;
+}
+
+void ASLDeveloperBoss::StartPhase2HackSlash()
+{
+    if (!IsValid(Phase2Room))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase2: No room assigned"));
+        LaunchWallAttack(); // 룸이 없으면 바로 다음 벽 발사
+        return;
+    }
+
+    bIsPhase2Active = true;
+    
+    Phase2Room->OnRoomEscapeWallDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandlePhase2RoomEscape);
+    
+    Phase2Room->ActivateRoom();
+    Phase2Room->TeleportPlayerToRoom();
+    Phase2Room->SpawnAllNPCs();
+    
+    UE_LOG(LogTemp, Display, TEXT("Phase2: Hack & Slash started"));
+}
+
+void ASLDeveloperBoss::HandlePhase2RoomEscape(ASLDeveloperRoomSpace* Room)
+{
+    if (!bIsPhase2Active || Room != Phase2Room)
+    {
+        return;
+    }
+    
+    bIsPhase2Active = false;
+    
+    if (IsValid(Phase2Room))
+    {
+        Phase2Room->OnRoomEscapeWallDestroyed.RemoveAll(this);
+        Phase2Room->DeactivateRoom();
+    }
+    
+    UE_LOG(LogTemp, Display, TEXT("Phase2: Player escaped room! Launching next wall attack"));
+    
+    LaunchWallAttack();
+}
+
+void ASLDeveloperBoss::SpawnMouseActor()
+{
+    if (!MouseActorClass || IsValid(MouseActor))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Mouse Actor already exists or no class specified"));
+        return;
+    }
+    
+    FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 500.0f);
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    
+    MouseActor = GetWorld()->SpawnActor<ASLMouseActor>(MouseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+    
+    if (IsValid(MouseActor))
+    {
+        MouseActor->OnMouseActorDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandleMouseActorDestroyed);
+        
+        // 초기에는 비활성 상태로 설정
+        MouseActor->StopOrbiting();
+        MouseActor->SetActorHiddenInGame(true);
+        MouseActor->SetActorEnableCollision(false);
+        
+        UE_LOG(LogTemp, Display, TEXT("Mouse Actor spawned and hidden"));
+    }
+}
+
+void ASLDeveloperBoss::DestroyMouseActor()
+{
+    if (IsValid(MouseActor))
+    {
+        MouseActor->OnMouseActorDestroyed.RemoveAll(this);
+        MouseActor->Destroy();
+        MouseActor = nullptr;
+        
+        UE_LOG(LogTemp, Display, TEXT("Mouse Actor destroyed"));
+    }
+}
+
+void ASLDeveloperBoss::ActivateMouseActor()
+{
+    if (!IsValid(MouseActor))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No Mouse Actor to activate"));
+        return;
+    }
+    
+    MouseActor->SetActorHiddenInGame(false);
+    MouseActor->SetActorEnableCollision(true);
+    MouseActor->StartOrbiting();
+    
+    UE_LOG(LogTemp, Display, TEXT("Mouse Actor activated"));
+}
+
+void ASLDeveloperBoss::DeactivateMouseActor()
+{
+    if (!IsValid(MouseActor))
+    {
+        return;
+    }
+    
+    MouseActor->StopOrbiting();
+    MouseActor->SetActorHiddenInGame(true);
+    MouseActor->SetActorEnableCollision(false);
+    
+    UE_LOG(LogTemp, Display, TEXT("Mouse Actor deactivated"));
+}
+
+ASLMouseActor* ASLDeveloperBoss::GetMouseActor() const
+{
+    return MouseActor;
+}
+
+void ASLDeveloperBoss::HandleMouseActorDestroyed(ASLMouseActor* DestroyedMouseActor)
+{
+    if (DestroyedMouseActor == MouseActor)
+    {
+        MouseActor = nullptr;
+        
+        if (bIsPhase5Active)
+        {
+            // Phase 5에서 마우스 액터가 파괴되면 보스전 완료
+            bIsPhase5Active = false;
+            UE_LOG(LogTemp, Display, TEXT("Phase 5 completed - Mouse Actor destroyed!"));
+            
+            // 보스전 완료 처리
+            OnDeveloperBossPatternFinished.Broadcast();
+        }
+    }
+}
+
+void ASLDeveloperBoss::StartPhase3Horror()
+{
+    if (!IsValid(MouseActor))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase3: No mouse actor available"));
+        LaunchWallAttack(); // 마우스 액터가 없으면 바로 다음 벽 발사
+        return;
+    }
+    
+    bIsPhase3Active = true;
+    
+    // 마우스 액터 활성화 및 무서운 형상으로 변경
+    ActivateMouseActor();
+    
+    // TODO: 화면 어둡게 하기 (Fog 효과)
+    // TODO: 마우스 액터 형상 변경
+    
+    UE_LOG(LogTemp, Display, TEXT("Phase3: Horror phase started - survive for %f seconds"), Phase3SurvivalTime);
+    
+    // N초 후 자동으로 다음 벽 발사
+    GetWorldTimerManager().SetTimer(
+        Phase3SurvivalTimer,
+        [this]()
+        {
+            if (bIsPhase3Active)
+            {
+                bIsPhase3Active = false;
+                DeactivateMouseActor();
+                LaunchWallAttack();
+                UE_LOG(LogTemp, Display, TEXT("Phase3: Survival time completed! Launching next wall"));
+            }
+        },
+        Phase3SurvivalTime,
+        false
+    );
+}
+
+void ASLDeveloperBoss::StartPhase5Final()
+{
+    if (!IsValid(MouseActor))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase5: No mouse actor available - spawning new one"));
+        SpawnMouseActor();
+        
+        if (!IsValid(MouseActor))
+        {
+            // 마우스 액터를 생성할 수 없으면 보스전 완료
+            OnDeveloperBossPatternFinished.Broadcast();
+            return;
+        }
+    }
+    
+    bIsPhase5Active = true;
+    
+    // 마우스 액터를 공격 가능한 상태로 활성화
+    ActivateMouseActor();
+    
+    // TODO: 마우스 액터에게 플레이어 공격을 받을 수 있다고 알려주기
+    // 마우스 액터의 BattleComponent 활성화 등
+    
+    UE_LOG(LogTemp, Display, TEXT("Phase5: Final phase started - destroy the mouse actor to win!"));
+}
+
+void ASLDeveloperBoss::TestSpawnMouseActor()
+{
+    SpawnMouseActor();
+    UE_LOG(LogTemp, Display, TEXT("Test: Mouse Actor spawned"));
+}
+
+void ASLDeveloperBoss::TestActivateMouseActor()
+{
+    ActivateMouseActor();
+    UE_LOG(LogTemp, Display, TEXT("Test: Mouse Actor activated"));
+}
+
+void ASLDeveloperBoss::TestDeactivateMouseActor()
+{
+    DeactivateMouseActor();
+    UE_LOG(LogTemp, Display, TEXT("Test: Mouse Actor deactivated"));
+}
+
+void ASLDeveloperBoss::TestStartPhase3()
+{
+    CurrentPhase = EDeveloperBossPhase::Phase3_Horror;
+    StartPhase3Horror();
+    UE_LOG(LogTemp, Display, TEXT("Test: Started Phase3 Horror"));
+}
+
+void ASLDeveloperBoss::TestStartPhase5()
+{
+    CurrentPhase = EDeveloperBossPhase::Phase5_Final;
+    StartPhase5Final();
+    UE_LOG(LogTemp, Display, TEXT("Test: Started Phase5 Final"));
 }

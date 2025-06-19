@@ -16,8 +16,8 @@ UENUM(BlueprintType)
 enum class EMouseActorState : uint8
 {
 	Inactive	UMETA(DisplayName = "Inactive"),
-	Chasing		UMETA(DisplayName = "Chasing"),
-	Attacking	UMETA(DisplayName = "Attacking"),
+	Orbiting	UMETA(DisplayName = "Orbiting"),
+	Descending	UMETA(DisplayName = "Descending"),
 	Grabbing	UMETA(DisplayName = "Grabbing"),
 	Destroyed	UMETA(DisplayName = "Destroyed")
 };
@@ -31,22 +31,13 @@ public:
 	ASLMouseActor();
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void StartChasing();
+	void StartOrbiting();
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void StopChasing();
+	void StopOrbiting();
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
 	void DestroyMouseActor();
-
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void GrabAndMovePlayer(const FVector& NewLocation);
-
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void SetChaseSpeed(float NewSpeed);
-
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void SetAttackDamage(float NewDamage);
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
 	EMouseActorState GetCurrentState() const;
@@ -55,19 +46,10 @@ public:
 	void TakeDamage(float DamageAmount);
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void EnablePeriodicGrab(bool bEnable);
+	void SetOrbitSettings(float NewOrbitRadius, float NewOrbitHeight, float NewOrbitSpeed);
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void SetGrabSettings(float MinInterval, float MaxInterval, float GrabChance, float GrabRadius);
-
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void SetDebugMode(bool bEnable);
-
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	FVector GetPlayerDirection() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	float GetDistanceToPlayer() const;
+	void SetGrabSettings(float NewGrabDistance, float NewGrabHeight, float NewGrabDamage, float NewGrabCooldownMin, float NewGrabCooldownMax);
 
 	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
 	FSLOnMouseActorDestroyed OnMouseActorDestroyed;
@@ -82,19 +64,18 @@ protected:
 	UFUNCTION()
 	void OnBattleComponentHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType);
 
-	void UpdateChaseTarget();
-	void ChasePlayer();
-	void AttackPlayer();
-	void UpdateThreatEffects();
-	void PlayDestroyEffects();
+	void UpdateOrbitMovement(float DeltaTime);
+	void UpdateDescentMovement(float DeltaTime);
+	void UpdateGrabMovement(float DeltaTime);
+	void UpdateMeshRotation(float DeltaTime);
+	void StartGrabPlayer();
+	void CompleteGrabPlayer();
+	void ApplyGrabDamage();
 	void SetMouseActorState(EMouseActorState NewState);
-	void MoveTowardsPlayer(float DeltaTime);
-	void StartPeriodicGrab();
-	void StopPeriodicGrab();
-	void ExecutePeriodicGrab();
-	FVector GetRandomGrabLocation();
-	bool IsSafeGrabLocation(const FVector& Location);
-	void ScheduleNextGrab();
+	ASLPlayerCharacter* FindPlayerCharacter();
+	bool IsPlayerInRange() const;
+	float GetRandomGrabCooldown() const;
+	bool CanGrabPlayer() const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> RootSceneComponent;
@@ -108,105 +89,65 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UBattleComponent> BattleComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float ChaseSpeed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit Settings")
+	float OrbitRadius;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float AttackDamage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit Settings")
+	float OrbitHeight;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float AttackRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit Settings")
+	float OrbitSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float GrabForce;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Settings")
+	float DescentSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Settings")
+	float GrabMoveSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grab Settings")
+	float GrabDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grab Settings")
+	float GrabHeight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grab Settings")
+	float GrabDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grab Settings")
+	float GrabCooldownMin;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grab Settings")
+	float GrabCooldownMax;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grab Settings")
+	float CollisionDisableTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "General Settings")
 	float MaxHealth;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float ThreatEffectInterval;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float RotationSpeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float AttackCooldown;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	bool bEnablePeriodicGrab;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float GrabIntervalMin;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float GrabIntervalMax;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float GrabProbability;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float GrabLocationRadius;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float MinGrabDistance;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Settings")
-	float MaxGrabDistance;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-	bool bShowDebugInfo;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-	bool bDrawDebugLines;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-	float DebugLineThickness;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-	float DebugLineDuration;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "General Settings")
+	float DetectionRange;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TObjectPtr<UNiagaraSystem> ChaseEffect;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TObjectPtr<UNiagaraSystem> AttackEffect;
+	TObjectPtr<UNiagaraSystem> GrabEffect;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> DestroyEffect;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TObjectPtr<UNiagaraSystem> ThreatEffect;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TObjectPtr<USoundBase> ChaseSound;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TObjectPtr<USoundBase> AttackSound;
+	TObjectPtr<USoundBase> GrabSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TObjectPtr<USoundBase> DestroySound;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
-	TObjectPtr<UMaterialInterface> NormalMaterial;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
-	TObjectPtr<UMaterialInterface> ThreatMaterial;
-
 private:
-	ASLPlayerCharacter* FindPlayerCharacter();
-	bool IsPlayerInAttackRange();
-	void HandlePlayerGrabbing();
-	void ResetAttackCooldown();
-
 	EMouseActorState CurrentState;
 	float CurrentHealth;
 	TObjectPtr<ASLPlayerCharacter> TargetPlayer;
-	FTimerHandle ThreatEffectTimerHandle;
-	FTimerHandle AttackCooldownHandle;
-	FTimerHandle PeriodicGrabTimerHandle;
-	FVector LastPlayerLocation;
-	FVector TargetLocation;
-	bool bCanAttack;
-	bool bIsGrabbing;
-	bool bPeriodicGrabActive;
+	FVector GrabTargetLocation;
+	FTimerHandle GrabCooldownTimerHandle;
+	FTimerHandle CollisionTimerHandle;
+	bool bCanGrab;
+	float OrbitAngle;
+	FVector OrbitCenter;
 };

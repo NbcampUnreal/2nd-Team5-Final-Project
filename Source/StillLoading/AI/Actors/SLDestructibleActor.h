@@ -1,94 +1,82 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Interactable/Object/SLInteractableBreakable.h"
 #include "SLDestructibleActor.generated.h"
 
-class UBattleComponent;
 class UNiagaraSystem;
+class USoundBase;
+class UDecalComponent;
 
-enum class EHitAnimType : uint8;
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSLOnDestructibleDestroyed, int32, ActorIndex);
-
-UENUM(BlueprintType)
-enum class EDestructibleState : uint8
-{
-	Inactive	UMETA(DisplayName = "Inactive"),
-	Active		UMETA(DisplayName = "Active"),
-	Destroyed	UMETA(DisplayName = "Destroyed")
-};
-
-UCLASS(BlueprintType, Abstract)
-class STILLLOADING_API ASLDestructibleActor : public AActor
+UCLASS()
+class STILLLOADING_API ASLDestructibleActor : public ASLInteractableBreakable
 {
 	GENERATED_BODY()
 
 public:
 	ASLDestructibleActor();
 
-	virtual void BeginPlay() override;
+	UFUNCTION(BlueprintCallable, Category = "Destructible")
+	void TakeDamage();
 
 	UFUNCTION(BlueprintCallable, Category = "Destructible")
-	virtual void ActivateActor();
+	bool CanTakeDamage() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Destructible")
-	virtual void DeactivateActor();
+	void AddCrackDecal(const FVector& HitLocation, const FVector& HitNormal);
 
 	UFUNCTION(BlueprintCallable, Category = "Destructible")
-	virtual void DestroyActor();
-
-	UFUNCTION(BlueprintCallable, Category = "Destructible")
-	bool CanBeDestroyed() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Destructible")
-	void SetActorIndex(int32 Index);
-
-	UFUNCTION(BlueprintCallable, Category = "Destructible")
-	int32 GetActorIndex() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Destructible")
-	EDestructibleState GetCurrentState() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Destructible")
-	float GetCurrentHealth() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Destructible")
-	float GetMaxHealth() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Destructible")
-	void TakeDamage(float DamageAmount);
-
-	UPROPERTY(BlueprintAssignable, Category = "Destructible")
-	FSLOnDestructibleDestroyed OnDestructibleDestroyed;
+	void ClearAllCracks();
 
 protected:
-	UFUNCTION()
-	virtual void OnBattleComponentHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType);
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType) override;
 
-	virtual void SetupCollisionResponse();
-	virtual void UpdateActorVisuals();
-	virtual void PlayDestroyEffects();
-	virtual void SetActorState(EDestructibleState NewState);
-	virtual void OnActorDestroyed();
+	void PlayHitFeedback(const FVector& HitLocation);
+	void FlashDamagedMaterial();
+	void StartShakeEffect();
+	void UpdateShakeEffect(float DeltaTime);
+	void DestroyActor();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<UBattleComponent> BattleComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+	TObjectPtr<UMaterialInterface> NormalMaterial;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Destructible Settings")
-	float MaxHealth;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TObjectPtr<UNiagaraSystem> DestroyEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+	TObjectPtr<UMaterialInterface> DamagedMaterial;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TObjectPtr<USoundBase> DestroySound;
+	TObjectPtr<UNiagaraSystem> HitEffect;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TObjectPtr<USoundBase> ActivationSound;
+	TObjectPtr<USoundBase> HitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	float MaterialFlashDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crack Effects")
+	TObjectPtr<UMaterialInterface> CrackDecalMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crack Effects")
+	FVector CrackDecalSize;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crack Effects")
+	float CrackDecalLifeTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shake Effects")
+	float ShakeIntensity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shake Effects")
+	float ShakeDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shake Effects")
+	float ShakeFrequency;
 
 private:
-	EDestructibleState CurrentState;
-	float CurrentHealth;
-	int32 ActorIndex;
+	TArray<TObjectPtr<UDecalComponent>> CrackDecals;
+	FTimerHandle MaterialFlashTimerHandle;
+	FTimerHandle ShakeTimerHandle;
+	FVector OriginalLocation;
+	float ShakeTimeElapsed;
+	bool bIsShaking;
 };
