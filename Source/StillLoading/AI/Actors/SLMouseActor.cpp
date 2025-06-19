@@ -163,6 +163,7 @@ void ASLMouseActor::StopOrbiting()
 	if (CurrentState == EMouseActorState::Grabbing && IsValid(TargetPlayer))
 	{
 		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		TargetPlayer->CharacterDragged(false);
 		
 		// Re-enable player movement
 		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
@@ -200,6 +201,7 @@ void ASLMouseActor::DestroyMouseActor()
 	if (CurrentState == EMouseActorState::Grabbing && IsValid(TargetPlayer))
 	{
 		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		TargetPlayer->CharacterDragged(false);
 		
 		// 플레이어 이동 다시 활성화
 		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
@@ -429,7 +431,8 @@ void ASLMouseActor::StartGrabPlayer()
 
 	// Attach player to mouse actor
 	TargetPlayer->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
-
+	TargetPlayer->CharacterDragged(true);
+	
 	// Disable player movement while grabbed
 	if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
 	{
@@ -470,7 +473,7 @@ void ASLMouseActor::CompleteGrabPlayer()
 	if (IsValid(TargetPlayer))
 	{
 		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		
+		TargetPlayer->CharacterDragged(false);
 		// Re-enable player movement
 		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
 		{
