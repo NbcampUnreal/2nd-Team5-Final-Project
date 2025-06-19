@@ -97,7 +97,8 @@ public:
 	ASLAIBaseCharacter();
 	virtual void BeginPlay() override;
 	virtual void Landed(const FHitResult& Hit) override;
-
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCharacterDeath, ASLAIBaseCharacter*);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPatternFinished, ASLAIBaseCharacter*);
 	
@@ -346,7 +347,6 @@ protected:
 	virtual void SetHitState(bool bNewIsHit, float AutoResetTime = 0.5f);
 
 	void SetupBoxCollision();
-	void TransferCapsuleSettingsToBox();
 	
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")

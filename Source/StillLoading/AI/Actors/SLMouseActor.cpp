@@ -14,7 +14,6 @@ ASLMouseActor::ASLMouseActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Components Setup
 	RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
 	RootComponent = RootSceneComponent;
 
@@ -29,7 +28,6 @@ ASLMouseActor::ASLMouseActor()
 
 	BattleComponent = CreateDefaultSubobject<UBattleComponent>(TEXT("BattleComponent"));
 
-	// Initialize values
 	OrbitRadius = 300.0f;
 	OrbitHeight = 400.0f;
 	OrbitSpeed = 90.0f;
@@ -45,7 +43,6 @@ ASLMouseActor::ASLMouseActor()
 	MaxHealth = 100.0f;
 	DetectionRange = 100.0f;
 
-	// Runtime values
 	CurrentState = EMouseActorState::Inactive;
 	CurrentHealth = 0.0f;
 	TargetPlayer = nullptr;
@@ -55,31 +52,40 @@ ASLMouseActor::ASLMouseActor()
 	OrbitAngle = 0.0f;
 	OrbitCenter = FVector::ZeroVector;
 
-	// Effects
 	GrabEffect = nullptr;
 	DestroyEffect = nullptr;
 	GrabSound = nullptr;
 	DestroySound = nullptr;
+
+	Phase3ChaseSpeed = 1200.0f;
+	Phase3StopDistance = 200.0f;
+	PlayerLookCheckAngle = 30.0f;
+	Phase3HorrorMesh = nullptr;
+	Phase3HorrorMaterial = nullptr;
+    
+	bIsInPhase3Mode = false;
+	bIsPlayerLookingAtMe = false;
+	OriginalMesh = nullptr;
+	Phase3HorrorScale = FVector(2.0f, 2.0f, 2.0f);
+
+
 }
 
 void ASLMouseActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Setup collision events
 	if (CollisionComponent)
 	{
 		CollisionComponent->OnComponentHit.AddDynamic(this, &ASLMouseActor::OnCollisionHit);
 		CollisionComponent->SetSphereRadius(DetectionRange);
 	}
 
-	// Setup battle component
 	if (BattleComponent)
 	{
 		BattleComponent->OnCharacterHited.AddDynamic(this, &ASLMouseActor::OnBattleComponentHit);
 	}
 
-	// Find initial target
 	TargetPlayer = FindPlayerCharacter();
 	CurrentHealth = MaxHealth;
 	bCanGrab = true;
@@ -104,12 +110,19 @@ void ASLMouseActor::Tick(float DeltaTime)
 		}
 	}
 
+	if (bIsInPhase3Mode)
+	{
+		UpdatePhase3Movement(DeltaTime);
+		UpdateMeshRotation(DeltaTime);
+		return;
+	}
+
 	switch (CurrentState)
 	{
 	case EMouseActorState::MovingToOrbit:
 		UpdateMoveToOrbitMovement(DeltaTime);
 		break;
-		
+        
 	case EMouseActorState::Orbiting:
 		UpdateOrbitMovement(DeltaTime);
 		if (CanGrabPlayer())
@@ -149,14 +162,11 @@ void ASLMouseActor::StartOrbiting()
 		return;
 	}
 
-	// Set orbit center and calculate target orbit position
 	OrbitCenter = TargetPlayer->GetActorLocation();
 	OrbitAngle = 0.0f;
 	
-	// Calculate the target orbit position
 	MoveToOrbitTargetLocation = CalculateOrbitPosition();
 	
-	// Start moving to orbit position
 	SetMouseActorState(EMouseActorState::MovingToOrbit);
 	
 	UE_LOG(LogTemp, Log, TEXT("Mouse Actor moving to orbit position from current location"));
@@ -164,13 +174,11 @@ void ASLMouseActor::StartOrbiting()
 
 void ASLMouseActor::StopOrbiting()
 {
-	// Release player if currently grabbing
 	if (CurrentState == EMouseActorState::Grabbing && IsValid(TargetPlayer))
 	{
 		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		TargetPlayer->CharacterDragged(false);
 		
-		// Re-enable player movement
 		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
 		{
 			MovementComp->SetDefaultMovementMode();
@@ -179,14 +187,6 @@ void ASLMouseActor::StopOrbiting()
 
 	SetMouseActorState(EMouseActorState::Inactive);
 	
-	// Clear timers
-	if (IsValid(GetWorld()))
-	{
-		GetWorldTimerManager().ClearTimer(GrabCooldownTimerHandle);
-		GetWorldTimerManager().ClearTimer(CollisionTimerHandle);
-	}
-
-	// Re-enable collision if it was disabled
 	if (IsValid(CollisionComponent))
 	{
 		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -202,13 +202,11 @@ void ASLMouseActor::DestroyMouseActor()
 		return;
 	}
 
-	// 현재 잡고 있는 경우 플레이어 해제
 	if (CurrentState == EMouseActorState::Grabbing && IsValid(TargetPlayer))
 	{
 		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		TargetPlayer->CharacterDragged(false);
 		
-		// 플레이어 이동 다시 활성화
 		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
 		{
 			MovementComp->SetDefaultMovementMode();
@@ -217,7 +215,6 @@ void ASLMouseActor::DestroyMouseActor()
 
 	SetMouseActorState(EMouseActorState::Destroyed);
 
-	// 파괴 효과 재생
 	if (IsValid(DestroyEffect) && IsValid(GetWorld()))
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
@@ -237,20 +234,11 @@ void ASLMouseActor::DestroyMouseActor()
 		);
 	}
 
-	// Clear timers
-	if (IsValid(GetWorld()))
-	{
-		GetWorldTimerManager().ClearTimer(GrabCooldownTimerHandle);
-		GetWorldTimerManager().ClearTimer(CollisionTimerHandle);
-	}
-
-	// Broadcast destruction
 	if (OnMouseActorDestroyed.IsBound())
 	{
 		OnMouseActorDestroyed.Broadcast(this);
 	}
 
-	// Hide and disable
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
 	SetActorTickEnabled(false);
@@ -315,6 +303,21 @@ void ASLMouseActor::OnBattleComponentHit(AActor* DamageCauser, float DamageAmoun
 	}
 }
 
+void ASLMouseActor::OnGrabCooldownFinished()
+{
+	bCanGrab = true;
+	OnMouseGrabCooldownFinished.Broadcast();
+}
+
+void ASLMouseActor::OnCollisionReenabled()
+{
+	if (IsValid(CollisionComponent))
+	{
+		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	OnMouseCollisionReenabled.Broadcast();
+}
+
 void ASLMouseActor::UpdateOrbitMovement(float DeltaTime)
 {
 	if (!IsValid(TargetPlayer))
@@ -350,7 +353,6 @@ void ASLMouseActor::UpdateDescentMovement(float DeltaTime)
 		return;
 	}
 
-	// Move towards player
 	FVector MovementDelta = DirectionToPlayer * DescentSpeed * DeltaTime;
 	FVector NewLocation = CurrentLocation + MovementDelta;
 	SetActorLocation(NewLocation);
@@ -386,17 +388,28 @@ void ASLMouseActor::UpdateMeshRotation(float DeltaTime)
 
 	FVector MeshLocation = MouseMeshComponent->GetComponentLocation();
 	FVector PlayerLocation = TargetPlayer->GetActorLocation();
-	
-	FVector DirectionToPlayer = (PlayerLocation - MeshLocation).GetSafeNormal();
-	
+    
 	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(MeshLocation, PlayerLocation);
-	
-	LookAtRotation.Pitch -= 45.0f;
-	
-	FRotator CurrentRotation = MouseMeshComponent->GetComponentRotation();
-	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, LookAtRotation, DeltaTime, 3.0f);
-	
-	MouseMeshComponent->SetWorldRotation(NewRotation);
+    
+	if (bIsInPhase3Mode)
+	{
+		// Phase3에서는 즉시 플레이어를 향해 회전 (더 섬뜩함)
+		LookAtRotation.Yaw -= 90.0f; // 정면 맞춤
+		LookAtRotation.Pitch -= 10.0f; // 살짝 아래를 내려다보는 느낌
+        
+		// 즉시 회전
+		MouseMeshComponent->SetWorldRotation(LookAtRotation);
+	}
+	else
+	{
+		// 기존 부드러운 회전
+		LookAtRotation.Yaw -= 90.0f;
+		LookAtRotation.Pitch -= 45.0f;
+        
+		FRotator CurrentRotation = MouseMeshComponent->GetComponentRotation();
+		FRotator NewRotation = FMath::RInterpTo(CurrentRotation, LookAtRotation, DeltaTime, 3.0f);
+		MouseMeshComponent->SetWorldRotation(NewRotation);
+	}
 }
 
 void ASLMouseActor::UpdateMoveToOrbitMovement(float DeltaTime)
@@ -406,7 +419,6 @@ void ASLMouseActor::UpdateMoveToOrbitMovement(float DeltaTime)
 		return;
 	}
 
-	// Update orbit center and target position based on current player location
 	OrbitCenter = TargetPlayer->GetActorLocation();
 	MoveToOrbitTargetLocation = CalculateOrbitPosition();
 
@@ -419,12 +431,10 @@ void ASLMouseActor::UpdateMoveToOrbitMovement(float DeltaTime)
 		return;
 	}
 
-	// Move towards target orbit position
 	FVector MovementDelta = DirectionToTarget * MoveToOrbitSpeed * DeltaTime;
 	FVector NewLocation = CurrentLocation + MovementDelta;
 	SetActorLocation(NewLocation);
 
-	// Check if we've reached the target orbit position
 	float DistanceToTarget = FVector::Dist(CurrentLocation, MoveToOrbitTargetLocation);
 	if (DistanceToTarget <= 50.0f)
 	{
@@ -474,7 +484,6 @@ void ASLMouseActor::StartGrabPlayer()
 			GetActorLocation()
 		);
 	}
-
 }
 
 void ASLMouseActor::CompleteGrabPlayer()
@@ -498,15 +507,12 @@ void ASLMouseActor::CompleteGrabPlayer()
 	{
 		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		
+		// 델리게이트로 변경 - 타이머 대신 지연 실행
+		FTimerHandle CollisionTimer;
 		GetWorldTimerManager().SetTimer(
-			CollisionTimerHandle,
-			[this]()
-			{
-				if (IsValid(CollisionComponent))
-				{
-					CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-				}
-			},
+			CollisionTimer,
+			this,
+			&ASLMouseActor::OnCollisionReenabled,
 			CollisionDisableTime,
 			false
 		);
@@ -514,13 +520,13 @@ void ASLMouseActor::CompleteGrabPlayer()
 
 	ApplyGrabDamage();
 
+	// 델리게이트로 변경 - 타이머 대신 지연 실행
 	float RandomCooldown = GetRandomGrabCooldown();
+	FTimerHandle CooldownTimer;
 	GetWorldTimerManager().SetTimer(
-		GrabCooldownTimerHandle,
-		[this]()
-		{
-			bCanGrab = true;
-		},
+		CooldownTimer,
+		this,
+		&ASLMouseActor::OnGrabCooldownFinished,
 		RandomCooldown,
 		false
 	);
@@ -536,6 +542,7 @@ void ASLMouseActor::CompleteGrabPlayer()
 		SetActorLocation(OrbitPosition);
 	}
 
+	OnMouseGrabCompleted.Broadcast();
 }
 
 void ASLMouseActor::ApplyGrabDamage()
@@ -556,7 +563,6 @@ void ASLMouseActor::ApplyGrabDamage()
 		HitResult.TraceEnd = TargetPlayer->GetActorLocation();
 		
 		PlayerBattleComp->ReceiveHitResult(GrabDamage, this, HitResult, EAttackAnimType::AAT_AISpecial);
-		
 	}
 }
 
@@ -565,6 +571,7 @@ void ASLMouseActor::SetMouseActorState(EMouseActorState NewState)
 	if (CurrentState != NewState)
 	{
 		CurrentState = NewState;
+		OnMouseStateChanged.Broadcast(NewState);
 	}
 }
 
@@ -608,16 +615,170 @@ bool ASLMouseActor::CanGrabPlayer() const
 
 float ASLMouseActor::GetRandomGrabCooldown() const
 {
-	return FMath::FRandRange(GrabCooldownMin, GrabCooldownMax);
+   return FMath::FRandRange(GrabCooldownMin, GrabCooldownMax);
 }
 
 FVector ASLMouseActor::CalculateOrbitPosition() const
 {
-	float RadianAngle = FMath::DegreesToRadians(OrbitAngle);
-	FVector OrbitPosition = OrbitCenter;
-	OrbitPosition.X += FMath::Cos(RadianAngle) * OrbitRadius;
-	OrbitPosition.Y += FMath::Sin(RadianAngle) * OrbitRadius;
-	OrbitPosition.Z += OrbitHeight;
+   float RadianAngle = FMath::DegreesToRadians(OrbitAngle);
+   FVector OrbitPosition = OrbitCenter;
+   OrbitPosition.X += FMath::Cos(RadianAngle) * OrbitRadius;
+   OrbitPosition.Y += FMath::Sin(RadianAngle) * OrbitRadius;
+   OrbitPosition.Z += OrbitHeight;
+   
+   return OrbitPosition;
+}
+
+void ASLMouseActor::StartPhase3HorrorMode()
+{
+   if (CurrentState == EMouseActorState::Destroyed)
+   {
+       return;
+   }
+
+   bIsInPhase3Mode = true;
+   ChangeToHorrorAppearance();
+   SetMouseActorState(EMouseActorState::Descending);
+   
+   UE_LOG(LogTemp, Display, TEXT("Mouse Actor: Phase 3 Horror Mode Started"));
+}
+
+void ASLMouseActor::StopPhase3HorrorMode()
+{
+   bIsInPhase3Mode = false;
+   RestoreOriginalAppearance();
+   
+   UE_LOG(LogTemp, Display, TEXT("Mouse Actor: Phase 3 Horror Mode Stopped"));
+}
+
+void ASLMouseActor::SetPhase3Settings(float NewChaseSpeed, float NewStopDistance, float NewLookAngle)
+{
+   Phase3ChaseSpeed = FMath::Max(0.0f, NewChaseSpeed);
+   Phase3StopDistance = FMath::Max(0.0f, NewStopDistance);
+   PlayerLookCheckAngle = FMath::Clamp(NewLookAngle, 0.0f, 180.0f);
+}
+
+void ASLMouseActor::SetPhase3Scale(const FVector& NewScale)
+{
+	Phase3HorrorScale = NewScale;
+    
+	// 이미 Phase3 모드라면 즉시 적용
+	if (bIsInPhase3Mode && IsValid(MouseMeshComponent))
+	{
+		MouseMeshComponent->SetWorldScale3D(Phase3HorrorScale);
+	}
+}
+
+void ASLMouseActor::UpdatePhase3Movement(float DeltaTime)
+{
+   if (!IsValid(TargetPlayer))
+   {
+       return;
+   }
+
+   bIsPlayerLookingAtMe = IsPlayerLookingAtMe();
+   
+   if (bIsPlayerLookingAtMe)
+   {
+       return;
+   }
+
+   FVector PlayerLocation = TargetPlayer->GetActorLocation();
+   FVector CurrentLocation = GetActorLocation();
+   float DistanceToPlayer = FVector::Dist(CurrentLocation, PlayerLocation);
+   
+   if (DistanceToPlayer > Phase3StopDistance)
+   {
+       FVector DirectionToPlayer = (PlayerLocation - CurrentLocation).GetSafeNormal();
+       FVector MovementDelta = DirectionToPlayer * Phase3ChaseSpeed * DeltaTime;
+       FVector NewLocation = CurrentLocation + MovementDelta;
+       SetActorLocation(NewLocation);
+   }
+}
+
+bool ASLMouseActor::IsPlayerLookingAtMe() const
+{
+	if (!IsValid(TargetPlayer))
+	{
+		return false;
+	}
+
+	// 플레이어 컨트롤러에서 카메라 정보 가져오기
+	APlayerController* PlayerController = Cast<APlayerController>(TargetPlayer->GetController());
+	if (!PlayerController)
+	{
+		return false;
+	}
+
+	// 카메라 위치와 방향 가져오기
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
+
+	FVector CameraForward = CameraRotation.Vector();
+	FVector MouseLocation = GetActorLocation();
+
+	// 카메라에서 마우스 액터로의 방향
+	FVector DirectionToMouse = (MouseLocation - CameraLocation).GetSafeNormal();
+
+	// 각도 확인 (시야각 체크)
+	float DotProduct = FVector::DotProduct(CameraForward, DirectionToMouse);
+	DotProduct = FMath::Clamp(DotProduct, -1.0f, 1.0f);
+	float AngleInDegrees = FMath::RadiansToDegrees(FMath::Acos(DotProduct));
+
+	// 시야각 범위 밖이면 false
+	if (AngleInDegrees > PlayerLookCheckAngle)
+	{
+		return false;
+	}
+
+	// 레이캐스트로 실제로 보이는지 확인
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	QueryParams.AddIgnoredActor(TargetPlayer);
+	QueryParams.bTraceComplex = false;
+
+	// 카메라에서 마우스 액터로 레이캐스트
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		CameraLocation,
+		MouseLocation,
+		ECC_Visibility,
+		QueryParams
+	);
+
+	return !bHit;
+}
+
+void ASLMouseActor::ChangeToHorrorAppearance()
+{
+   if (!IsValid(MouseMeshComponent))
+   {
+       return;
+   }
+
+   OriginalMesh = MouseMeshComponent->GetStaticMesh();
+
+   if (IsValid(Phase3HorrorMesh))
+   {
+       MouseMeshComponent->SetStaticMesh(Phase3HorrorMesh);
+   }
+
+	MouseMeshComponent->SetWorldScale3D(Phase3HorrorScale);
+}
+
+void ASLMouseActor::RestoreOriginalAppearance()
+{
+   if (!IsValid(MouseMeshComponent))
+   {
+       return;
+   }
+
+   if (IsValid(OriginalMesh))
+   {
+       MouseMeshComponent->SetStaticMesh(OriginalMesh);
+   }
 	
-	return OrbitPosition;
+	MouseMeshComponent->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
 }

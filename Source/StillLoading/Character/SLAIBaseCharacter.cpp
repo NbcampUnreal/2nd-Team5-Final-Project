@@ -186,6 +186,12 @@ void ASLAIBaseCharacter::Landed(const FHitResult& Hit)
 	}
 }
 
+void ASLAIBaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	
+	Super::EndPlay(EndPlayReason);
+}
+
 void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -450,6 +456,7 @@ void ASLAIBaseCharacter::UnequipWeapon()
         
 		// 캐릭터에서 무기 분리
 		EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		EquippedWeapon->Destroy();
 		EquippedWeapon = nullptr;
 	}
 }
