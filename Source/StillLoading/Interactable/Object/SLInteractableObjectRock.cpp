@@ -10,7 +10,6 @@ ASLInteractableObjectRock::ASLInteractableObjectRock()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = false; // 기본적으로 Tick OFF
-	TriggerType = ESLReactiveTriggerType::ERT_InteractKey;
 }
 
 void ASLInteractableObjectRock::PushInDirection(FVector Direction)
