@@ -135,7 +135,9 @@ protected:
 	FVector GetPlayerDirection() const;
 	FVector GetPlayerDirectionFromPoint(const FVector& FromPoint) const; 
 	void ApplySpawnRotationToWallPart(UStaticMeshComponent* WallPart, int32 PartIndex);
-
+	void SetupWallPartCollisions(UStaticMeshComponent* WallPart);
+	bool ShouldIgnoreCollision(AActor* OtherActor) const;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CATEGORY_COMPONENTS)
 	TObjectPtr<USceneComponent> RootSceneComponent;
 
