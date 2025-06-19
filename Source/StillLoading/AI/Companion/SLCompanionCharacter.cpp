@@ -67,14 +67,7 @@ ASLCompanionCharacter::ASLCompanionCharacter()
     GetCharacterMovement()->NavAgentProps.bCanFly = true;
     GetCharacterMovement()->bCanWalkOffLedges = true;
     GetCharacterMovement()->bCanWalkOffLedgesWhenCrouching = true;
-
-    /*GetCharacterMovement()->bOrientRotationToMovement = false;  // 이동 방향으로 자동 회전 비활성화
-    GetCharacterMovement()->bUseControllerDesiredRotation = true;  // 컨트롤러가 원하는 회전 사용
-    GetCharacterMovement()->RotationRate = FRotator(0.0f, 360.0f, 0.0f);
-
-    bUseControllerRotationYaw = true;
-    bUseControllerRotationPitch = false;
-    bUseControllerRotationRoll = false;*/
+    
 }
 
 void ASLCompanionCharacter::BeginPlay()

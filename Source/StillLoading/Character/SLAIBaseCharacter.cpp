@@ -517,7 +517,7 @@ void ASLAIBaseCharacter::CharacterHit(AActor* DamageCauser, float DamageAmount, 
         }
 
         HitDirectionVector = LocalHitDirection;
-        SetHitState(true, 1.0f);
+        SetHitState(true, 2.0f);
     }
 
     if (HitEffectComponent)
@@ -1159,13 +1159,25 @@ void ASLAIBaseCharacter::ProcessDeath()
 void ASLAIBaseCharacter::SetHitState(bool bNewIsHit, float AutoResetTime)
 {
 	bIsHit = bNewIsHit;
-    
+
+	if (AIController)
+	{
+		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+		{
+			BlackboardComponent->SetValueAsBool(FName("bIsHit"), bIsHit);
+		}
+	}
+	
 	if (bNewIsHit && AutoResetTime > 0.0f)
 	{
 		FTimerHandle HitResetTimer;
 		GetWorld()->GetTimerManager().SetTimer(HitResetTimer, [this]()
 		{
 			bIsHit = false;
+			if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+			{
+				BlackboardComponent->SetValueAsBool(FName("bIsHit"), false);
+			}
 		}, AutoResetTime, false);
 	}
 }
