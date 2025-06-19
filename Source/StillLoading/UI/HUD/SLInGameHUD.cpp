@@ -22,7 +22,7 @@ void ASLInGameHUD::OnStartedHUD()
 
 	if (IsValid(GM))
 	{
-		GM->OnInProgressObjectiveAdded.AddDynamic(this, &ThisClass::OnAddObjective);
+		GM->OnPrimaryInProgressObjectiveChanged.AddDynamic(this, &ThisClass::OnAddObjective);
 		GM->OnInProgressObjectiveRemoved.AddDynamic(this, &ThisClass::OnRemoveObjective);
 	}
 }
@@ -33,7 +33,7 @@ void ASLInGameHUD::OnAddObjective(USLObjectiveBase* TargetObjective)
 	{
 		FName ObjectiveName = TargetObjective->GetObjectiveName();
 		int32 CompleteCount = TargetObjective->GetObjectiveCompleteCount();
-
+		UE_LOG(LogTemp, Warning, TEXT("Changed Top Objective : %s"), *ObjectiveName.ToString());
 		CurrentObjectiveName = ObjectiveName;
 
 		if (CompleteCount == 1)

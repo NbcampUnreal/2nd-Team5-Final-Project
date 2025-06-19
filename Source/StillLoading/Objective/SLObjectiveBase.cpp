@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SLObjectiveBase.h"
@@ -12,7 +12,7 @@ void USLObjectiveBase::AddObjectiveProgress(const int32 Count)
 	OnObjectiveProgressChanged.Broadcast(ObjectiveProgressCount);
 	if (ObjectiveProgressCount >= ObjectiveCompleteCount && ObjectiveState == ESLObjectiveState::InProgress)
 	{
-		ObjectiveComplete();
+		SetObjectiveState(ESLObjectiveState::Complete);
 	}
 }
 
@@ -24,6 +24,11 @@ void USLObjectiveBase::ObjectiveFail()
 
 void USLObjectiveBase::SetObjectiveState(const ESLObjectiveState InState)
 {
+	if (ObjectiveState == InState)
+	{
+		return;
+	}
+	
 	ObjectiveState = InState;
 	switch (InState)
 	{
@@ -47,10 +52,4 @@ void USLObjectiveBase::SetObjectiveStateDelayed(const ESLObjectiveState InState,
 	{
 		SetObjectiveState(InState);
 	}, DelayTime, false);
-}
-
-void USLObjectiveBase::ObjectiveComplete()
-{
-	ObjectiveState = ESLObjectiveState::Complete;
-	OnObjectiveStateChanged.Broadcast(ObjectiveState);
 }

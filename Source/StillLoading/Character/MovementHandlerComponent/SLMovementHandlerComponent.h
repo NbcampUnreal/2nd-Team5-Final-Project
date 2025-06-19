@@ -7,6 +7,9 @@
 #include "Components/ActorComponent.h"
 #include "SLMovementHandlerComponent.generated.h"
 
+class UNiagaraComponent;
+class UNiagaraSystem;
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API UMovementHandlerComponent : public USLMovementComponentBase
 {
@@ -83,6 +86,12 @@ protected:
 	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
 	UFUNCTION()
 	void FixCharacterVelocity();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
+	TObjectPtr<UNiagaraSystem> EmpoweredShieldEffect;
+
+	UPROPERTY()
+	TObjectPtr<UNiagaraComponent> ActiveShieldEffectComponent;
 
 	UPROPERTY()
 	FVector2D MovementInputAxis = FVector2D::ZeroVector;

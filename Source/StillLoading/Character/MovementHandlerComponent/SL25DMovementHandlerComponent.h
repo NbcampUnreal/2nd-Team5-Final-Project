@@ -60,8 +60,6 @@ protected:
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
 	UFUNCTION()
 	void Move(float AxisValue, EInputActionType ActionType);
-	UFUNCTION()
-	void FaceToMouse();
 
 	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;

@@ -10,14 +10,44 @@ class STILLLOADING_API ASLBasePlayerController : public APlayerController, publi
 {
 	GENERATED_BODY()
 
+	ASLBasePlayerController();
+
 public:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual FGenericTeamId GetGenericTeamId() const override;
 
 	UFUNCTION(BlueprintCallable)
+	void SetDefaultCursor();
+	UFUNCTION(BlueprintCallable)
+	void SetEnemyCursor();
+
+	UFUNCTION(BlueprintCallable)
 	void BindIMC(APawn* InPawn);
 
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Cursor")
+	TSubclassOf<UUserWidget> DefaultCursorWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Cursor")
+	TSubclassOf<UUserWidget> EnemyCursorWidgetClass;
+	
 private:
-	FGenericTeamId playerTeamId;
+	void CheckActorUnderCursor();
+
+	UPROPERTY()
+	FGenericTeamId PlayerTeamId;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> DefaultCursorWidgetInstance;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> EnemyCursorWidgetInstance;
+
+	UPROPERTY()
+	TObjectPtr<AActor> HoveredActor_LastFrame;
+
+	UPROPERTY()
+	FVector2D LastMousePosition;
 };

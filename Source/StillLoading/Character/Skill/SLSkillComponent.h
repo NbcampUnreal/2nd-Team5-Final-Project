@@ -40,4 +40,7 @@ protected:
 private:
 	UFUNCTION()
 	void ActiveSpawnSkill();
+
+	UFUNCTION()
+	void ActiveSpawnSkillTemp();
 };

@@ -18,10 +18,10 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void Activate() override;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void DeActivate() override;
 
 protected:

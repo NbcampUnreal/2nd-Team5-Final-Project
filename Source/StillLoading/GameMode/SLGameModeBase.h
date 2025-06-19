@@ -12,6 +12,7 @@ class ASLGameStateBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInProgressObjectiveAdded, USLObjectiveBase*, Objective);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInProgressObjectiveRemoved, USLObjectiveBase*, Objective);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPrimaryInProgressObjectiveChanged, USLObjectiveBase*, Objective);
 
 UCLASS()
 class STILLLOADING_API ASLGameModeBase : public AGameMode
@@ -31,6 +32,8 @@ public:
 	FOnInProgressObjectiveAdded OnInProgressObjectiveAdded;
 	UPROPERTY(BlueprintAssignable)
 	FOnInProgressObjectiveRemoved OnInProgressObjectiveRemoved;
+	UPROPERTY(BlueprintAssignable)
+	FOnPrimaryInProgressObjectiveChanged OnPrimaryInProgressObjectiveChanged;
 	
 protected:
 	virtual void BeginPlay() override;

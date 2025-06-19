@@ -159,11 +159,18 @@ void ASLPlayerCharacter::ChangeVisibilityWeapons(bool bIsVisible)
 	}
 }
 
-void ASLPlayerCharacter::ResetState() const
+void ASLPlayerCharacter::ResetState()
 {
 	if (CashedPlayerState)
 	{
 		CashedPlayerState->ResetState();
+		SetPrimaryState(TAG_Character_Movement_Idle);
+		CachedMontageComponent->StopAllMontages(0.2);
+		
+		if (UMovementHandlerComponent* MoveComp = FindComponentByClass<UMovementHandlerComponent>())
+		{
+			MoveComp->ToggleCameraZoom(true);
+		}
 	}
 }
 
@@ -186,6 +193,7 @@ void ASLPlayerCharacter::DisableLockOnMode()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	RemoveSecondaryState(TAG_Character_LockOn);
+	RemoveSecondaryState(TAG_Character_PrepareLockOn);
 }
 
 void ASLPlayerCharacter::Landed(const FHitResult& Hit)
@@ -212,6 +220,7 @@ void ASLPlayerCharacter::OnPlayerHpChanged(float MaxHp, const float CurrentHp)
 		if (UMovementHandlerComponent* MoveComp = FindComponentByClass<UMovementHandlerComponent>())
 		{
 			MoveComp->DisableLock();
+			MoveComp->ToggleCameraZoom(false, 1000.0f);
 		}
 	}
 }

@@ -60,7 +60,7 @@ public:
 	void ChangeVisibilityWeapons(bool bIsVisible);
 
 	UFUNCTION(BlueprintCallable)
-	void ResetState() const;
+	void ResetState();
 
 	// Skill
 	UFUNCTION()

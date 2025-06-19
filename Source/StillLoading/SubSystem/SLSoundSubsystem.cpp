@@ -7,6 +7,8 @@
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "SubSystem/DataAssets/SLSoundDataAsset.h"
+#include "Sound/SoundClass.h"
+#include "Sound/SoundMix.h"
 
 void USLSoundSubsystem::PlayUISound(ESLUISoundType SoundType)
 {
@@ -23,7 +25,7 @@ void USLSoundSubsystem::PlayUISound(ESLUISoundType SoundType)
 
 	if (!IsValid(UIAudioComp))
 	{
-		UIAudioComp = UGameplayStatics::CreateSound2D(GetGameInstance(), SoundSource, EffectVolume);
+		UIAudioComp = UGameplayStatics::CreateSound2D(GetGameInstance(), SoundSource, 1.0f);
 		UIAudioComp->bAutoDestroy = false;
 	}
 	
@@ -41,8 +43,10 @@ void USLSoundSubsystem::StopUISound()
 
 void USLSoundSubsystem::PlayBgmSound(ESLBgmSoundType SoundType)
 {
-	CheckValidOfSoundDataAsset();
+	SetBgmVolume(BgmVolume);
+	SetEffectVolume(EffectVolume);
 
+	CheckValidOfSoundDataAsset();
 	USoundBase* SoundSource = SoundDataAsset->GetBgmSoundSource(SoundType);
 
 	if (!IsValid(SoundSource))
@@ -54,7 +58,7 @@ void USLSoundSubsystem::PlayBgmSound(ESLBgmSoundType SoundType)
 
 	if (!IsValid(BgmAudioComp))
 	{
-		BgmAudioComp = UGameplayStatics::CreateSound2D(GetGameInstance(), SoundSource, BgmVolume);
+		BgmAudioComp = UGameplayStatics::CreateSound2D(GetGameInstance(), SoundSource, 1.0f);
 		BgmAudioComp->bAutoDestroy = false;
 	}
 
@@ -81,49 +85,45 @@ void USLSoundSubsystem::PlayBattleSound(EBattleSoundType SoundType, const FVecto
 		return;
 	}
 	
-	UGameplayStatics::PlaySoundAtLocation(GetWorld(), SoundSource, Location, FRotator::ZeroRotator, EffectVolume);
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), SoundSource, Location, FRotator::ZeroRotator, 1.0f);
 }
 
 void USLSoundSubsystem::SetBgmVolume(float VolumeValue)
 {
-	BgmVolume = FMath::Clamp(VolumeValue, 0.0f, 1.0f);
+	BgmVolume = VolumeValue;
+	CheckValidOfSoundMix();
+	USoundClass* BGMSoundClass = SoundSettings->BGMSoundClass.LoadSynchronous();
 
-	if (IsValid(BgmAudioComp))
+	if (IsValid(BGMSoundClass))
 	{
-		BgmAudioComp->SetVolumeMultiplier(BgmVolume);
-
-		if (FMath::IsNearlyZero(BgmVolume))
-		{
-			BgmAudioComp->SetPaused(true);
-			return;
-		}
-
-		if (BgmAudioComp->bIsPaused)
-		{
-			BgmAudioComp->SetPaused(false);
-		}
+		UGameplayStatics::SetSoundMixClassOverride(this, SoundMix, BGMSoundClass, VolumeValue, 1.0f, 0.0f);
+		UGameplayStatics::PushSoundMixModifier(this, SoundMix);
 	}
 }
 
 void USLSoundSubsystem::SetEffectVolume(float VolumeValue)
 {
-	EffectVolume = FMath::Clamp(VolumeValue, 0.0f, 1.0f);
+	EffectVolume = VolumeValue;
+	CheckValidOfSoundMix();
+	USoundClass* SFXSoundClass = SoundSettings->EffectSoundClass.LoadSynchronous();
 
-	if (IsValid(UIAudioComp))
+	if (IsValid(SFXSoundClass))
 	{
-		UIAudioComp->SetVolumeMultiplier(EffectVolume);
-
-		if (FMath::IsNearlyZero(EffectVolume))
-		{
-			UIAudioComp->SetPaused(true);
-			return;
-		}
-
-		if (UIAudioComp->bIsPaused)
-		{
-			UIAudioComp->SetPaused(false);
-		}
+		UGameplayStatics::SetSoundMixClassOverride(this, SoundMix, SFXSoundClass, VolumeValue, 1.0f, 0.0f);
+		UGameplayStatics::PushSoundMixModifier(this, SoundMix);
 	}
+}
+
+void USLSoundSubsystem::CheckValidOfSoundMix()
+{
+	if (IsValid(SoundMix))
+	{
+		return;
+	}
+
+	CheckValidOfSoundSettings();
+	SoundMix = SoundSettings->SoundMix.LoadSynchronous();
+	checkf(IsValid(SoundMix), TEXT("SoundMix is invalid"));
 }
 
 void USLSoundSubsystem::CheckValidOfSoundDataAsset()
