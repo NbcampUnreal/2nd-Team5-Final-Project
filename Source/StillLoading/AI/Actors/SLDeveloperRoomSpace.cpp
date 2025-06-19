@@ -1,11 +1,12 @@
 #include "SLDeveloperRoomSpace.h"
+
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/ChildActorComponent.h"
+#include "Interactable/Object/SLInteractableBreakable.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacter.h"
-#include "Character/BattleComponent/BattleComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "NiagaraFunctionLibrary.h"
 
 ASLDeveloperRoomSpace::ASLDeveloperRoomSpace()
 {
@@ -22,22 +23,13 @@ ASLDeveloperRoomSpace::ASLDeveloperRoomSpace()
     NPCSpawnAreaComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     NPCSpawnAreaComponent->SetVisibility(true);
 
-    // Escape Wall 컴포넌트들 생성
-    EscapeWallMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EscapeWallMeshComponent"));
-    EscapeWallMeshComponent->SetupAttachment(RootComponent);
-
-    EscapeWallCollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("EscapeWallCollisionComponent"));
-    EscapeWallCollisionComponent->SetupAttachment(EscapeWallMeshComponent);
-    EscapeWallCollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
+    EscapeWallChildActorComponent = CreateDefaultSubobject<UChildActorComponent>(TEXT("EscapeWallChildActorComponent"));
+    EscapeWallChildActorComponent->SetupAttachment(RootComponent);
 
     PlayerTeleportLocation = FVector::ZeroVector;
-    EscapeWallLocation = FVector(500.0f, 0.0f, 0.0f);
-    EscapeWallRotation = FRotator::ZeroRotator;
-    EscapeWallScale = FVector(1.0f, 1.0f, 1.0f);
-    EscapeWallMaxHp = 10;
-    EscapeWallCurrentHp = EscapeWallMaxHp;
+    EscapeWallActor = nullptr;
     bIsRoomActive = false;
-    bEscapeWallDestroyed = false;
+    bShowEscapeWallOnStart = true;
 }
 
 void ASLDeveloperRoomSpace::BeginPlay()
@@ -54,33 +46,29 @@ void ASLDeveloperRoomSpace::BeginPlay()
 
 void ASLDeveloperRoomSpace::SetupEscapeWall()
 {
-    if (EscapeWallMeshComponent)
+    if (EscapeWallChildActorComponent)
     {
-        // 메시 설정
-        if (EscapeWallMesh)
+        AActor* ChildActor = EscapeWallChildActorComponent->GetChildActor();
+        EscapeWallActor = Cast<ASLInteractableBreakable>(ChildActor);
+
+        if (IsValid(EscapeWallActor))
         {
-            EscapeWallMeshComponent->SetStaticMesh(EscapeWallMesh);
+            EscapeWallActor->OnObjectBreaked.AddDynamic(this, &ASLDeveloperRoomSpace::OnEscapeWallDestroyed);
+            
+            if (bShowEscapeWallOnStart)
+            {
+                EscapeWallActor->SetActorHiddenInGame(false);
+                EscapeWallActor->SetActorEnableCollision(true);
+                EscapeWallActor->SetActorTickEnabled(true);
+            }
+            else
+            {
+                EscapeWallActor->SetActorHiddenInGame(true);
+                EscapeWallActor->SetActorEnableCollision(false);
+                EscapeWallActor->SetActorTickEnabled(false);
+            }
         }
-
-        // 위치, 회전, 스케일 설정
-        EscapeWallMeshComponent->SetRelativeLocation(EscapeWallLocation);
-        EscapeWallMeshComponent->SetRelativeRotation(EscapeWallRotation);
-        EscapeWallMeshComponent->SetRelativeScale3D(EscapeWallScale);
-
-        // 초기에는 숨김
-        EscapeWallMeshComponent->SetVisibility(false);
-        EscapeWallMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }
-
-    if (EscapeWallCollisionComponent)
-    {
-        EscapeWallCollisionComponent->OnComponentHit.AddDynamic(this, &ASLDeveloperRoomSpace::OnEscapeWallHit);
-        EscapeWallCollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    }
-
-    // HP 초기화
-    EscapeWallCurrentHp = EscapeWallMaxHp;
-    bEscapeWallDestroyed = false;
 }
 
 void ASLDeveloperRoomSpace::ActivateRoom()
@@ -93,23 +81,12 @@ void ASLDeveloperRoomSpace::ActivateRoom()
         RoomMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     }
 
-    // Escape Wall 활성화
-    if (EscapeWallMeshComponent)
+    if (IsValid(EscapeWallActor))
     {
-        EscapeWallMeshComponent->SetVisibility(true);
-        EscapeWallMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        EscapeWallActor->SetActorHiddenInGame(false);
+        EscapeWallActor->SetActorEnableCollision(true);
+        EscapeWallActor->SetActorTickEnabled(true);
     }
-
-    if (EscapeWallCollisionComponent)
-    {
-        EscapeWallCollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    }
-
-    // HP 리셋
-    EscapeWallCurrentHp = EscapeWallMaxHp;
-    bEscapeWallDestroyed = false;
-
-    UE_LOG(LogTemp, Log, TEXT("Developer Room activated with escape wall"));
 }
 
 void ASLDeveloperRoomSpace::DeactivateRoom()
@@ -117,85 +94,18 @@ void ASLDeveloperRoomSpace::DeactivateRoom()
     bIsRoomActive = false;
     CleanupNPCs();
 
-    // Escape Wall 비활성화
-    if (EscapeWallMeshComponent)
+    if (IsValid(EscapeWallActor))
     {
-        EscapeWallMeshComponent->SetVisibility(false);
-        EscapeWallMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    }
-
-    if (EscapeWallCollisionComponent)
-    {
-        EscapeWallCollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    }
-
-    UE_LOG(LogTemp, Log, TEXT("Developer Room deactivated"));
-}
-
-void ASLDeveloperRoomSpace::OnEscapeWallHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
-{
-    if (bEscapeWallDestroyed || !bIsRoomActive)
-    {
-        return;
-    }
-
-    // 플레이어의 공격인지 확인
-    if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(OtherActor))
-    {
-        EscapeWallCurrentHp--;
-        UE_LOG(LogTemp, Log, TEXT("Escape wall hit! HP remaining: %d"), EscapeWallCurrentHp);
-
-        if (EscapeWallCurrentHp <= 0)
-        {
-            DestroyEscapeWall();
-        }
-    }
-    // 또는 BattleComponent를 통한 공격 감지도 가능
-    else if (UBattleComponent* BattleComp = OtherActor->FindComponentByClass<UBattleComponent>())
-    {
-        EscapeWallCurrentHp--;
-        UE_LOG(LogTemp, Log, TEXT("Escape wall hit by battle component! HP remaining: %d"), EscapeWallCurrentHp);
-
-        if (EscapeWallCurrentHp <= 0)
-        {
-            DestroyEscapeWall();
-        }
+        EscapeWallActor->SetActorHiddenInGame(true);
+        EscapeWallActor->SetActorEnableCollision(false);
+        EscapeWallActor->SetActorTickEnabled(false);
     }
 }
 
-void ASLDeveloperRoomSpace::DestroyEscapeWall()
+void ASLDeveloperRoomSpace::OnEscapeWallDestroyed()
 {
-    if (bEscapeWallDestroyed)
-    {
-        return;
-    }
-
-    bEscapeWallDestroyed = true;
-
-    // 파괴 이펙트 재생
-    if (EscapeWallDestroyEffect && EscapeWallMeshComponent)
-    {
-        UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-            GetWorld(),
-            EscapeWallDestroyEffect,
-            EscapeWallMeshComponent->GetComponentLocation(),
-            EscapeWallMeshComponent->GetComponentRotation()
-        );
-    }
-
-    // 벽 숨기기
-    if (EscapeWallMeshComponent)
-    {
-        EscapeWallMeshComponent->SetVisibility(false);
-        EscapeWallMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    }
-
-    if (EscapeWallCollisionComponent)
-    {
-        EscapeWallCollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    }
-
-    UE_LOG(LogTemp, Log, TEXT("Escape wall destroyed - broadcasting room escape"));
+    RemoveAllNPCWeapons();
+    
     OnRoomEscapeWallDestroyed.Broadcast(this);
 }
 
@@ -213,8 +123,6 @@ void ASLDeveloperRoomSpace::SpawnAllNPCs()
     {
         SpawnNPCsFromInfo(SpawnInfo);
     }
-
-    UE_LOG(LogTemp, Log, TEXT("Spawned total %d NPCs in room"), SpawnedNPCs.Num());
 }
 
 void ASLDeveloperRoomSpace::TeleportPlayerToRoom()
@@ -225,7 +133,6 @@ void ASLDeveloperRoomSpace::TeleportPlayerToRoom()
         {
             FVector TeleportLocation = GetActorLocation() + PlayerTeleportLocation;
             PlayerPawn->SetActorLocation(TeleportLocation);
-            UE_LOG(LogTemp, Log, TEXT("Player teleported to room at %s"), *TeleportLocation.ToString());
         }
     }
 }
@@ -252,7 +159,6 @@ void ASLDeveloperRoomSpace::OnPlayerOverlapBegin(UPrimitiveComponent* Overlapped
 {
     if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(OtherActor))
     {
-        UE_LOG(LogTemp, Log, TEXT("Player entered room"));
         OnPlayerEnteredRoom.Broadcast(this);
     }
 }
@@ -262,7 +168,6 @@ void ASLDeveloperRoomSpace::OnNPCDeath(ASLAIBaseCharacter* DeadNPC)
     if (SpawnedNPCs.Contains(DeadNPC))
     {
         SpawnedNPCs.Remove(DeadNPC);
-        UE_LOG(LogTemp, Log, TEXT("NPC died. Remaining: %d"), SpawnedNPCs.Num());
     }
 }
 
@@ -292,10 +197,7 @@ void ASLDeveloperRoomSpace::SpawnNPCsFromInfo(const FPhase2NPCSpawnInfo& SpawnIn
         {
             SpawnedNPC->OnCharacterDeath.AddUObject(this, &ASLDeveloperRoomSpace::OnNPCDeath);
             SpawnedNPCs.Add(SpawnedNPC);
-
-            UE_LOG(LogTemp, Log, TEXT("Spawned NPC: %s at %s"), 
-                *SpawnedNPC->GetClass()->GetName(), 
-                *SpawnLocation.ToString());
+            
         }
     }
 }
@@ -330,4 +232,16 @@ FVector ASLDeveloperRoomSpace::GetRandomLocationInSpawnArea()
     );
 
     return BoxCenter + RandomOffset;
+}
+
+void ASLDeveloperRoomSpace::RemoveAllNPCWeapons()
+{
+    for (ASLAIBaseCharacter* NPC : SpawnedNPCs)
+    {
+        if (IsValid(NPC))
+        {
+            NPC->UnequipWeapon();
+        }
+    }
+    
 }

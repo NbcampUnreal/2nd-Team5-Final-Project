@@ -7,6 +7,7 @@
 #include "Engine/Engine.h"
 #include "TimerManager.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Character/SLAIBaseCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/BattleComponent/BattleComponent.h"
@@ -451,6 +452,15 @@ void ASLLaunchableWall::OnWallPartHit(UPrimitiveComponent* HitComponent, AActor*
 		return;
 	}
 
+	// 죽은 AI 무시
+	if (ASLAIBaseCharacter* AICharacter = Cast<ASLAIBaseCharacter>(OtherActor))
+	{
+		if (AICharacter->GetIsDead())
+		{
+			return;
+		}
+	}
+
 	int32 WallPartIndex = -1;
 	for (int32 i = 0; i < WallParts.Num(); i++)
 	{
@@ -461,32 +471,24 @@ void ASLLaunchableWall::OnWallPartHit(UPrimitiveComponent* HitComponent, AActor*
 		}
 	}
 
-	if (WallPartIndex == -1 || !WallPartStates.IsValidIndex(WallPartIndex))
+	if (WallPartIndex == -1 || !WallPartStates.IsValidIndex(WallPartIndex) || WallPartStates[WallPartIndex] != EWallPartState::Launched)
 	{
 		return;
 	}
 
-	if (WallPartStates[WallPartIndex] != EWallPartState::Launched)
-	{
-		return;
-	}
-
+	// 플레이어 충돌
 	if (ASLPlayerCharacterBase* PlayerCharacter = Cast<ASLPlayerCharacterBase>(OtherActor))
 	{
 		ApplyDamageToPlayer(OtherActor, Hit, WallPartIndex);
 		PlayCharacterHitEffects(Hit.ImpactPoint, OtherActor);
-		DestroyWallPart(WallPartIndex);
-		return;
 	}
-
-	if (OtherComponent && 
-		(OtherComponent->GetCollisionObjectType() == ECC_WorldStatic || 
-		 OtherComponent->GetCollisionObjectType() == ECC_WorldDynamic))
+	// 다른 모든 충돌
+	else
 	{
 		PlayGroundHitEffects(Hit.ImpactPoint);
-		DestroyWallPart(WallPartIndex);
-		return;
 	}
+
+	DestroyWallPart(WallPartIndex);
 }
 
 void ASLLaunchableWall::SetupWallParts()
@@ -498,7 +500,7 @@ void ASLLaunchableWall::SetupWallParts()
 	}
 
 	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
-	
+    
 	for (int32 i = 0; i < ActiveParts && i < WallParts.Num(); i++)
 	{
 		if (WallParts[i])
@@ -508,7 +510,10 @@ void ASLLaunchableWall::SetupWallParts()
 			{
 				WallParts[i]->SetStaticMesh(MeshToUse);
 			}
-			
+            
+			// 충돌 설정
+			SetupWallPartCollisions(WallParts[i]);
+            
 			if (!WallParts[i]->OnComponentHit.IsBound())
 			{
 				WallParts[i]->OnComponentHit.AddDynamic(this, &ASLLaunchableWall::OnWallPartHit);
@@ -517,7 +522,7 @@ void ASLLaunchableWall::SetupWallParts()
 			WallPartStates[i] = EWallPartState::Inactive;
 		}
 	}
-	
+    
 	UpdateWallPartsVisibility();
 	RefreshWallLayout();
 }
@@ -959,4 +964,40 @@ UStaticMesh* ASLLaunchableWall::GetMeshForPart(int32 Index) const
 	}
 	
 	return DefaultWallMesh;
+}
+
+void ASLLaunchableWall::SetupWallPartCollisions(UStaticMeshComponent* WallPart)
+{
+	if (!WallPart)
+	{
+		return;
+	}
+    
+	WallPart->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WallPart->SetCollisionObjectType(ECC_WorldDynamic);
+	WallPart->SetCollisionResponseToAllChannels(ECR_Block);
+	WallPart->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+}
+
+bool ASLLaunchableWall::ShouldIgnoreCollision(AActor* OtherActor) const
+{
+	if (!OtherActor)
+	{
+		return true;
+	}
+    
+	if (ASLAIBaseCharacter* AICharacter = Cast<ASLAIBaseCharacter>(OtherActor))
+	{
+		if (AICharacter->GetIsDead())
+		{
+			return true;
+		}
+	}
+    
+	if (OtherActor == this)
+	{
+		return true;
+	}
+    
+	return false;
 }

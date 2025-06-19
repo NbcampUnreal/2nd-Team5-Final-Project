@@ -345,6 +345,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Hit")
 	virtual void SetHitState(bool bNewIsHit, float AutoResetTime = 0.5f);
 
+	void SetupBoxCollision();
+	void TransferCapsuleSettingsToBox();
+	
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<ASLBaseAIController> AIController;
@@ -387,6 +390,9 @@ protected:
 	TArray<TObjectPtr<UAnimMontage>> DeathMontages;
 	
 	// --- Collision Components ---
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBoxComponent> BoxCollisionComponent;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> LeftHandCollisionBox;
 

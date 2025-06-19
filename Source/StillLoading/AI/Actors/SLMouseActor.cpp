@@ -33,6 +33,7 @@ ASLMouseActor::ASLMouseActor()
 	OrbitRadius = 300.0f;
 	OrbitHeight = 400.0f;
 	OrbitSpeed = 90.0f;
+	MoveToOrbitSpeed = 500.0f;
 	DescentSpeed = 800.0f;
 	GrabMoveSpeed = 600.0f;
 	GrabDistance = 500.0f;
@@ -46,9 +47,10 @@ ASLMouseActor::ASLMouseActor()
 
 	// Runtime values
 	CurrentState = EMouseActorState::Inactive;
-	CurrentHealth = MaxHealth;
+	CurrentHealth = 0.0f;
 	TargetPlayer = nullptr;
 	GrabTargetLocation = FVector::ZeroVector;
+	MoveToOrbitTargetLocation = FVector::ZeroVector;
 	bCanGrab = true;
 	OrbitAngle = 0.0f;
 	OrbitCenter = FVector::ZeroVector;
@@ -93,7 +95,6 @@ void ASLMouseActor::Tick(float DeltaTime)
 		return;
 	}
 
-	// Find player if we don't have one
 	if (!IsValid(TargetPlayer))
 	{
 		TargetPlayer = FindPlayerCharacter();
@@ -103,9 +104,12 @@ void ASLMouseActor::Tick(float DeltaTime)
 		}
 	}
 
-	// Update behavior based on current state
 	switch (CurrentState)
 	{
+	case EMouseActorState::MovingToOrbit:
+		UpdateMoveToOrbitMovement(DeltaTime);
+		break;
+		
 	case EMouseActorState::Orbiting:
 		UpdateOrbitMovement(DeltaTime);
 		if (CanGrabPlayer())
@@ -113,7 +117,7 @@ void ASLMouseActor::Tick(float DeltaTime)
 			SetMouseActorState(EMouseActorState::Descending);
 		}
 		break;
-		
+        
 	case EMouseActorState::Descending:
 		UpdateDescentMovement(DeltaTime);
 		if (IsPlayerInRange())
@@ -121,13 +125,12 @@ void ASLMouseActor::Tick(float DeltaTime)
 			StartGrabPlayer();
 		}
 		break;
-		
+        
 	case EMouseActorState::Grabbing:
 		UpdateGrabMovement(DeltaTime);
 		break;
 	}
 
-	// Update mesh rotation to look at player
 	UpdateMeshRotation(DeltaTime);
 }
 
@@ -138,23 +141,25 @@ void ASLMouseActor::StartOrbiting()
 		return;
 	}
 
-	SetMouseActorState(EMouseActorState::Orbiting);
 	TargetPlayer = FindPlayerCharacter();
 	
-	if (IsValid(TargetPlayer))
+	if (!IsValid(TargetPlayer))
 	{
-		// Set initial orbit center and position
-		OrbitCenter = TargetPlayer->GetActorLocation();
-		OrbitAngle = 0.0f;
-		
-		// Position mouse actor above and to the side of player
-		FVector InitialOrbitPosition = OrbitCenter;
-		InitialOrbitPosition.X += OrbitRadius;
-		InitialOrbitPosition.Z += OrbitHeight;
-		SetActorLocation(InitialOrbitPosition);
+		UE_LOG(LogTemp, Warning, TEXT("Mouse Actor: No valid player found for orbiting"));
+		return;
 	}
+
+	// Set orbit center and calculate target orbit position
+	OrbitCenter = TargetPlayer->GetActorLocation();
+	OrbitAngle = 0.0f;
 	
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor started orbiting above player"));
+	// Calculate the target orbit position
+	MoveToOrbitTargetLocation = CalculateOrbitPosition();
+	
+	// Start moving to orbit position
+	SetMouseActorState(EMouseActorState::MovingToOrbit);
+	
+	UE_LOG(LogTemp, Log, TEXT("Mouse Actor moving to orbit position from current location"));
 }
 
 void ASLMouseActor::StopOrbiting()
@@ -258,26 +263,6 @@ EMouseActorState ASLMouseActor::GetCurrentState() const
 	return CurrentState;
 }
 
-void ASLMouseActor::TakeDamage(float DamageAmount)
-{
-	if (CurrentState == EMouseActorState::Destroyed)
-	{
-		return;
-	}
-
-	CurrentHealth -= DamageAmount;
-
-	if (CurrentHealth <= 0.0f)
-	{
-		DestroyMouseActor();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("Mouse Actor damaged: %f, Health remaining: %f"), 
-			DamageAmount, CurrentHealth);
-	}
-}
-
 void ASLMouseActor::SetOrbitSettings(float NewOrbitRadius, float NewOrbitHeight, float NewOrbitSpeed)
 {
 	OrbitRadius = FMath::Max(0.0f, NewOrbitRadius);
@@ -312,7 +297,22 @@ void ASLMouseActor::OnCollisionHit(UPrimitiveComponent* HitComponent, AActor* Ot
 
 void ASLMouseActor::OnBattleComponentHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType)
 {
-	TakeDamage(DamageAmount);
+	if (CurrentState == EMouseActorState::Destroyed)
+	{
+		return;
+	}
+
+	CurrentHealth -= DamageAmount;
+
+	if (CurrentHealth <= 0.0f)
+	{
+		DestroyMouseActor();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Mouse Actor damaged: %f, Health remaining: %f"), 
+			DamageAmount, CurrentHealth);
+	}
 }
 
 void ASLMouseActor::UpdateOrbitMovement(float DeltaTime)
@@ -322,23 +322,15 @@ void ASLMouseActor::UpdateOrbitMovement(float DeltaTime)
 		return;
 	}
 
-	// Update orbit center to follow player
 	OrbitCenter = TargetPlayer->GetActorLocation();
 	
-	// Update orbit angle
 	OrbitAngle += OrbitSpeed * DeltaTime;
 	if (OrbitAngle >= 360.0f)
 	{
 		OrbitAngle -= 360.0f;
 	}
 
-	// Calculate new position in orbit
-	float RadianAngle = FMath::DegreesToRadians(OrbitAngle);
-	FVector OrbitPosition = OrbitCenter;
-	OrbitPosition.X += FMath::Cos(RadianAngle) * OrbitRadius;
-	OrbitPosition.Y += FMath::Sin(RadianAngle) * OrbitRadius;
-	OrbitPosition.Z += OrbitHeight;
-
+	FVector OrbitPosition = CalculateOrbitPosition();
 	SetActorLocation(OrbitPosition);
 }
 
@@ -374,12 +366,10 @@ void ASLMouseActor::UpdateGrabMovement(float DeltaTime)
 		return;
 	}
 
-	// Move towards grab target location
 	FVector MovementDelta = DirectionToTarget * GrabMoveSpeed * DeltaTime;
 	FVector NewLocation = CurrentLocation + MovementDelta;
 	SetActorLocation(NewLocation);
 
-	// Check if we've reached the target location
 	float DistanceToTarget = FVector::Dist(CurrentLocation, GrabTargetLocation);
 	if (DistanceToTarget <= 50.0f)
 	{
@@ -397,20 +387,50 @@ void ASLMouseActor::UpdateMeshRotation(float DeltaTime)
 	FVector MeshLocation = MouseMeshComponent->GetComponentLocation();
 	FVector PlayerLocation = TargetPlayer->GetActorLocation();
 	
-	// Calculate direction to player
 	FVector DirectionToPlayer = (PlayerLocation - MeshLocation).GetSafeNormal();
 	
-	// Create rotation that tilts the mesh 45 degrees toward the player
 	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(MeshLocation, PlayerLocation);
 	
-	// Add 45 degree tilt (pitch down toward player)
 	LookAtRotation.Pitch -= 45.0f;
-	LookAtRotation.Roll = 90.0f;
-	// Smoothly interpolate to the target rotation
+	
 	FRotator CurrentRotation = MouseMeshComponent->GetComponentRotation();
 	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, LookAtRotation, DeltaTime, 3.0f);
 	
 	MouseMeshComponent->SetWorldRotation(NewRotation);
+}
+
+void ASLMouseActor::UpdateMoveToOrbitMovement(float DeltaTime)
+{
+	if (!IsValid(TargetPlayer))
+	{
+		return;
+	}
+
+	// Update orbit center and target position based on current player location
+	OrbitCenter = TargetPlayer->GetActorLocation();
+	MoveToOrbitTargetLocation = CalculateOrbitPosition();
+
+	FVector CurrentLocation = GetActorLocation();
+	FVector DirectionToTarget = (MoveToOrbitTargetLocation - CurrentLocation).GetSafeNormal();
+	
+	if (DirectionToTarget.IsZero())
+	{
+		SetMouseActorState(EMouseActorState::Orbiting);
+		return;
+	}
+
+	// Move towards target orbit position
+	FVector MovementDelta = DirectionToTarget * MoveToOrbitSpeed * DeltaTime;
+	FVector NewLocation = CurrentLocation + MovementDelta;
+	SetActorLocation(NewLocation);
+
+	// Check if we've reached the target orbit position
+	float DistanceToTarget = FVector::Dist(CurrentLocation, MoveToOrbitTargetLocation);
+	if (DistanceToTarget <= 50.0f)
+	{
+		SetMouseActorState(EMouseActorState::Orbiting);
+		UE_LOG(LogTemp, Log, TEXT("Mouse Actor reached orbit position, starting to orbit"));
+	}
 }
 
 void ASLMouseActor::StartGrabPlayer()
@@ -423,23 +443,19 @@ void ASLMouseActor::StartGrabPlayer()
 	SetMouseActorState(EMouseActorState::Grabbing);
 	bCanGrab = false;
 
-	// Calculate grab target location (high in the air, away from current position)
 	FVector CurrentLocation = GetActorLocation();
 	FVector DirectionFromPlayer = (CurrentLocation - TargetPlayer->GetActorLocation()).GetSafeNormal();
 	GrabTargetLocation = CurrentLocation + (DirectionFromPlayer * GrabDistance);
 	GrabTargetLocation.Z += GrabHeight;
 
-	// Attach player to mouse actor
 	TargetPlayer->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 	TargetPlayer->CharacterDragged(true);
 	
-	// Disable player movement while grabbed
 	if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
 	{
 		MovementComp->DisableMovement();
 	}
 
-	// Play grab effects
 	if (IsValid(GrabEffect) && IsValid(GetWorld()))
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
@@ -459,7 +475,6 @@ void ASLMouseActor::StartGrabPlayer()
 		);
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor grabbed player during descent"));
 }
 
 void ASLMouseActor::CompleteGrabPlayer()
@@ -469,24 +484,20 @@ void ASLMouseActor::CompleteGrabPlayer()
 		return;
 	}
 
-	// Detach player from mouse actor
 	if (IsValid(TargetPlayer))
 	{
 		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		TargetPlayer->CharacterDragged(false);
-		// Re-enable player movement
 		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
 		{
 			MovementComp->SetDefaultMovementMode();
 		}
 	}
 
-	// Temporarily disable collision to prevent immediate re-grab
 	if (IsValid(CollisionComponent))
 	{
 		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		
-		// Re-enable collision after delay
 		GetWorldTimerManager().SetTimer(
 			CollisionTimerHandle,
 			[this]()
@@ -494,7 +505,6 @@ void ASLMouseActor::CompleteGrabPlayer()
 				if (IsValid(CollisionComponent))
 				{
 					CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-					UE_LOG(LogTemp, Log, TEXT("Mouse Actor collision re-enabled"));
 				}
 			},
 			CollisionDisableTime,
@@ -502,40 +512,30 @@ void ASLMouseActor::CompleteGrabPlayer()
 		);
 	}
 
-	// Apply damage to player
 	ApplyGrabDamage();
 
-	// Start grab cooldown
 	float RandomCooldown = GetRandomGrabCooldown();
 	GetWorldTimerManager().SetTimer(
 		GrabCooldownTimerHandle,
 		[this]()
 		{
 			bCanGrab = true;
-			UE_LOG(LogTemp, Log, TEXT("Mouse Actor grab cooldown finished"));
 		},
 		RandomCooldown,
 		false
 	);
-
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor grab cooldown started: %.1f seconds"), RandomCooldown);
-
-	// Return to orbiting state
+	
 	SetMouseActorState(EMouseActorState::Orbiting);
 	
-	// Reset orbit position above player
 	if (IsValid(TargetPlayer))
 	{
 		OrbitCenter = TargetPlayer->GetActorLocation();
 		OrbitAngle = 0.0f;
 		
-		FVector OrbitPosition = OrbitCenter;
-		OrbitPosition.X += OrbitRadius;
-		OrbitPosition.Z += OrbitHeight;
+		FVector OrbitPosition = CalculateOrbitPosition();
 		SetActorLocation(OrbitPosition);
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor completed grab and returned to orbiting"));
 }
 
 void ASLMouseActor::ApplyGrabDamage()
@@ -557,7 +557,6 @@ void ASLMouseActor::ApplyGrabDamage()
 		
 		PlayerBattleComp->ReceiveHitResult(GrabDamage, this, HitResult, EAttackAnimType::AAT_AISpecial);
 		
-		UE_LOG(LogTemp, Log, TEXT("Mouse Actor applied grab damage: %f"), GrabDamage);
 	}
 }
 
@@ -566,7 +565,6 @@ void ASLMouseActor::SetMouseActorState(EMouseActorState NewState)
 	if (CurrentState != NewState)
 	{
 		CurrentState = NewState;
-		UE_LOG(LogTemp, Log, TEXT("Mouse Actor state changed to: %d"), (int32)NewState);
 	}
 }
 
@@ -611,4 +609,15 @@ bool ASLMouseActor::CanGrabPlayer() const
 float ASLMouseActor::GetRandomGrabCooldown() const
 {
 	return FMath::FRandRange(GrabCooldownMin, GrabCooldownMax);
+}
+
+FVector ASLMouseActor::CalculateOrbitPosition() const
+{
+	float RadianAngle = FMath::DegreesToRadians(OrbitAngle);
+	FVector OrbitPosition = OrbitCenter;
+	OrbitPosition.X += FMath::Cos(RadianAngle) * OrbitRadius;
+	OrbitPosition.Y += FMath::Sin(RadianAngle) * OrbitRadius;
+	OrbitPosition.Z += OrbitHeight;
+	
+	return OrbitPosition;
 }

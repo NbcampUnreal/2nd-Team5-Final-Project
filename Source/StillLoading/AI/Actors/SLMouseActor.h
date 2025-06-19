@@ -19,6 +19,7 @@ enum class EMouseActorState : uint8
 	Orbiting	UMETA(DisplayName = "Orbiting"),
 	Descending	UMETA(DisplayName = "Descending"),
 	Grabbing	UMETA(DisplayName = "Grabbing"),
+	MovingToOrbit	UMETA(DisplayName = "Moving To Orbit"),
 	Destroyed	UMETA(DisplayName = "Destroyed")
 };
 
@@ -43,14 +44,11 @@ public:
 	EMouseActorState GetCurrentState() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void TakeDamage(float DamageAmount);
-
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
 	void SetOrbitSettings(float NewOrbitRadius, float NewOrbitHeight, float NewOrbitSpeed);
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
 	void SetGrabSettings(float NewGrabDistance, float NewGrabHeight, float NewGrabDamage, float NewGrabCooldownMin, float NewGrabCooldownMax);
-
+	
 	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
 	FSLOnMouseActorDestroyed OnMouseActorDestroyed;
 
@@ -68,6 +66,7 @@ protected:
 	void UpdateDescentMovement(float DeltaTime);
 	void UpdateGrabMovement(float DeltaTime);
 	void UpdateMeshRotation(float DeltaTime);
+	void UpdateMoveToOrbitMovement(float DeltaTime);
 	void StartGrabPlayer();
 	void CompleteGrabPlayer();
 	void ApplyGrabDamage();
@@ -76,7 +75,8 @@ protected:
 	bool IsPlayerInRange() const;
 	float GetRandomGrabCooldown() const;
 	bool CanGrabPlayer() const;
-
+	FVector CalculateOrbitPosition() const;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> RootSceneComponent;
 
@@ -97,6 +97,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit Settings")
 	float OrbitSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit Settings")
+	float MoveToOrbitSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Settings")
 	float DescentSpeed;
@@ -139,12 +142,13 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TObjectPtr<USoundBase> DestroySound;
-
+	
 private:
 	EMouseActorState CurrentState;
 	float CurrentHealth;
 	TObjectPtr<ASLPlayerCharacter> TargetPlayer;
 	FVector GrabTargetLocation;
+	FVector MoveToOrbitTargetLocation;
 	FTimerHandle GrabCooldownTimerHandle;
 	FTimerHandle CollisionTimerHandle;
 	bool bCanGrab;

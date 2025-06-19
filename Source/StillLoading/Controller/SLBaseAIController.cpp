@@ -233,10 +233,6 @@ void ASLBaseAIController::UpdateTargetEvaluation()
 				*BestTarget->GetName(), 
 				BestScore);
 		}
-		else
-		{
-			UE_LOG(LogAITargeting, Warning, TEXT("[%s] No Valid Target Found"), *GetName());
-		}
 		
 		if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
 		{
@@ -261,8 +257,6 @@ void ASLBaseAIController::AddOrUpdateTarget(AActor* Actor)
 		ExistingInfo->Distance = Distance;
 		ExistingInfo->LastSeenTime = 0.0f; // 현재 보이는 상태
 		
-		UE_LOG(LogAITargeting, Verbose, TEXT("[%s] Target Updated: %s (Distance: %.1f -> %.1f, Threat: %.2f)"), 
-			*GetName(), *Actor->GetName(), OldDistance, Distance, ExistingInfo->ThreatLevel);
 	}
 	else
 	{
@@ -274,8 +268,6 @@ void ASLBaseAIController::AddOrUpdateTarget(AActor* Actor)
 		
 		PotentialTargets.Add(Actor, NewInfo);
 		
-		UE_LOG(LogAITargeting, Log, TEXT("[%s] New Target Added: %s (Distance: %.1f, Threat: %.2f)"), 
-			*GetName(), *Actor->GetName(), Distance, NewInfo.ThreatLevel);
 	}
 }
 
