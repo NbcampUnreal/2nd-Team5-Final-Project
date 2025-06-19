@@ -100,7 +100,7 @@ protected:
 	float FocusMaxDistance = 800.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Invulnerable")
-	int32 InvulnerableDuration = 0.5;
+	int32 InvulnerableDuration = 5;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Warp")
 	float WarpDistanceThreshold = 500.f;

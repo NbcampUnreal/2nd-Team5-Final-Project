@@ -8,6 +8,7 @@
 #include "SL25DMovementHandlerComponent.generated.h"
 
 
+class UNiagaraSystem;
 class USLSoundSubsystem;
 class UCollisionRadarComponent;
 
@@ -24,6 +25,25 @@ public:
 	UFUNCTION()
 	void BeginBuff();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Effects")
+	TObjectPtr<UNiagaraSystem> MoveTargetEffect;
+
+	// 캐릭터가 마우스 커서를 바라보게 할지 여부
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Rotation")
+	bool bShouldFaceMouse = false;
+
+	// 초당 회전 속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Rotation")
+	float RotationSpeed = 10.0f;
+
+	// 캐릭터 이동 속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Movement")
+	float MovementSpeed = 600.0f;
+
+	// 목표 지점에 도착했다고 판단할 거리 (반경)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Movement", meta = (ClampMin = "0.0"))
+	float AcceptanceRadius = 25.0f;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
@@ -35,8 +55,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement|Rotation")
 	void StartFacingMouse();
-
-	/** 호출되면, Tick에서 마우스를 향한 회전을 중지합니다. */
 	UFUNCTION(BlueprintCallable, Category = "Movement|Rotation")
 	void StopFacingMouse();
 
@@ -56,6 +74,8 @@ protected:
 	void Block(bool bIsBlocking);
 	UFUNCTION()
 	void Attack();
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void StartMoveToMouseCursorLocation();
 	UFUNCTION()
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
 	UFUNCTION()
@@ -77,11 +97,6 @@ protected:
 	float RightDot = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Parry")
 	float ParryDuration = 0.2f;
-
-	bool bShouldFaceMouse = false;
-
-	UPROPERTY(EditAnywhere, Category = "Movement|Rotation")
-	float RotationSpeed = 15.0f;
 	
 	UPROPERTY()
 	int BlockCount = 0;
@@ -91,4 +106,13 @@ protected:
 	// 막기용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Block")
 	int MaxBlockCount = 5;
+
+private:
+	void HandleRotation(float DeltaTime);
+	void MoveToTarget(float DeltaTime);
+
+	FTimerHandle FacingMouseTimerHandle;
+
+	FVector TargetMoveLocation;
+	bool bIsMovingToTarget = false;
 };

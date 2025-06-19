@@ -16,7 +16,7 @@ void UAnimationMontageComponent::BeginPlay()
 
 	if (!OwnerCharacter) return;
 
-	GetAnimInstance();
+	AnimInstance = GetAnimInstance();
 	
 	if (AnimInstance)
 	{
@@ -24,9 +24,9 @@ void UAnimationMontageComponent::BeginPlay()
 	}
 }
 
-void UAnimationMontageComponent::GetAnimInstance()
+UAnimInstance* UAnimationMontageComponent::GetAnimInstance()
 {
-	AnimInstance = OwnerCharacter ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr;
+	return OwnerCharacter ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr;
 }
 
 void UAnimationMontageComponent::OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)

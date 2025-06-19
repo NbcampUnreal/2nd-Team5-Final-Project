@@ -68,6 +68,10 @@ public:
 
 	UFUNCTION()
 	void CharacterDragged(bool bIsDragged);
+	UFUNCTION(BlueprintCallable)
+	void EnterCinematic(float Yaw);
+	UFUNCTION(BlueprintCallable)
+	void EndCinematic();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<ASLItem> SwordClass;
@@ -115,6 +119,7 @@ private:
 	TObjectPtr<ASLBattlePlayerState> CashedPlayerState = nullptr;
 
 	bool bIsAlreadyDied = false;
+	bool bIsBlockChangeable = true;
 	
 public:
 	// 상태 태그 추가/제거 함수
@@ -166,4 +171,7 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	TObjectPtr<UCameraComponent> ThirdPersonCamera;
+
+	UFUNCTION(BlueprintCallable, Category = "State")
+	void ToggleBlock(bool bDoUnlock);
 };

@@ -23,10 +23,22 @@ void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 		break;
 
 	case ECharacterMovementAction::CMA_LaunchBack:
+		/*
 		if (UMovementHandlerComponent* MoveComp = Character->FindComponentByClass<UMovementHandlerComponent>())
 		{
 			MoveComp->StartKnockback(KnockBackSpeed, KnockBackDuration);
 		}
+		*/
+
+		const FVector ForwardDir = Character->GetActorForwardVector();
+		const FVector BackwardDir = -ForwardDir;
+
+		FVector LaunchDirection = BackwardDir + (FVector::UpVector * 0.1);
+		LaunchDirection.Normalize();
+
+		LaunchVector = LaunchDirection * LaunchPower;
+           
+		Character->LaunchCharacter(LaunchVector, true, true);
 		break;
 
 	case ECharacterMovementAction::CMA_LaunchOff:

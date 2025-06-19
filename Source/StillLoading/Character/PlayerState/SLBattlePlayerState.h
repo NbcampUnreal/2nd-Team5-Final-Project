@@ -78,6 +78,8 @@ protected:
 private:
 	UFUNCTION()
 	void UpdateGauge();
+	UFUNCTION()
+	void OnPlayerEmpoweredStateChanged(bool bIsEmpowered);
 
 	FTimerHandle GaugeUpdateTimerHandle;
 
