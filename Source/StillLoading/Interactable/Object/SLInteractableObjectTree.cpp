@@ -22,7 +22,7 @@ void ASLInteractableObjectTree::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
+	StaticMeshComp->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::BeginOverlapCharacter);
 }
 
 void ASLInteractableObjectTree::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
@@ -41,7 +41,7 @@ void ASLInteractableObjectTree::BeginOverlapCharacter(UPrimitiveComponent* Overl
 	{
 		if (ASLPlayerRidingCharacter* Character = Cast<ASLPlayerRidingCharacter>(OtherActor))
 		{
-			UGameplayStatics::ApplyDamage(Character, 1, nullptr, this, UDamageType::StaticClass());
+			UGameplayStatics::ApplyDamage(Character, 20, nullptr, this, UDamageType::StaticClass());
 		}
 	}
 }
