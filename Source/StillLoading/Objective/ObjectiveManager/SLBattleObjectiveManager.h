@@ -20,6 +20,15 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void DeactivateBattleUI(USLObjectiveHandlerBase* Component);
 
+	UFUNCTION(BlueprintCallable)
+	void PostPlayerDiedTest();
+
+	UFUNCTION(BlueprintImplementableEvent, meta = (AllowPrivateAccess = "true"))
+	void PostPlayerDied();
+
+	UFUNCTION()
+	void CheckPlayerDied(float MaxHp, float CurrentHp);
+
 	void ActivatePlayerHpUI();
 	void ActivatePlayerSpecialUI();
 	void ActivateHitEffectUI();

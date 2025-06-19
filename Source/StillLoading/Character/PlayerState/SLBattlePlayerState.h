@@ -23,7 +23,7 @@ public:
 	
 	UFUNCTION()
 	void SetHealth(float NewHealth);
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void DecreaseHealth(float Amount);
 	UFUNCTION()
 	void SetWalking(bool bNewWalking);

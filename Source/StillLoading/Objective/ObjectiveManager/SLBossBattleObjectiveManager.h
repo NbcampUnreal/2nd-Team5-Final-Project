@@ -14,6 +14,12 @@ class STILLLOADING_API ASLBossBattleObjectiveManager : public ASLBattleObjective
 	GENERATED_BODY()
 	
 protected:
+	UFUNCTION(BlueprintImplementableEvent, meta = (AllowPrivateAccess = "true"))
+	void PostBossDied();
+
+	UFUNCTION()
+	void CheckBossDied(float MaxHp, float CurrentHp);
+
 	virtual void ActivateBattleUI(USLObjectiveHandlerBase* Component) override;
 	virtual void DeactivateBattleUI(USLObjectiveHandlerBase* Component) override;
 
