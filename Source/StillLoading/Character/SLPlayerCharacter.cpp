@@ -9,6 +9,7 @@
 #include "Item/SLDefaultSword.h"
 #include "Item/SLItem.h"
 #include "MontageComponent/AnimationMontageComponent.h"
+#include "MovementHandlerComponent/SL25DMovementHandlerComponent.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
 #include "PlayerState/SLBattlePlayerState.h"
 
@@ -106,6 +107,32 @@ void ASLPlayerCharacter::CharacterDragged(const bool bIsDragged)
 			CachedMontageComponent->PlayTrickMontage("Dragged");
 		}
 	}
+}
+
+void ASLPlayerCharacter::EnterCinematic(const float Yaw)
+{
+	if (CachedMontageComponent)
+	{
+		CachedMontageComponent->StopAllMontages(0.2);
+	}
+
+	if (USL25DMovementHandlerComponent* CombatHandler = FindComponentByClass<USL25DMovementHandlerComponent>())
+	{
+		CombatHandler->CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, Yaw, 0.0f));
+		CombatHandler->SetComponentTickEnabled(false);
+	}
+	
+	SetPrimaryState(TAG_Character_EnterCinematic);
+}
+
+void ASLPlayerCharacter::EndCinematic()
+{
+	if (USL25DMovementHandlerComponent* CombatHandler = FindComponentByClass<USL25DMovementHandlerComponent>())
+	{
+		CombatHandler->SetComponentTickEnabled(true);
+	}
+
+	SetPrimaryState(TAG_Character_Movement_Idle);
 }
 
 void ASLPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -307,6 +334,7 @@ bool ASLPlayerCharacter::IsBlocking() const
 // 상태 관리
 void ASLPlayerCharacter::SetPrimaryState(FGameplayTag NewState)
 {
+	if (!bIsBlockChangeable) return;
 	PrimaryStateTags.Reset();
 	PrimaryStateTags.AddTag(NewState);
 }
@@ -381,6 +409,11 @@ void ASLPlayerCharacter::ClearStateTags(const TArray<FGameplayTag>& PrimaryExcep
 		SecondaryStateTags.Reset();
 		SecondaryStateTags = SecondaryExceptTags;
 	}
+}
+
+void ASLPlayerCharacter::ToggleBlock(bool bDoUnlock)
+{
+	bIsBlockChangeable = bDoUnlock;
 }
 
 bool ASLPlayerCharacter::IsConditionBlocked(EQueryType QueryType) const
