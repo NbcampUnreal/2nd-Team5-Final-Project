@@ -29,6 +29,9 @@ class STILLLOADING_API UAnimationMontageComponent : public UActorComponent
 public:
 	UAnimationMontageComponent();
 
+	UFUNCTION(BlueprintCallable)
+	UAnimInstance* GetAnimInstance();
+
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName Section);
 	UFUNCTION()
@@ -75,7 +78,6 @@ protected:
 	TObjectPtr<UAnimInstance> AnimInstance;
 
 private:
-	void GetAnimInstance();
 	UFUNCTION()
 	void OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
 	UFUNCTION()

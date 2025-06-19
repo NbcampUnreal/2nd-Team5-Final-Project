@@ -300,13 +300,13 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	case EHitAnimType::HAT_FallBack:
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
-			OwnerCharacter->SetActorRotation(TargetRotation);
+			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
 			CachedMontageComponent->PlayHitMontage(FName("Fall"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Falling);
 		}
 		else
 		{
-			OwnerCharacter->SetActorRotation(TargetRotation);
+			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
 			if (bIsFromBack)
 			{
 				CachedMontageComponent->PlayHitMontage(FName("KnockBack_Back"));
@@ -321,21 +321,14 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	case EHitAnimType::HAT_Exhausterd: // 기절
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
-			OwnerCharacter->SetActorRotation(TargetRotation);
+			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
 			CachedMontageComponent->PlayHitMontage(FName("Fall"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Falling);
 		}
 		else
 		{
-			OwnerCharacter->SetActorRotation(TargetRotation);
-			if (bIsFromBack)
-			{
-				CachedMontageComponent->PlayHitMontage(FName("Groggy_Back"));
-			}
-			else
-			{
-				CachedMontageComponent->PlayHitMontage(FName("Groggy"));
-			}
+			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
+			CachedMontageComponent->PlayHitMontage(FName("Groggy"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Groggy);
 		}
 		return;

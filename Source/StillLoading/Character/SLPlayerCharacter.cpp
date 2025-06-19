@@ -93,6 +93,10 @@ void ASLPlayerCharacter::CharacterDragged(const bool bIsDragged)
 	if (!bIsDragged)
 	{
 		SetPrimaryState(TAG_Character_Movement_Idle);
+		if (CachedMontageComponent)
+		{
+			CachedMontageComponent->GetAnimInstance()->Montage_Stop(0.25f);
+		}
 	}
 	else
 	{
