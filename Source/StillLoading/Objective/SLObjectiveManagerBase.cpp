@@ -15,6 +15,11 @@ ASLObjectiveManagerBase::ASLObjectiveManagerBase()
 	ObjectiveHandler = CreateDefaultSubobject<USLObjectiveHandlerBase>(TEXT("Objective Handler"));
 }
 
+void ASLObjectiveManagerBase::ResetCurrentObjective()
+{
+	ResetCurrentGame();
+}
+
 void ASLObjectiveManagerBase::BeginPlay()
 {
 	Super::BeginPlay();

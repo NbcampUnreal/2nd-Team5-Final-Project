@@ -244,6 +244,17 @@ void AMonsterSpawner::SpawnMonstersWithoutLeader()
 	}
 }
 
+void AMonsterSpawner::ResetSpawnedMonster()
+{
+	for (AActor* SpawnedMonster : SpawnedMonsters)
+	{
+		if (IsValid(SpawnedMonster))
+		{
+			SpawnedMonster->Destroy();
+		}
+	}
+}
+
 void AMonsterSpawner::MonsterDied(AActor* DiedMonsterRef)
 {
 	if (!DiedMonsterRef)

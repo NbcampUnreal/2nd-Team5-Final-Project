@@ -17,6 +17,8 @@ enum class ESLBgmSoundType : uint8
 	EBS_Mini3,
 	EBS_Mini4,
 	EBS_Mini5,
+	EBS_Mini6,
+	EBS_RidingGame,
 	EBS_DebugRoom,
 	EBS_BossBattle,
 	EBS_Ending

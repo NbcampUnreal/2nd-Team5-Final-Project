@@ -26,10 +26,23 @@ void ASLBossBattleObjectiveManager::DeactivateBattleUI(USLObjectiveHandlerBase* 
 	}
 }
 
+void ASLBossBattleObjectiveManager::CheckBossDied(float MaxHp, float CurrentHp)
+{
+	if (CurrentHp <= 0)
+	{
+		PostBossDied();
+	}
+}
+
 void ASLBossBattleObjectiveManager::ActivateBossHpUI()
 {
 	if (IsValid(TargetBoss))
 	{
 		HUD->ApplyBossHp(TargetBoss->GetBossHpChangedDelegate());
+
+		if (!TargetBoss->GetBossHpChangedDelegate().OnBossHpChanged.IsAlreadyBound(this, &ThisClass::CheckBossDied))
+		{
+			TargetBoss->GetBossHpChangedDelegate().OnBossHpChanged.AddDynamic(this, &ThisClass::CheckBossDied);
+		}
 	}
 }
