@@ -79,9 +79,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	bool GameSucceedFlag = false;
 
-
-	
-
-
+	UPROPERTY()
 	TArray<TObjectPtr<ASLInteractableObjectStatue>> Statues;
 };
