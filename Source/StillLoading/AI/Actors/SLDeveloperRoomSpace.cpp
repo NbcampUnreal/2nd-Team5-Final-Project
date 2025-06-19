@@ -167,6 +167,9 @@ void ASLDeveloperRoomSpace::OnNPCDeath(ASLAIBaseCharacter* DeadNPC)
 {
     if (SpawnedNPCs.Contains(DeadNPC))
     {
+        // NPC가 장착한 무기 정리
+        CleanupNPCEquipment(DeadNPC);
+        
         SpawnedNPCs.Remove(DeadNPC);
     }
 }
@@ -209,6 +212,10 @@ void ASLDeveloperRoomSpace::CleanupNPCs()
         if (IsValid(NPC))
         {
             NPC->OnCharacterDeath.RemoveAll(this);
+            
+            // NPC 장비 정리
+            CleanupNPCEquipment(NPC);
+            
             NPC->Destroy();
         }
     }
@@ -244,4 +251,21 @@ void ASLDeveloperRoomSpace::RemoveAllNPCWeapons()
         }
     }
     
+}
+
+void ASLDeveloperRoomSpace::CleanupNPCEquipment(ASLAIBaseCharacter* NPC)
+{
+    if (!IsValid(NPC))
+    {
+        return;
+    }
+    
+    if (AActor* EquippedWeapon = NPC->GetEquippedWeapon())
+    {
+        NPC->UnequipWeapon();
+        if (IsValid(EquippedWeapon))
+        {
+            EquippedWeapon->Destroy();
+        }
+    }
 }

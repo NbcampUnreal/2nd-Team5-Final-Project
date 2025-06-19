@@ -16,6 +16,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossPatternFinished, ASLAIBaseCha
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeveloperBossPatternFinished);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossLineDestroyed, int32, LineIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhaseChanged, int32, NewPhase);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnPhase1BossRushCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnPhase2HackSlashCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnPhase3HorrorCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnPhase5FinalCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSLOnBossSpawnCompleted, ASLAIBaseCharacter*, SpawnedBoss);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnWallCooldownFinished);
 
 UENUM(BlueprintType)
 enum class EDeveloperBossPhase : uint8
@@ -111,6 +117,24 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
     FOnPhaseChanged OnPhaseChanged;
 
+    UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
+    FSLOnPhase1BossRushCompleted OnPhase1BossRushCompleted;
+
+    UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
+    FSLOnPhase2HackSlashCompleted OnPhase2HackSlashCompleted;
+
+    UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
+    FSLOnPhase3HorrorCompleted OnPhase3HorrorCompleted;
+
+    UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
+    FSLOnPhase5FinalCompleted OnPhase5FinalCompleted;
+
+    UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
+    FSLOnBossSpawnCompleted OnBossSpawnCompleted;
+
+    UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
+    FSLOnWallCooldownFinished OnWallCooldownFinished;
+
 protected:
     UFUNCTION()
     void HandleBossDeath(ASLAIBaseCharacter* DeadBoss);
@@ -123,7 +147,23 @@ protected:
 
     UFUNCTION()
     void HandleWallAttackFinished();
-    
+
+    UFUNCTION()
+    void HandleMouseActorDestroyed(ASLMouseActor* DestroyedMouseActor);
+
+    UFUNCTION()
+    void HandlePhase2RoomEscape(ASLDeveloperRoomSpace* Room);
+
+    UFUNCTION()
+    void OnWallCooldownFinishedInternal();
+
+    UFUNCTION()
+    void OnPhase1SpawnDelayFinished();
+
+    UFUNCTION()
+    void OnPhase3SurvivalTimeFinished();
+    void SpawnPhase3MouseActor();
+
     void RegisterBossEvents(ASLAIBaseCharacter* Boss);
     void UnregisterBossEvents(ASLAIBaseCharacter* Boss);
     void SetupBossLines();
@@ -137,13 +177,18 @@ protected:
     void CompletePhase1BossRush();
     void WeakenBossForPhase1(ASLAIBaseCharacter* Boss);
 
-    UFUNCTION()
-    void HandleMouseActorDestroyed(ASLMouseActor* DestroyedMouseActor);
-
     void StartPhase3Horror();
     void StartPhase5Final();
     void CleanupDeadBosses();
+    void ResetBossLines();
+    void ResetCurrentWall();
+    void StartPhase2HackSlash();
 
+    UFUNCTION()
+    void HandlePhase3MouseActorDestroyed(ASLMouseActor* DestroyedMouseActor);
+    
+    void DestroyPhase3MouseActor();
+    
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Developer Boss")
     TArray<TSubclassOf<ASLAIBaseCharacter>> AvailableBossClasses;
     
@@ -181,30 +226,24 @@ protected:
     TSubclassOf<ASLMouseActor> MouseActorClass;
     
 private:
-    UFUNCTION()
-    void HandlePhase2RoomEscape(ASLDeveloperRoomSpace* Room);
-    
-    void ResetBossLines();
-    void ResetCurrentWall();
-    void StartPhase2HackSlash();
-    
     static const int32 MaxBossLines = 5;
 
     EDeveloperBossPhase CurrentPhase;
     int32 DestroyedLinesCount;
     bool bIsFightStarted;
     bool bCanLaunchWall;
-    FTimerHandle WallCooldownTimer;
 
     bool bIsPhase1Active;
     int32 Phase1CurrentBossIndex;
     int32 Phase1TotalBossCount;
-    FTimerHandle Phase1SpawnTimer;
 
     bool bIsPhase2Active;
 
     bool bIsPhase3Active;
     bool bIsPhase5Active;
-    FTimerHandle Phase3SurvivalTimer;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase3", meta = (ClampMin = "0.0", UIMin = "0.0", AllowPrivateAccess = "true"))
     float Phase3SurvivalTime;
+
+    
+    TObjectPtr<ASLMouseActor> Phase3MouseActor;
 };

@@ -260,6 +260,7 @@ void ASLLaunchableWall::OnYMovementTimelineFinished()
 		}
 	}
 	
+	OnWallYMovementCompleted.Broadcast();
 	StartSpacingAnimation();
 }
 
@@ -284,6 +285,7 @@ void ASLLaunchableWall::OnSpacingTimelineUpdate(float Value)
 void ASLLaunchableWall::OnSpacingTimelineFinished()
 {
 	bIsSpacingAnimating = false;
+	OnWallSpacingCompleted.Broadcast();
 	LaunchNextPart();
 }
 
@@ -546,11 +548,7 @@ void ASLLaunchableWall::CheckAllPartsLaunched()
 	if (LaunchedPartsCount >= ActiveParts)
 	{
 		bIsLaunching = false;
-		
-		if (OnAllWallPartsLaunched.IsBound())
-		{
-			OnAllWallPartsLaunched.Broadcast();
-		}
+		OnAllWallPartsLaunched.Broadcast();
 	}
 }
 
@@ -593,13 +591,10 @@ void ASLLaunchableWall::LaunchCurrentPart()
 			WallPartStates[CurrentLaunchIndex] = EWallPartState::Launched;
 		}
 
-		// ProjectileMovementComponent 속도 설정 업데이트
 		CurrentMovement->InitialSpeed = LaunchSpeed;
 		CurrentMovement->MaxSpeed = LaunchSpeed;
 		
-		// 윗면 방향의 반대로 발사 (윗면이 플레이어를 바라보고 있으므로 반대 방향으로 발사)
 		FVector LaunchDirection = -CurrentPart->GetUpVector();
-		
 		CurrentMovement->Velocity = LaunchDirection * LaunchSpeed;
 		CurrentMovement->SetActive(true);
 
@@ -609,8 +604,9 @@ void ASLLaunchableWall::LaunchCurrentPart()
 		int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
 		if (CurrentLaunchIndex < ActiveParts)
 		{
+			FTimerHandle DelayTimer;
 			GetWorldTimerManager().SetTimer(
-				LaunchTimerHandle,
+				DelayTimer,
 				this,
 				&ASLLaunchableWall::LaunchNextPart,
 				LaunchDelay,
@@ -664,10 +660,12 @@ void ASLLaunchableWall::OnRotationTimelineUpdate(float Value)
 
 void ASLLaunchableWall::OnRotationTimelineFinished()
 {
+	OnWallPartRotationCompleted.Broadcast(CurrentRotatingPartIndex);
 	CurrentRotatingPartIndex = -1;
 
+	FTimerHandle DelayTimer;
 	GetWorldTimerManager().SetTimer(
-		RotationTimerHandle,
+		DelayTimer,
 		this,
 		&ASLLaunchableWall::LaunchCurrentPart,
 		RotationDelay,
@@ -719,10 +717,12 @@ void ASLLaunchableWall::OnPlayerAimTimelineUpdate(float Value)
 
 void ASLLaunchableWall::OnPlayerAimTimelineFinished()
 {
+	OnWallPartRotationCompleted.Broadcast(CurrentRotatingPartIndex);
 	CurrentRotatingPartIndex = -1;
 
+	FTimerHandle DelayTimer;
 	GetWorldTimerManager().SetTimer(
-		RotationTimerHandle,
+		DelayTimer,
 		this,
 		&ASLLaunchableWall::LaunchCurrentPart,
 		RotationDelay,

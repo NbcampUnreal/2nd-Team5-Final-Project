@@ -53,6 +53,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Developer Room")
     bool IsPlayerInRoom() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Room")
+    void CleanupNPCs();
     
     UPROPERTY(BlueprintAssignable, Category = "Developer Room")
     FSLOnRoomEscapeWallDestroyed OnRoomEscapeWallDestroyed;
@@ -73,10 +76,10 @@ protected:
     void OnNPCDeath(ASLAIBaseCharacter* DeadNPC);
     
     void SpawnNPCsFromInfo(const FPhase2NPCSpawnInfo& SpawnInfo);
-    void CleanupNPCs();
     FVector GetRandomLocationInSpawnArea();
     void SetupEscapeWall();
-
+    void CleanupNPCEquipment(ASLAIBaseCharacter* NPC);
+    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<UStaticMeshComponent> RoomMeshComponent;
 
@@ -103,5 +106,6 @@ private:
     
     TArray<TObjectPtr<ASLAIBaseCharacter>> SpawnedNPCs;
     bool bIsRoomActive;
+    UPROPERTY()
     TObjectPtr<ASLInteractableBreakable> EscapeWallActor;
 };

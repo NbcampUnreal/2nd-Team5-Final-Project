@@ -35,6 +35,8 @@ ASLDeveloperBoss::ASLDeveloperBoss()
     bIsPhase3Active = false;
     bIsPhase5Active = false;
     Phase3SurvivalTime = 10.0f;
+
+    Phase3MouseActor = nullptr;
 }
 
 void ASLDeveloperBoss::BeginPlay()
@@ -43,7 +45,6 @@ void ASLDeveloperBoss::BeginPlay()
     
     SetupBossLines();
 
-    // 마우스 액터를 게임 시작시 항상 스폰
     if (MouseActorClass)
     {
         SpawnMouseActor();
@@ -52,10 +53,6 @@ void ASLDeveloperBoss::BeginPlay()
 
 void ASLDeveloperBoss::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    GetWorldTimerManager().ClearTimer(WallCooldownTimer);
-    GetWorldTimerManager().ClearTimer(Phase1SpawnTimer);
-    GetWorldTimerManager().ClearTimer(Phase3SurvivalTimer);
-    
     bIsPhase1Active = false;
     bIsPhase3Active = false;
     bIsPhase5Active = false;
@@ -63,6 +60,11 @@ void ASLDeveloperBoss::EndPlay(const EEndPlayReason::Type EndPlayReason)
     if (IsValid(MouseActor))
     {
         MouseActor->OnMouseActorDestroyed.RemoveAll(this);
+    }
+    
+    if (IsValid(Phase3MouseActor))
+    {
+        Phase3MouseActor->OnMouseActorDestroyed.RemoveAll(this);
     }
     
     ResetBossLines();
@@ -128,7 +130,6 @@ void ASLDeveloperBoss::InitializeBossFight()
     bIsPhase1Active = false;
     Phase1CurrentBossIndex = 0;
     Phase1TotalBossCount = 0;
-    GetWorldTimerManager().ClearTimer(Phase1SpawnTimer);
     
     for (int32 i = 0; i < BossLines.Num(); i++)
     {
@@ -186,9 +187,12 @@ void ASLDeveloperBoss::LaunchWallAttack()
     CurrentWall->LaunchWallToPlayer();
     
     bCanLaunchWall = false;
+    
+    FTimerHandle CooldownTimer;
     GetWorldTimerManager().SetTimer(
-        WallCooldownTimer,
-        [this]() { bCanLaunchWall = true; },
+        CooldownTimer,
+        this,
+        &ASLDeveloperBoss::OnWallCooldownFinishedInternal,
         WallAttackCooldown,
         false
     );
@@ -470,6 +474,8 @@ void ASLDeveloperBoss::SpawnNextPhase1Boss()
     
     if (SpawnedBoss)
     {
+        OnBossSpawnCompleted.Broadcast(SpawnedBoss);
+        
         WeakenBossForPhase1(SpawnedBoss);
         
         Phase1CurrentBossIndex++;
@@ -484,10 +490,11 @@ void ASLDeveloperBoss::SpawnNextPhase1Boss()
         
         if (Phase1CurrentBossIndex < AvailableBossClasses.Num())
         {
+            FTimerHandle SpawnTimer;
             GetWorldTimerManager().SetTimer(
-                Phase1SpawnTimer,
+                SpawnTimer,
                 this,
-                &ASLDeveloperBoss::SpawnNextPhase1Boss,
+                &ASLDeveloperBoss::OnPhase1SpawnDelayFinished,
                 Phase1BossSpawnDelay,
                 false
             );
@@ -508,10 +515,11 @@ void ASLDeveloperBoss::HandlePhase1BossDeath(ASLAIBaseCharacter* DeadBoss)
     {
         UE_LOG(LogTemp, Display, TEXT("Phase1: Spawning next boss in %f seconds"), Phase1BossSpawnDelay);
         
+        FTimerHandle SpawnTimer;
         GetWorldTimerManager().SetTimer(
-            Phase1SpawnTimer,
+            SpawnTimer,
             this,
-            &ASLDeveloperBoss::SpawnNextPhase1Boss,
+            &ASLDeveloperBoss::OnPhase1SpawnDelayFinished,
             Phase1BossSpawnDelay,
             false
         );
@@ -530,11 +538,11 @@ void ASLDeveloperBoss::CompletePhase1BossRush()
     bIsPhase1Active = false;
     Phase1CurrentBossIndex = 0;
     
-    GetWorldTimerManager().ClearTimer(Phase1SpawnTimer);
-    
     CleanupDeadBosses();
     
     UE_LOG(LogTemp, Display, TEXT("Phase1: Boss Rush completed! Launching next wall attack"));
+    
+    OnPhase1BossRushCompleted.Broadcast();
     
     LaunchWallAttack();
 }
@@ -562,36 +570,35 @@ bool ASLDeveloperBoss::IsPhase1Active() const
 
 int32 ASLDeveloperBoss::GetPhase1BossesRemaining() const
 {
-    if (!bIsPhase1Active)
-    {
-        return 0;
-    }
-    
-    int32 BossesToSpawn = AvailableBossClasses.Num() - Phase1CurrentBossIndex;
-    int32 SpawnedBossesAlive = SpawnedBosses.Num();
-    
-    return BossesToSpawn + SpawnedBossesAlive;
+   if (!bIsPhase1Active)
+   {
+       return 0;
+   }
+   
+   int32 BossesToSpawn = AvailableBossClasses.Num() - Phase1CurrentBossIndex;
+   int32 SpawnedBossesAlive = SpawnedBosses.Num();
+   
+   return BossesToSpawn + SpawnedBossesAlive;
 }
 
 void ASLDeveloperBoss::StartPhase2HackSlash()
 {
-    if (!IsValid(Phase2Room))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase2: No room assigned"));
-        LaunchWallAttack();
-        return;
-    }
+   if (!IsValid(Phase2Room))
+   {
+       UE_LOG(LogTemp, Warning, TEXT("Phase2: No room assigned"));
+       LaunchWallAttack();
+       return;
+   }
 
-    bIsPhase2Active = true;
-    
-    Phase2Room->OnRoomEscapeWallDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandlePhase2RoomEscape);
-    Phase2Room->ActivateRoom();
-    
-    // 단순히 플레이어를 텔레포트
-    Phase2Room->TeleportPlayerToRoom();
-    Phase2Room->SpawnAllNPCs();
-    
-    UE_LOG(LogTemp, Display, TEXT("Phase2: Hack & Slash started with teleport"));
+   bIsPhase2Active = true;
+   
+   Phase2Room->OnRoomEscapeWallDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandlePhase2RoomEscape);
+   Phase2Room->ActivateRoom();
+   
+   Phase2Room->TeleportPlayerToRoom();
+   Phase2Room->SpawnAllNPCs();
+   
+   UE_LOG(LogTemp, Display, TEXT("Phase2: Hack & Slash started with teleport"));
 }
 
 void ASLDeveloperBoss::HandlePhase2RoomEscape(ASLDeveloperRoomSpace* Room)
@@ -606,105 +613,109 @@ void ASLDeveloperBoss::HandlePhase2RoomEscape(ASLDeveloperRoomSpace* Room)
     if (IsValid(Phase2Room))
     {
         Phase2Room->OnRoomEscapeWallDestroyed.RemoveAll(this);
+        
+        // 방 비활성화 전에 NPC 정리 강제 실행
+        Phase2Room->CleanupNPCs();
         Phase2Room->DeactivateRoom();
     }
     
     UE_LOG(LogTemp, Display, TEXT("Phase2: Player escaped room! Launching next wall attack"));
+    
+    OnPhase2HackSlashCompleted.Broadcast();
     
     LaunchWallAttack();
 }
 
 void ASLDeveloperBoss::SpawnMouseActor()
 {
-    // 이미 존재하는 마우스 액터가 있다면 제거
-    if (IsValid(MouseActor))
-    {
-        DestroyMouseActor();
-    }
-    
-    if (!MouseActorClass)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Mouse Actor class not specified"));
-        return;
-    }
-    
-    FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 500.0f);
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-    
-    MouseActor = GetWorld()->SpawnActor<ASLMouseActor>(MouseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
-    
-    if (IsValid(MouseActor))
-    {
-        MouseActor->OnMouseActorDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandleMouseActorDestroyed);
-        
-        // 스폰되자마자 궤도 돌기 시작
-        MouseActor->SetActorHiddenInGame(false);
-        MouseActor->SetActorEnableCollision(true);
-        MouseActor->StartOrbiting();
-    }
+   if (IsValid(MouseActor))
+   {
+       DestroyMouseActor();
+   }
+   
+   if (!MouseActorClass)
+   {
+       UE_LOG(LogTemp, Warning, TEXT("Mouse Actor class not specified"));
+       return;
+   }
+   
+   FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 500.0f);
+   FActorSpawnParameters SpawnParams;
+   SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+   
+   MouseActor = GetWorld()->SpawnActor<ASLMouseActor>(MouseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+   
+   if (IsValid(MouseActor))
+   {
+       MouseActor->OnMouseActorDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandleMouseActorDestroyed);
+       
+       MouseActor->SetActorHiddenInGame(false);
+       MouseActor->SetActorEnableCollision(true);
+       MouseActor->StartOrbiting();
+   }
 }
 
 void ASLDeveloperBoss::DestroyMouseActor()
 {
-    if (IsValid(MouseActor))
-    {
-        MouseActor->OnMouseActorDestroyed.RemoveAll(this);
-        MouseActor->Destroy();
-        MouseActor = nullptr;
-        
-        UE_LOG(LogTemp, Display, TEXT("Mouse Actor destroyed"));
-    }
+   if (IsValid(MouseActor))
+   {
+       MouseActor->OnMouseActorDestroyed.RemoveAll(this);
+       MouseActor->Destroy();
+       MouseActor = nullptr;
+       
+       UE_LOG(LogTemp, Display, TEXT("Mouse Actor destroyed"));
+   }
 }
 
 void ASLDeveloperBoss::ActivateMouseActor()
 {
-    if (!IsValid(MouseActor))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("No Mouse Actor to activate"));
-        return;
-    }
-    
-    MouseActor->SetActorHiddenInGame(false);
-    MouseActor->SetActorEnableCollision(true);
-    MouseActor->StartOrbiting();
-    
-    UE_LOG(LogTemp, Display, TEXT("Mouse Actor activated"));
+   if (!IsValid(MouseActor))
+   {
+       UE_LOG(LogTemp, Warning, TEXT("No Mouse Actor to activate"));
+       return;
+   }
+   
+   MouseActor->SetActorHiddenInGame(false);
+   MouseActor->SetActorEnableCollision(true);
+   MouseActor->StartOrbiting();
+   
+   UE_LOG(LogTemp, Display, TEXT("Mouse Actor activated"));
 }
 
 void ASLDeveloperBoss::DeactivateMouseActor()
 {
-    if (!IsValid(MouseActor))
-    {
-        return;
-    }
-    
-    MouseActor->StopOrbiting();
-    MouseActor->SetActorHiddenInGame(true);
-    MouseActor->SetActorEnableCollision(false);
-    
-    UE_LOG(LogTemp, Display, TEXT("Mouse Actor deactivated"));
+   if (!IsValid(MouseActor))
+   {
+       return;
+   }
+   
+   MouseActor->StopOrbiting();
+   MouseActor->SetActorHiddenInGame(true);
+   MouseActor->SetActorEnableCollision(false);
+   
+   UE_LOG(LogTemp, Display, TEXT("Mouse Actor deactivated"));
 }
 
 ASLMouseActor* ASLDeveloperBoss::GetMouseActor() const
 {
-    return MouseActor;
+   return MouseActor;
 }
 
 void ASLDeveloperBoss::HandleMouseActorDestroyed(ASLMouseActor* DestroyedMouseActor)
 {
-    if (DestroyedMouseActor == MouseActor)
-    {
-        MouseActor = nullptr;
-        
-        if (bIsPhase5Active)
-        {
-            bIsPhase5Active = false;
-            UE_LOG(LogTemp, Display, TEXT("Phase 5 completed - Mouse Actor destroyed!"));
-            
-            OnDeveloperBossPatternFinished.Broadcast();
-        }
-    }
+   if (DestroyedMouseActor == MouseActor)
+   {
+       MouseActor = nullptr;
+       
+       if (bIsPhase5Active)
+       {
+           bIsPhase5Active = false;
+           UE_LOG(LogTemp, Display, TEXT("Phase 5 completed - Mouse Actor destroyed!"));
+           
+           OnPhase5FinalCompleted.Broadcast();
+           OnDeveloperBossPatternFinished.Broadcast();
+       }
+   }
 }
 
 void ASLDeveloperBoss::StartPhase3Horror()
@@ -718,22 +729,19 @@ void ASLDeveloperBoss::StartPhase3Horror()
     
     bIsPhase3Active = true;
     
-    ActivateMouseActor();
+    // 기존 마우스 액터 비활성화
+    DeactivateMouseActor();
+    
+    // Phase3 전용 마우스 액터 스폰
+    SpawnPhase3MouseActor();
     
     UE_LOG(LogTemp, Display, TEXT("Phase3: Horror phase started - survive for %f seconds"), Phase3SurvivalTime);
     
+    FTimerHandle SurvivalTimer;
     GetWorldTimerManager().SetTimer(
-        Phase3SurvivalTimer,
-        [this]()
-        {
-            if (bIsPhase3Active)
-            {
-                bIsPhase3Active = false;
-                DeactivateMouseActor();
-                LaunchWallAttack();
-                UE_LOG(LogTemp, Display, TEXT("Phase3: Survival time completed! Launching next wall"));
-            }
-        },
+        SurvivalTimer,
+        this,
+        &ASLDeveloperBoss::OnPhase3SurvivalTimeFinished,
         Phase3SurvivalTime,
         false
     );
@@ -741,67 +749,167 @@ void ASLDeveloperBoss::StartPhase3Horror()
 
 void ASLDeveloperBoss::StartPhase5Final()
 {
-    if (!IsValid(MouseActor))
-    {
-        if (!IsValid(MouseActor))
-        {
-            OnDeveloperBossPatternFinished.Broadcast();
-            return;
-        }
-    }
-    
-    bIsPhase5Active = true;
-    
-    ActivateMouseActor();
-    
-    UE_LOG(LogTemp, Display, TEXT("Phase5: Final phase started - destroy the mouse actor to win!"));
+   if (!IsValid(MouseActor))
+   {
+       OnDeveloperBossPatternFinished.Broadcast();
+       return;
+   }
+   
+   bIsPhase5Active = true;
+   
+   ActivateMouseActor();
+   
+   UE_LOG(LogTemp, Display, TEXT("Phase5: Final phase started - destroy the mouse actor to win!"));
 }
 
 void ASLDeveloperBoss::TestStartPhase3()
 {
-    CurrentPhase = EDeveloperBossPhase::Phase3_Horror;
-    StartPhase3Horror();
-    UE_LOG(LogTemp, Display, TEXT("Test: Started Phase3 Horror"));
+   CurrentPhase = EDeveloperBossPhase::Phase3_Horror;
+   StartPhase3Horror();
+   UE_LOG(LogTemp, Display, TEXT("Test: Started Phase3 Horror"));
 }
 
 void ASLDeveloperBoss::TestStartPhase5()
 {
-    CurrentPhase = EDeveloperBossPhase::Phase5_Final;
-    StartPhase5Final();
-    UE_LOG(LogTemp, Display, TEXT("Test: Started Phase5 Final"));
+   CurrentPhase = EDeveloperBossPhase::Phase5_Final;
+   StartPhase5Final();
+   UE_LOG(LogTemp, Display, TEXT("Test: Started Phase5 Final"));
 }
 
 void ASLDeveloperBoss::CleanupDeadBosses()
 {
-    TArray<ASLAIBaseCharacter*> BossesToRemove;
-    
-    for (ASLAIBaseCharacter* Boss : SpawnedBosses)
+   TArray<ASLAIBaseCharacter*> BossesToRemove;
+   
+   for (ASLAIBaseCharacter* Boss : SpawnedBosses)
+   {
+       if (IsValid(Boss) && Boss->GetIsDead())
+       {
+           BossesToRemove.Add(Boss);
+       }
+   }
+   
+   for (ASLAIBaseCharacter* DeadBoss : BossesToRemove)
+   {
+       SpawnedBosses.Remove(DeadBoss);
+       UnregisterBossEvents(DeadBoss);
+       
+       FTimerHandle DestroyTimer;
+       GetWorld()->GetTimerManager().SetTimer(
+           DestroyTimer,
+           [DeadBoss]()
+           {
+               if (IsValid(DeadBoss))
+               {
+                   DeadBoss->Destroy();
+               }
+           },
+           2.0f,
+           false
+       );
+   }
+   
+   UE_LOG(LogTemp, Log, TEXT("Scheduled %d dead bosses for cleanup"), BossesToRemove.Num());
+}
+
+void ASLDeveloperBoss::OnWallCooldownFinishedInternal()
+{
+   bCanLaunchWall = true;
+   OnWallCooldownFinished.Broadcast();
+}
+
+void ASLDeveloperBoss::OnPhase1SpawnDelayFinished()
+{
+   SpawnNextPhase1Boss();
+}
+
+void ASLDeveloperBoss::OnPhase3SurvivalTimeFinished()
+{
+    if (bIsPhase3Active)
     {
-        if (IsValid(Boss) && Boss->GetIsDead())
+        bIsPhase3Active = false;
+        
+        // Phase3 마우스 액터 제거
+        DestroyPhase3MouseActor();
+        
+        // 기존 마우스 액터 다시 활성화
+        ActivateMouseActor();
+        
+        UE_LOG(LogTemp, Display, TEXT("Phase3: Survival time completed! Launching next wall"));
+        
+        OnPhase3HorrorCompleted.Broadcast();
+        LaunchWallAttack();
+    }
+}
+
+void ASLDeveloperBoss::SpawnPhase3MouseActor()
+{
+    // 기존 Phase3 마우스 액터가 있다면 제거
+    if (IsValid(Phase3MouseActor))
+    {
+        DestroyPhase3MouseActor();
+    }
+    
+    // MouseActor에서 Phase3MouseActorClass 가져오기
+    TSubclassOf<ASLMouseActor> Phase3Class = nullptr;
+    if (IsValid(MouseActor))
+    {
+        Phase3Class = MouseActor->GetPhase3MouseActorClass();
+    }
+    
+    if (!Phase3Class)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase3: No Phase3 Mouse Actor class specified"));
+        return;
+    }
+    
+    // 기존 마우스 액터 위치에서 스폰
+    FVector SpawnLocation = MouseActor ? MouseActor->GetActorLocation() : GetActorLocation() + FVector(0, 0, 500.0f);
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    
+    Phase3MouseActor = GetWorld()->SpawnActor<ASLMouseActor>(Phase3Class, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+    
+    if (IsValid(Phase3MouseActor))
+    {
+        Phase3MouseActor->OnMouseActorDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandlePhase3MouseActorDestroyed);
+        
+        // Phase3 모드 즉시 시작
+        Phase3MouseActor->StartPhase3HorrorMode();
+        
+        UE_LOG(LogTemp, Display, TEXT("Phase3 Mouse Actor spawned successfully"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to spawn Phase3 Mouse Actor"));
+    }
+}
+
+void ASLDeveloperBoss::DestroyPhase3MouseActor()
+{
+    if (IsValid(Phase3MouseActor))
+    {
+        Phase3MouseActor->OnMouseActorDestroyed.RemoveAll(this);
+        Phase3MouseActor->Destroy();
+        Phase3MouseActor = nullptr;
+        
+        UE_LOG(LogTemp, Display, TEXT("Phase3 Mouse Actor destroyed"));
+    }
+}
+
+void ASLDeveloperBoss::HandlePhase3MouseActorDestroyed(ASLMouseActor* DestroyedMouseActor)
+{
+    if (DestroyedMouseActor == Phase3MouseActor)
+    {
+        Phase3MouseActor = nullptr;
+        
+        if (bIsPhase3Active)
         {
-            BossesToRemove.Add(Boss);
+            // Phase3에서 Phase3 마우스 액터가 파괴되면 즉시 Phase3 종료
+            bIsPhase3Active = false;
+            OnPhase3HorrorCompleted.Broadcast();
+            LaunchWallAttack();
+            
+            UE_LOG(LogTemp, Display, TEXT("Phase3 completed - Phase3 Mouse Actor destroyed!"));
         }
     }
-    
-    for (ASLAIBaseCharacter* DeadBoss : BossesToRemove)
-    {
-        SpawnedBosses.Remove(DeadBoss);
-        UnregisterBossEvents(DeadBoss);
-        
-        FTimerHandle DestroyTimer;
-        GetWorld()->GetTimerManager().SetTimer(
-            DestroyTimer,
-            [DeadBoss]()
-            {
-                if (IsValid(DeadBoss))
-                {
-                    DeadBoss->Destroy();
-                }
-            },
-            2.0f,
-            false
-        );
-    }
-    
-    UE_LOG(LogTemp, Log, TEXT("Scheduled %d dead bosses for cleanup"), BossesToRemove.Num());
 }
