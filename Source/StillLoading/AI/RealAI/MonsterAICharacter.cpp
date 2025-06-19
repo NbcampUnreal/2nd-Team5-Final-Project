@@ -343,22 +343,23 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	case EHitAnimType::HAT_WeakHit:
 	case EHitAnimType::HAT_HardHit:
 		{
+			SetBattleState(TAG_AI_Hit);
+			PlayHitMontageAndSetupRecovery(2);
+
+			FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
+			KnockbackDir.Z = 0;
+			KnockbackDir.Normalize();
+			
 			const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
 			if (GetCharacterMovement()->IsFalling() && GroundDistance > 20.0f)
 			{
-				AnimationComponent->PlayAIHitMontage("HitAir");
-				FVector Velocity = GetCharacterMovement()->Velocity;
-				Velocity.Z = 0.f;
-				GetCharacterMovement()->Velocity = Velocity;
+				LaunchCharacter(KnockbackDir * 1200, true, false);
 			}
-			SetBattleState(TAG_AI_Hit);
-
-			FVector PushDirection = GetActorLocation() - Causer->GetActorLocation();
-			PushDirection.Z = 0.0f;
-			PushDirection.Normalize();
-
-			LaunchCharacter(PushDirection * 500.0f, true, true);
-
+			else
+			{
+				LaunchCharacter(KnockbackDir * 1200, true, false);
+			}
+			
 			if (CurrentHealth < 0.f)
 			{
 				if (DeathMaterial)
@@ -366,13 +367,14 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 					if (GetWorld()->GetTimerManager().IsTimerActive(MaterialResetTimerHandle))
 					{
 						GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
+						GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
 					}
 				}
 				AnimationComponent->PlayAIHitMontage("Dead");
 			}
+			
 			break;
 		}
-
 	case EHitAnimType::HAT_AirBorne:
 		AnimationComponent->PlayAIHitMontage("Airborne");
 		SetBattleState(TAG_AI_Hit);
@@ -634,4 +636,31 @@ USLSoundSubsystem* AMonsterAICharacter::GetBattleSoundSubSystem() const
 	}
 
 	return nullptr;
+}
+
+void AMonsterAICharacter::RecoverFromHitState()
+{
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	SetBattleState(TAG_AI_Idle);
+}
+
+void AMonsterAICharacter::PlayHitMontageAndSetupRecovery(const float Length)
+{
+	if (Length > 0.f)
+	{
+		FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+		if (TimerManager.IsTimerActive(CollisionResetTimerHandle))
+		{
+			return;
+		}
+
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
+		GetWorld()->GetTimerManager().SetTimer(CollisionResetTimerHandle, this, &AMonsterAICharacter::RecoverFromHitState, Length, false);
+	}
+	else
+	{
+		RecoverFromHitState();
+	}
 }

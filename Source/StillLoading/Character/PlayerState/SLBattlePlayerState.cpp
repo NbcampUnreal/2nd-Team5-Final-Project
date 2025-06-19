@@ -22,6 +22,17 @@ void ASLBattlePlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 
+	const AController* OwnerController = GetOwner<AController>();
+	if (!OwnerController) return;
+
+	const APawn* Pawn = OwnerController->GetPawn();
+	if (!Pawn) return;
+
+	UCombatHandlerComponent* CombatHandler = Pawn->FindComponentByClass<UCombatHandlerComponent>();
+	if (!CombatHandler) return;
+	
+	CombatHandler->OnEmpoweredStateChanged.AddDynamic(this, &ASLBattlePlayerState::OnPlayerEmpoweredStateChanged);
+
 	GetWorld()->GetTimerManager().SetTimer(
 	   GaugeUpdateTimerHandle,
 	   this,
@@ -87,20 +98,6 @@ void ASLBattlePlayerState::IncreaseBurningGage(const float Amount)
 
 	BurningGage += Amount;
 
-	if (BurningGage >= MaxBurningGage)
-	{
-		if (UMovementHandlerComponent* MoveComp = Pawn->FindComponentByClass<UMovementHandlerComponent>())
-		{
-			MoveComp->BeginBuff();
-		}
-		else if (USL25DMovementHandlerComponent* D25MoveComp = Pawn->FindComponentByClass<USL25DMovementHandlerComponent>())
-		{
-			D25MoveComp->BeginBuff();
-		}
-
-		BurningGage = 0.f;
-	}
-
 	// 싱글에선 직접 호출
 	OnRep_BurningGage();
 }
@@ -144,12 +141,29 @@ void ASLBattlePlayerState::OnRep_BurningGage()
 	if (!PlayerCharacter) return;
 
 	const UCombatHandlerComponent* CombatHandler = Pawn->FindComponentByClass<UCombatHandlerComponent>();
-	if (!CombatHandler || CombatHandler->IsEmpowered()) return;
+	if (!CombatHandler) return;
+
+	if (CombatHandler->IsEmpowered())
+	{
+		return;
+	}
 
 	if (ASLDefaultSword* SwordActor = Cast<ASLDefaultSword>(PlayerCharacter->Sword))
 	{
 		SwordActor->UpdateMaterialByGauge(BurningGage);
 		GageDelegate.OnSpecialValueChanged.Broadcast(MaxBurningGage, BurningGage);
+	}
+
+	if (BurningGage >= MaxBurningGage)
+	{
+		if (UMovementHandlerComponent* MoveComp = Pawn->FindComponentByClass<UMovementHandlerComponent>())
+		{
+			MoveComp->BeginBuff();
+		}
+		else if (USL25DMovementHandlerComponent* D25MoveComp = Pawn->FindComponentByClass<USL25DMovementHandlerComponent>())
+		{
+			D25MoveComp->BeginBuff();
+		}
 	}
 }
 
@@ -157,9 +171,13 @@ void ASLBattlePlayerState::UpdateGauge()
 {
 	if (BurningGage <= 0) return;
 	BurningGage = FMath::Clamp(BurningGage - 1.f, 0.f, MaxBurningGage);
-	UE_LOG(LogTemp, Warning, TEXT("UpdateGauge [%f]"), BurningGage);
 	// 싱글에선 직접 호출
 	OnRep_BurningGage();
+}
+
+void ASLBattlePlayerState::OnPlayerEmpoweredStateChanged(const bool bIsEmpowered)
+{
+	if (!bIsEmpowered) BurningGage = 0.f;
 }
 
 void ASLBattlePlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

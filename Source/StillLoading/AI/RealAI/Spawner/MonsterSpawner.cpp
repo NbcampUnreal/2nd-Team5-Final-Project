@@ -1,9 +1,12 @@
 #include "MonsterSpawner.h"
 
+#include "AIController.h"
 #include "NavigationSystem.h"
 #include "NiagaraFunctionLibrary.h"
 #include "AI/RealAI/AISquadManager.h"
+#include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/BoxComponent.h"
 
@@ -154,6 +157,7 @@ void AMonsterSpawner::SpawnMonstersByType()
 		if (AAISquadManager* MyNewSquadManager = GetWorld()->SpawnActor<AAISquadManager>(AAISquadManager::StaticClass(), SpawnLocation, SpawnRotation))
 		{
 			MyNewSquadManager->InitializeSquad(SpawnedMonsters);
+			MyNewSquadManager->SetTargetDistanceRadius(TargetDetectionRadius);
 			Leader->SetSquadManager(MyNewSquadManager);
 		}
 	}
@@ -213,6 +217,15 @@ void AMonsterSpawner::SpawnMonstersWithoutLeader()
 					SpawnFloorEffect(AIMonster);
 					AIMonster->BeginSpawning(SpawnLocation, RiseHeight);
 					SpawnedMonsters.Add(AIMonster);
+
+					if (AAIController* AIController = Cast<AAIController>(AIMonster->GetController()))
+					{
+						if (UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent())
+						{
+							BlackboardComp->SetValueAsVector(BlackboardKeys::HomeLocation, SpawnLocation);
+							BlackboardComp->SetValueAsFloat(BlackboardKeys::AvailDistance, TargetDetectionRadius);
+						}
+					}
 				}
 			}
 

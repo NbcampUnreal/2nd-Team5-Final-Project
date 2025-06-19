@@ -46,7 +46,7 @@ void UCameraOcclusionHandlerComponent::OnOcclusionOverlapBegin(UPrimitiveCompone
 {
     if (OtherActor == GetOwner() || !OtherComp) return;
 
-    UE_LOG(LogTemp, Warning, TEXT("Overlap BEGIN - Actor: %s, Component: %s"), *OtherActor->GetName(), *OtherComp->GetName());
+    //UE_LOG(LogTemp, Warning, TEXT("Overlap BEGIN - Actor: %s, Component: %s"), *OtherActor->GetName(), *OtherComp->GetName());
 
     if (UStaticMeshComponent* Mesh = Cast<UStaticMeshComponent>(OtherComp))
     {
@@ -58,7 +58,7 @@ void UCameraOcclusionHandlerComponent::OnOcclusionOverlapEnd(UPrimitiveComponent
 {
     if (OtherActor == GetOwner() || !OtherComp) return;
     
-    UE_LOG(LogTemp, Warning, TEXT("Overlap END - Actor: %s, Component: %s"), *OtherActor->GetName(), *OtherComp->GetName());
+    //UE_LOG(LogTemp, Warning, TEXT("Overlap END - Actor: %s, Component: %s"), *OtherActor->GetName(), *OtherComp->GetName());
   
     if (UStaticMeshComponent* Mesh = Cast<UStaticMeshComponent>(OtherComp))
     {
