@@ -73,6 +73,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void EndCinematic();
 
+	UFUNCTION(BlueprintCallable)
+	UActorComponent* GetMovementHandler() const;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<ASLItem> SwordClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")

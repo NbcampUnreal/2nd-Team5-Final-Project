@@ -52,7 +52,7 @@ void AMonsterAIController::OnPossess(APawn* InPawn)
 
 	if (InPawn)
 	{
-		CheckPerception(InPawn);
+		//CheckPerception(InPawn);
 		
 		ACharacter* AICharacter = Cast<ACharacter>(InPawn);
 		if (AICharacter && AICharacter->GetMesh())

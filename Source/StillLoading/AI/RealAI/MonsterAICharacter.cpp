@@ -270,7 +270,7 @@ void AMonsterAICharacter::SetChasing(bool bEnable)
 
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
-		MoveComp->MaxWalkSpeed = bEnable ? 400.f : 400.f;
+		MoveComp->MaxWalkSpeed = bEnable ? 350.f : 350.f;
 	}
 }
 

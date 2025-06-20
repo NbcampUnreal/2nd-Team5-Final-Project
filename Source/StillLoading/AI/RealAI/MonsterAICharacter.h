@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Boid/SwarmAgent.h"
 #include "Character/BattleComponent/SLTargetableInterface.h"
-#include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
 class ASLBasePlayerController;
@@ -37,7 +37,7 @@ enum class EMonsterType : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMonsterDied, AActor*, DiedMonster);
 
 UCLASS()
-class STILLLOADING_API AMonsterAICharacter : public ACharacter, public ISLTargetableInterface
+class STILLLOADING_API AMonsterAICharacter : public ASwarmAgent, public ISLTargetableInterface
 {
 	GENERATED_BODY()
 
