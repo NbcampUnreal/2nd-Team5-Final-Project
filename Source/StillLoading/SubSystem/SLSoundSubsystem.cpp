@@ -54,16 +54,17 @@ void USLSoundSubsystem::PlayBgmSound(ESLBgmSoundType SoundType)
 		return;
 	}
 
-	StopBgmSound();
-
 	if (!IsValid(BgmAudioComp))
 	{
-		BgmAudioComp = UGameplayStatics::CreateSound2D(GetGameInstance(), SoundSource, 1.0f);
-		BgmAudioComp->bAutoDestroy = false;
+		BgmAudioComp = UGameplayStatics::CreateSound2D(GetGameInstance(), SoundSource, 1.0f, 1.0f, 0.0f, nullptr, true, false);
+		BgmAudioComp->Play();
 	}
-
-	BgmAudioComp->SetSound(SoundSource);
-	BgmAudioComp->Play();
+	else if (BgmAudioComp->GetSound() != SoundSource)
+	{
+		StopBgmSound();
+		BgmAudioComp->SetSound(SoundSource);
+		BgmAudioComp->Play();
+	}
 }
 
 void USLSoundSubsystem::StopBgmSound()
