@@ -60,9 +60,6 @@ public:
 	void StartPhase3HorrorMode();
 
 	UFUNCTION(BlueprintCallable, Category = "Phase 3")
-	void StopPhase3HorrorMode();
-
-	UFUNCTION(BlueprintCallable, Category = "Phase 3")
 	void SetPhase3Settings(float NewChaseSpeed, float NewStopDistance, float NewLookAngle);
 
 	UFUNCTION(BlueprintCallable, Category = "Phase 3")
@@ -122,7 +119,6 @@ protected:
 
 	void UpdatePhase3Movement(float DeltaTime);
 	bool IsPlayerLookingAtMe() const;
-	void ChangeToHorrorAppearance();
 	void RestoreOriginalAppearance();
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
