@@ -49,6 +49,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Base Action")
 	void DanceTime() const;
 
+	UPROPERTY()
+	TObjectPtr<USkeletalMeshComponent> CachedSkeletalMesh = nullptr;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value);
@@ -84,6 +87,4 @@ protected:
 	TObjectPtr<USLSoundSubsystem> CachedBattleSoundSubsystem = nullptr;
 	UPROPERTY()
 	TObjectPtr<USLInteractionComponent> CachedInteractionComponent = nullptr;
-	UPROPERTY()
-	TObjectPtr<USkeletalMeshComponent> CachedSkeletalMesh = nullptr;
 };

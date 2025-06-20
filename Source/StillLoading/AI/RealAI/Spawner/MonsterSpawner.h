@@ -80,6 +80,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	float RiseHeight = 500.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn|Distance")
+	float TargetDetectionRadius = 1500.f;
+
 protected:
 	virtual void BeginPlay() override;
 
