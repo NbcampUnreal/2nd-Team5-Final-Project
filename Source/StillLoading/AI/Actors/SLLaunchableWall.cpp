@@ -12,6 +12,7 @@
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/DataAsset/AttackDataAsset.h"
+#include "AI/Actors/SLMouseActor.h"
 
 ASLLaunchableWall::ASLLaunchableWall()
 {
@@ -25,6 +26,7 @@ ASLLaunchableWall::ASLLaunchableWall()
 	YMovementTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("YMovementTimeline"));
 	SpacingTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("SpacingTimeline"));
 
+	// 기본값 설정
 	NumberOfWallParts = 5;
 	WallPartSpacing = 100.0f;
 	LaunchDelay = 0.2f;
@@ -59,6 +61,11 @@ ASLLaunchableWall::ASLLaunchableWall()
 	bUseCustomMeshPerPart = false;
 	DefaultWallMesh = nullptr;
 	
+	MouseActorStunDuration = 3.0f;
+	MouseHitEffect = nullptr;
+	MouseHitSound = nullptr;
+	
+	// private 변수들 초기화
 	CurrentLaunchIndex = 0;
 	LaunchedPartsCount = 0;
 	bIsLaunching = false;
@@ -70,8 +77,423 @@ ASLLaunchableWall::ASLLaunchableWall()
 	TargetRotation = FRotator::ZeroRotator;
 	PlayerAimStartRotation = FRotator::ZeroRotator;
 	PlayerAimTargetRotation = FRotator::ZeroRotator;
-
+	PostLaunchLifetime = 2.0f;
+	
 	CreateWallParts();
+}
+
+void ASLLaunchableWall::OnPlayerAimTimelineFinished()
+{
+	OnWallPartRotationCompleted.Broadcast(CurrentRotatingPartIndex);
+	CurrentRotatingPartIndex = -1;
+
+	FTimerHandle DelayTimer;
+	GetWorldTimerManager().SetTimer(
+		DelayTimer,
+		this,
+		&ASLLaunchableWall::LaunchCurrentPart,
+		RotationDelay,
+		false
+	);
+}
+
+void ASLLaunchableWall::ApplyDamageToPlayer(AActor* PlayerActor, const FHitResult& HitResult, int32 WallPartIndex)
+{
+	if (!PlayerActor)
+	{
+		return;
+	}
+
+	if (UBattleComponent* BattleComp = PlayerActor->FindComponentByClass<UBattleComponent>())
+	{
+		BattleComp->ReceiveHitResult(10.f, this, HitResult, EAttackAnimType::AAT_AIProjectile);
+	}
+}
+
+void ASLLaunchableWall::PlayCharacterHitEffects(const FVector& HitLocation, AActor* HitActor)
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	if (CharacterHitEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			CharacterHitEffect,
+			HitLocation,
+			FRotator::ZeroRotator,
+			FVector(1.0f)
+		);
+	}
+
+	if (CharacterHitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			CharacterHitSound,
+			HitLocation
+		);
+	}
+}
+
+void ASLLaunchableWall::PlayGroundHitEffects(const FVector& HitLocation)
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	if (GroundHitEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			GroundHitEffect,
+			HitLocation,
+			FRotator::ZeroRotator,
+			FVector(1.0f),
+			true,
+			true,
+			ENCPoolMethod::None,
+			true
+		);
+	}
+
+	if (GroundHitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			GroundHitSound,
+			HitLocation
+		);
+	}
+}
+
+void ASLLaunchableWall::DestroyWallPart(int32 WallPartIndex)
+{
+	if (!WallParts.IsValidIndex(WallPartIndex) || !WallParts[WallPartIndex])
+	{
+		return;
+	}
+
+	WallParts[WallPartIndex]->SetVisibility(false);
+	WallParts[WallPartIndex]->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (ProjectileMovements.IsValidIndex(WallPartIndex) && ProjectileMovements[WallPartIndex])
+	{
+		ProjectileMovements[WallPartIndex]->SetActive(false);
+	}
+
+	if (WallPartStates.IsValidIndex(WallPartIndex))
+	{
+		WallPartStates[WallPartIndex] = EWallPartState::Inactive;
+	}
+
+}
+
+FVector ASLLaunchableWall::GetPlayerLocation() const
+{
+	if (!GetWorld())
+	{
+		return GetActorLocation();
+	}
+
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (!PlayerController || !PlayerController->GetPawn())
+	{
+		return GetActorLocation();
+	}
+
+	return PlayerController->GetPawn()->GetActorLocation();
+}
+
+FVector ASLLaunchableWall::GetPlayerDirection() const
+{
+	if (!GetWorld())
+	{
+		return GetActorForwardVector();
+	}
+
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (!PlayerController || !PlayerController->GetPawn())
+	{
+		return GetActorForwardVector();
+	}
+
+	FVector PlayerLocation = PlayerController->GetPawn()->GetActorLocation();
+	FVector WallLocation = GetActorLocation();
+	FVector DirectionToPlayer = (PlayerLocation - WallLocation).GetSafeNormal();
+
+	return DirectionToPlayer;
+}
+
+FVector ASLLaunchableWall::GetPlayerDirectionFromPoint(const FVector& FromPoint) const
+{
+	if (!GetWorld())
+	{
+		return GetActorForwardVector();
+	}
+
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (!PlayerController || !PlayerController->GetPawn())
+	{
+		return GetActorForwardVector(); 
+	}
+
+	FVector PlayerLocation = PlayerController->GetPawn()->GetActorLocation();
+	return (PlayerLocation - FromPoint).GetSafeNormal();
+}
+
+void ASLLaunchableWall::CreateWallParts()
+{
+	WallParts.Empty();
+	ProjectileMovements.Empty();
+	WallPartStates.SetNum(MaxWallParts);
+
+	for (int32 i = 0; i < MaxWallParts; i++)
+	{
+		CreateWallPart(i);
+		WallPartStates[i] = EWallPartState::Inactive;
+	}
+}
+
+void ASLLaunchableWall::CreateWallPart(int32 Index)
+{
+	FString ComponentName = FString::Printf(TEXT("WallPart_%d"), Index);
+	UStaticMeshComponent* WallPart = CreateDefaultSubobject<UStaticMeshComponent>(*ComponentName);
+	
+	if (WallPart)
+	{
+		WallPart->SetupAttachment(RootComponent);
+		
+		FVector PartLocation;
+		if (bArrangeHorizontally)
+		{
+			PartLocation = FVector(Index * WallPartSpacing, 0.0f, 0.0f);
+		}
+		else
+		{
+			PartLocation = FVector(0.0f, 0.0f, Index * WallPartSpacing);
+		}
+		
+		WallPart->SetRelativeLocation(PartLocation);
+		WallPart->SetRelativeScale3D(WallPartScale);
+		
+		WallParts.Add(WallPart);
+
+		FString MovementComponentName = FString::Printf(TEXT("ProjectileMovement_%d"), Index);
+		UProjectileMovementComponent* ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(*MovementComponentName);
+		
+		if (ProjectileMovement)
+		{
+			ProjectileMovement->SetUpdatedComponent(WallPart);
+			ProjectileMovement->InitialSpeed = LaunchSpeed;
+			ProjectileMovement->MaxSpeed = LaunchSpeed;
+			ProjectileMovement->bRotationFollowsVelocity = false;
+			ProjectileMovement->bShouldBounce = false;
+			ProjectileMovement->ProjectileGravityScale = ProjectileGravityScale;
+			ProjectileMovement->SetActive(false); 
+			
+			ProjectileMovements.Add(ProjectileMovement);
+		}
+	}
+}
+
+void ASLLaunchableWall::UpdateWallPartsVisibility()
+{
+	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
+	
+	for (int32 i = 0; i < WallParts.Num(); i++)
+	{
+		if (WallParts[i])
+		{
+			bool bShouldBeVisible = (i < ActiveParts);
+			WallParts[i]->SetVisibility(bShouldBeVisible);
+			
+			if (ProjectileMovements.IsValidIndex(i) && ProjectileMovements[i])
+			{
+				ProjectileMovements[i]->SetActive(false);
+			}
+		}
+	}
+}
+
+UStaticMesh* ASLLaunchableWall::GetMeshForPart(int32 Index) const
+{
+	if (bUseCustomMeshPerPart && 
+		WallPartMeshes.IsValidIndex(Index) && 
+		WallPartMeshes[Index])
+	{
+		return WallPartMeshes[Index];
+	}
+	
+	return DefaultWallMesh;
+}
+
+void ASLLaunchableWall::SetupWallPartCollisions(UStaticMeshComponent* WallPart)
+{
+	if (!WallPart)
+	{
+		return;
+	}
+    
+	WallPart->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WallPart->SetCollisionObjectType(ECC_WorldDynamic);
+	WallPart->SetCollisionResponseToAllChannels(ECR_Block);
+	WallPart->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+}
+
+bool ASLLaunchableWall::ShouldIgnoreCollision(AActor* OtherActor) const
+{
+	if (!OtherActor)
+	{
+		return true;
+	}
+    
+	if (ASLAIBaseCharacter* AICharacter = Cast<ASLAIBaseCharacter>(OtherActor))
+	{
+		if (AICharacter->GetIsDead())
+		{
+			return true;
+		}
+	}
+    
+	if (OtherActor == this)
+	{
+		return true;
+	}
+    
+	return false;
+}
+
+void ASLLaunchableWall::ResetWall()
+{
+    
+    
+    bIsLaunching = false;
+    bIsYMovementAnimating = false;
+    bIsSpacingAnimating = false;
+    CurrentLaunchIndex = 0;
+    LaunchedPartsCount = 0;  // 중요: 발사된 파트 수 리셋
+    CurrentRotatingPartIndex = -1;
+	
+    if (RotationTimeline)
+    {
+        RotationTimeline->Stop();
+        RotationTimeline->SetPlaybackPosition(0.0f, false);
+    }
+    
+    if (PlayerAimTimeline)
+    {
+        PlayerAimTimeline->Stop();
+        PlayerAimTimeline->SetPlaybackPosition(0.0f, false);
+    }
+    
+    if (YMovementTimeline)
+    {
+        YMovementTimeline->Stop();
+        YMovementTimeline->SetPlaybackPosition(0.0f, false);
+    }
+    
+    if (SpacingTimeline)
+    {
+        SpacingTimeline->Stop();
+        SpacingTimeline->SetPlaybackPosition(0.0f, false);
+    }
+	
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+    }
+	
+    int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
+    
+    for (int32 i = 0; i < ActiveParts && i < WallParts.Num(); i++)
+    {
+        if (WallParts[i])
+        {
+            // ProjectileMovement 먼저 정지 및 분리
+            if (ProjectileMovements.IsValidIndex(i) && ProjectileMovements[i])
+            {
+                ProjectileMovements[i]->SetActive(false);
+                ProjectileMovements[i]->Velocity = FVector::ZeroVector;
+                ProjectileMovements[i]->SetUpdatedComponent(nullptr);
+            }
+            
+            // 부모에 다시 어태치 (분리된 경우 대비)
+            if (!WallParts[i]->IsAttachedTo(RootComponent))
+            {
+                WallParts[i]->AttachToComponent(
+                    RootComponent,
+                    FAttachmentTransformRules::SnapToTargetNotIncludingScale
+                );
+            }
+            
+            // 가시성 및 콜리전 복구
+            WallParts[i]->SetVisibility(true);
+            WallParts[i]->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+            
+            // 원래 위치 및 회전 복구
+            FVector OriginalPosition;
+            if (bArrangeHorizontally)
+            {
+                OriginalPosition = FVector(i * WallPartSpacing, 0.0f, 0.0f);
+            }
+            else
+            {
+                OriginalPosition = FVector(0.0f, 0.0f, i * WallPartSpacing);
+            }
+            
+            WallParts[i]->SetRelativeLocation(OriginalPosition);
+            WallParts[i]->SetRelativeScale3D(WallPartScale);
+            ApplySpawnRotationToWallPart(WallParts[i], i);
+            
+            // ProjectileMovement 재연결 및 설정
+            if (ProjectileMovements.IsValidIndex(i) && ProjectileMovements[i])
+            {
+                ProjectileMovements[i]->SetUpdatedComponent(WallParts[i]);
+                ProjectileMovements[i]->InitialSpeed = LaunchSpeed;
+                ProjectileMovements[i]->MaxSpeed = LaunchSpeed;
+                ProjectileMovements[i]->bRotationFollowsVelocity = false;
+                ProjectileMovements[i]->bShouldBounce = false;
+                ProjectileMovements[i]->ProjectileGravityScale = ProjectileGravityScale;
+                ProjectileMovements[i]->SetActive(false); // 비활성 상태로 시작
+            }
+            
+            // 상태 리셋
+            if (WallPartStates.IsValidIndex(i))
+            {
+                WallPartStates[i] = EWallPartState::Inactive;
+            }
+        }
+    }
+    
+    // 5. 원래 위치 정보 재수집
+    OriginalWallPartPositions.Empty();
+    YMovedWallPartPositions.Empty();
+    
+    for (int32 i = 0; i < ActiveParts && i < WallParts.Num(); i++)
+    {
+        if (WallParts[i])
+        {
+            OriginalWallPartPositions.Add(WallParts[i]->GetRelativeLocation());
+        }
+    }
+    
+    // 6. 액터 상태 복구
+    SetActorHiddenInGame(false);
+    SetActorEnableCollision(true);
+    SetActorTickEnabled(true);
+    
+    // 7. 델리게이트 정리 (혹시 남아있는 이벤트 바인딩 제거)
+    OnAllWallPartsLaunched.Clear();
+    OnWallAnimationCompleted.Clear();
+    OnWallPartRotationCompleted.Clear();
+    OnWallYMovementCompleted.Clear();
+    OnWallSpacingCompleted.Clear();
+    OnWallHitMouseActor.Clear();
+	
 }
 
 void ASLLaunchableWall::BeginPlay()
@@ -188,8 +610,10 @@ void ASLLaunchableWall::OnConstruction(const FTransform& Transform)
 
 void ASLLaunchableWall::LaunchWallToPlayer()
 {
+	
 	if (!CanLaunch())
 	{
+		UE_LOG(LogTemp, Error, TEXT("❌ Cannot launch wall!"));
 		return;
 	}
 	
@@ -398,45 +822,6 @@ void ASLLaunchableWall::ApplySpawnRotation()
 	}
 }
 
-void ASLLaunchableWall::SetSpawnRotation(const FRotator& NewRotation)
-{
-	SpawnRotation = NewRotation;
-	ApplySpawnRotation();
-}
-
-void ASLLaunchableWall::SetLaunchSpeed(float NewSpeed)
-{
-	LaunchSpeed = FMath::Max(0.0f, NewSpeed);
-}
-
-void ASLLaunchableWall::SetLaunchDelay(float NewDelay)
-{
-	LaunchDelay = FMath::Max(0.0f, NewDelay);
-}
-
-void ASLLaunchableWall::SetNumberOfWallParts(int32 NewCount)
-{
-	NumberOfWallParts = FMath::Clamp(NewCount, 1, MaxWallParts);
-	UpdateWallPartsVisibility();
-	RefreshWallLayout();
-}
-
-void ASLLaunchableWall::SetRotationDuration(float NewDuration)
-{
-	RotationDuration = FMath::Clamp(NewDuration, 0.1f, 2.0f);
-}
-
-void ASLLaunchableWall::SetPlayerAimDuration(float NewDuration)
-{
-	PlayerAimDuration = FMath::Max(0.1f, NewDuration);
-}
-
-void ASLLaunchableWall::SetAnimationDurations(float NewYMovementDuration, float NewSpacingDuration)
-{
-	YMovementDuration = FMath::Clamp(NewYMovementDuration, 0.1f, 3.0f);
-	SpacingAnimationDuration = FMath::Clamp(NewSpacingDuration, 0.1f, 3.0f);
-}
-
 void ASLLaunchableWall::ApplySpawnRotationToWallPart(UStaticMeshComponent* WallPart, int32 PartIndex)
 {
 	if (!WallPart)
@@ -478,6 +863,14 @@ void ASLLaunchableWall::OnWallPartHit(UPrimitiveComponent* HitComponent, AActor*
 		return;
 	}
 
+	// 마우스 액터와의 충돌 처리 (새로 추가)
+	if (ASLMouseActor* MouseActor = Cast<ASLMouseActor>(OtherActor))
+	{
+		HandleMouseActorHit(MouseActor, Hit, WallPartIndex);
+		DestroyWallPart(WallPartIndex);
+		return;
+	}
+
 	// 플레이어 충돌
 	if (ASLPlayerCharacterBase* PlayerCharacter = Cast<ASLPlayerCharacterBase>(OtherActor))
 	{
@@ -491,6 +884,44 @@ void ASLLaunchableWall::OnWallPartHit(UPrimitiveComponent* HitComponent, AActor*
 	}
 
 	DestroyWallPart(WallPartIndex);
+}
+
+void ASLLaunchableWall::HandleMouseActorHit(ASLMouseActor* MouseActor, const FHitResult& HitResult, int32 WallPartIndex)
+{
+	if (!IsValid(MouseActor))
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ Invalid MouseActor in HandleMouseActorHit"));
+		return;
+	}
+
+	// 마우스 액터에 스턴 적용
+	MouseActor->ApplyWallStun(MouseActorStunDuration);
+
+	// 마우스 히트 이펙트 재생
+	if (IsValid(MouseHitEffect) && IsValid(GetWorld()))
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			MouseHitEffect,
+			HitResult.ImpactPoint,
+			FRotator::ZeroRotator,
+			FVector(1.0f)
+		);
+	}
+
+	// 마우스 히트 사운드 재생
+	if (IsValid(MouseHitSound) && IsValid(GetWorld()))
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			MouseHitSound,
+			HitResult.ImpactPoint
+		);
+	}
+
+	// 마우스 액터 히트 이벤트 브로드캐스트
+	OnWallHitMouseActor.Broadcast(MouseActor, WallPartIndex);
+	
 }
 
 void ASLLaunchableWall::SetupWallParts()
@@ -544,11 +975,22 @@ void ASLLaunchableWall::LaunchNextPart()
 void ASLLaunchableWall::CheckAllPartsLaunched()
 {
 	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
-	
 	if (LaunchedPartsCount >= ActiveParts)
 	{
 		bIsLaunching = false;
-		OnAllWallPartsLaunched.Broadcast();
+		OnAllWallPartsLaunched.Broadcast(this); 
+
+		if (PostLaunchLifetime > 0.0f && GetWorld())
+		{
+			FTimerHandle SelfResetTimer;
+			GetWorldTimerManager().SetTimer(
+				SelfResetTimer,
+				this,
+				&ASLLaunchableWall::ResetWall, 
+				PostLaunchLifetime,
+				false
+			);
+		}
 	}
 }
 
@@ -713,291 +1155,4 @@ void ASLLaunchableWall::OnPlayerAimTimelineUpdate(float Value)
 	
 	FRotator CurrentRotation = FMath::Lerp(PlayerAimStartRotation, PlayerAimTargetRotation, Value);
 	CurrentPart->SetWorldRotation(CurrentRotation);
-}
-
-void ASLLaunchableWall::OnPlayerAimTimelineFinished()
-{
-	OnWallPartRotationCompleted.Broadcast(CurrentRotatingPartIndex);
-	CurrentRotatingPartIndex = -1;
-
-	FTimerHandle DelayTimer;
-	GetWorldTimerManager().SetTimer(
-		DelayTimer,
-		this,
-		&ASLLaunchableWall::LaunchCurrentPart,
-		RotationDelay,
-		false
-	);
-}
-
-void ASLLaunchableWall::ApplyDamageToPlayer(AActor* PlayerActor, const FHitResult& HitResult, int32 WallPartIndex)
-{
-	if (!PlayerActor)
-	{
-		return;
-	}
-
-	if (UBattleComponent* BattleComp = PlayerActor->FindComponentByClass<UBattleComponent>())
-	{
-		//BattleComp->SendHitResult(PlayerActor, HitResult, EAttackAnimType::AAT_AIProjectile);
-		BattleComp->ReceiveHitResult(10.f,  this, HitResult,EAttackAnimType::AAT_AIProjectile);
-	}
-}
-
-void ASLLaunchableWall::PlayCharacterHitEffects(const FVector& HitLocation, AActor* HitActor)
-{
-	if (!GetWorld())
-	{
-		return;
-	}
-
-	if (CharacterHitEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			CharacterHitEffect,
-			HitLocation,
-			FRotator::ZeroRotator,
-			FVector(1.0f)
-		);
-	}
-
-	if (CharacterHitSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			CharacterHitSound,
-			HitLocation
-		);
-	}
-}
-
-void ASLLaunchableWall::PlayGroundHitEffects(const FVector& HitLocation)
-{
-	if (!GetWorld())
-	{
-		return;
-	}
-
-	if (GroundHitEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			GroundHitEffect,
-			HitLocation,
-			FRotator::ZeroRotator,
-			FVector(1.0f),
-			true,
-			true,
-			ENCPoolMethod::None,
-			true
-		);
-	}
-
-	if (GroundHitSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			GroundHitSound,
-			HitLocation
-		);
-	}
-}
-
-void ASLLaunchableWall::DestroyWallPart(int32 WallPartIndex)
-{
-	if (!WallParts.IsValidIndex(WallPartIndex) || !WallParts[WallPartIndex])
-	{
-		return;
-	}
-
-	WallParts[WallPartIndex]->SetVisibility(false);
-	WallParts[WallPartIndex]->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	if (ProjectileMovements.IsValidIndex(WallPartIndex) && ProjectileMovements[WallPartIndex])
-	{
-		ProjectileMovements[WallPartIndex]->SetActive(false);
-	}
-
-	if (WallPartStates.IsValidIndex(WallPartIndex))
-	{
-		WallPartStates[WallPartIndex] = EWallPartState::Inactive;
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("Wall part %d destroyed"), WallPartIndex);
-}
-
-FVector ASLLaunchableWall::GetPlayerLocation() const
-{
-	if (!GetWorld())
-	{
-		return GetActorLocation();
-	}
-
-	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-	if (!PlayerController || !PlayerController->GetPawn())
-	{
-		return GetActorLocation();
-	}
-
-	return PlayerController->GetPawn()->GetActorLocation();
-}
-
-FVector ASLLaunchableWall::GetPlayerDirection() const
-{
-	if (!GetWorld())
-	{
-		return GetActorForwardVector();
-	}
-
-	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-	if (!PlayerController || !PlayerController->GetPawn())
-	{
-		return GetActorForwardVector();
-	}
-
-	FVector PlayerLocation = PlayerController->GetPawn()->GetActorLocation();
-	FVector WallLocation = GetActorLocation();
-	FVector DirectionToPlayer = (PlayerLocation - WallLocation).GetSafeNormal();
-
-	return DirectionToPlayer;
-}
-
-FVector ASLLaunchableWall::GetPlayerDirectionFromPoint(const FVector& FromPoint) const
-{
-	if (!GetWorld())
-	{
-		return GetActorForwardVector();
-	}
-
-	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-	if (!PlayerController || !PlayerController->GetPawn())
-	{
-		return GetActorForwardVector(); 
-	}
-
-	FVector PlayerLocation = PlayerController->GetPawn()->GetActorLocation();
-	return (PlayerLocation - FromPoint).GetSafeNormal();
-}
-
-void ASLLaunchableWall::CreateWallParts()
-{
-	WallParts.Empty();
-	ProjectileMovements.Empty();
-	WallPartStates.SetNum(MaxWallParts);
-
-	for (int32 i = 0; i < MaxWallParts; i++)
-	{
-		CreateWallPart(i);
-		WallPartStates[i] = EWallPartState::Inactive;
-	}
-}
-
-void ASLLaunchableWall::CreateWallPart(int32 Index)
-{
-	FString ComponentName = FString::Printf(TEXT("WallPart_%d"), Index);
-	UStaticMeshComponent* WallPart = CreateDefaultSubobject<UStaticMeshComponent>(*ComponentName);
-	
-	if (WallPart)
-	{
-		WallPart->SetupAttachment(RootComponent);
-		
-		FVector PartLocation;
-		if (bArrangeHorizontally)
-		{
-			PartLocation = FVector(Index * WallPartSpacing, 0.0f, 0.0f);
-		}
-		else
-		{
-			PartLocation = FVector(0.0f, 0.0f, Index * WallPartSpacing);
-		}
-		
-		WallPart->SetRelativeLocation(PartLocation);
-		WallPart->SetRelativeScale3D(WallPartScale);
-		
-		WallParts.Add(WallPart);
-
-		FString MovementComponentName = FString::Printf(TEXT("ProjectileMovement_%d"), Index);
-		UProjectileMovementComponent* ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(*MovementComponentName);
-		
-		if (ProjectileMovement)
-		{
-			ProjectileMovement->SetUpdatedComponent(WallPart);
-			ProjectileMovement->InitialSpeed = LaunchSpeed;
-			ProjectileMovement->MaxSpeed = LaunchSpeed;
-			ProjectileMovement->bRotationFollowsVelocity = false;
-			ProjectileMovement->bShouldBounce = false;
-			ProjectileMovement->ProjectileGravityScale = ProjectileGravityScale;
-			ProjectileMovement->SetActive(false); 
-			
-			ProjectileMovements.Add(ProjectileMovement);
-		}
-	}
-}
-
-void ASLLaunchableWall::UpdateWallPartsVisibility()
-{
-	int32 ActiveParts = FMath::Clamp(NumberOfWallParts, 1, MaxWallParts);
-	
-	for (int32 i = 0; i < WallParts.Num(); i++)
-	{
-		if (WallParts[i])
-		{
-			bool bShouldBeVisible = (i < ActiveParts);
-			WallParts[i]->SetVisibility(bShouldBeVisible);
-			
-			if (ProjectileMovements.IsValidIndex(i) && ProjectileMovements[i])
-			{
-				ProjectileMovements[i]->SetActive(false);
-			}
-		}
-	}
-}
-
-UStaticMesh* ASLLaunchableWall::GetMeshForPart(int32 Index) const
-{
-	if (bUseCustomMeshPerPart && 
-		WallPartMeshes.IsValidIndex(Index) && 
-		WallPartMeshes[Index])
-	{
-		return WallPartMeshes[Index];
-	}
-	
-	return DefaultWallMesh;
-}
-
-void ASLLaunchableWall::SetupWallPartCollisions(UStaticMeshComponent* WallPart)
-{
-	if (!WallPart)
-	{
-		return;
-	}
-    
-	WallPart->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	WallPart->SetCollisionObjectType(ECC_WorldDynamic);
-	WallPart->SetCollisionResponseToAllChannels(ECR_Block);
-	WallPart->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-}
-
-bool ASLLaunchableWall::ShouldIgnoreCollision(AActor* OtherActor) const
-{
-	if (!OtherActor)
-	{
-		return true;
-	}
-    
-	if (ASLAIBaseCharacter* AICharacter = Cast<ASLAIBaseCharacter>(OtherActor))
-	{
-		if (AICharacter->GetIsDead())
-		{
-			return true;
-		}
-	}
-    
-	if (OtherActor == this)
-	{
-		return true;
-	}
-    
-	return false;
 }
