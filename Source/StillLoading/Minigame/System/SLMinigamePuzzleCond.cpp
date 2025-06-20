@@ -97,7 +97,10 @@ void ASLMinigamePuzzleCond::InitCondition()
 void ASLMinigamePuzzleCond::SendCondition(ESLMinigameResult InResult)
 {
 	Super::SendConditionToMinigameSubsystem(InResult);
-	
+	if (InResult == ESLMinigameResult::EMR_Success)
+	{
+		OnMinigameCompleted.Broadcast();
+	}	
 }
 
 void ASLMinigamePuzzleCond::DeactivateAllStatue()
