@@ -49,25 +49,19 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
 	EMouseActorState GetCurrentState() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void SetOrbitSettings(float NewOrbitRadius, float NewOrbitHeight, float NewOrbitSpeed);
-
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void SetGrabSettings(float NewGrabDistance, float NewGrabHeight, float NewGrabDamage, float NewGrabCooldownMin, float NewGrabCooldownMax);
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Phase 3")
 	void StartPhase3HorrorMode();
 
 	UFUNCTION(BlueprintCallable, Category = "Phase 3")
-	void SetPhase3Settings(float NewChaseSpeed, float NewStopDistance, float NewLookAngle);
-
-	UFUNCTION(BlueprintCallable, Category = "Phase 3")
-	void SetPhase3Scale(const FVector& NewScale);
-
-	UFUNCTION(BlueprintCallable, Category = "Phase 3")
 	TSubclassOf<ASLMouseActor> GetPhase3MouseActorClass() const { return Phase3MouseActorClass; }
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Phase 3")
+	void PerformSweepAttack();
+
+	void StartMultiHitTimer();
+	void OnMultiHitTimerFinished();
+
 	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
 	FSLOnMouseActorDestroyed OnMouseActorDestroyed;
 
@@ -120,6 +114,11 @@ protected:
 	void UpdatePhase3Movement(float DeltaTime);
 	bool IsPlayerLookingAtMe() const;
 	void RestoreOriginalAppearance();
+
+	UFUNCTION()
+	void OnSweepAttackCooldownFinished();
+
+	void ExecuteSweepAttack();
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> RootSceneComponent;
@@ -200,14 +199,31 @@ protected:
 	TObjectPtr<UStaticMesh> Phase3HorrorMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
-	TObjectPtr<UMaterialInterface> Phase3HorrorMaterial;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
 	FVector Phase3HorrorScale;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
 	TSubclassOf<ASLMouseActor> Phase3MouseActorClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float SweepAttackDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float SweepAttackRange;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float SweepAttackCooldown;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	TObjectPtr<UNiagaraSystem> SweepAttackEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Debug")
+	bool bShowSweepDebug;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	int32 SweepAttackHitCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float SweepAttackHitInterval;
 private:
 	EMouseActorState CurrentState;
 	float CurrentHealth;
@@ -224,4 +240,11 @@ private:
 	UPROPERTY()
 	TObjectPtr<UStaticMesh> OriginalMesh;
 
+	bool bCanSweepAttack;
+	FTimerHandle SweepAttackCooldownTimer;
+
+	FTimerHandle MultiHitTimer;
+	int32 CurrentHitCount;
+	UPROPERTY()
+	TSet<TObjectPtr<AActor>> MultiHitTargets;
 };

@@ -58,27 +58,50 @@ ASLMouseActor::ASLMouseActor()
 	DestroySound = nullptr;
 
 	Phase3ChaseSpeed = 800.0f;
-	Phase3StopDistance = 200.0f;
-	PlayerLookCheckAngle = 5.0f;
+	Phase3StopDistance = 100.0f;
+	PlayerLookCheckAngle = 15.0f;
 	Phase3HorrorMesh = nullptr;
-	Phase3HorrorMaterial = nullptr;
     
 	bIsInPhase3Mode = false;
 	bIsPlayerLookingAtMe = false;
 	OriginalMesh = nullptr;
-	Phase3HorrorScale = FVector(2.0f, 2.0f, 2.0f);
+	Phase3HorrorScale = FVector(1.0f, 1.0f, 1.0f);
 
+	SweepAttackDamage = 30.0f;
+	SweepAttackRange = 500.0f;
+	SweepAttackCooldown = 5.0f;
+	bCanSweepAttack = true;
+	SweepAttackEffect = nullptr;
+	bShowSweepDebug = true;
 
+	SweepAttackHitCount = 5;
+	SweepAttackHitInterval = 0.1f;
+	CurrentHitCount = 0;
 }
 
 void ASLMouseActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 메시 컴포넌트 콜리전 설정
+	if (MouseMeshComponent)
+	{
+		MouseMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		MouseMeshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	}
+
+	// 콜리전 컴포넌트 설정
 	if (CollisionComponent)
 	{
 		CollisionComponent->OnComponentHit.AddDynamic(this, &ASLMouseActor::OnCollisionHit);
 		CollisionComponent->SetSphereRadius(DetectionRange);
+		
+		// 플레이어와는 겹침만 허용, 물리적 충돌 방지
+		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		CollisionComponent->SetCollisionObjectType(ECC_WorldDynamic);
+		CollisionComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
 	}
 
 	if (BattleComponent)
@@ -246,22 +269,6 @@ EMouseActorState ASLMouseActor::GetCurrentState() const
 	return CurrentState;
 }
 
-void ASLMouseActor::SetOrbitSettings(float NewOrbitRadius, float NewOrbitHeight, float NewOrbitSpeed)
-{
-	OrbitRadius = FMath::Max(0.0f, NewOrbitRadius);
-	OrbitHeight = FMath::Max(0.0f, NewOrbitHeight);
-	OrbitSpeed = FMath::Max(0.0f, NewOrbitSpeed);
-}
-
-void ASLMouseActor::SetGrabSettings(float NewGrabDistance, float NewGrabHeight, float NewGrabDamage, float NewGrabCooldownMin, float NewGrabCooldownMax)
-{
-	GrabDistance = FMath::Max(0.0f, NewGrabDistance);
-	GrabHeight = FMath::Max(0.0f, NewGrabHeight);
-	GrabDamage = FMath::Max(0.0f, NewGrabDamage);
-	GrabCooldownMin = FMath::Max(0.1f, NewGrabCooldownMin);
-	GrabCooldownMax = FMath::Max(GrabCooldownMin, NewGrabCooldownMax);
-}
-
 void ASLMouseActor::OnCollisionHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (!IsValid(OtherActor) || CurrentState == EMouseActorState::Destroyed)
@@ -303,7 +310,22 @@ void ASLMouseActor::OnCollisionReenabled()
 {
 	if (IsValid(CollisionComponent))
 	{
-		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		if (bIsInPhase3Mode)
+		{
+			// Phase3에서는 겹침만 허용
+			CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			CollisionComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+			CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+			CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+		}
+		else
+		{
+			// 일반 모드에서는 기존 설정
+			CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			CollisionComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+			CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+			CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
+		}
 	}
 	OnMouseCollisionReenabled.Broadcast();
 }
@@ -383,12 +405,21 @@ void ASLMouseActor::UpdateMeshRotation(float DeltaTime)
     
 	if (bIsInPhase3Mode)
 	{
-		// Phase3에서는 즉시 플레이어를 향해 회전 (더 섬뜩함)
-		LookAtRotation.Yaw -= 90.0f; // 정면 맞춤
-		LookAtRotation.Pitch -= 20.0f; // 살짝 아래를 내려다보는 느낌
-		LookAtRotation.Roll -= 10.0f;
-		// 즉시 회전
-		MouseMeshComponent->SetWorldRotation(LookAtRotation);
+		LookAtRotation.Yaw -= 90.0f; 
+		LookAtRotation.Pitch -= 20.0f; 
+		LookAtRotation.Roll -= 10.0f; 
+		
+		
+		FRotator CurrentRotation = MouseMeshComponent->GetComponentRotation();
+		FRotator NewRotation = FMath::RInterpTo(CurrentRotation, LookAtRotation, DeltaTime, 5.0f);
+		MouseMeshComponent->SetWorldRotation(NewRotation);
+		
+		
+		FVector DirectionToPlayer = (PlayerLocation - GetActorLocation()).GetSafeNormal();
+		FRotator ActorRotation = DirectionToPlayer.Rotation();
+		FRotator CurrentActorRotation = GetActorRotation();
+		FRotator NewActorRotation = FMath::RInterpTo(CurrentActorRotation, ActorRotation, DeltaTime, 3.0f);
+		SetActorRotation(NewActorRotation);
 	}
 	else
 	{
@@ -623,58 +654,59 @@ FVector ASLMouseActor::CalculateOrbitPosition() const
 
 void ASLMouseActor::StartPhase3HorrorMode()
 {
-   if (CurrentState == EMouseActorState::Destroyed)
-   {
-       return;
-   }
-
-   bIsInPhase3Mode = true;
-   SetMouseActorState(EMouseActorState::Descending);
-}
-
-void ASLMouseActor::SetPhase3Settings(float NewChaseSpeed, float NewStopDistance, float NewLookAngle)
-{
-   Phase3ChaseSpeed = FMath::Max(0.0f, NewChaseSpeed);
-   Phase3StopDistance = FMath::Max(0.0f, NewStopDistance);
-   PlayerLookCheckAngle = FMath::Clamp(NewLookAngle, 0.0f, 180.0f);
-}
-
-void ASLMouseActor::SetPhase3Scale(const FVector& NewScale)
-{
-	Phase3HorrorScale = NewScale;
-    
-	if (bIsInPhase3Mode && IsValid(MouseMeshComponent))
+	if (CurrentState == EMouseActorState::Destroyed)
 	{
-		MouseMeshComponent->SetWorldScale3D(Phase3HorrorScale);
+		return;
+	}
+
+	bIsInPhase3Mode = true;
+	SetMouseActorState(EMouseActorState::Descending);
+	
+	// Phase3에서는 콜리전을 더 작게 설정하고 겹침만 허용
+	if (CollisionComponent)
+	{
+		CollisionComponent->SetSphereRadius(DetectionRange * 0.5f); // 콜리전 범위 축소
+		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		CollisionComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 	}
 }
 
 void ASLMouseActor::UpdatePhase3Movement(float DeltaTime)
 {
-   if (!IsValid(TargetPlayer))
-   {
-       return;
-   }
+	if (!IsValid(TargetPlayer))
+	{
+		return;
+	}
 
-   bIsPlayerLookingAtMe = IsPlayerLookingAtMe();
+	bIsPlayerLookingAtMe = IsPlayerLookingAtMe();
    
-   if (bIsPlayerLookingAtMe)
-   {
-       return;
-   }
+	if (bIsPlayerLookingAtMe)
+	{
+		return;
+	}
 
-   FVector PlayerLocation = TargetPlayer->GetActorLocation();
-   FVector CurrentLocation = GetActorLocation();
-   float DistanceToPlayer = FVector::Dist(CurrentLocation, PlayerLocation);
+	FVector PlayerLocation = TargetPlayer->GetActorLocation();
+	FVector CurrentLocation = GetActorLocation();
+	float DistanceToPlayer = FVector::Dist(CurrentLocation, PlayerLocation);
    
-   if (DistanceToPlayer > Phase3StopDistance)
-   {
-       FVector DirectionToPlayer = (PlayerLocation - CurrentLocation).GetSafeNormal();
-       FVector MovementDelta = DirectionToPlayer * Phase3ChaseSpeed * DeltaTime;
-       FVector NewLocation = CurrentLocation + MovementDelta;
-       SetActorLocation(NewLocation);
-   }
+	// 스윕 공격 범위 내에 있고 쿨타임이 끝났으면 공격
+	if (DistanceToPlayer <= SweepAttackRange && bCanSweepAttack)
+	{
+		PerformSweepAttack();
+		return;
+	}
+   
+	if (DistanceToPlayer > Phase3StopDistance)
+	{
+		FVector DirectionToPlayer = (PlayerLocation - CurrentLocation).GetSafeNormal();
+		FVector MovementDelta = DirectionToPlayer * Phase3ChaseSpeed * DeltaTime;
+		FVector NewLocation = CurrentLocation + MovementDelta;
+		SetActorLocation(NewLocation);
+	}
 }
+
 
 bool ASLMouseActor::IsPlayerLookingAtMe() const
 {
@@ -744,4 +776,197 @@ void ASLMouseActor::RestoreOriginalAppearance()
    }
 	
 	MouseMeshComponent->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
+}
+
+void ASLMouseActor::PerformSweepAttack()
+{
+	if (!bCanSweepAttack || !bIsInPhase3Mode || !IsValid(TargetPlayer))
+	{
+		return;
+	}
+    
+	bCanSweepAttack = false;
+	CurrentHitCount = 0;
+	MultiHitTargets.Empty();
+    
+	// 나이아가라 이펙트 재생 (플레이어 방향으로)
+	if (IsValid(SweepAttackEffect) && IsValid(GetWorld()))
+	{
+		FVector StartLocation = GetActorLocation();
+		FVector PlayerLocation = TargetPlayer->GetActorLocation();
+		
+		// 플레이어 방향 계산 (수평면에서)
+		FVector DirectionToPlayer = (PlayerLocation - StartLocation);
+		DirectionToPlayer.Z = 0.0f; // 수평 방향만 고려
+		DirectionToPlayer.Normalize();
+		
+		// 이펙트 회전 계산 (Up Vector가 플레이어를 향하도록)
+		FRotator EffectRotation = UKismetMathLibrary::MakeRotFromZ(DirectionToPlayer);
+		
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			SweepAttackEffect,
+			StartLocation,
+			EffectRotation
+		);
+		
+		UE_LOG(LogTemp, Warning, TEXT("Mouse Actor: Effect spawned at rotation Yaw=%f, Player direction=%s"), 
+			EffectRotation.Yaw, *DirectionToPlayer.ToString());
+	}
+    
+	// 첫 번째 히트 실행
+	ExecuteSweepAttack();
+	CurrentHitCount++;
+    
+	// 다단 히트 타이머 시작
+	if (SweepAttackHitCount > 1)
+	{
+		StartMultiHitTimer();
+	}
+    
+	// 쿨타임 시작
+	if (IsValid(GetWorld()))
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			SweepAttackCooldownTimer,
+			this,
+			&ASLMouseActor::OnSweepAttackCooldownFinished,
+			SweepAttackCooldown,
+			false
+		);
+	}
+}
+
+void ASLMouseActor::ExecuteSweepAttack()
+{
+    if (!IsValid(GetWorld()) || !IsValid(TargetPlayer))
+    {
+        return;
+    }
+    
+    FVector StartLocation = GetActorLocation();
+    
+    // 플레이어 방향으로 스윕 공격
+    FVector DirectionToPlayer = (TargetPlayer->GetActorLocation() - StartLocation).GetSafeNormal();
+    FVector EndLocation = StartLocation + (DirectionToPlayer * SweepAttackRange);
+
+    if (bShowSweepDebug)
+    {
+        // 디버그 박스를 플레이어 방향으로 표시
+        FVector CenterPoint = (StartLocation + EndLocation) * 0.5f;
+        FRotator BoxRotation = DirectionToPlayer.Rotation();
+        
+        FColor DebugColor = (CurrentHitCount == 1) ? FColor::Red : FColor::Orange;
+        
+        DrawDebugBox(
+            GetWorld(),
+            CenterPoint,
+            FVector(SweepAttackRange * 0.5f, 50.0f, 50.0f),
+            BoxRotation.Quaternion(),
+            DebugColor,
+            false,
+            SweepAttackHitInterval + 0.5f
+        );
+    }
+    
+    // 스윕 파라미터 설정
+    FCollisionShape SweepShape = FCollisionShape::MakeBox(FVector(50.0f, 50.0f, 50.0f));
+    
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this);
+    
+    TArray<FHitResult> HitResults;
+    
+    // 플레이어 방향으로 스윕 실행
+    FQuat SweepRotation = DirectionToPlayer.Rotation().Quaternion();
+    
+    bool bHit = GetWorld()->SweepMultiByChannel(
+        HitResults,
+        StartLocation,
+        EndLocation,
+        SweepRotation,
+        ECC_Pawn,
+        SweepShape,
+        QueryParams
+    );
+    
+    if (bHit)
+    {
+        for (const FHitResult& Hit : HitResults)
+        {
+            if (AActor* HitActor = Hit.GetActor())
+            {
+                // 첫 번째 히트이거나 다단 히트에서 이미 맞은 대상인 경우 처리
+                if (CurrentHitCount == 1 || MultiHitTargets.Contains(HitActor))
+                {
+                    // 첫 번째 히트일 때 다단 히트 대상에 추가
+                    if (CurrentHitCount == 1)
+                    {
+                        MultiHitTargets.Add(HitActor);
+                    }
+                    
+                    // 배틀 컴포넌트를 통해 데미지 적용
+                    if (UBattleComponent* TargetBattleComp = HitActor->FindComponentByClass<UBattleComponent>())
+                    {
+                        float CurrentDamage = SweepAttackDamage;
+                        
+                        // 다단 히트일 경우 데미지 조정 (선택사항)
+                        if (CurrentHitCount > 1)
+                        {
+                            CurrentDamage *= 0.7f; // 후속 히트는 70% 데미지
+                        }
+                        
+                        TargetBattleComp->ReceiveHitResult(
+                            CurrentDamage,
+                            this,
+                            Hit,
+                            EAttackAnimType::AAT_AIProjectile
+                        );
+                        
+                        UE_LOG(LogTemp, Warning, TEXT("Mouse Actor Phase3: Sweep attack hit %s (Hit %d/%d)"), 
+                            *HitActor->GetName(), CurrentHitCount, SweepAttackHitCount);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void ASLMouseActor::OnSweepAttackCooldownFinished()
+{
+    bCanSweepAttack = true;
+}
+
+void ASLMouseActor::StartMultiHitTimer()
+{
+	if (IsValid(GetWorld()) && CurrentHitCount < SweepAttackHitCount)
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			MultiHitTimer,
+			this,
+			&ASLMouseActor::OnMultiHitTimerFinished,
+			SweepAttackHitInterval,
+			false
+		);
+	}
+}
+
+void ASLMouseActor::OnMultiHitTimerFinished()
+{
+	if (CurrentHitCount < SweepAttackHitCount)
+	{
+		CurrentHitCount++;
+		ExecuteSweepAttack();
+        
+		// 다음 히트가 있으면 타이머 재시작
+		if (CurrentHitCount < SweepAttackHitCount)
+		{
+			StartMultiHitTimer();
+		}
+		else
+		{
+			// 모든 히트 완료
+			UE_LOG(LogTemp, Warning, TEXT("Mouse Actor: Multi-hit sweep attack completed (%d hits)"), SweepAttackHitCount);
+		}
+	}
 }
