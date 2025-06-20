@@ -54,6 +54,9 @@ void ASLDestructibleActor::BeginPlay()
 	{
 		StaticMeshComp->SetMaterial(0, NormalMaterial);
 	}
+
+	// 콜리전 설정
+	SetupCollisionSettings();
 }
 
 void ASLDestructibleActor::Tick(float DeltaTime)
@@ -317,12 +320,38 @@ void ASLDestructibleActor::UpdateShakeEffect(float DeltaTime)
 
 void ASLDestructibleActor::DestroyActor()
 {
+	// 콜리전 비활성화
+	if (StaticMeshComp)
+	{
+		StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
 	// 모든 균열 데칼 제거
 	ClearAllCracks();
 
 	// 부모 클래스의 OnInteracted를 호출하여 기존 파괴 로직 실행
-	// (이펙트 재생, 액터 비활성화, 델리게이트 브로드캐스트)
 	Super::OnInteracted(nullptr, ESLReactiveTriggerType::ERT_Hit);
 
 	UE_LOG(LogTemp, Log, TEXT("Destructible Actor destroyed"));
+}
+
+void ASLDestructibleActor::SetupCollisionSettings()
+{
+	if (StaticMeshComp)
+	{
+		// 콜리전 활성화
+		StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        
+		// 오브젝트 타입을 WorldStatic으로 설정 (환경 오브젝트)
+		StaticMeshComp->SetCollisionObjectType(ECC_WorldStatic);
+        
+		// 모든 채널에 대해 Block 응답
+		StaticMeshComp->SetCollisionResponseToAllChannels(ECR_Block);
+        
+		// 카메라는 무시
+		StaticMeshComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+        
+		// 플레이어(Pawn)에 대해서는 확실히 Block
+		StaticMeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	}
 }

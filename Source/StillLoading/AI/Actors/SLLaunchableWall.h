@@ -25,7 +25,12 @@
 #define CATEGORY_RUNTIME_DATA "LaunchableWall | Runtime Data"
 
 class UNiagaraSystem;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnAllWallPartsLaunched);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnWallAnimationCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSLOnWallPartRotationCompleted, int32, WallPartIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnWallYMovementCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnWallSpacingCompleted);
 
 UENUM(BlueprintType)
 enum class EWallPartState : uint8
@@ -62,7 +67,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = CATEGORY_SPAWN_ROTATION)
 	void SetSpawnRotation(const FRotator& NewRotation);
 
-	// Runtime Data 변경 함수들
 	UFUNCTION(BlueprintCallable, Category = CATEGORY_RUNTIME_DATA)
 	void SetLaunchSpeed(float NewSpeed);
 
@@ -83,6 +87,18 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = CATEGORY_EVENTS)
 	FSLOnAllWallPartsLaunched OnAllWallPartsLaunched;
+
+	UPROPERTY(BlueprintAssignable, Category = CATEGORY_EVENTS)
+	FSLOnWallAnimationCompleted OnWallAnimationCompleted;
+
+	UPROPERTY(BlueprintAssignable, Category = CATEGORY_EVENTS)
+	FSLOnWallPartRotationCompleted OnWallPartRotationCompleted;
+
+	UPROPERTY(BlueprintAssignable, Category = CATEGORY_EVENTS)
+	FSLOnWallYMovementCompleted OnWallYMovementCompleted;
+
+	UPROPERTY(BlueprintAssignable, Category = CATEGORY_EVENTS)
+	FSLOnWallSpacingCompleted OnWallSpacingCompleted;
 
 protected:
 	virtual void BeginPlay() override;
@@ -135,7 +151,9 @@ protected:
 	FVector GetPlayerDirection() const;
 	FVector GetPlayerDirectionFromPoint(const FVector& FromPoint) const; 
 	void ApplySpawnRotationToWallPart(UStaticMeshComponent* WallPart, int32 PartIndex);
-
+	void SetupWallPartCollisions(UStaticMeshComponent* WallPart);
+	bool ShouldIgnoreCollision(AActor* OtherActor) const;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CATEGORY_COMPONENTS)
 	TObjectPtr<USceneComponent> RootSceneComponent;
 
@@ -255,9 +273,6 @@ private:
 	bool bIsYMovementAnimating;
 	bool bIsSpacingAnimating;
 	int32 CurrentRotatingPartIndex;
-
-	FTimerHandle LaunchTimerHandle;
-	FTimerHandle RotationTimerHandle;
 
 	TArray<EWallPartState> WallPartStates;
 	TArray<FVector> OriginalWallPartPositions;

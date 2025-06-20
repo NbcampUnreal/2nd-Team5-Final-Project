@@ -52,5 +52,6 @@ void ASLInteractableBreakable::OnHited(AActor* DamageCauser, float DamageAmount,
     if (ASLPlayerCharacterBase* Character = Cast<ASLPlayerCharacterBase>(DamageCauser))
     {
         TriggerReact(Character, ESLReactiveTriggerType::ERT_Hit);
+        OnObjectHit.Broadcast(HitResult);
     }
 }
