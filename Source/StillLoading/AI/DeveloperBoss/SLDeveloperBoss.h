@@ -95,12 +95,6 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
     void TestDestroyNextLine();
-
-    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
-    void TestStartPhase3();
-
-    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
-    void TestStartPhase5();
     
     UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
     FOnBossCharacterDeath OnBossCharacterDeath;
@@ -180,7 +174,6 @@ protected:
     void StartPhase3Horror();
     void StartPhase5Final();
     void CleanupDeadBosses();
-    void ResetBossLines();
     void ResetCurrentWall();
     void StartPhase2HackSlash();
 

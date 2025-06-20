@@ -57,9 +57,9 @@ ASLMouseActor::ASLMouseActor()
 	GrabSound = nullptr;
 	DestroySound = nullptr;
 
-	Phase3ChaseSpeed = 1200.0f;
+	Phase3ChaseSpeed = 800.0f;
 	Phase3StopDistance = 200.0f;
-	PlayerLookCheckAngle = 30.0f;
+	PlayerLookCheckAngle = 5.0f;
 	Phase3HorrorMesh = nullptr;
 	Phase3HorrorMaterial = nullptr;
     
@@ -168,8 +168,6 @@ void ASLMouseActor::StartOrbiting()
 	MoveToOrbitTargetLocation = CalculateOrbitPosition();
 	
 	SetMouseActorState(EMouseActorState::MovingToOrbit);
-	
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor moving to orbit position from current location"));
 }
 
 void ASLMouseActor::StopOrbiting()
@@ -191,8 +189,6 @@ void ASLMouseActor::StopOrbiting()
 	{
 		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
-
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor stopped orbiting"));
 }
 
 void ASLMouseActor::DestroyMouseActor()
@@ -243,7 +239,6 @@ void ASLMouseActor::DestroyMouseActor()
 	SetActorEnableCollision(false);
 	SetActorTickEnabled(false);
 
-	UE_LOG(LogTemp, Log, TEXT("Mouse Actor destroyed"));
 }
 
 EMouseActorState ASLMouseActor::GetCurrentState() const
@@ -295,11 +290,6 @@ void ASLMouseActor::OnBattleComponentHit(AActor* DamageCauser, float DamageAmoun
 	if (CurrentHealth <= 0.0f)
 	{
 		DestroyMouseActor();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("Mouse Actor damaged: %f, Health remaining: %f"), 
-			DamageAmount, CurrentHealth);
 	}
 }
 
@@ -395,8 +385,8 @@ void ASLMouseActor::UpdateMeshRotation(float DeltaTime)
 	{
 		// Phase3에서는 즉시 플레이어를 향해 회전 (더 섬뜩함)
 		LookAtRotation.Yaw -= 90.0f; // 정면 맞춤
-		LookAtRotation.Pitch -= 10.0f; // 살짝 아래를 내려다보는 느낌
-        
+		LookAtRotation.Pitch -= 20.0f; // 살짝 아래를 내려다보는 느낌
+		LookAtRotation.Roll -= 10.0f;
 		// 즉시 회전
 		MouseMeshComponent->SetWorldRotation(LookAtRotation);
 	}
@@ -439,7 +429,6 @@ void ASLMouseActor::UpdateMoveToOrbitMovement(float DeltaTime)
 	if (DistanceToTarget <= 50.0f)
 	{
 		SetMouseActorState(EMouseActorState::Orbiting);
-		UE_LOG(LogTemp, Log, TEXT("Mouse Actor reached orbit position, starting to orbit"));
 	}
 }
 
@@ -507,7 +496,6 @@ void ASLMouseActor::CompleteGrabPlayer()
 	{
 		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		
-		// 델리게이트로 변경 - 타이머 대신 지연 실행
 		FTimerHandle CollisionTimer;
 		GetWorldTimerManager().SetTimer(
 			CollisionTimer,
@@ -520,7 +508,6 @@ void ASLMouseActor::CompleteGrabPlayer()
 
 	ApplyGrabDamage();
 
-	// 델리게이트로 변경 - 타이머 대신 지연 실행
 	float RandomCooldown = GetRandomGrabCooldown();
 	FTimerHandle CooldownTimer;
 	GetWorldTimerManager().SetTimer(
@@ -610,6 +597,11 @@ bool ASLMouseActor::IsPlayerInRange() const
 
 bool ASLMouseActor::CanGrabPlayer() const
 {
+	if (bIsInPhase3Mode)
+	{
+		return false;
+	}
+    
 	return bCanGrab && (CurrentState == EMouseActorState::Orbiting || CurrentState == EMouseActorState::Descending);
 }
 
@@ -637,18 +629,7 @@ void ASLMouseActor::StartPhase3HorrorMode()
    }
 
    bIsInPhase3Mode = true;
-   ChangeToHorrorAppearance();
    SetMouseActorState(EMouseActorState::Descending);
-   
-   UE_LOG(LogTemp, Display, TEXT("Mouse Actor: Phase 3 Horror Mode Started"));
-}
-
-void ASLMouseActor::StopPhase3HorrorMode()
-{
-   bIsInPhase3Mode = false;
-   RestoreOriginalAppearance();
-   
-   UE_LOG(LogTemp, Display, TEXT("Mouse Actor: Phase 3 Horror Mode Stopped"));
 }
 
 void ASLMouseActor::SetPhase3Settings(float NewChaseSpeed, float NewStopDistance, float NewLookAngle)
@@ -662,7 +643,6 @@ void ASLMouseActor::SetPhase3Scale(const FVector& NewScale)
 {
 	Phase3HorrorScale = NewScale;
     
-	// 이미 Phase3 모드라면 즉시 적용
 	if (bIsInPhase3Mode && IsValid(MouseMeshComponent))
 	{
 		MouseMeshComponent->SetWorldScale3D(Phase3HorrorScale);
@@ -721,7 +701,7 @@ bool ASLMouseActor::IsPlayerLookingAtMe() const
 	// 카메라에서 마우스 액터로의 방향
 	FVector DirectionToMouse = (MouseLocation - CameraLocation).GetSafeNormal();
 
-	// 각도 확인 (시야각 체크)
+	// 각도 확인
 	float DotProduct = FVector::DotProduct(CameraForward, DirectionToMouse);
 	DotProduct = FMath::Clamp(DotProduct, -1.0f, 1.0f);
 	float AngleInDegrees = FMath::RadiansToDegrees(FMath::Acos(DotProduct));
@@ -749,23 +729,6 @@ bool ASLMouseActor::IsPlayerLookingAtMe() const
 	);
 
 	return !bHit;
-}
-
-void ASLMouseActor::ChangeToHorrorAppearance()
-{
-   if (!IsValid(MouseMeshComponent))
-   {
-       return;
-   }
-
-   OriginalMesh = MouseMeshComponent->GetStaticMesh();
-
-   if (IsValid(Phase3HorrorMesh))
-   {
-       MouseMeshComponent->SetStaticMesh(Phase3HorrorMesh);
-   }
-
-	MouseMeshComponent->SetWorldScale3D(Phase3HorrorScale);
 }
 
 void ASLMouseActor::RestoreOriginalAppearance()
