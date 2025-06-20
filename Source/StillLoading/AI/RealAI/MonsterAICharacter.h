@@ -194,7 +194,12 @@ private:
 	FTimerHandle PushResetHandle;
 	UPROPERTY()
 	FTimerHandle MaterialResetTimerHandle;
+	UPROPERTY()
+	FTimerHandle CollisionResetTimerHandle;
 
+	void RecoverFromHitState();
+	void PlayHitMontageAndSetupRecovery(float Length);
+	
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInterface>> OriginalMaterials;
 

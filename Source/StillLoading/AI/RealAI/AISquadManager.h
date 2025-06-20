@@ -56,6 +56,9 @@ protected:
 	float TargetDetectionRadius = 1500.f;
 
 public:
+	UFUNCTION()
+	void SetTargetDistanceRadius(float Distance);
+	
 	UFUNCTION(BlueprintCallable, Category = "AI Squad")
 	void InitializeSquad(const TArray<AActor*>& AllMembers);
 

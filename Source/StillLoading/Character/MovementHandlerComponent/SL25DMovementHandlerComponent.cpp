@@ -1,5 +1,6 @@
 #include "SL25DMovementHandlerComponent.h"
 
+#include "NiagaraFunctionLibrary.h"
 #include "SLMovementHandlerComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Character/SLPlayerCharacter.h"
@@ -9,8 +10,10 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "SubSystem/SLSoundSubsystem.h"
 #include "SubSystem/SLSoundTypes.h"
 
@@ -48,50 +51,12 @@ void USL25DMovementHandlerComponent::TickComponent(float DeltaTime, ELevelTick T
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (!bShouldFaceMouse)
-    {
-       return;
-    }
+	HandleRotation(DeltaTime);
 
-    if (!OwnerCharacter || !CachedSkeletalMesh) return;
-    
-    APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
-    if (!PlayerController) return;
-
-    FVector WorldLocation, WorldDirection;
-    if (!PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
-    {
-        return;
-    }
-
-    const FPlane CharacterPlane(OwnerCharacter->GetActorLocation(), FVector::UpVector);
-    const FVector IntersectionPoint = FMath::LinePlaneIntersection(
-        WorldLocation,
-        WorldLocation + (WorldDirection * 15000.0f),
-        CharacterPlane
-    );
-
-    const FVector DirectionToTarget = IntersectionPoint - OwnerCharacter->GetActorLocation();
-    const FVector FlattenedDirection = FVector(DirectionToTarget.X, DirectionToTarget.Y, 0.0f);
-
-    if (!FlattenedDirection.IsNearlyZero())
-    {
-        const FRotator TargetRotation = FlattenedDirection.Rotation();
-        const FRotator CorrectedTargetRotation = FRotator(0.0f, TargetRotation.Yaw - 90.0f, 0.0f);
-        const FRotator CurrentRotation = CachedSkeletalMesh->GetRelativeRotation();
-        const FRotator SmoothedRotation = FMath::RInterpTo(
-          CurrentRotation,
-          CorrectedTargetRotation,
-          DeltaTime,
-          RotationSpeed
-        );
-
-        CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, SmoothedRotation.Yaw, 0.0f));
-    }
-
-    //DrawDebugLine(GetWorld(), WorldLocation, IntersectionPoint, FColor::Green, false, -1.0f, 0, 1.0f);
-    //DrawDebugSphere(GetWorld(), IntersectionPoint, 25.0f, 12, FColor::Red, false, -1.0f, 0, 1.0f);
-    //DrawDebugLine(GetWorld(), OwnerCharacter->GetActorLocation(), IntersectionPoint, FColor::Yellow, false, -1.0f, 0, 2.0f);
+	if (bIsMovingToTarget)
+	{
+		MoveToTarget(DeltaTime);
+	}
 }
 
 void USL25DMovementHandlerComponent::StartFacingMouse()
@@ -196,6 +161,8 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 			break;
 		}
 	case EInputActionType::EIAT_PointMove:
+		StartFacingMouse();
+		StartMoveToMouseCursorLocation();
 		break;
 	case EInputActionType::EIAT_Block:
 		if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
@@ -333,13 +300,13 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	case EHitAnimType::HAT_FallBack:
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
-			OwnerCharacter->SetActorRotation(TargetRotation);
+			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
 			CachedMontageComponent->PlayHitMontage(FName("Fall"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Falling);
 		}
 		else
 		{
-			OwnerCharacter->SetActorRotation(TargetRotation);
+			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
 			if (bIsFromBack)
 			{
 				CachedMontageComponent->PlayHitMontage(FName("KnockBack_Back"));
@@ -354,21 +321,14 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	case EHitAnimType::HAT_Exhausterd: // 기절
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
-			OwnerCharacter->SetActorRotation(TargetRotation);
+			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
 			CachedMontageComponent->PlayHitMontage(FName("Fall"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Falling);
 		}
 		else
 		{
-			OwnerCharacter->SetActorRotation(TargetRotation);
-			if (bIsFromBack)
-			{
-				CachedMontageComponent->PlayHitMontage(FName("Groggy_Back"));
-			}
-			else
-			{
-				CachedMontageComponent->PlayHitMontage(FName("Groggy"));
-			}
+			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
+			CachedMontageComponent->PlayHitMontage(FName("Groggy"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Groggy);
 		}
 		return;
@@ -527,6 +487,51 @@ void USL25DMovementHandlerComponent::Attack()
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack);
 }
 
+void USL25DMovementHandlerComponent::StartMoveToMouseCursorLocation()
+{
+	APlayerController* PlayerController = OwnerCharacter ? Cast<APlayerController>(OwnerCharacter->GetController()) : nullptr;
+	if (!PlayerController) return;
+
+	FVector WorldLocation, WorldDirection;
+	if (!PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+	{
+		return;
+	}
+
+	const FPlane CharacterPlane(OwnerCharacter->GetActorLocation(), FVector::UpVector);
+	const FVector IntersectionPoint = FMath::LinePlaneIntersection(
+		WorldLocation,
+		WorldLocation + (WorldDirection * 15000.0f),
+		CharacterPlane
+	);
+
+	TargetMoveLocation = IntersectionPoint;
+	bIsMovingToTarget = true;
+
+	if (MoveTargetEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			MoveTargetEffect,
+			TargetMoveLocation,
+			FRotator::ZeroRotator,
+			FVector(1.0f),
+			true,
+			true
+		);
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(
+		FacingMouseTimerHandle,
+		FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			StopFacingMouse();
+		}),
+		0.2, false
+	);
+	
+}
+
 void USL25DMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)
 {
 	const bool bEmpowered = CachedCombatComponent->IsEmpowered();
@@ -573,6 +578,7 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Movement Blocked"));
 		return;
 	}
+	
 	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
 
 	AController* Controller = OwnerCharacter->GetController();
@@ -630,7 +636,113 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 		break;
 	}
 
+	bIsMovingToTarget = false;
+
 	//CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterWalk, OwnerCharacter->GetActorLocation());
+}
+
+void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
+{
+	if (!bShouldFaceMouse)
+	{
+		return;
+	}
+
+	if (!OwnerCharacter || !CachedSkeletalMesh) return;
+    
+	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+	if (!PlayerController) return;
+
+	FVector WorldLocation, WorldDirection;
+	if (!PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+	{
+		return;
+	}
+
+	const FPlane CharacterPlane(OwnerCharacter->GetActorLocation(), FVector::UpVector);
+	const FVector IntersectionPoint = FMath::LinePlaneIntersection(
+		WorldLocation,
+		WorldLocation + (WorldDirection * 15000.0f),
+		CharacterPlane
+	);
+
+	const FVector DirectionToTarget = IntersectionPoint - OwnerCharacter->GetActorLocation();
+	const FVector FlattenedDirection = FVector(DirectionToTarget.X, DirectionToTarget.Y, 0.0f);
+
+	if (!FlattenedDirection.IsNearlyZero())
+	{
+		const FRotator TargetRotation = FlattenedDirection.Rotation();
+		const FRotator CorrectedTargetRotation = FRotator(0.0f, TargetRotation.Yaw - 90.0f, 0.0f);
+		const FRotator CurrentRotation = CachedSkeletalMesh->GetRelativeRotation();
+		const FRotator SmoothedRotation = FMath::RInterpTo(
+		  CurrentRotation,
+		  CorrectedTargetRotation,
+		  DeltaTime,
+		  RotationSpeed
+		);
+
+		CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, SmoothedRotation.Yaw, 0.0f));
+	}
+
+	//DrawDebugLine(GetWorld(), WorldLocation, IntersectionPoint, FColor::Green, false, -1.0f, 0, 1.0f);
+	//DrawDebugSphere(GetWorld(), IntersectionPoint, 25.0f, 12, FColor::Red, false, -1.0f, 0, 1.0f);
+	//DrawDebugLine(GetWorld(), OwnerCharacter->GetActorLocation(), IntersectionPoint, FColor::Yellow, false, -1.0f, 0, 2.0f);
+}
+
+void USL25DMovementHandlerComponent::MoveToTarget(float DeltaTime)
+{
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_MovementBlock))
+	{
+		bIsMovingToTarget = false;
+		//UE_LOG(LogTemp, Warning, TEXT("USL25DMovementHandlerComponent: Movement Blocked"));
+		return;
+	}
+	
+	const FVector CurrentLocation = OwnerCharacter->GetActorLocation();
+    
+	if (FVector::DistSquared2D(CurrentLocation, TargetMoveLocation) < FMath::Square(AcceptanceRadius))
+	{
+		bIsMovingToTarget = false;
+		return;
+	}
+
+	FVector FinalTargetLocation = TargetMoveLocation;
+
+	FHitResult HitResult;
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(OwnerCharacter);
+
+	float CapsuleRadius, CapsuleHalfHeight;
+	OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleSize(CapsuleRadius, CapsuleHalfHeight);
+
+	const bool bHit = UKismetSystemLibrary::CapsuleTraceSingle(
+		GetWorld(),
+		CurrentLocation,
+		TargetMoveLocation,
+		CapsuleRadius,
+		CapsuleHalfHeight,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::None,
+		HitResult,
+		true
+	);
+
+	if (bHit)
+	{
+		FVector DirectionToOriginalTarget = (TargetMoveLocation - CurrentLocation).GetSafeNormal();
+		FinalTargetLocation = HitResult.Location - DirectionToOriginalTarget * 5.0f;
+	}
+
+	FVector MoveDirection = (FinalTargetLocation - CurrentLocation);
+	MoveDirection.Z = 0.0f;
+	MoveDirection.Normalize();
+
+	if (!MoveDirection.IsNearlyZero())
+	{
+		OwnerCharacter->AddMovementInput(MoveDirection, 1.0f);
+	}
 }
 
 // 애니매이션 노티용

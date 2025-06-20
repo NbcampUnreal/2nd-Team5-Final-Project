@@ -39,6 +39,7 @@ void UMovementHandlerComponent::BeginPlay()
 
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
 		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
+		OwnerCharacter->GetCharacterMovement()->MaxAcceleration = 8192.0f;
 	}
 
 	if (CachedRadarComponent)
@@ -363,7 +364,7 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Invulnerable) && InvulnerableDuration > 0) return;
 
 	// 피격
-	OwnerCharacter->ClearStateTags({}, {
+	OwnerCharacter->ClearStateTags({TAG_Character_Movement_Dodge}, {
 		                               TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
 		                               TAG_Character_Empowered
 	                               });
@@ -419,11 +420,11 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 		return;
 	case EHitAnimType::HAT_HardHit: // 중간거
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
-		RemoveDelay = 2.0f;
+		RemoveDelay = 1.0f;
 		break;
 	case EHitAnimType::HAT_WeakHit:
 		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
-		RemoveDelay = 1.5f;
+		RemoveDelay = 0.5f;
 		break;
 	default: break;
 	}
@@ -524,6 +525,8 @@ void UMovementHandlerComponent::Jump()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Jump Blocked"));
 		return;
 	}
+
+ 	if (OwnerCharacter->GetCharacterMovement()->IsFalling()) return;
 
 	if (OwnerCharacter)
 	{

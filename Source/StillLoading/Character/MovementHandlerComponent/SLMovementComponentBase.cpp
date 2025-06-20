@@ -105,6 +105,7 @@ void USLMovementComponentBase::DanceTime() const
 
 void USLMovementComponentBase::OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value)
 {
+	
 }
 
 void USLMovementComponentBase::OnActionStarted_Implementation(EInputActionType ActionType)

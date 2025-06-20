@@ -116,6 +116,12 @@ void AAISquadManager::Tick(float DeltaTime)
 	}
 }
 
+void AAISquadManager::SetTargetDistanceRadius(float Distance)
+{
+	TargetDetectionRadius = Distance;
+	SharedBlackboard->SetValueAsFloat(BlackboardKeys::AvailDistance, TargetDetectionRadius);
+}
+
 void AAISquadManager::InitializeSquad(const TArray<AActor*>& AllMembers)
 {
 	if (AllMembers.IsEmpty()) return;

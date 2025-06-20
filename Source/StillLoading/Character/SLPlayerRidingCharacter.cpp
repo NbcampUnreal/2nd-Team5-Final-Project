@@ -6,6 +6,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "StillLoading/Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Character/FlashComponent/SLFlashComponent.h"
+#include "Character/PlayerState/SLBattlePlayerState.h"
+
 
 ASLPlayerRidingCharacter::ASLPlayerRidingCharacter()
 {
@@ -15,7 +17,6 @@ ASLPlayerRidingCharacter::ASLPlayerRidingCharacter()
     
     DynamicIMCComponent = CreateDefaultSubobject<UDynamicIMCComponent>(TEXT("DynamicIMCComponent"));
     
-
     GetCharacterMovement()->bOrientRotationToMovement = false;
     bUseControllerRotationYaw = false;
     bUseControllerRotationPitch = false;
@@ -85,7 +86,15 @@ void ASLPlayerRidingCharacter::OnActionCompletedCallback(const EInputActionType 
 float ASLPlayerRidingCharacter::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
     if (FlashComponent->IsFlashing()) return 0.f;
-    CurrentHealth = FMath::Max(0.0f, CurrentHealth - DamageAmount);
+
+    ASLBattlePlayerState* SLPlayerState = Cast<ASLBattlePlayerState>(GetPlayerState());
+
+    if (IsValid(SLPlayerState))
+    {
+        SLPlayerState->DecreaseHealth(DamageAmount);
+    }
+
+    //CurrentHealth = FMath::Max(0.0f, CurrentHealth - DamageAmount);
     APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     if (PC && PC->PlayerCameraManager)
     {
@@ -95,9 +104,9 @@ float ASLPlayerRidingCharacter::TakeDamage(float DamageAmount, const FDamageEven
     {
         FlashComponent->StartFlashing();
     }
-    if (CurrentHealth <= 0.0f)
+    /*if (CurrentHealth <= 0.0f)
     {
         UE_LOG(LogTemp, Error, TEXT("Player Died!"));
-    }
+    }*/
     return 0.f;
 }
