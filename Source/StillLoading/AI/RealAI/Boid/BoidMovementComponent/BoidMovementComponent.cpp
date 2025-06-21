@@ -27,7 +27,6 @@ void UBoidMovementComponent::BeginPlay()
 	OwnerCharacter = Cast<ASwarmAgent>(GetOwner());
 	if (!OwnerCharacter)
 	{
-		UE_LOG(LogTemp, Error, TEXT("BoidMovementComponent's Owner is not a valid ASwarmAgent!"));
 		SetComponentTickEnabled(false);
 		return;
 	}
@@ -35,9 +34,6 @@ void UBoidMovementComponent::BeginPlay()
 	SwarmManager = OwnerCharacter->GetMySwarmManager();
 	if (!SwarmManager)
 	{
-		UE_LOG(LogTemp, Error,
-		       TEXT("BoidMovementComponent could not find its SwarmManager from its Owner Agent! Disabling Tick."),
-		       *OwnerCharacter->GetName());
 		SetComponentTickEnabled(false);
 	}
 
@@ -175,7 +171,7 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	{
 		if (CurrentState == EBoidMonsterState::FS_UnAbleToAttack)
 		{
-			CurrentSeparation = ForceDistanceToTarget;
+			CurrentSeparation = FMath::RandRange(50000, 70000);
 		}
 	}
 
@@ -192,23 +188,11 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	if (SwarmManager->GetCurrentSquadState() == ESquadState::Engaging
 		&& CurrentState == EBoidMonsterState::FS_UnAbleToAttack)
 	{
-		if (SeparationSq < 1000) // 뒤에있어서 멀어지려는 힘이 약하고
+		if (SeparationSq > 600) // 뒤에있어서 멀어지려는 힘이 약하고
 		{
-			//OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰
+			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰
 		}
-		//UE_LOG(LogTemp, Warning, TEXT("SeparationSq [%f]"), SeparationSq);
-
-		const FVector PlayerLocation = GetGoalLocation();
-		if (!PlayerLocation.IsZero())
-		{
-			const FVector MyLocation = OwnerCharacter->GetActorLocation();
-			const FVector VectorFromPlayerToMe = MyLocation - PlayerLocation;
-
-			FVector OrbitDirectionVector = FVector::CrossProduct(VectorFromPlayerToMe, FVector::UpVector);
-			OrbitDirectionVector.Normalize();
-
-			FinalGoalForce = OrbitDirectionVector * OrbitForceWeight * OrbitDirection;
-		}
+		UE_LOG(LogTemp, Warning, TEXT("SeparationSq [%f]"), SeparationSq);
 	}
 	else
 	{
@@ -219,7 +203,7 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	FVector SteeringForce = FinalGoalForce + SeparationForce + AlignmentForce + CohesionForce;
 	SteeringForce = SteeringForce.GetClampedToMaxSize(MaxSteeringForce);
 
-	const float InterpSpeed = 5.0f;
+	const float InterpSpeed = 50.0f;
 	SmoothedSteeringForce = FMath::VInterpTo(SmoothedSteeringForce, SteeringForce, DeltaTime, InterpSpeed);
 
 	OwnerCharacter->GetCharacterMovement()->AddInputVector(SmoothedSteeringForce);

@@ -122,7 +122,6 @@ public:
 	// 팔로워 상태 관련
 	void SetSquadState(const ESquadState NewState);
 	ESquadState GetCurrentSquadState() const { return CurrentSquadState; }
-
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Swarm State")
 	TObjectPtr<AActor> CurrentTarget;

@@ -28,13 +28,13 @@ public:
 	float PerceptionRadius = 500.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boids | Global Settings")
-	float MaxAttackCoolDown = 7.0f;
+	float MaxAttackCoolDown = 8.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boids | Global Settings")
-	float MinAttackCoolDown = 2.0f;
+	float MinAttackCoolDown = 5.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boids | Global Settings")
-	float AttackRange = 200.0f;
+	float AttackRange = 150.0f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -68,16 +68,16 @@ protected:
 	float ForceDistanceToTarget = 50000.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boid | Orbit")
-	float OrbitForceWeight = 1.0f; // 공전하는 힘의 세기 (클수록 빠르게 돕니다)
+	float OrbitForceWeight = 0.8f; // 공전하는 힘의 세기 (클수록 빠르게 돕니다)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boid | Orbit", meta = (ToolTip = "1.0 for counter-clockwise, -1.0 for clockwise"))
 	float OrbitDirection = 1.0f; // 1.0 또는 -1.0으로 공전 방향을 제어 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")
-	TObjectPtr<UNiagaraSystem> TeleportEffect;
+	TObjectPtr<UNiagaraSystem> TeleportEffect = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")
-	TObjectPtr<USoundCue> TeleportSound;
+	TObjectPtr<USoundCue> TeleportSound = nullptr;
 
 private:
 	void BeginAttack(float DeltaTime, const AActor* CurrentTarget, ASwarmAgent* SwarmAgent);
@@ -90,10 +90,10 @@ private:
 	FVector SmoothedSteeringForce = FVector::ZeroVector;
 
 	UPROPERTY()
-	TObjectPtr<ASwarmAgent> OwnerCharacter;
+	TObjectPtr<ASwarmAgent> OwnerCharacter = nullptr;
 
 	UPROPERTY()
-	TObjectPtr<ASwarmManager> SwarmManager;
+	TObjectPtr<ASwarmManager> SwarmManager = nullptr;
 
 	// 속도를 줄이는 시작 반경
 	UPROPERTY(EditAnywhere, Category = "Boids")
