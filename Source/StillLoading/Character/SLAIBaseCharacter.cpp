@@ -32,6 +32,9 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
     GetCharacterMovement()->MaxWalkSpeed = 300.f;
     GetCharacterMovement()->BrakingDecelerationWalking = 1000.f;
 
+	BoxCollisionComponent = CreateDefaultSubobject<UBoxComponent>("BoxCollisionComponent");
+	BoxCollisionComponent->SetupAttachment(RootComponent);
+    
     LeftHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftHandCollisionBox");
     LeftHandCollisionBox->SetupAttachment(GetMesh());
     LeftHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -71,7 +74,9 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
     GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
-    
+
+	SetupBoxCollision();
+
     AIChapter = EChapter::EC_None;
     bIsDebugMode = false;
 
@@ -134,7 +139,7 @@ void ASLAIBaseCharacter::BeginPlay()
 			EquipWeapon(WeaponActor);
 		}
 	}
-
+	
 	bIsHitReaction = false;
 	bIsDead = false;
 	SetCurrentHealth(MaxHealth);
@@ -179,6 +184,12 @@ void ASLAIBaseCharacter::Landed(const FHitResult& Hit)
 			}
 		}, 1.0f, false);
 	}
+}
+
+void ASLAIBaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	
+	Super::EndPlay(EndPlayReason);
 }
 
 void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -445,6 +456,7 @@ void ASLAIBaseCharacter::UnequipWeapon()
         
 		// 캐릭터에서 무기 분리
 		EquippedWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		EquippedWeapon->Destroy();
 		EquippedWeapon = nullptr;
 	}
 }
@@ -1130,29 +1142,25 @@ void ASLAIBaseCharacter::ProcessDeath()
     
 	bIsDead = true;
     
-	// 충돌 비활성화
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); 
-
-	// 이동 중지
+	// 모든 충돌 비활성화
+	if (BoxCollisionComponent)
+	{
+		BoxCollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
     
-	// AI 컨트롤러 중지 및 죽음 알림
 	if (AIController)
 	{
 		if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
 		{
 			BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
 		}
-        
-		if (ASLBaseAIController* BaseAIController = Cast<ASLBaseAIController>(AIController))
-		{
-			BaseAIController->OnTargetDeath(this);
-		}
 	}
+    
 	OnCharacterDeath.Broadcast(this);
-	// 블루프린트 이벤트 호출
 	OnDeath();
 }
 
@@ -1199,4 +1207,21 @@ void ASLAIBaseCharacter::SetIsSpecialPattern(bool bNewIsSpecialPattern)
 void ASLAIBaseCharacter::NotifyPatternFinished()
 {
 	OnPatternFinished.Broadcast(this);
+}
+
+void ASLAIBaseCharacter::SetupBoxCollision()
+{
+	if (BoxCollisionComponent)
+	{
+		BoxCollisionComponent->SetBoxExtent(FVector(42.0f, 42.0f, 88.0f));
+		
+		// 콜리전 설정
+		BoxCollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		BoxCollisionComponent->SetCollisionObjectType(ECC_Pawn);
+        
+		// 콜리전 응답 설정
+		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+	}
 }

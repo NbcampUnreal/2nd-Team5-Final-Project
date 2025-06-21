@@ -97,7 +97,8 @@ public:
 	ASLAIBaseCharacter();
 	virtual void BeginPlay() override;
 	virtual void Landed(const FHitResult& Hit) override;
-
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCharacterDeath, ASLAIBaseCharacter*);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPatternFinished, ASLAIBaseCharacter*);
 	
@@ -345,6 +346,8 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Hit")
 	virtual void SetHitState(bool bNewIsHit, float AutoResetTime = 0.5f);
 
+	void SetupBoxCollision();
+	
 	// --- AI References ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<ASLBaseAIController> AIController;
@@ -387,6 +390,9 @@ protected:
 	TArray<TObjectPtr<UAnimMontage>> DeathMontages;
 	
 	// --- Collision Components ---
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBoxComponent> BoxCollisionComponent;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> LeftHandCollisionBox;
 

@@ -2,74 +2,101 @@
 
 
 #include "SaveLoad/SLSaveGameSubsystem.h"
+
+#include "GameMode/SLGameModeBase.h"
+#include "Objective/SLObjectiveBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Objective/SLObjectiveDataSettings.h"
+#include "Objective/SLObjectiveSubsystem.h"
 #include "SubSystem/SLUserDataSubsystem.h"
 #include "SubSystem/SLLevelTransferSubsystem.h"
 #include "SaveLoad/SLSaveGame.h"
+#include "SubSystem/SLUserDataSettings.h"
 
 void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Collection.InitializeDependency<USLUserDataSubsystem>();
     Collection.InitializeDependency<USLLevelTransferSubsystem>();
+    Collection.InitializeDependency<USLObjectiveSubsystem>();
     Super::Initialize(Collection);
-    LoadGame();
+    
+    LoadGameData();
 }
 
 void USLSaveGameSubsystem::Deinitialize()
 {
     Super::Deinitialize();
-    SaveGame();
 }
 
-void USLSaveGameSubsystem::SaveGame()
+void USLSaveGameSubsystem::SaveGameData()
 {
-    check(CurrentSaveGame);
+    check(CurrentSaveData);
 
     SaveWidgetData();
     SaveChapterData();
+    SaveObjectiveData();
     
-    UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
-
-    UE_LOG(LogTemp, Warning, TEXT("Save Data"));
+    UGameplayStatics::SaveGameToSlot(CurrentSaveData, SlotName, 0);
 }
 
-void USLSaveGameSubsystem::LoadGame()
+void USLSaveGameSubsystem::LoadGameData()
 {
     if (UGameplayStatics::DoesSaveGameExist(SlotName, 0))
     {
         USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(SlotName, 0);
-        CurrentSaveGame = Cast<USLSaveGame>(Loaded);
-        UE_LOG(LogTemp, Warning, TEXT("Data Load Succeed"));
-        
+        CurrentSaveData = Cast<USLSaveGame>(Loaded);
         SendWidgetData(false);
         SendChapterData();
+        SendObjectiveData();
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("Save file does not exist created a new one"));
-        CurrentSaveGame = NewObject<USLSaveGame>();
-        UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
+        ResetGameData();
         SendWidgetData(true);
     }
 }
 
-void USLSaveGameSubsystem::NewGame()
+void USLSaveGameSubsystem::ResetGameData()
 {
-    CurrentSaveGame = NewObject<USLSaveGame>();
-    UE_LOG(LogTemp, Warning, TEXT("Create New Save Data"));
-    UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
-    UE_LOG(LogTemp, Warning, TEXT("Save Data"));
+    CurrentSaveData = NewObject<USLSaveGame>();
+    LoadObjectiveDefaultData();
+    UGameplayStatics::SaveGameToSlot(CurrentSaveData, SlotName, 0);
 }
 
-const FWidgetSaveData& USLSaveGameSubsystem::GetCurrentWidgetDataByRef() const
+void USLSaveGameSubsystem::LoadObjectiveDefaultData()
 {
-    check(CurrentSaveGame);
-    return CurrentSaveGame->WidgetSaveData;
+    const USLObjectiveDataSettings* ObjectiveDataSettings = GetDefault<USLObjectiveDataSettings>();
+    USLObjectiveSubsystem* ObjectiveSubsystem = GetGameInstance()->GetSubsystem<USLObjectiveSubsystem>();
+    TMap<ESLChapterType, FSLObjectiveRuntimeData>& CachedObjectiveData = ObjectiveSubsystem->GetCachedObjectiveDataRef();
+    
+    CachedObjectiveData.Empty(5);
+    CurrentSaveData->ObjectiveSaveData.ChapterObjectiveSaveDataMap.Empty(5);
+    
+    for (int32 Chapter = 1; Chapter <= 5; Chapter++)
+    {
+        const ESLChapterType ChapterType = static_cast<ESLChapterType>(Chapter);
+        const TSoftObjectPtr<USLObjectiveDataAsset>* ChapterDataAssetPtr = ObjectiveDataSettings->ChapterObjectiveDataMap.Find(ChapterType);
+        if (ChapterDataAssetPtr == nullptr)
+        {
+            continue;
+        }
+        const USLObjectiveDataAsset* ChapterDataAsset = ChapterDataAssetPtr->LoadSynchronous();
+        FObjectiveSaveData ObjectiveSaveData;
+        FSLObjectiveRuntimeData ObjectiveRuntimeData;
+        
+        for (auto&[Name, Objective] : ChapterDataAsset->ChapterObjectiveMap)
+        {
+            USLObjectiveBase* NewObjective = DuplicateObject(Objective, this);
+            ObjectiveSaveData.ObjectiveSaveDataMap.Add(Name, Objective->GetObjectiveState());
+            ObjectiveRuntimeData.ChapterObjectiveMap.Add(Name, NewObjective);
+        }
+        CurrentSaveData->ObjectiveSaveData.ChapterObjectiveSaveDataMap.Add(ChapterType, ObjectiveSaveData);
+        CachedObjectiveData.Add(ChapterType, ObjectiveRuntimeData);
+    }
 }
 
 void USLSaveGameSubsystem::SaveWidgetData()
 { 
-
     UGameInstance* GameInstance = GetGameInstance();
 
     check(GameInstance);
@@ -78,21 +105,20 @@ void USLSaveGameSubsystem::SaveWidgetData()
 
     check(UserDataSubSystem);
 
-    CurrentSaveGame->WidgetSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
-    CurrentSaveGame->WidgetSaveData.LanguageType = UserDataSubSystem->GetCurrentLanguage();
-    CurrentSaveGame->WidgetSaveData.BgmVolume = UserDataSubSystem->GetCurrentBgmVolume();
-    CurrentSaveGame->WidgetSaveData.EffectVolume = UserDataSubSystem->GetCurrentEffectVolume();
-    CurrentSaveGame->WidgetSaveData.Brightness = UserDataSubSystem->GetCurrentBrightness();
+    CurrentSaveData->UserSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
+    CurrentSaveData->UserSaveData.LanguageType = UserDataSubSystem->GetCurrentLanguage();
+    CurrentSaveData->UserSaveData.BgmVolume = UserDataSubSystem->GetCurrentBgmVolume();
+    CurrentSaveData->UserSaveData.EffectVolume = UserDataSubSystem->GetCurrentEffectVolume();
+    CurrentSaveData->UserSaveData.Brightness = UserDataSubSystem->GetCurrentBrightness();
 
-    CurrentSaveGame->WidgetSaveData.WindowMode = UserDataSubSystem->GetCurrentWindowMode();
+    CurrentSaveData->UserSaveData.WindowMode = UserDataSubSystem->GetCurrentWindowMode();
     TPair<float,float> ScreenSize = UserDataSubSystem->GetCurrentScreenSize();
-    CurrentSaveGame->WidgetSaveData.ScreenWidth = ScreenSize.Key;
-    CurrentSaveGame->WidgetSaveData.ScreenHeight = ScreenSize.Value;
+    CurrentSaveData->UserSaveData.ScreenWidth = ScreenSize.Key;
+    CurrentSaveData->UserSaveData.ScreenHeight = ScreenSize.Value;
 
-    CurrentSaveGame->WidgetSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
-    CurrentSaveGame->WidgetSaveData.KeySet = UserDataSubSystem->GetKeySet();
-   
-
+    CurrentSaveData->UserSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
+    CurrentSaveData->UserSaveData.KeySet = UserDataSubSystem->GetKeySet();
+    
     UE_LOG(LogTemp, Warning, TEXT("Save Widget Data"));
 }
 
@@ -101,7 +127,7 @@ void USLSaveGameSubsystem::SendWidgetData(bool bIsFirstGame)
     USLUserDataSubsystem* UserDataSubsystem = GetGameInstance()->GetSubsystem<USLUserDataSubsystem>();
     checkf(IsValid(UserDataSubsystem), TEXT("User Data Subsystem is invalid"));
 
-    checkf(IsValid(CurrentSaveGame), TEXT("Current Save Game is invalid"));
+    checkf(IsValid(CurrentSaveData), TEXT("Current Save Game is invalid"));
 
     if (bIsFirstGame)
     {
@@ -109,7 +135,7 @@ void USLSaveGameSubsystem::SendWidgetData(bool bIsFirstGame)
     }
     else
     {
-        UserDataSubsystem->ApplyLoadedUserData(CurrentSaveGame->WidgetSaveData);
+        UserDataSubsystem->ApplyLoadedUserData(CurrentSaveData->UserSaveData);
     }
 }
 
@@ -117,15 +143,85 @@ void USLSaveGameSubsystem::SaveChapterData()
 {
     USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
     checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
+    CurrentSaveData->CurrentChapter = LevelSubsystem->GetCurrentChapter();
+}
 
-    CurrentSaveGame->CurrentChapter = LevelSubsystem->GetCurrentChapter();
+void USLSaveGameSubsystem::SaveObjectiveData()
+{
+    USLObjectiveSubsystem* ObjectiveSubsystem = GetGameInstance()->GetSubsystem<USLObjectiveSubsystem>();
+    checkf(IsValid(ObjectiveSubsystem), TEXT("Objective Subsystem is invalid"));
+    checkf(IsValid(CurrentSaveData), TEXT("Current Save Game is invalid"));
+
+    if (CurrentSaveData->ObjectiveSaveData.ChapterObjectiveSaveDataMap.Num() == 0)
+    {
+        LoadObjectiveDefaultData();
+        return;
+    }
+    
+    TMap<ESLChapterType, FSLObjectiveRuntimeData>& CachedObjectiveData = ObjectiveSubsystem->GetCachedObjectiveDataRef();
+    
+    for (int32 Chapter = 1; Chapter <= 5; Chapter++)
+    {
+        const ESLChapterType ChapterType = static_cast<ESLChapterType>(Chapter);
+        
+        if (FSLObjectiveRuntimeData* ChapterObjectiveDataPtr = CachedObjectiveData.Find(ChapterType))
+        {
+            FSLObjectiveRuntimeData& ChapterObjectiveData = *ChapterObjectiveDataPtr;
+
+            for (auto& [Name, Objective] : ChapterObjectiveData.ChapterObjectiveMap)
+            {
+                if (!IsValid(Objective))
+                {
+                    continue;
+                }
+
+                if (FObjectiveSaveData* ChapterSaveDataPtr = CurrentSaveData->ObjectiveSaveData.ChapterObjectiveSaveDataMap.Find(ChapterType))
+                {
+                    if (ESLObjectiveState* ObjectiveStatePtr = ChapterSaveDataPtr->ObjectiveSaveDataMap.Find(Name))
+                    {
+                        *ObjectiveStatePtr = Objective->GetObjectiveState();
+                    }
+                }
+            }
+        }
+    }
 }
 
 void USLSaveGameSubsystem::SendChapterData()
 {
     USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
     checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
+    checkf(IsValid(CurrentSaveData), TEXT("Current Save Game is invalid"));
+    LevelSubsystem->SetCurrentChapter(CurrentSaveData->CurrentChapter);
+}
 
-    checkf(IsValid(CurrentSaveGame), TEXT("Current Save Game is invalid"));
-    LevelSubsystem->SetCurrentChapter(CurrentSaveGame->CurrentChapter);
+void USLSaveGameSubsystem::SendObjectiveData()
+{
+    USLObjectiveSubsystem* ObjectiveSubsystem = GetGameInstance()->GetSubsystem<USLObjectiveSubsystem>();
+    checkf(IsValid(ObjectiveSubsystem), TEXT("Objective Subsystem is invalid"));
+    checkf(IsValid(CurrentSaveData), TEXT("Current Save Game is invalid"));
+
+    if (CurrentSaveData->ObjectiveSaveData.ChapterObjectiveSaveDataMap.Num() == 0)
+    {
+        LoadObjectiveDefaultData();
+        return;
+    }
+    
+    TMap<ESLChapterType, FSLObjectiveRuntimeData>& CachedObjectiveData = ObjectiveSubsystem->GetCachedObjectiveDataRef();
+    for (int32 Chapter = 1; Chapter <= 5; Chapter++)
+    {
+        const ESLChapterType ChapterType = static_cast<ESLChapterType>(Chapter);
+        FSLObjectiveRuntimeData& ChapterObjectiveData = *CachedObjectiveData.Find(ChapterType);
+
+        for (auto&[Name, Objective] : ChapterObjectiveData.ChapterObjectiveMap)
+        {
+            const auto ChapterObjectiveSaveMap = CurrentSaveData->ObjectiveSaveData.ChapterObjectiveSaveDataMap.Find(ChapterType);
+            if(ChapterObjectiveSaveMap == nullptr)
+            {
+                continue;
+            }
+            const ESLObjectiveState ObjectiveState = ChapterObjectiveSaveMap->ObjectiveSaveDataMap.FindRef(Name);
+            Objective->SetObjectiveState(ObjectiveState);
+        }
+    }
 }

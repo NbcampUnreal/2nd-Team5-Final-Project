@@ -89,7 +89,6 @@ void ASLDeveloperRoomCable::ActivateLine()
 	SetLineState(EBossLineState::Active);
 	CurrentHp = MaxHp;
 
-	UE_LOG(LogTemp, Log, TEXT("Boss Line %d activated"), LineIndex);
 }
 
 void ASLDeveloperRoomCable::DeactivateLine()
@@ -102,7 +101,6 @@ void ASLDeveloperRoomCable::DeactivateLine()
 	SetLineState(EBossLineState::Inactive);
 	CurrentHp = 0;
 
-	UE_LOG(LogTemp, Log, TEXT("Boss Line %d deactivated"), LineIndex);
 }
 
 void ASLDeveloperRoomCable::DestroyLine()
@@ -118,7 +116,6 @@ void ASLDeveloperRoomCable::DestroyLine()
 	// 블루프린트에서 구현할 이벤트 호출 (이펙트만 처리)
 	OnLineDestroyed();
 
-	UE_LOG(LogTemp, Log, TEXT("Boss Line %d destroyed - effects handled by blueprint"), LineIndex);
 }
 
 void ASLDeveloperRoomCable::SetLineIndex(int32 Index)
@@ -175,7 +172,6 @@ void ASLDeveloperRoomCable::HideAndDisable()
 	// 부모 클래스의 OnObjectBreaked도 호출
 	OnObjectBreaked.Broadcast();
 
-	UE_LOG(LogTemp, Log, TEXT("Boss Line %d hidden and disabled - delegates broadcasted"), LineIndex);
 }
 
 void ASLDeveloperRoomCable::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
@@ -204,7 +200,6 @@ void ASLDeveloperRoomCable::OnInteracted(const ASLPlayerCharacterBase* InCharact
 		{
 			// 데미지를 받았을 때 머티리얼 플래시
 			FlashDamagedMaterial();
-			UE_LOG(LogTemp, Log, TEXT("Boss Line %d damaged. Health remaining: %d"), LineIndex, CurrentHp);
 		}
 	}
 }
@@ -226,7 +221,6 @@ void ASLDeveloperRoomCable::OnLineHit(UPrimitiveComponent* HitComponent, AActor*
 		StartShakeEffect();
 		
 		TriggerReact(PlayerCharacter, ESLReactiveTriggerType::ERT_Hit);
-		UE_LOG(LogTemp, Log, TEXT("Boss Line %d hit by collision"), LineIndex);
 	}
 }
 
@@ -314,7 +308,6 @@ void ASLDeveloperRoomCable::PlayHitFeedback(const FVector& HitLocation)
 		);
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Boss Line %d hit feedback played at %s"), LineIndex, *HitLocation.ToString());
 }
 
 void ASLDeveloperRoomCable::FlashDamagedMaterial()
@@ -350,7 +343,6 @@ void ASLDeveloperRoomCable::FlashDamagedMaterial()
 		);
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Boss Line %d material flashed"), LineIndex);
 }
 
 void ASLDeveloperRoomCable::StartShakeEffect()
@@ -374,14 +366,12 @@ void ASLDeveloperRoomCable::StartShakeEffect()
 				bIsShaking = false;
 				// 원래 위치로 복구
 				SetActorLocation(OriginalLocation);
-				UE_LOG(LogTemp, Log, TEXT("Boss Line %d shake effect ended"), LineIndex);
 			},
 			ShakeDuration,
 			false
 		);
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Boss Line %d shake effect started"), LineIndex);
 }
 
 void ASLDeveloperRoomCable::UpdateShakeEffect(float DeltaTime)
@@ -393,18 +383,15 @@ void ASLDeveloperRoomCable::UpdateShakeEffect(float DeltaTime)
 
 	ShakeTimeElapsed += DeltaTime;
 
-	// 사인파를 이용한 랜덤 흔들림 계산
 	float ShakeX = FMath::Sin(ShakeTimeElapsed * ShakeFrequency) * ShakeIntensity * FMath::FRandRange(-1.0f, 1.0f);
 	float ShakeY = FMath::Cos(ShakeTimeElapsed * ShakeFrequency * 1.3f) * ShakeIntensity * FMath::FRandRange(-1.0f, 1.0f);
 	float ShakeZ = FMath::Sin(ShakeTimeElapsed * ShakeFrequency * 0.7f) * ShakeIntensity * 0.5f * FMath::FRandRange(-1.0f, 1.0f);
 
-	// 시간이 지날수록 흔들림 감소
 	float DecayFactor = FMath::Max(0.0f, 1.0f - (ShakeTimeElapsed / ShakeDuration));
 	ShakeX *= DecayFactor;
 	ShakeY *= DecayFactor;
 	ShakeZ *= DecayFactor;
 
-	// 새로운 위치 설정
 	FVector NewLocation = OriginalLocation + FVector(ShakeX, ShakeY, ShakeZ);
 	SetActorLocation(NewLocation);
 }

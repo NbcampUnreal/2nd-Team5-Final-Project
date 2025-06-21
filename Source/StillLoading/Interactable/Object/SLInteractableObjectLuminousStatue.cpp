@@ -24,7 +24,7 @@ void ASLInteractableObjectLuminousStatue::TurnOffLight()
 
 	const float TargetTime = 1.0f; // 변화 시간
 
-	const float StartIntensity = 50.0f;
+	const float StartIntensity = 20.0f;
 
 	const float EndIntensity = 0.0f;
 
@@ -84,7 +84,7 @@ void ASLInteractableObjectLuminousStatue::SetLightActive()
 
 	const float StartIntensity = 0.0f;
 
-	const float EndIntensity = 50.0f;
+	const float EndIntensity = 20.0f;
 
 	GetWorldTimerManager().SetTimer(LightControlHandler,
 		[this, ElapsedTime, Interval, TargetTime, StartIntensity, EndIntensity]() mutable
