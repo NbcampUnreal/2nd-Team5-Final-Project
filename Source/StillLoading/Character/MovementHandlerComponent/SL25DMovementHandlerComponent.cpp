@@ -148,15 +148,8 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 				CachedCombatComponent->SetEmpoweredCombatMode(10);
 				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
 
-				// 전체 슬로우 (자기 자신 포함)
-				//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, nullptr, 0.2f, 0.15f, true, false);
-				// 자기 자신 제외한 모두 슬로우
-				//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, OwnerCharacter, 0.2f, 0.3f, true, true);
-
 				return;
 			}
-			//FaceToMouse();
-			StartFacingMouse();
 			Attack();
 			break;
 		}
@@ -170,12 +163,9 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 			//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
 			return;
 		}
-		//FaceToMouse();
-		StartFacingMouse();
 		Block(true);
 		break;
 	case EInputActionType::EIAT_Walk:
-		StartFacingMouse();
 		DodgeLoco();
 		break;
 	case EInputActionType::EIAT_Menu:
@@ -213,7 +203,6 @@ void USL25DMovementHandlerComponent::OnActionCompleted_Implementation(EInputActi
 	case EInputActionType::EIAT_Menu:
 		break;
 	case EInputActionType::EIAT_Block:
-		StopFacingMouse();
 		Block(false);
 		break;
 
@@ -426,7 +415,8 @@ void USL25DMovementHandlerComponent::DodgeLoco()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
 		return;
 	}
-	
+
+	FaceMouseCursorInstantly();
 	CachedMontageComponent->PlayDodgeMontage("Forward");
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
 }
@@ -446,6 +436,8 @@ void USL25DMovementHandlerComponent::Block(const bool bIsBlocking)
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Defence Blocked"));
 		return;
 	}
+
+	FaceMouseCursorInstantly();
 	
 	if (bIsBlocking && !OwnerCharacter->GetCharacterMovement()->IsFalling())
 	{
@@ -467,6 +459,8 @@ void USL25DMovementHandlerComponent::Attack()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Attack Blocked"));
 		return;
 	}
+
+	FaceMouseCursorInstantly();
 
 	if (!CachedCombatComponent->GetCurrentComboInfo(Montage, SectionName))
 	{
@@ -605,6 +599,38 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 	bIsMovingToTarget = false;
 }
 
+void USL25DMovementHandlerComponent::FaceMouseCursorInstantly() const
+{
+	if (!OwnerCharacter) return;
+    
+	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+	if (!PlayerController) return;
+
+	FVector WorldLocation, WorldDirection;
+	if (!PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+	{
+		return;
+	}
+
+	const FPlane CharacterPlane(OwnerCharacter->GetActorLocation(), FVector::UpVector);
+    
+	const FVector IntersectionPoint = FMath::LinePlaneIntersection(
+	   WorldLocation,
+	   WorldLocation + (WorldDirection * 15000.0f),
+	   CharacterPlane
+	);
+
+	const FVector DirectionToTarget = IntersectionPoint - OwnerCharacter->GetActorLocation();
+	const FVector FlattenedDirection = FVector(DirectionToTarget.X, DirectionToTarget.Y, 0.0f);
+
+	if (!FlattenedDirection.IsNearlyZero())
+	{
+		const FRotator TargetRotation = FlattenedDirection.Rotation();
+        
+		OwnerCharacter->SetActorRotation(FRotator(0.0f, TargetRotation.Yaw, 0.0f));
+	}
+}
+
 void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
 {
 	if (!bShouldFaceMouse)
@@ -699,6 +725,7 @@ void USL25DMovementHandlerComponent::MoveToTarget(float DeltaTime)
 	{
 		FVector DirectionToOriginalTarget = (TargetMoveLocation - CurrentLocation).GetSafeNormal();
 		FinalTargetLocation = HitResult.Location - DirectionToOriginalTarget * 5.0f;
+		StopFacingMouse();
 	}
 
 	FVector MoveDirection = (FinalTargetLocation - CurrentLocation);
