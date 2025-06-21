@@ -2,6 +2,11 @@
 
 #include "SwarmAgent.h"
 #include "SwarmManager.h"
+#include "AI/RealAI/Blackboardkeys.h"
+#include "AI/RealAI/MonsterAICharacter.h"
+#include "AnimInstances/SLCompanionAnimInstance.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/SphereComponent.h"
 #include "Engine/TargetPoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -95,6 +100,7 @@ void ASwarmSpawner::BeginSpawn()
 
 							if (bIsLeader)
 							{
+								DeferredAgent->RequestBerserkMode();
 								DeferredAgent->SetLeader(true, LeaderBehaviorTree, LeaderBlackBoard);
 								SpawnedManager->SetLeader(DeferredAgent);
 							}

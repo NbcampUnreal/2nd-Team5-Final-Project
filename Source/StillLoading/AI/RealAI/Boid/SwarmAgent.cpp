@@ -7,6 +7,7 @@
 #include "BoidMovementComponent/BoidMovementComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 ASwarmAgent::ASwarmAgent()
 {
@@ -28,6 +29,34 @@ void ASwarmAgent::PossessedBy(AController* NewController)
     if (AAIController* AIController = Cast<AAIController>(NewController))
 	{
 		ApplyLeaderState(AIController);
+
+    	if (bShouldEnterBerserkOnPossess)
+    	{
+    		ApplyBerserkState();
+    	}
+	}
+}
+
+void ASwarmAgent::RequestBerserkMode()
+{
+	bShouldEnterBerserkOnPossess = true;
+}
+
+void ASwarmAgent::ApplyBerserkState()
+{
+	if (AAIController* AICon = Cast<AAIController>(GetController()))
+	{
+		if (UBlackboardComponent* BBComp = AICon->GetBlackboardComponent())
+		{
+			ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+			BBComp->SetValueAsObject(TEXT("TargetActor"), PlayerCharacter);
+			UE_LOG(LogTemp, Warning, TEXT("%s is now in BERSERK mode. Target locked."), *GetName());
+		}
+	}
+    
+	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
+	{
+		Monster->SetMonsterModeState(TAG_AI_Berserk);
 	}
 }
 

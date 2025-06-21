@@ -28,6 +28,8 @@ public:
 	void AgentDied();
 	UFUNCTION()
 	void PlayAttackAnim();
+	UFUNCTION()
+	void RequestBerserkMode();
 
 	UFUNCTION()
 	FORCEINLINE_DEBUGGABLE bool IsLeader() { return bIsLeader; }
@@ -46,6 +48,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
+	
+	void ApplyBerserkState();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY()
@@ -60,4 +64,5 @@ protected:
 private:
 	int32 AgentID = -1;
 	bool bIsLeader = false;
+	bool bShouldEnterBerserkOnPossess = false;
 };
