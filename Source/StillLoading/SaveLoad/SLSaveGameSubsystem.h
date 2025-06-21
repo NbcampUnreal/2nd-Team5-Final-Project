@@ -7,6 +7,8 @@
 #include "SLSaveDataStructs.h"
 #include "SLSaveGameSubsystem.generated.h"
 
+struct FSLObjectiveRuntimeData;
+enum class ESLChapterType : uint8;
 class USLSaveGame;
 
 UCLASS()
@@ -17,44 +19,28 @@ class STILLLOADING_API USLSaveGameSubsystem : public UGameInstanceSubsystem
 public:
 
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-
     virtual void Deinitialize() override;
 
- 
     UFUNCTION(BlueprintCallable)
-    void SaveGame();
-
+    void SaveGameData();
     UFUNCTION(BlueprintCallable)
-    void LoadGame();
-
+    void LoadGameData();
     UFUNCTION(BlueprintCallable)
-    void NewGame();
-
-    UFUNCTION(BlueprintCallable)
-    USLSaveGame* GetCurrentSaveGame() const { return CurrentSaveGame; }
-
-    UFUNCTION()
-    const FWidgetSaveData& GetCurrentWidgetDataByRef() const;
-
+    void ResetGameData();
 
 private:
-    UFUNCTION()
+    void LoadObjectiveDefaultData();
+    
     void SaveWidgetData();
-
-    UFUNCTION()
-    void SendWidgetData(bool bIsFirstGame);
-
-    UFUNCTION()
     void SaveChapterData();
-
-    UFUNCTION()
+    void SaveObjectiveData();
+    
+    void SendWidgetData(bool bIsFirstGame);
     void SendChapterData();
-
-
-    UPROPERTY()
-    USLSaveGame* CurrentSaveGame;
+    void SendObjectiveData();
 
     UPROPERTY()
-    FString SlotName = FString(TEXT("SaveData"));
-
+    TObjectPtr<USLSaveGame> CurrentSaveData;
+    UPROPERTY()
+    FString SlotName = "SaveData";
 };

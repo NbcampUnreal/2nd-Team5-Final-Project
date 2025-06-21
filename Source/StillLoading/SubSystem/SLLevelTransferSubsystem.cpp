@@ -5,6 +5,7 @@
 #include "SubSystem/SLLevelTransferSettings.h"
 #include "SubSystem/DataAssets/SLLevelDataAsset.h"
 #include "Kismet/GameplayStatics.h"
+#include "SaveLoad/SLSaveGameSubsystem.h"
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/SLSoundSubsystem.h"
 #include "UI/HUD/SLBaseHUD.h"
@@ -57,6 +58,11 @@ void USLLevelTransferSubsystem::SetCurrentChapter(ESLChapterType ChapterType)
 	CheckValidOfUISubsystem();
 	UISubsystem->SetChapterToUI(ChapterType);
 
+	if (USLSaveGameSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>())
+	{
+		SaveGameSubsystem->SaveGameData();
+	}
+	
 	ChapterDelegate.Broadcast(ChapterType);
 }
 
