@@ -2,6 +2,8 @@
 
 #include "NavigationSystem.h"
 #include "SwarmAgent.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 ASwarmManager::ASwarmManager()
 {
@@ -37,6 +39,8 @@ void ASwarmManager::RegisterAgent(ASwarmAgent* Agent)
 		);
 		AgentRandomOffsets.Add(Agent->GetAgentID(), RandomOffset);
 	}
+
+	TotalSpawnCount++;
 }
 
 void ASwarmManager::UnregisterAgent(ASwarmAgent* Agent)
@@ -49,6 +53,13 @@ void ASwarmManager::UnregisterAgent(ASwarmAgent* Agent)
 	if (Agent && Agent->GetAgentID() >= 0)
 	{
 		AgentRandomOffsets.Remove(Agent->GetAgentID());
+	}
+
+	if (OnMonstersUpdated.IsBound())
+	{
+		int32 DecreaseCount = TotalSpawnCount - AllAgents.Num();
+		OnMonstersUpdated.Broadcast(DecreaseCount);
+		LastMonsterCount = AllAgents.Num();
 	}
 }
 
@@ -157,13 +168,53 @@ FVector ASwarmManager::GetFormationSlotLocationForAgent(int32 AgentID) const
     return FinalTargetLocation;
 }
 
+void ASwarmManager::SetSquadState(const ESquadState NewState)
+{
+	CurrentSquadState = NewState;
+}
+
 void ASwarmManager::AgentDead(ASwarmAgent* Agent)
 {
+	if (!Agent) return;
+
+	const bool bWasLeader = (Agent == LeaderAgent);
 	UnregisterAgent(Agent);
 
-	if (Agent->IsLeader() && AllAgents.Num() > 0)
+	if (bWasLeader)
 	{
-		LeaderAgent = AllAgents.Last();
-		LeaderAgent->SetLeader(true);
+		TryToAppointNewLeader();
+	}
+}
+
+void ASwarmManager::TryToAppointNewLeader()
+{
+	LeaderAgent = nullptr;
+
+	if (AllAgents.Num() > 0)
+	{
+		if (ASwarmAgent* NewLeader = AllAgents[0])
+		{
+			NewLeader->SetLeader(true);
+
+			if (AAIController* NewLeaderController = Cast<AAIController>(NewLeader->GetController()))
+			{
+				if (UBlackboardComponent* NewLeaderBlackboard = NewLeaderController->GetBlackboardComponent())
+				{
+					if (ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0))
+					{
+						NewLeaderBlackboard->SetValueAsObject(TEXT("TargetActor"), PlayerCharacter);
+						UE_LOG(LogTemp, Log, TEXT("TargetActor has been set to the new leader's blackboard."));
+					}
+				}
+			}
+            
+			SetLeader(NewLeader); 
+
+			UE_LOG(LogTemp, Warning, TEXT("SwarmManager: %s is the new leader!"), *NewLeader->GetName());
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SwarmManager: No agents left to be a leader."));
 	}
 }

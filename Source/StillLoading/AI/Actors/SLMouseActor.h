@@ -27,8 +27,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseGrabCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseOrbitCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseCollisionReenabled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseGrabCooldownFinished);
-
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseActorStunned);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseActorStunRecovered);
 
 UCLASS()
 class STILLLOADING_API ASLMouseActor : public AActor
@@ -38,6 +38,7 @@ class STILLLOADING_API ASLMouseActor : public AActor
 public:
 	ASLMouseActor();
 
+	// Public Functions
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
 	void StartOrbiting();
 
@@ -59,9 +60,31 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Phase 3")
 	void PerformSweepAttack();
 
+	UFUNCTION(BlueprintCallable, Category = "Phase 5")
+	void ApplyWallStun(float StunDuration);
+
+	UFUNCTION(BlueprintCallable, Category = "Phase 5")
+	bool IsStunned() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Phase 5")
+	void EnableAttackability();
+
+	UFUNCTION(BlueprintCallable, Category = "Phase 5")
+	void DisableAttackability();
+
+	UFUNCTION(BlueprintCallable, Category = "Debug")
+	void DebugAttackability();
+
+	UFUNCTION(BlueprintCallable, Category = "Debug")
+	bool IsAttackable() const { return bIsAttackable; }
+
+	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
+	bool IsGrabbingPlayer() const;
+	
 	void StartMultiHitTimer();
 	void OnMultiHitTimerFinished();
 
+	// Public Variables (Delegates)
 	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
 	FSLOnMouseActorDestroyed OnMouseActorDestroyed;
 
@@ -80,7 +103,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
 	FSLOnMouseGrabCooldownFinished OnMouseGrabCooldownFinished;
 
+	UPROPERTY(BlueprintAssignable, Category = "Phase 5")
+	FSLOnMouseActorStunned OnMouseActorStunned;
+
+	UPROPERTY(BlueprintAssignable, Category = "Phase 5")
+	FSLOnMouseActorStunRecovered OnMouseActorStunRecovered;
+
 protected:
+	// Protected Functions
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
@@ -96,6 +126,12 @@ protected:
 	UFUNCTION()
 	void OnCollisionReenabled();
 
+	UFUNCTION()
+	void OnStunRecovery();
+
+	UFUNCTION()
+	void OnSweepAttackCooldownFinished();
+
 	void UpdateOrbitMovement(float DeltaTime);
 	void UpdateDescentMovement(float DeltaTime);
 	void UpdateGrabMovement(float DeltaTime);
@@ -110,16 +146,14 @@ protected:
 	float GetRandomGrabCooldown() const;
 	bool CanGrabPlayer() const;
 	FVector CalculateOrbitPosition() const;
-
 	void UpdatePhase3Movement(float DeltaTime);
 	bool IsPlayerLookingAtMe() const;
 	void RestoreOriginalAppearance();
-
-	UFUNCTION()
-	void OnSweepAttackCooldownFinished();
-
 	void ExecuteSweepAttack();
+	FVector FindSafeDropLocation(const FVector& CurrentLocation) const;
+	bool IsLocationSafe(const FVector& Location) const;
 	
+	// Protected Variables (Components)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> RootSceneComponent;
 
@@ -132,6 +166,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UBattleComponent> BattleComponent;
 
+	// Protected Variables (Settings)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit Settings")
 	float OrbitRadius;
 
@@ -224,7 +259,18 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
 	float SweepAttackHitInterval;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 5 Settings")
+	float DefaultWallStunDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 5 Settings")
+	TObjectPtr<UNiagaraSystem> StunEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 5 Settings")
+	TObjectPtr<USoundBase> StunSound;
+
 private:
+	// Private Variables (Runtime State)
 	EMouseActorState CurrentState;
 	float CurrentHealth;
 	UPROPERTY()
@@ -247,4 +293,8 @@ private:
 	int32 CurrentHitCount;
 	UPROPERTY()
 	TSet<TObjectPtr<AActor>> MultiHitTargets;
+
+	bool bIsStunned;
+	bool bIsAttackable;
+	FTimerHandle StunRecoveryTimer;
 };

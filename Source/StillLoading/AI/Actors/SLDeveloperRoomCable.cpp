@@ -21,8 +21,8 @@ ASLDeveloperRoomCable::ASLDeveloperRoomCable()
 	// 초기값 설정
 	CurrentLineState = EBossLineState::Inactive;
 	LineIndex = -1;
-	MaxHp = 10;
-	CurrentHp = 10;
+	MaxHp = 4;
+	CurrentHp = 4;
 	
 	// TriggerType을 Hit으로 설정하여 공격으로만 파괴 가능하게 함
 	TriggerType = ESLReactiveTriggerType::ERT_Hit;
@@ -234,7 +234,7 @@ void ASLDeveloperRoomCable::UpdateLineVisuals()
 	switch (CurrentLineState)
 	{
 	case EBossLineState::Inactive:
-		LineSkeletalMeshComponent->SetVisibility(false);
+		LineSkeletalMeshComponent->SetVisibility(true);
 		LineCollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		if (InactiveMaterial)
 		{
