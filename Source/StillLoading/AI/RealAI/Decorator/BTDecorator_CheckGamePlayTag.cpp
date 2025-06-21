@@ -23,6 +23,8 @@ bool UBTDecorator_CheckGamePlayTag::CalculateRawConditionValue(UBehaviorTreeComp
 		return AIPawn->HasBattleState(TagToCheck);
 	case ETagType::TT_Strategy:
 		return AIPawn->HasStrategyState(TagToCheck);
+	case ETagType::TT_MonsterMode:
+		return AIPawn->HasMonsterModeState(TagToCheck);
 	}
 
 	return false;

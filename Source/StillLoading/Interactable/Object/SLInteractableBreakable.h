@@ -12,6 +12,7 @@ class UBattleComponent;
 class UNiagaraSystem;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnObjectBreaked);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnObjectHit, const FHitResult&, HitResult);
 
 UCLASS()
 class STILLLOADING_API ASLInteractableBreakable : public ASLInteractableObjectBase
@@ -25,6 +26,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnObjectBreaked OnObjectBreaked;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnObjectHit OnObjectHit;
 	
 protected:
 	UFUNCTION()

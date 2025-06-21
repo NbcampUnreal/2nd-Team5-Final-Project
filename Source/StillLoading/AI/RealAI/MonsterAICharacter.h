@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Boid/SwarmAgent.h"
 #include "Character/BattleComponent/SLTargetableInterface.h"
-#include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
 class ASLBasePlayerController;
@@ -34,10 +34,10 @@ enum class EMonsterType : uint8
 	MT_SkullH	UMETA(DisplayName = "Skull H"),
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMonsterDied, AActor*, DiedMonster);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAgentDied, AActor*, DiedMonster);
 
 UCLASS()
-class STILLLOADING_API AMonsterAICharacter : public ACharacter, public ISLTargetableInterface
+class STILLLOADING_API AMonsterAICharacter : public ASwarmAgent, public ISLTargetableInterface
 {
 	GENERATED_BODY()
 
@@ -45,10 +45,7 @@ public:
 	AMonsterAICharacter();
 
 	UPROPERTY(BlueprintAssignable, Category = "Delegate | Battle")
-	FOnMonsterDied OnMonsterDied;
-
-	UFUNCTION()
-	void SetSquadManager(AAISquadManager* InManager);
+	FOnAgentDied OnMonsterDied;
 
 	UFUNCTION()
 	void BeginSpawning(const FVector& FinalLocation, float RiseHeight = 300.f);
@@ -62,10 +59,16 @@ public:
 	bool IsInPrimaryState(const FGameplayTag StateToCheck) const;
 
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	void SetMonsterModeState(const FGameplayTag NewState);
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
+	bool HasMonsterModeState(const FGameplayTag StateToCheck) const;
+
+	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void SetBattleState(const FGameplayTag NewState);
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	bool HasBattleState(const FGameplayTag StateToCheck) const;
 
+	// 애니메이션 분기용
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void SetStrategyState(const FGameplayTag NewState);
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
@@ -93,6 +96,9 @@ public:
 	// 전략 상태 단일
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StrategyStateTags;
+	// ex) 버서커 모드등
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
+	FGameplayTagContainer MonsterModeTags;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
@@ -103,9 +109,6 @@ public:
 	TObjectPtr<AActor> Sword;
 	UPROPERTY()
 	TObjectPtr<AActor> Shield;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Squad")
-	TObjectPtr<AAISquadManager> SquadManager;
 
 	// 피격시 BlendSpace 용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
@@ -120,7 +123,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Landed(const FHitResult& Hit) override;
 
@@ -172,12 +174,6 @@ private:
 	void StartFlyingState();
 	UFUNCTION(BlueprintCallable)
 	void StopFlyingState();
-	UFUNCTION()
-	void DrawDebugMessage();
-	UFUNCTION()
-	void StepBackward(const float DeltaTime);
-	UFUNCTION()
-	void WatchTarget(float DeltaTime);
 
 	UFUNCTION()
 	USLSoundSubsystem* GetBattleSoundSubSystem() const;
@@ -214,23 +210,12 @@ private:
 	FVector SpawnEndLocation;
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Spawn")
-	void SetLeader();
-
-	UFUNCTION(BlueprintCallable, Category = "Spawn")
-	FORCEINLINE bool IsLeader() const { return bIsLeader; }
-
 	FORCEINLINE TObjectPtr<UAnimationMontageComponent> GetAnimMontageComp()
 	{
 		if (AnimationComponent) return nullptr;
 		return AnimationComponent;
 	}
-	
-	UFUNCTION(BlueprintCallable, Category = "Spawn")
-	FORCEINLINE void SetFollower() { bIsLeader = false; }
 
 	UFUNCTION(BlueprintCallable, Category = "Stat")
 	FORCEINLINE void SetMonsterMaxHealth(const float Health) { MaxHealth = Health; }
-
-	FORCEINLINE AAISquadManager* GetSquadManager() const { return SquadManager; }
 };

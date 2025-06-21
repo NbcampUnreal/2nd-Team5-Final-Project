@@ -38,7 +38,8 @@ protected:
 	void StartShakeEffect();
 	void UpdateShakeEffect(float DeltaTime);
 	void DestroyActor();
-
+	void SetupCollisionSettings();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
 	TObjectPtr<UMaterialInterface> NormalMaterial;
 

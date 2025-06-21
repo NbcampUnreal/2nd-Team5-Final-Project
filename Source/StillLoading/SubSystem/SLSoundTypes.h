@@ -21,7 +21,8 @@ enum class ESLBgmSoundType : uint8
 	EBS_RidingGame,
 	EBS_DebugRoom,
 	EBS_BossBattle,
-	EBS_Ending
+	EBS_Ending,
+	EBS_Mini1Battle
 };
 
 UENUM(BlueprintType)

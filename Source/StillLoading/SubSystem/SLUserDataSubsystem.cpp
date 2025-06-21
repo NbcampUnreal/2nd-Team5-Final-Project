@@ -25,7 +25,7 @@ float USLUserDataSubsystem::GetCurrentScreenHeightSize()
 	return ScreenHeight;
 }
 
-void USLUserDataSubsystem::ApplyLoadedUserData(const FWidgetSaveData& LoadData)
+void USLUserDataSubsystem::ApplyLoadedUserData(const FUserSaveData& LoadData)
 {
 	SetLanguage(LoadData.LanguageType);
 	SetBgmVolume(LoadData.BgmVolume);
