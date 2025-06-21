@@ -11,6 +11,7 @@
  * 
  */
 
+enum class ESLObjectiveState : uint8;
 enum class ESLChapterType : uint8;
 class USLObjectiveDataAsset;
 class USLObjectiveDataSettings;
@@ -26,18 +27,17 @@ public:
 	USLObjectiveBase* GetObjective(ESLChapterType Chapter, FName Name);
 
 	UFUNCTION(BlueprintCallable)
-	bool IsObjectiveCompleted(ESLChapterType Chapter, FName Name);
+	ESLObjectiveState GetObjectiveState(ESLChapterType Chapter, FName Name);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<USLObjectiveBase*> GetInProgressedObejctives();
-	
+	TArray<USLObjectiveBase*> GetInProgressedObjectives();
+
+	TMap<ESLChapterType, FSLObjectiveRuntimeData>& GetCachedObjectiveDataRef();
+
 protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	
 private:
 	UPROPERTY()
-	const USLObjectiveDataSettings* ObjectiveDataSettings = nullptr;
-
-	UPROPERTY()
-	TMap<ESLChapterType, FSLObjectiveRuntimeData> CachedChapterObjectiveDataMap;
+	TMap<ESLChapterType, FSLObjectiveRuntimeData> CachedObjectiveData;
 };

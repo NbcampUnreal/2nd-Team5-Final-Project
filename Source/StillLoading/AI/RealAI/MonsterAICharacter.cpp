@@ -26,6 +26,7 @@ AMonsterAICharacter::AMonsterAICharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
+	GetCharacterMovement()->MaxWalkSpeed = 300;
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = AMonsterAIController::StaticClass();
@@ -174,23 +175,6 @@ void AMonsterAICharacter::ResetPushFlag()
 	bRecentlyPushed = false;
 }
 
-void AMonsterAICharacter::SetLeader()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Leader Selected!! [%s]"), *this->GetName());
-	bIsLeader = true;
-
-	SetStrategyState(TAG_AI_Leader);
-
-	AMonsterAIController* LeaderController = Cast<AMonsterAIController>(GetController());
-
-	if (LeaderController && LeaderController->GetBlackboardComponent())
-	{
-		LeaderController->GetBlackboardComponent()->SetValueAsObject(FName("Leader"), this);
-		LeaderController->GetBlackboardComponent()->SetValueAsVector(FName("LeaderOrderLocation"), FVector::ZeroVector);
-		LeaderController->CheckPerception(this);
-	}
-}
-
 void AMonsterAICharacter::RotateToHitCauser(const AActor* Causer)
 {
 	if (!Causer) return;
@@ -270,7 +254,7 @@ void AMonsterAICharacter::SetChasing(bool bEnable)
 
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
-		MoveComp->MaxWalkSpeed = bEnable ? 400.f : 400.f;
+		MoveComp->MaxWalkSpeed = bEnable ? 350.f : 350.f;
 	}
 }
 
@@ -330,10 +314,6 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	RotateToHitCauser(Causer);
 	ChangeMeshTemporarily();
 	StartFlyingState();
-	if (!bIsLeader)
-	{
-		SetStrategyState(TAG_JOBMOB_ATTACK);
-	}
 
 	LastAttacker = Causer;
 	CurrentHealth -= Damage;
@@ -462,6 +442,8 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	{
 	case EAttackAnimType::AAT_AINormal:
 	case EAttackAnimType::AAT_AISpecial:
+		SetPrimaryState(TAG_AI_Idle);
+		LastAttackFinishTime = GetWorld()->GetTimeSeconds();
 		break;
 	case EAttackAnimType::AAT_FinalAttackA:
 	case EAttackAnimType::AAT_FinalAttackB:
@@ -475,6 +457,7 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	default: break;
 	}
 
+	SetStrategyState(TAG_AI_Idle);
 	SetBattleState(TAG_AI_Idle);
 	StopFlyingState();
 }
@@ -483,6 +466,7 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 {
 	OnDeath();
 	SetBattleState(TAG_AI_Dead);
+	AgentDied();
 
 	if (DeathMaterial && bIsChangeMaterial)
 	{

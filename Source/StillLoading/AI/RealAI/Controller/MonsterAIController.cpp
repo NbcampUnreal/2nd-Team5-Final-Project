@@ -1,42 +1,14 @@
 #include "MonsterAIController.h"
 
-#include "AI/RealAI/AISquadManager.h"
-#include "AI/RealAI/Blackboardkeys.h"
-#include "AI/RealAI/MonsterAICharacter.h"
-#include "BehaviorTree/BehaviorTree.h"
-#include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLPlayerCharacterBase.h"
-#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/WidgetComponent.h"
 #include "Perception/AIPerceptionComponent.h"
-#include "Perception/AISenseConfig_Sight.h"
 
 struct FStateTreeInstanceData;
 
 AMonsterAIController::AMonsterAIController()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	AIPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
-	BlackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
-
-	// Sight 구성
-	SightConfig->SightRadius = 1500.0f;
-	SightConfig->LoseSightRadius = 1700.0f;
-	SightConfig->PeripheralVisionAngleDegrees = 270.0f;
-	SightConfig->SetMaxAge(0.5f);
-
-	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-	SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
-	SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
-
-	AIPerception->ConfigureSense(*SightConfig);
-	AIPerception->SetDominantSense(SightConfig->GetSenseImplementation());
-	SetPerceptionComponent(*AIPerception);
-
-	AIPerception->OnPerceptionUpdated.AddDynamic(this, &AMonsterAIController::OnPerceptionUpdated);
-	AIPerception->OnTargetPerceptionUpdated.AddDynamic(this, &AMonsterAIController::OnTargetPerceptionUpdated);
 }
 
 void AMonsterAIController::BeginPlay()
@@ -52,7 +24,7 @@ void AMonsterAIController::OnPossess(APawn* InPawn)
 
 	if (InPawn)
 	{
-		CheckPerception(InPawn);
+		//CheckPerception(InPawn);
 		
 		ACharacter* AICharacter = Cast<ACharacter>(InPawn);
 		if (AICharacter && AICharacter->GetMesh())
@@ -101,91 +73,10 @@ void AMonsterAIController::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AMonsterAIController::CheckPerception(APawn* InPawn)
-{
-	APawn* MyPawn = GetPawn();
-	if (!MyPawn) return;
-
-	if (!LeaderBehaviorTreeAsset || !SoldierBehaviorTreeAsset)
-	{
-		UE_LOG(LogTemp, Error, TEXT("AIController '%s' does not have Behavior Tree Assets assigned!"), *GetName());
-		return;
-	}
-
-	const AMonsterAICharacter* PossessedCharacter = Cast<AMonsterAICharacter>(MyPawn);
-	const bool bIsLeader = PossessedCharacter ? PossessedCharacter->StrategyStateTags.HasTag(TAG_AI_Leader) : false;
-
-	UBehaviorTree* BTToRun = nullptr;
-	if (bIsLeader)
-	{
-		BlackboardComponent->SetValueAsObject(BlackboardKeys::Leader, InPawn);
-		BTToRun = LeaderBehaviorTreeAsset; 
-	}
-	else
-	{
-		BTToRun = SoldierBehaviorTreeAsset;
-	}
-	
-	if (AIPerception)
-	{
-		AIPerception->SetActive(bIsLeader);
-	}
-
-	UBlackboardComponent* RawBlackboard = BlackboardComponent.Get();
-	if (UseBlackboard(BTToRun->BlackboardAsset, RawBlackboard))
-	{
-		RunBehaviorTree(BTToRun);
-		BlackboardComponent->SetValueAsObject(BlackboardKeys::SelfActor, MyPawn);
-		UE_LOG(LogTemp, Log, TEXT("AI '%s' initialized as %s."), *MyPawn->GetName(), bIsLeader ? TEXT("Leader") : TEXT("Soldier"));
-	}
-}
-
 void AMonsterAIController::ToggleLockOnWidget(bool bIsLockOnWidget)
 {
 	LockOnWidgetFront->SetVisibility(bIsLockOnWidget);
 	LockOnWidgetBack->SetVisibility(bIsLockOnWidget);
-}
-
-// 개별 액터의 감지/미감지 상태 기반 행동(추격 시작/중단 등)을 할 때
-void AMonsterAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
-{
-	if (ASLPlayerCharacterBase* Player = Cast<ASLPlayerCharacterBase>(Actor))
-	{
-		if (Stimulus.WasSuccessfullySensed())
-		{
-			BlackboardComponent->SetValueAsObject(BlackboardKeys::TargetActor, Actor);
-			if (AMonsterAICharacter* MyChar = Cast<AMonsterAICharacter>(GetPawn()))
-			{
-				MyChar->SetChasing(true);
-				MyChar->SetPrimaryState(TAG_AI_AbleToAttack);
-			}
-		}
-		else if (!Stimulus.WasSuccessfullySensed())
-		{
-			if (AMonsterAICharacter* MyChar = Cast<AMonsterAICharacter>(GetPawn()))
-			{
-				MyChar->SetChasing(false);
-				MyChar->SetPrimaryState(TAG_AI_Idle);
-			}
-		}
-	}
-}
-
-// 감지 리스트를 기반으로 우선 타겟 선정, 시야각 등 전역 판단할 때
-void AMonsterAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
-{
-	for (AActor* Actor : UpdatedActors)
-	{
-		if (ASLPlayerCharacterBase* Player = Cast<ASLPlayerCharacterBase>(Actor))
-		{
-			if (LineOfSightTo(Player))
-			{
-				//BlackboardComponent->SetValueAsObject("TargetActor", Player);
-				//UE_LOG(LogTemp, Warning, TEXT("전체 감지 업데이트: %s"), *Player->GetName());
-				break;
-			}
-		}
-	}
 }
 
 ETeamAttitude::Type AMonsterAIController::GetTeamAttitudeTowards(const AActor& Other) const
@@ -198,7 +89,7 @@ ETeamAttitude::Type AMonsterAIController::GetTeamAttitudeTowards(const AActor& O
 		return ETeamAttitude::Neutral;
 	}
 
-	FGenericTeamId OtherTeamID = OtherTeamAgent->GetGenericTeamId();
+	const FGenericTeamId OtherTeamID = OtherTeamAgent->GetGenericTeamId();
 	FGenericTeamId MyTeamID = GetGenericTeamId();
 
 	// 팀 ID가 같으면 우호적

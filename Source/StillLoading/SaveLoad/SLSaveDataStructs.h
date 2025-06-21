@@ -6,13 +6,16 @@
 #include "UI/SLUITypes.h"
 #include "SubSystem/SLTextPoolTypes.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "Objective/SLObjectiveBase.h"
 #include "SLSaveDataStructs.generated.h"
 /**
  * 
  */
 
+enum class ESLChapterType : uint8;
+
 USTRUCT(BlueprintType)
-struct FWidgetSaveData
+struct FUserSaveData
 {
 	GENERATED_BODY()
 
@@ -44,3 +47,20 @@ struct FWidgetSaveData
 	float ScreenHeight = 1080.0f;
 };
 
+USTRUCT(BlueprintType)
+struct FObjectiveSaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(SaveGame)
+	TMap<FName, ESLObjectiveState> ObjectiveSaveDataMap;
+};
+
+USTRUCT(BlueprintType)
+struct FChapterObjectiveSaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(SaveGame)
+	TMap<ESLChapterType, FObjectiveSaveData> ChapterObjectiveSaveDataMap;
+};

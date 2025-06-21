@@ -79,6 +79,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Leader, "AI.Leader");
 // AI State
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Idle, "AI.Idle");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_AbleToAttack, "AI.AbleToAttack");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_IsPlayingMontage, "AI.IsPlayingMontage");
 
 // 잡몹 행동 패턴
 UE_DEFINE_GAMEPLAY_TAG(TAG_JOBMOB_ATTACK, "JobMob.Attack");
