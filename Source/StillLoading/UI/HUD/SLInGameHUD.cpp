@@ -147,6 +147,11 @@ void ASLInGameHUD::SetObjectiveVisibility()
 	InGameWidget->SetIsObjectiveActivate();
 }
 
+void ASLInGameHUD::SetInvisibleObjectivve()
+{
+	InGameWidget->SetInvisibleObjective();
+}
+
 void ASLInGameHUD::SetBossStateVisibility(bool bIsVisible)
 {
 	InGameWidget->SetIsBossStateActivate(bIsVisible);
