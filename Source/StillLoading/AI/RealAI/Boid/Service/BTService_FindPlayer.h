@@ -15,9 +15,6 @@ public:
 protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
-	UPROPERTY(EditAnywhere, Category = "AI")
-	float DetectionRadius = 800.0f;
-
 	UPROPERTY(EditAnywhere, Category="AI")
 	float ForgettingTime = 2.0f;
 	

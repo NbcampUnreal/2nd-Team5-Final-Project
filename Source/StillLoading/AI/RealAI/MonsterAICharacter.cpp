@@ -427,7 +427,6 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	{
 	case EAttackAnimType::AAT_AINormal:
 	case EAttackAnimType::AAT_AISpecial:
-		SetPrimaryState(TAG_AI_Idle);
 		LastAttackFinishTime = GetWorld()->GetTimeSeconds();
 		break;
 	case EAttackAnimType::AAT_FinalAttackA:
@@ -442,6 +441,7 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	default: break;
 	}
 
+	SetPrimaryState(TAG_AI_Idle);
 	SetStrategyState(TAG_AI_Idle);
 	SetBattleState(TAG_AI_Idle);
 	StopFlyingState();

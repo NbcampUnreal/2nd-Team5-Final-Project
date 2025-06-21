@@ -1,6 +1,7 @@
 #include "BTTask_GetNextPatrolPoint.h"
 
 #include "AIController.h"
+#include "AI/RealAI/Boid/SwarmAgent.h"
 #include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Engine/TargetPoint.h"
@@ -13,11 +14,14 @@ UBTTask_GetNextPatrolPoint::UBTTask_GetNextPatrolPoint()
 
 EBTNodeResult::Type UBTTask_GetNextPatrolPoint::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	AAIController* AIController = OwnerComp.GetAIOwner();
+	const AAIController* AIController = OwnerComp.GetAIOwner();
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
-	if (!AIController || !BlackboardComp) return EBTNodeResult::Failed;
+	const ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(AIController->GetPawn());
+	
+	if (!AIController || !BlackboardComp || !OwningAgent) return EBTNodeResult::Failed;
 
-	ASwarmManager* SwarmManager = Cast<ASwarmManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASwarmManager::StaticClass()));
+	ASwarmManager* SwarmManager = OwningAgent->GetMySwarmManager();
+
 	if (!SwarmManager || SwarmManager->SwarmPatrolPoints.Num() == 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("GetNextPatrolPoint: SwarmManager not found or has no patrol points."));
@@ -26,7 +30,7 @@ EBTNodeResult::Type UBTTask_GetNextPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 
 	const int32 CurrentIndex = BlackboardComp->GetValueAsInt(PatrolIndexKey.SelectedKeyName);
 
-	UE_LOG(LogTemp, Warning, TEXT("CurrentIndex [%d]"), CurrentIndex);
+	//UE_LOG(LogTemp, Warning, TEXT("CurrentIndex [%d]"), CurrentIndex);
 
 	const ATargetPoint* TargetPoint = SwarmManager->SwarmPatrolPoints[CurrentIndex];
 	if (!TargetPoint) return EBTNodeResult::Failed;

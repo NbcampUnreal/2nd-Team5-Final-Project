@@ -19,7 +19,6 @@ ASwarmAgent::ASwarmAgent()
 void ASwarmAgent::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ASwarmAgent::PossessedBy(AController* NewController)
@@ -40,6 +39,11 @@ void ASwarmAgent::PossessedBy(AController* NewController)
 void ASwarmAgent::RequestBerserkMode()
 {
 	bShouldEnterBerserkOnPossess = true;
+}
+
+ASwarmManager* ASwarmAgent::GetMySwarmManager() const
+{
+	return MySwarmManager;
 }
 
 void ASwarmAgent::ApplyBerserkState()
@@ -75,14 +79,13 @@ void ASwarmAgent::SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree, UB
     bIsLeader = IsLeader;
     AgentID = bIsLeader ? -1 : 0;
 
-    if (bIsLeader)
+    if (bIsLeader && LeaderBehaviorTree && LeaderBlackBoard)
     {
         CachedLeaderBehaviorTree = LeaderBehaviorTree;
         CachedLeaderBlackboard = LeaderBlackBoard;
     }
 
-    AAIController* AIController = Cast<AAIController>(GetController());
-    if (AIController)
+    if (AAIController* AIController = Cast<AAIController>(GetController()))
     {
         ApplyLeaderState(AIController);
     }
