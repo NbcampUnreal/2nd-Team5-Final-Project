@@ -30,11 +30,12 @@ public:
 	ESLChapterType CurrentChapter = ESLChapterType::EC_Chapter0;
 
 	UPROPERTY()
-	FWidgetSaveData WidgetSaveData;
+	FUserSaveData UserSaveData;
+
+	// UPROPERTY()
+	// TMap<ESLChapterType, FSLObjectiveRuntimeData> ObjectiveSaveData;
 
 	UPROPERTY()
-	TMap<ESLChapterType, FSLObjectiveRuntimeData> ChapterObjectiveSaveData;
+	FChapterObjectiveSaveData ObjectiveSaveData;
 	
-	UPROPERTY()
-	TArray<TObjectPtr<USLObjectiveBase>> InProgressedObjectiveSaveData;
 };

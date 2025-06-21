@@ -5,29 +5,30 @@
 
 #include "SLObjectiveBase.h"
 #include "SLObjectiveDataSettings.h"
+#include "SaveLoad/SLSaveGameSubsystem.h"
 #include "SubSystem/SLLevelTransferTypes.h"
 
 USLObjectiveBase* USLObjectiveSubsystem::GetObjective(const ESLChapterType Chapter, const FName Name)
 {
-    const FSLObjectiveRuntimeData& ChapterDataAsset = CachedChapterObjectiveDataMap.FindRef(Chapter);
+    const FSLObjectiveRuntimeData& ChapterDataAsset = CachedObjectiveData.FindRef(Chapter);
     USLObjectiveBase* Objective = ChapterDataAsset.ChapterObjectiveMap.FindRef(Name);
     return Objective;
 }
 
-bool USLObjectiveSubsystem::IsObjectiveCompleted(const ESLChapterType Chapter, const FName Name)
+ESLObjectiveState USLObjectiveSubsystem::GetObjectiveState(const ESLChapterType Chapter, const FName Name)
 {
-    const USLObjectiveBase* Objective = GetObjective(Chapter, Name);
-    if (Objective == nullptr)
+    if (const USLObjectiveBase* Objective = GetObjective(Chapter, Name))
     {
-        return false;
+        return Objective->GetObjectiveState();
     }
-    return Objective->GetObjectiveState() == ESLObjectiveState::Complete;
+
+    return ESLObjectiveState::None;
 }
 
-TArray<USLObjectiveBase*> USLObjectiveSubsystem::GetInProgressedObejctives()
+TArray<USLObjectiveBase*> USLObjectiveSubsystem::GetInProgressedObjectives()
 {
     TArray<USLObjectiveBase*> InProgressedObjectives;
-    for (const auto&[Chapter, ChapterData] : CachedChapterObjectiveDataMap)
+    for (const auto&[Chapter, ChapterData] : CachedObjectiveData)
     {
         for (const auto&[Name, Objective] : ChapterData.ChapterObjectiveMap)
         {
@@ -40,13 +41,16 @@ TArray<USLObjectiveBase*> USLObjectiveSubsystem::GetInProgressedObejctives()
     return InProgressedObjectives;
 }
 
+TMap<ESLChapterType, FSLObjectiveRuntimeData>& USLObjectiveSubsystem::GetCachedObjectiveDataRef()
+{
+    return CachedObjectiveData;
+}
+
 void USLObjectiveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
-    if (ObjectiveDataSettings == nullptr)
-    {
-        ObjectiveDataSettings = GetDefault<USLObjectiveDataSettings>();
-    }
+    
+    const USLObjectiveDataSettings* ObjectiveDataSettings = GetDefault<USLObjectiveDataSettings>();
     if (ObjectiveDataSettings == nullptr)
     {
         return;
@@ -69,6 +73,6 @@ void USLObjectiveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
             ObjectiveRuntimeData.ChapterObjectiveMap.Add(Name, NewObjectiveBase);
         }
         
-        CachedChapterObjectiveDataMap.Add(ChapterType, ObjectiveRuntimeData);
+        CachedObjectiveData.Add(ChapterType, ObjectiveRuntimeData);
     }
 }

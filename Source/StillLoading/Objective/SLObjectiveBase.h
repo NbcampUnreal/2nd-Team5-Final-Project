@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "SLObjectiveBase.generated.h"
 
+struct FObjectiveSaveData;
+
 UENUM(BlueprintType)
 enum class ESLObjectiveState : uint8
 {
@@ -52,7 +54,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	int32 GetObjectiveCompleteCount() const { return ObjectiveCompleteCount; }
-	
+
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Objective Delegate")
 	FOnObjectiveStateChanged OnObjectiveStateChanged;
