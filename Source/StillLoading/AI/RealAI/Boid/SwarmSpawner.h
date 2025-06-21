@@ -34,6 +34,8 @@ struct FSwarmComposition
 	bool bIsLeader = false;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpawnedMonstersCountUpdated, int32, DecreaseCount);
+
 UCLASS()
 class STILLLOADING_API ASwarmSpawner : public AActor
 {
@@ -46,6 +48,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void BeginSpawn();
+
+	UPROPERTY(BlueprintAssignable, Category = "Monster Spawner | Events")
+	FOnSpawnedMonstersCountUpdated OnMonstersUpdated;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Spawner Setting")
 	bool bBeginBurserkMode = false;
@@ -61,6 +66,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
 	float LeaderMovementSpeed = 300.0f;
+
+	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
+	float DetectionRadius = 700.0f;
 
 	/*
 	새 떼 / 물고기 떼 (Classic Flock/School) -> Separation: 1.5, Cohesion: 2.0, Alignment: 2.0, GoalSeeking: 0.5
@@ -107,6 +115,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintCallable)
+	void OnMonstersUpdated_Handler(int32 DecreaseCount);
 
 	UPROPERTY(EditAnywhere, Category = "AI | Swarm Settings")
 	TSubclassOf<ASwarmManager> SwarmManagerClass;

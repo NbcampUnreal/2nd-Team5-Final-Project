@@ -2,6 +2,7 @@
 
 #include "AIController.h"
 #include "AI/RealAI/MonsterAICharacter.h"
+#include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "GameFramework/Character.h"
@@ -20,9 +21,14 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 
 	if (!CheckTag(OwnerComp)) return;
 
-	APawn* ControlledPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
+	const APawn* ControlledPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
-	if (!ControlledPawn || !BlackboardComp) return;
+	const AAIController* AIController = OwnerComp.GetAIOwner();
+	if (!AIController) return;
+	const ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(AIController->GetPawn());
+	if (!OwningAgent) return;
+	ASwarmManager* SwarmManager = OwningAgent->GetMySwarmManager();
+	if (!ControlledPawn || !BlackboardComp || !SwarmManager) return;
 
 	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 	if (!PlayerCharacter)
@@ -33,10 +39,11 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 
 	const float Distance = FVector::Dist(ControlledPawn->GetActorLocation(), PlayerCharacter->GetActorLocation());
 
-	if (Distance < DetectionRadius)
+	if (Distance < SwarmManager->DetectionRadius)
 	{
 		BlackboardComp->SetValueAsObject(TargetActorKey.SelectedKeyName, PlayerCharacter);
 		BlackboardComp->SetValueAsFloat(TEXT("LastSeenTime"), GetWorld()->GetTimeSeconds());
+		SwarmManager->SetSquadState(ESquadState::Engaging);
 	}
 	else
 	{
@@ -48,6 +55,7 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 			if (TimeSinceLastSeen > ForgettingTime)
 			{
 				BlackboardComp->ClearValue(TargetActorKey.SelectedKeyName);
+				SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
 				UE_LOG(LogTemp, Warning, TEXT("Target LOST. Clearing TargetActor."));
 			}
 		}

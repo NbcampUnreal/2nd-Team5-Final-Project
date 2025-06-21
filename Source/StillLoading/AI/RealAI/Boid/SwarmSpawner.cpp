@@ -2,11 +2,7 @@
 
 #include "SwarmAgent.h"
 #include "SwarmManager.h"
-#include "AI/RealAI/Blackboardkeys.h"
-#include "AI/RealAI/MonsterAICharacter.h"
 #include "AnimInstances/SLCompanionAnimInstance.h"
-#include "BehaviorTree/BlackboardComponent.h"
-#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/SphereComponent.h"
 #include "Engine/TargetPoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -54,6 +50,7 @@ void ASwarmSpawner::BeginSpawn()
 			SpawnedManager->CombatGoalSeeking = CombatGoalSeekingWeight;
 
 			SpawnedManager->CurrentFormationType = FormationType;
+			SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
 
 			// 순찰 포인트 정렬
 			TArray<FVector> InitialPathPoints;
@@ -83,6 +80,7 @@ void ASwarmSpawner::BeginSpawn()
 						if (ASwarmAgent* DeferredAgent = World->SpawnActorDeferred<ASwarmAgent>(AgentClass, SpawnTransform))
 						{
 							DeferredAgent->AIControllerClass = ControllerClass;
+							DeferredAgent->MySwarmManager = SpawnedManager;
 
 							if (UCharacterMovementComponent* MoveComp = DeferredAgent->GetCharacterMovement())
 							{
@@ -100,9 +98,13 @@ void ASwarmSpawner::BeginSpawn()
 
 							if (bIsLeader)
 							{
-								DeferredAgent->RequestBerserkMode();
+								if (bBeginBurserkMode)
+								{
+									DeferredAgent->RequestBerserkMode();
+								}
 								DeferredAgent->SetLeader(true, LeaderBehaviorTree, LeaderBlackBoard);
 								SpawnedManager->SetLeader(DeferredAgent);
+								SpawnedManager->DetectionRadius = DetectionRadius;
 							}
 
 							UGameplayStatics::FinishSpawningActor(DeferredAgent, SpawnTransform);
@@ -123,4 +125,10 @@ void ASwarmSpawner::BeginPlay()
 	{
 		BeginSpawn();
 	}
+}
+
+void ASwarmSpawner::OnMonstersUpdated_Handler(const int32 DecreaseCount)
+{
+	OnMonstersUpdated.Broadcast(DecreaseCount);
+	UE_LOG(LogTemp, Warning, TEXT("DecreaseCount MonsterCount[%d]"), DecreaseCount);
 }

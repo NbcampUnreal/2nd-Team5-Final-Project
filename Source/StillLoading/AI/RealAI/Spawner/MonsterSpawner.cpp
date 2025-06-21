@@ -118,7 +118,6 @@ void AMonsterSpawner::SpawnMonstersByType()
 
 					if (!Leader)
 					{
-						AIMonster->SetLeader(true); // 리더 지정
 						Leader = AIMonster;
 					}
 				}

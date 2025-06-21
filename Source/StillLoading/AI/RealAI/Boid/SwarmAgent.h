@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "SwarmAgent.generated.h"
 
+class ASwarmManager;
 class UBlackboardData;
 class UBehaviorTree;
 class ATargetPoint;
@@ -40,8 +41,14 @@ public:
 	UFUNCTION()
 	FORCEINLINE_DEBUGGABLE void SetAgentID(const int NextAgentID) { AgentID = NextAgentID; }
 
+	UFUNCTION(BlueprintPure, Category = "Swarm")
+	ASwarmManager* GetMySwarmManager() const;
+
 	UPROPERTY()
 	FOnMonsterDied FOnMonsterDied;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Swarm")
+	TObjectPtr<ASwarmManager> MySwarmManager;
 
 	float LastAttackFinishTime = -100.f;
 
@@ -52,7 +59,7 @@ protected:
 	void ApplyBerserkState();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoidMovementComponent> BoidMovementComp;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
