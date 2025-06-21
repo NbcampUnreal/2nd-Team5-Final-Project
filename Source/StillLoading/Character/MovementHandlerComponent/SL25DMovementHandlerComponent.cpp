@@ -33,7 +33,7 @@ void USL25DMovementHandlerComponent::BeginPlay()
 	{
 		OwnerCharacter->CameraBoom->bUsePawnControlRotation = false;
 		OwnerCharacter->ThirdPersonCamera->bUsePawnControlRotation = false;
-		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
 		OwnerCharacter->CameraBoom->bInheritPitch = false;
 		OwnerCharacter->CameraBoom->bInheritYaw = false;
 		OwnerCharacter->CameraBoom->bInheritRoll = false;
@@ -300,13 +300,13 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	case EHitAnimType::HAT_FallBack:
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
-			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
+			OwnerCharacter->SetActorRotation(TargetRotation);
 			CachedMontageComponent->PlayHitMontage(FName("Fall"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Falling);
 		}
 		else
 		{
-			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
+			OwnerCharacter->SetActorRotation(TargetRotation);
 			if (bIsFromBack)
 			{
 				CachedMontageComponent->PlayHitMontage(FName("KnockBack_Back"));
@@ -321,13 +321,13 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	case EHitAnimType::HAT_Exhausterd: // 기절
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
-			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
+			OwnerCharacter->SetActorRotation(TargetRotation);
 			CachedMontageComponent->PlayHitMontage(FName("Fall"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Falling);
 		}
 		else
 		{
-			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
+			OwnerCharacter->SetActorRotation(TargetRotation);
 			CachedMontageComponent->PlayHitMontage(FName("Groggy"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Groggy);
 		}
@@ -581,42 +581,8 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 	
 	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
 
-	AController* Controller = OwnerCharacter->GetController();
-	if (!Controller) return;
-
-	const FRotator ControlRotation = Controller->GetControlRotation();
-	const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
-
 	const FVector ForwardDir = FVector(1.f, -1.f, 0.f).GetSafeNormal();
 	const FVector RightDir = FVector(1.f, 1.f, 0.f).GetSafeNormal();
-	
-	if (CachedSkeletalMesh)
-	{
-		float YawRotationScalar = 0.0f;
-		switch (ActionType)
-		{
-		case EInputActionType::EIAT_MoveLeft:
-			YawRotationScalar = 180.0f;
-			break;
-		case EInputActionType::EIAT_MoveRight:
-			YawRotationScalar = 0.0f;
-			break;
-		case EInputActionType::EIAT_MoveUp:
-			YawRotationScalar = -90.0f;
-			break;
-		case EInputActionType::EIAT_MoveDown:
-			YawRotationScalar = 90.0f;
-			break;
-		default:
-			break;
-		}
-		
-		const FRotator TargetRotation(0.0f, YawRotationScalar, 0.0f);
-		const FRotator CurrentRotation = CachedSkeletalMesh->GetRelativeRotation();
-		const FRotator SmoothedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f);
-
-		CachedSkeletalMesh->SetRelativeRotation(SmoothedRotation);
-	}
 
 	switch (ActionType)
 	{
@@ -637,8 +603,6 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 	}
 
 	bIsMovingToTarget = false;
-
-	//CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterWalk, OwnerCharacter->GetActorLocation());
 }
 
 void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
@@ -648,7 +612,7 @@ void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
 		return;
 	}
 
-	if (!OwnerCharacter || !CachedSkeletalMesh) return;
+	if (!OwnerCharacter) return;
     
 	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
 	if (!PlayerController) return;
@@ -673,7 +637,9 @@ void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
 	{
 		const FRotator TargetRotation = FlattenedDirection.Rotation();
 		const FRotator CorrectedTargetRotation = FRotator(0.0f, TargetRotation.Yaw - 90.0f, 0.0f);
-		const FRotator CurrentRotation = CachedSkeletalMesh->GetRelativeRotation();
+       
+		const FRotator CurrentRotation = OwnerCharacter->GetActorRotation();
+       
 		const FRotator SmoothedRotation = FMath::RInterpTo(
 		  CurrentRotation,
 		  CorrectedTargetRotation,
@@ -681,7 +647,7 @@ void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
 		  RotationSpeed
 		);
 
-		CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, SmoothedRotation.Yaw, 0.0f));
+		OwnerCharacter->SetActorRotation(FRotator(0.0f, SmoothedRotation.Yaw, 0.0f));
 	}
 
 	//DrawDebugLine(GetWorld(), WorldLocation, IntersectionPoint, FColor::Green, false, -1.0f, 0, 1.0f);

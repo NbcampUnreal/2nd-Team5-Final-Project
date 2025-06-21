@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Boid/SwarmAgent.h"
 #include "Character/BattleComponent/SLTargetableInterface.h"
-#include "GameFramework/Character.h"
 #include "MonsterAICharacter.generated.h"
 
 class ASLBasePlayerController;
@@ -34,10 +34,10 @@ enum class EMonsterType : uint8
 	MT_SkullH	UMETA(DisplayName = "Skull H"),
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMonsterDied, AActor*, DiedMonster);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAgentDied, AActor*, DiedMonster);
 
 UCLASS()
-class STILLLOADING_API AMonsterAICharacter : public ACharacter, public ISLTargetableInterface
+class STILLLOADING_API AMonsterAICharacter : public ASwarmAgent, public ISLTargetableInterface
 {
 	GENERATED_BODY()
 
@@ -45,7 +45,7 @@ public:
 	AMonsterAICharacter();
 
 	UPROPERTY(BlueprintAssignable, Category = "Delegate | Battle")
-	FOnMonsterDied OnMonsterDied;
+	FOnAgentDied OnMonsterDied;
 
 	UFUNCTION()
 	void SetSquadManager(AAISquadManager* InManager);
@@ -214,20 +214,11 @@ private:
 	FVector SpawnEndLocation;
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Spawn")
-	void SetLeader();
-
-	UFUNCTION(BlueprintCallable, Category = "Spawn")
-	FORCEINLINE bool IsLeader() const { return bIsLeader; }
-
 	FORCEINLINE TObjectPtr<UAnimationMontageComponent> GetAnimMontageComp()
 	{
 		if (AnimationComponent) return nullptr;
 		return AnimationComponent;
 	}
-	
-	UFUNCTION(BlueprintCallable, Category = "Spawn")
-	FORCEINLINE void SetFollower() { bIsLeader = false; }
 
 	UFUNCTION(BlueprintCallable, Category = "Stat")
 	FORCEINLINE void SetMonsterMaxHealth(const float Health) { MaxHealth = Health; }

@@ -135,6 +135,26 @@ void ASLPlayerCharacter::EndCinematic()
 	SetPrimaryState(TAG_Character_Movement_Idle);
 }
 
+UActorComponent* ASLPlayerCharacter::GetMovementHandler() const
+{
+	UActorComponent* CurrentComponent = nullptr;
+
+	if (USL25DMovementHandlerComponent* Combat25Handler = FindComponentByClass<USL25DMovementHandlerComponent>())
+	{
+		CurrentComponent = Combat25Handler;
+	}
+	else if (USL2DMovementHandlerComponent* Combat2Handler = FindComponentByClass<USL2DMovementHandlerComponent>())
+	{
+		CurrentComponent = Combat2Handler;
+	}
+	else if (UMovementHandlerComponent* Combat3Handler = FindComponentByClass<UMovementHandlerComponent>())
+	{
+		CurrentComponent = Combat3Handler;
+	}
+
+	return CurrentComponent;
+}
+
 void ASLPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
