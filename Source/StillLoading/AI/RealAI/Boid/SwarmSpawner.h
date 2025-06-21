@@ -47,6 +47,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void BeginSpawn();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Spawner Setting")
+	bool bBeginBurserkMode = false;
+
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
 	bool bEnableAutoSpawn = true;
 
@@ -117,13 +120,13 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "AI | Swarm Settings")
 	TArray<FSwarmComposition> SwarmCompositions;
     
-	UPROPERTY(EditAnywhere, Category = "AI | Swarm Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Swarm Settings")
 	float SpawnRadius = 1000.0f;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<USphereComponent> SpawnRadiusSphere;
 
-	UPROPERTY(EditAnywhere, Category = "AI | Patrol", meta = (MakeEditWidget = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Patrol", meta = (MakeEditWidget = "true"))
 	TArray<TObjectPtr<ATargetPoint>> PatrolPoints;
 
 private:

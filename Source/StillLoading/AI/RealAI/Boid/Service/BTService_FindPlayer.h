@@ -16,14 +16,14 @@ protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
 	UPROPERTY(EditAnywhere, Category = "AI")
-	float DetectionRadius = 2000.0f;
+	float DetectionRadius = 800.0f;
 
 	UPROPERTY(EditAnywhere, Category="AI")
-	float ForgettingTime = 5.0f;
+	float ForgettingTime = 2.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
 	FBlackboardKeySelector TargetActorKey;
 
-	UPROPERTY()
-	bool bDoOnce = false;
+private:
+	bool CheckTag(const UBehaviorTreeComponent& OwnerComp);
 };
