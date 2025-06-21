@@ -1,6 +1,7 @@
 #include "BTService_FindPlayer.h"
 
 #include "AIController.h"
+#include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
@@ -27,6 +28,13 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 	{
 		BlackboardComp->SetValueAsObject(TargetActorKey.SelectedKeyName, PlayerCharacter);
 		BlackboardComp->SetValueAsFloat(TEXT("LastSeenTime"), GetWorld()->GetTimeSeconds());
+
+		if (bDoOnce) return;
+		if (ASwarmManager* Manager = Cast<ASwarmManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASwarmManager::StaticClass())))
+		{
+			Manager->SetSquadState(ESquadState::Engaging);
+			bDoOnce = true;
+		}
 	}
 	else
 	{

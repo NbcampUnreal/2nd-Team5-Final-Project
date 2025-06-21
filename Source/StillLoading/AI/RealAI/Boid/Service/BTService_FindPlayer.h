@@ -23,4 +23,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
 	FBlackboardKeySelector TargetActorKey;
+
+	UPROPERTY()
+	bool bDoOnce = false;
 };

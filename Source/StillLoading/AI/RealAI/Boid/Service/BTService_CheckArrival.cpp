@@ -1,7 +1,6 @@
 #include "BTService_CheckArrival.h"
 
 #include "AIController.h"
-#include "AI/RealAI/Blackboardkeys.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 UBTService_CheckArrival::UBTService_CheckArrival()
@@ -18,31 +17,26 @@ void UBTService_CheckArrival::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 
 	APawn* ControlledPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
-
 	if (!ControlledPawn || !BlackboardComp) return;
 
 	FVector TargetLocation = FVector::ZeroVector;
-	bool bHasTarget = false;
+	bool bHasValidTarget = false;
 
-	if (AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(BlackboardKeys::TargetActor)))
+	if (AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetActorKey.SelectedKeyName)))
 	{
 		TargetLocation = TargetActor->GetActorLocation();
-		bHasTarget = true;
+		bHasValidTarget = true;
 	}
-	else
+	else if (BlackboardComp->IsVectorValueSet(PatrolTargetLocationKey.SelectedKeyName))
 	{
-		TargetLocation = BlackboardComp->GetValueAsVector(TEXT("PatrolTargetLocation"));
-		if (!TargetLocation.IsZero())
-		{
-			bHasTarget = true;
-		}
+		TargetLocation = BlackboardComp->GetValueAsVector(PatrolTargetLocationKey.SelectedKeyName);
+		bHasValidTarget = true;
 	}
 
-	if (bHasTarget)
+	if (bHasValidTarget)
 	{
-		float DistanceToGoal = FVector::Dist(ControlledPawn->GetActorLocation(), TargetLocation);
-		bool bIsAtLocation = (DistanceToGoal < AcceptanceRadius);
-		BlackboardComp->SetValueAsBool(IsAtLocationKey.SelectedKeyName, bIsAtLocation);
+		const float DistanceToGoal = FVector::Dist(ControlledPawn->GetActorLocation(), TargetLocation);
+		BlackboardComp->SetValueAsBool(IsAtLocationKey.SelectedKeyName, DistanceToGoal < AcceptanceRadius);
 	}
 	else
 	{

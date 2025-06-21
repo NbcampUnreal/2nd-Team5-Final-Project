@@ -26,13 +26,19 @@ EBTNodeResult::Type UBTTask_GetNextPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 
 	const int32 CurrentIndex = BlackboardComp->GetValueAsInt(PatrolIndexKey.SelectedKeyName);
 
+	UE_LOG(LogTemp, Warning, TEXT("CurrentIndex [%d]"), CurrentIndex);
+
 	const ATargetPoint* TargetPoint = SwarmManager->SwarmPatrolPoints[CurrentIndex];
 	if (!TargetPoint) return EBTNodeResult::Failed;
-    
+
+	SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
 	BlackboardComp->SetValueAsVector(PatrolLocationKey.SelectedKeyName, TargetPoint->GetActorLocation());
 
-	int32 NextIndex = (CurrentIndex + 1) % SwarmManager->SwarmPatrolPoints.Num();
+	/*
+	const int32 NextIndex = (CurrentIndex + 1) % SwarmManager->SwarmPatrolPoints.Num();
+	UE_LOG(LogTemp, Warning, TEXT("NextIndex [%d]"), NextIndex);
 	BlackboardComp->SetValueAsInt(PatrolIndexKey.SelectedKeyName, NextIndex);
+	*/
 
 	return EBTNodeResult::Succeeded;
 }
