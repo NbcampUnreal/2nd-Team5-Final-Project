@@ -51,6 +51,9 @@ public:
 	void SetObjectiveVisibility();
 
 	UFUNCTION(BlueprintCallable)
+	void SetInvisibleObjectivve();
+
+	UFUNCTION(BlueprintCallable)
 	void SetBossStateVisibility(bool bIsVisible);
 
 	// use delegate

@@ -79,6 +79,7 @@ void ASLMinigamePuzzleCond::SubmittedAnswer()
 void ASLMinigamePuzzleCond::RegisterStatue(ASLInteractableObjectStatue* InStatue)
 {
 	Statues.Add(InStatue);
+	CurrentStates.Add(0);
 }
 
 // Called when the game starts or when spawned

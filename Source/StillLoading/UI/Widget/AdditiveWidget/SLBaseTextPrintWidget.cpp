@@ -122,12 +122,28 @@ void USLBaseTextPrintWidget::OnClickedFastButton()
 
 void USLBaseTextPrintWidget::OnClickedAcceptButton()
 {
+	GetWorld()->GetTimerManager().ClearTimer(TextPrintTimer);
+
+	if (CurrentTextIndex >= 0)
+	{
+		CurrentTextIndex = -1;
+		ParentTalkText->SetText(TalkArray[TargetTextIndex]);
+	}
+
 	CloseTalk();
 	OnChoiceEnded.Broadcast(true);
 }
 
 void USLBaseTextPrintWidget::OnClickedRejectButton()
 {
+	GetWorld()->GetTimerManager().ClearTimer(TextPrintTimer);
+
+	if (CurrentTextIndex >= 0)
+	{
+		CurrentTextIndex = -1;
+		ParentTalkText->SetText(TalkArray[TargetTextIndex]);
+	}
+
 	CloseTalk();
 	OnChoiceEnded.Broadcast(false);
 }

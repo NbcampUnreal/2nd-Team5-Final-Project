@@ -4,6 +4,7 @@
 #include "SLObjectiveBase.h"
 
 #include "GameMode/SLGameModeBase.h"
+#include "SaveLoad/SLSaveDataStructs.h"
 
 void USLObjectiveBase::AddObjectiveProgress(const int32 Count)
 {

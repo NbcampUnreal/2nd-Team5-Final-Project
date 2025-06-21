@@ -52,6 +52,10 @@
 				"Win64",
 				"Android"
 			]
+		},
+		{
+			"Name": "Text3D",
+			"Enabled": true
 		}
 	]
 }
