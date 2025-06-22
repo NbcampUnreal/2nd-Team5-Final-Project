@@ -79,8 +79,11 @@ void USLInGameWidget::SetIsObjectiveActivate()
 
 void USLInGameWidget::SetInvisibleObjective()
 {
-	SetIsSubWidgetActivate(false, ActiveGameStateAnim, DeactiveGameStateAnim);
-	bIsObjectiveVisible = false;
+	if (bIsObjectiveVisible)
+	{
+		SetIsSubWidgetActivate(false, ActiveGameStateAnim, DeactiveGameStateAnim);
+		bIsObjectiveVisible = false;
+	}
 }
 
 void USLInGameWidget::SetIsBossStateActivate(bool bIsActived)

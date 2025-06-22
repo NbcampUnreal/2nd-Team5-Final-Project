@@ -26,6 +26,7 @@ public:
 	virtual void DeactivateWidget() override;
 
 protected:
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void ApplyTextData() override;
 	virtual bool ApplyOtherImage() override;
