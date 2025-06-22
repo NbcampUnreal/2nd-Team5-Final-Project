@@ -95,6 +95,15 @@ ASLMouseActor::ASLMouseActor()
 
 	bIsStunned = false;
 	bIsAttackable = false;
+
+	// Drop Settings 초기화 추가
+	MoveToDropSpeed = 800.0f;
+	DropHeight = 200.0f;
+	InitialDropVelocity = 100.0f;
+    
+	// Private Variables 초기화 추가
+	DropTargetLocation = FVector::ZeroVector;
+	bIsMovingToDrop = false;
 }
 
 void ASLMouseActor::BeginPlay()
@@ -162,10 +171,10 @@ void ASLMouseActor::Tick(float DeltaTime)
 
 	if (bIsStunned)
 	{
-		UpdateMeshRotation(DeltaTime); // 회전만 유지
+		UpdateMeshRotation(DeltaTime);
 		return;
 	}
-	
+    
 	if (bIsInPhase3Mode)
 	{
 		UpdatePhase3Movement(DeltaTime);
@@ -198,6 +207,7 @@ void ASLMouseActor::Tick(float DeltaTime)
 	case EMouseActorState::Grabbing:
 		UpdateGrabMovement(DeltaTime);
 		break;
+        
 	}
 
 	UpdateMeshRotation(DeltaTime);
@@ -228,11 +238,13 @@ void ASLMouseActor::StartOrbiting()
 
 void ASLMouseActor::StopOrbiting()
 {
-	if (CurrentState == EMouseActorState::Grabbing && IsValid(TargetPlayer))
+	// MovingToDrop 상태일 때도 플레이어 분리 처리
+	if ((CurrentState == EMouseActorState::Grabbing || CurrentState == EMouseActorState::MovingToDrop) 
+		&& IsValid(TargetPlayer))
 	{
 		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		TargetPlayer->CharacterDragged(false);
-		
+        
 		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
 		{
 			MovementComp->SetDefaultMovementMode();
@@ -240,7 +252,8 @@ void ASLMouseActor::StopOrbiting()
 	}
 
 	SetMouseActorState(EMouseActorState::Inactive);
-	
+	bIsMovingToDrop = false;
+    
 	if (IsValid(CollisionComponent))
 	{
 		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -588,20 +601,22 @@ void ASLMouseActor::CompleteGrabPlayer()
 
 	if (IsValid(TargetPlayer))
 	{
-		// 안전한 드롭 위치 찾기
-		FVector SafeDropLocation = FindSafeDropLocation(GetActorLocation());
-        
-		// 플레이어를 안전한 위치에 드롭
+		// 플레이어를 현재 위치에서 바로 분리
 		TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		TargetPlayer->SetActorLocation(SafeDropLocation);
 		TargetPlayer->CharacterDragged(false);
         
+		// 자연스러운 물리 낙하 적용
 		if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
 		{
-			MovementComp->SetDefaultMovementMode();
+			MovementComp->SetMovementMode(MOVE_Falling);
+            
+			// 약간의 아래쪽 초기 속도 부여 (선택적)
+			FVector InitialVelocity = FVector(0, 0, -InitialDropVelocity);
+			MovementComp->Velocity = InitialVelocity;
 		}
 	}
 
+	// 콜리전 재활성화 처리
 	if (IsValid(CollisionComponent))
 	{
 		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -616,8 +631,10 @@ void ASLMouseActor::CompleteGrabPlayer()
 		);
 	}
 
+	// 데미지 적용
 	ApplyGrabDamage();
 
+	// 쿨다운 및 궤도 복귀
 	float RandomCooldown = GetRandomGrabCooldown();
 	FTimerHandle CooldownTimer;
 	GetWorldTimerManager().SetTimer(
@@ -659,7 +676,7 @@ void ASLMouseActor::ApplyGrabDamage()
 		HitResult.TraceStart = GetActorLocation();
 		HitResult.TraceEnd = TargetPlayer->GetActorLocation();
 		
-		PlayerBattleComp->ReceiveHitResult(GrabDamage, this, HitResult, EAttackAnimType::AAT_AISpecial);
+		PlayerBattleComp->ReceiveHitResult(GrabDamage, this, HitResult, EAttackAnimType::AAT_WZ_Loop_Attack04);
 	}
 }
 
@@ -924,23 +941,19 @@ void ASLMouseActor::ExecuteSweepAttack()
     }
     
     FVector StartLocation = GetActorLocation();
-    
-    // 플레이어 방향으로 스윕 공격
     FVector DirectionToPlayer = (TargetPlayer->GetActorLocation() - StartLocation).GetSafeNormal();
     FVector EndLocation = StartLocation + (DirectionToPlayer * SweepAttackRange);
 
     if (bShowSweepDebug)
     {
-        // 디버그 박스를 플레이어 방향으로 표시
         FVector CenterPoint = (StartLocation + EndLocation) * 0.5f;
         FRotator BoxRotation = DirectionToPlayer.Rotation();
-        
         FColor DebugColor = (CurrentHitCount == 1) ? FColor::Red : FColor::Orange;
         
         DrawDebugBox(
             GetWorld(),
             CenterPoint,
-            FVector(SweepAttackRange * 0.5f, 50.0f, 50.0f),
+            FVector(SweepAttackRange * 0.5f, 100.0f, 100.0f), // 박스 크기 증가
             BoxRotation.Quaternion(),
             DebugColor,
             false,
@@ -948,26 +961,42 @@ void ASLMouseActor::ExecuteSweepAttack()
         );
     }
     
-    // 스윕 파라미터 설정
-    FCollisionShape SweepShape = FCollisionShape::MakeBox(FVector(50.0f, 50.0f, 50.0f));
+    // 스윕 박스 크기 증가
+    FCollisionShape SweepShape = FCollisionShape::MakeBox(FVector(100.0f, 100.0f, 100.0f));
     
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(this);
+    QueryParams.bTraceComplex = false; // 추가
     
     TArray<FHitResult> HitResults;
-    
-    // 플레이어 방향으로 스윕 실행
     FQuat SweepRotation = DirectionToPlayer.Rotation().Quaternion();
     
-    bool bHit = GetWorld()->SweepMultiByChannel(
-        HitResults,
-        StartLocation,
-        EndLocation,
-        SweepRotation,
+    // 여러 콜리전 채널로 시도
+    TArray<ECollisionChannel> ChannelsToTest = {
         ECC_Pawn,
-        SweepShape,
-        QueryParams
-    );
+        ECC_WorldDynamic,
+        ECC_GameTraceChannel1  // 플레이어 공격 채널
+    };
+    
+    bool bHit = false;
+    for (ECollisionChannel Channel : ChannelsToTest)
+    {
+        bHit = GetWorld()->SweepMultiByChannel(
+            HitResults,
+            StartLocation,
+            EndLocation,
+            SweepRotation,
+            Channel,
+            SweepShape,
+            QueryParams
+        );
+        
+        if (bHit && HitResults.Num() > 0)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Mouse Actor: Sweep hit detected on channel %d"), static_cast<int32>(Channel));
+            break;
+        }
+    }
     
     if (bHit)
     {
@@ -975,39 +1004,38 @@ void ASLMouseActor::ExecuteSweepAttack()
         {
             if (AActor* HitActor = Hit.GetActor())
             {
-                // 첫 번째 히트이거나 다단 히트에서 이미 맞은 대상인 경우 처리
-                if (CurrentHitCount == 1 || MultiHitTargets.Contains(HitActor))
+            	if (CurrentHitCount >= 1 || MultiHitTargets.Contains(HitActor))
                 {
-                    // 첫 번째 히트일 때 다단 히트 대상에 추가
                     if (CurrentHitCount == 1)
                     {
                         MultiHitTargets.Add(HitActor);
                     }
                     
-                    // 배틀 컴포넌트를 통해 데미지 적용
                     if (UBattleComponent* TargetBattleComp = HitActor->FindComponentByClass<UBattleComponent>())
                     {
                         float CurrentDamage = SweepAttackDamage;
-                        
-                        // 다단 히트일 경우 데미지 조정 (선택사항)
                         if (CurrentHitCount > 1)
                         {
-                            CurrentDamage *= 0.7f; // 후속 히트는 70% 데미지
+                            CurrentDamage *= 0.7f;
                         }
                         
                         TargetBattleComp->ReceiveHitResult(
                             CurrentDamage,
                             this,
                             Hit,
-                            EAttackAnimType::AAT_AIProjectile
+                            EAttackAnimType::AAT_WZ_Loop_Attack04
                         );
                         
-                        UE_LOG(LogTemp, Warning, TEXT("Mouse Actor Phase3: Sweep attack hit %s (Hit %d/%d)"), 
-                            *HitActor->GetName(), CurrentHitCount, SweepAttackHitCount);
+                        UE_LOG(LogTemp, Warning, TEXT("Mouse Actor Phase3: Sweep attack hit %s (Hit %d/%d, Damage: %f)"), 
+                            *HitActor->GetName(), CurrentHitCount, SweepAttackHitCount, CurrentDamage);
                     }
                 }
             }
         }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Mouse Actor: Sweep attack found no targets"));
     }
 }
 
@@ -1370,4 +1398,105 @@ bool ASLMouseActor::IsLocationSafe(const FVector& Location) const
     );
 
     return !bBlocked;
+}
+
+void ASLMouseActor::StartMoveToDropLocation()
+{
+    SetMouseActorState(EMouseActorState::MovingToDrop);
+    bIsMovingToDrop = true;
+}
+
+void ASLMouseActor::UpdateMoveToDropMovement(float DeltaTime)
+{
+    if (!IsValid(TargetPlayer) || !bIsMovingToDrop)
+    {
+        return;
+    }
+
+    FVector CurrentLocation = GetActorLocation();
+    FVector DirectionToTarget = (DropTargetLocation - CurrentLocation).GetSafeNormal();
+    
+    if (DirectionToTarget.IsZero())
+    {
+        DropPlayerNaturally();
+        return;
+    }
+
+    FVector MovementDelta = DirectionToTarget * MoveToDropSpeed * DeltaTime;
+    FVector NewLocation = CurrentLocation + MovementDelta;
+    SetActorLocation(NewLocation);
+
+    float DistanceToTarget = FVector::Dist(CurrentLocation, DropTargetLocation);
+    if (DistanceToTarget <= 50.0f)
+    {
+        DropPlayerNaturally();
+    }
+}
+
+void ASLMouseActor::DropPlayerNaturally()
+{
+    if (!IsValid(TargetPlayer))
+    {
+        return;
+    }
+
+    bIsMovingToDrop = false;
+
+    // 플레이어를 마우스에서 분리
+    TargetPlayer->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    TargetPlayer->CharacterDragged(false);
+    
+    // 플레이어의 MovementComponent 가져오기
+    if (UCharacterMovementComponent* MovementComp = TargetPlayer->GetCharacterMovement())
+    {
+        // Falling 모드로 설정하여 자연스럽게 떨어지도록 함
+        MovementComp->SetMovementMode(MOVE_Falling);
+        
+        // 약간의 아래쪽 초기 속도 부여 (선택적)
+        FVector InitialVelocity = FVector(0, 0, -InitialDropVelocity);
+        MovementComp->Velocity = InitialVelocity;
+    }
+
+    // 콜리전 재활성화 처리
+    if (IsValid(CollisionComponent))
+    {
+        CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        
+        FTimerHandle CollisionTimer;
+        GetWorldTimerManager().SetTimer(
+            CollisionTimer,
+            this,
+            &ASLMouseActor::OnCollisionReenabled,
+            CollisionDisableTime,
+            false
+        );
+    }
+
+    // 데미지 적용
+    ApplyGrabDamage();
+
+    // 쿨다운 타이머 설정
+    float RandomCooldown = GetRandomGrabCooldown();
+    FTimerHandle CooldownTimer;
+    GetWorldTimerManager().SetTimer(
+        CooldownTimer,
+        this,
+        &ASLMouseActor::OnGrabCooldownFinished,
+        RandomCooldown,
+        false
+    );
+    
+    // 궤도 상태로 돌아가기
+    SetMouseActorState(EMouseActorState::Orbiting);
+    
+    if (IsValid(TargetPlayer))
+    {
+        OrbitCenter = TargetPlayer->GetActorLocation();
+        OrbitAngle = 0.0f;
+        
+        FVector OrbitPosition = CalculateOrbitPosition();
+        SetActorLocation(OrbitPosition);
+    }
+
+    OnMouseGrabCompleted.Broadcast();
 }
