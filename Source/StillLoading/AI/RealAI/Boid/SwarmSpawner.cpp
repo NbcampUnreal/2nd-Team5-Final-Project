@@ -34,7 +34,7 @@ void ASwarmSpawner::BeginSpawn()
 	UWorld* World = GetWorld();
 	if (World && SwarmManagerClass)
 	{
-		if (ASwarmManager* SpawnedManager = World->SpawnActor<ASwarmManager>(
+		if (SpawnedManager = World->SpawnActor<ASwarmManager>(
 			SwarmManagerClass, GetActorLocation(), GetActorRotation()))
 		{
 			// 군체 알고리즘 가중치 셋팅
@@ -67,17 +67,23 @@ void ASwarmSpawner::BeginSpawn()
 				SpawnedManager->SetNewPath(InitialPathPoints);
 			}
 
+			TotalSpawnCount = 0;
+
 			for (const auto& [AgentClass, ControllerClass, SpawnCount, AvoidanceWeight, bIsLeader] : SwarmCompositions)
 			{
 				if (AgentClass)
 				{
+					TotalSpawnCount += SpawnCount;
+
 					for (int32 i = 0; i < SpawnCount; ++i)
 					{
 						const FVector SpawnLocation = GetActorLocation() + FMath::VRand() * FMath::FRandRange(0, SpawnRadius);
 						const FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
 
+						constexpr ESpawnActorCollisionHandlingMethod CollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
 						// 지연 스폰
-						if (ASwarmAgent* DeferredAgent = World->SpawnActorDeferred<ASwarmAgent>(AgentClass, SpawnTransform))
+						if (ASwarmAgent* DeferredAgent = World->SpawnActorDeferred<ASwarmAgent>(AgentClass, SpawnTransform, this, nullptr, CollisionHandlingOverride))
 						{
 							DeferredAgent->AIControllerClass = ControllerClass;
 							DeferredAgent->MySwarmManager = SpawnedManager;
@@ -110,10 +116,31 @@ void ASwarmSpawner::BeginSpawn()
 							UGameplayStatics::FinishSpawningActor(DeferredAgent, SpawnTransform);
 							SpawnedManager->RegisterAgent(DeferredAgent); // 에이전트 등록
 						}
+						else
+						{
+							UE_LOG(LogTemp, Error, TEXT("ASwarmSpawner::BeginSpawn - Failed to spawn agent of class %s at location %s"), 
+								   *AgentClass->GetName(), 
+								   *SpawnLocation.ToString());
+						}
 					}
 				}
 			}
 		}
+	}
+}
+
+int32 ASwarmSpawner::GetSpawnCount() const
+{
+	return TotalSpawnCount;
+}
+
+void ASwarmSpawner::ResetSpawendMonster()
+{
+	if (IsValid(SpawnedManager))
+	{
+		SpawnedManager->DestroyAllAgents();
+		SpawnedManager->Destroy();
+		BeginSpawn();
 	}
 }
 

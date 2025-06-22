@@ -26,7 +26,7 @@ void ASLInteractableBreakable::OnInteracted(const ASLPlayerCharacterBase* InChar
             DestroyEffect,                    // Niagara System
             GetActorLocation(),           // 위치
             GetActorRotation(),           // 회전
-            FVector(1.0f),                // 스케일
+            FVector(EffectScale),                // 스케일
             true,                         // AutoDestroy
             true,                         // AutoActivate
             ENCPoolMethod::None,          // Pooling 방식 (None/AutoRelease/ManualRelease)

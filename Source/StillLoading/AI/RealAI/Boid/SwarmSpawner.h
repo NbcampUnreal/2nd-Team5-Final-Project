@@ -49,6 +49,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void BeginSpawn();
 
+	UFUNCTION(BlueprintCallable)
+	int32 GetSpawnCount() const;
+
+	UFUNCTION(BlueprintCallable)
+	void ResetSpawendMonster();
+
 	UPROPERTY(BlueprintAssignable, Category = "Monster Spawner | Events")
 	FOnSpawnedMonstersCountUpdated OnMonstersUpdated;
 
@@ -139,6 +145,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Patrol", meta = (MakeEditWidget = "true"))
 	TArray<TObjectPtr<ATargetPoint>> PatrolPoints;
+
+	UPROPERTY()
+	int32 TotalSpawnCount = 0;
+
+	UPROPERTY()
+	TObjectPtr<ASwarmManager> SpawnedManager = nullptr;
 
 private:
 	bool bLeaderSet = false;
