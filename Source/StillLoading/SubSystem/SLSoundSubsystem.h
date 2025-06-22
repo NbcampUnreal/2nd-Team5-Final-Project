@@ -57,8 +57,12 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> UIAudioComp = nullptr;
 
+	UPROPERTY()
 	ESLChapterType PossessChapter = ESLChapterType::EC_None;
 
+	UPROPERTY()
 	float BgmVolume = 0.0f;
+
+	UPROPERTY()
 	float EffectVolume = 0.0f;
 };
