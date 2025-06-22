@@ -15,6 +15,7 @@ enum class EBoidMonsterState : uint8
 	FS_None,
 	FS_AbleToAttack 	UMETA(DisplayName = "Able To Attack"),
 	FS_UnAbleToAttack	UMETA(DisplayName = "UnAble To Attack"),
+	FS_Retreating		UMETA(DisplayName = "Retreating"),
 };
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -24,6 +25,14 @@ class STILLLOADING_API UBoidMovementComponent : public UActorComponent
 
 public:
 	UBoidMovementComponent();
+	
+	// 공격 후 얼마나 멀어질지 거리 설정
+	UPROPERTY(EditAnywhere, Category = "Boid Combat")
+	float RetreatDistance = 200.0f;
+	
+	// 후퇴 속도
+	UPROPERTY(EditAnywhere, Category = "Boid Combat", meta = (ClampMin = "0.0"))
+	float RetreatSpeed = 200.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boids | Global Settings")
 	float PerceptionRadius = 500.0f;
@@ -54,9 +63,11 @@ protected:
 	FVector GetGoalLocation() const;
 	void InitializeComponent(const TObjectPtr<ASwarmManager>& InSwarmManager);
 
+	// 텔포 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")
 	float StuckDistanceThreshold = 800.0f;
 
+	// 텔포 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")
 	float ObstacleCheckDistance = 150.0f;
 
@@ -103,8 +114,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Boids")
 	float MaxSteeringForce = 500.0f;
 
-	float CurrentCollDown = 3.0f;
+	float CurrentCoolDown = 3.0f;
 	float TotalTime = 3.0f;
+	FVector RetreatTargetLocation = FVector::ZeroVector;
+	float OriginalMaxWalkSpeed;
 
 	EBoidMonsterState CurrentState = EBoidMonsterState::FS_None;
 };
