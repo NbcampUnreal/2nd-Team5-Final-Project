@@ -12,6 +12,11 @@ ASLDungeonDoor::ASLDungeonDoor()
 
 }
 
+bool ASLDungeonDoor::GetIsOpened() const
+{
+	return bIsOpen;
+}
+
 void ASLDungeonDoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

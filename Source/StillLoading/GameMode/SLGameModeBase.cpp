@@ -14,7 +14,15 @@ ASLGameModeBase::ASLGameModeBase()
 
 void ASLGameModeBase::AddInProgressObjective(USLObjectiveBase* Objective)
 {
-	SLGameState->GetInProgressedObjectives().AddUnique(Objective);
+	TArray<TObjectPtr<USLObjectiveBase>>& InProgressedObjectives = SLGameState->GetInProgressedObjectives();
+	
+	if (InProgressedObjectives.Contains(Objective))
+	{
+		return;
+	}
+	
+	InProgressedObjectives.AddUnique(Objective);
+	
 	OnInProgressObjectiveAdded.Broadcast(Objective);
 	OnPrimaryInProgressObjectiveChanged.Broadcast(Objective);
 }

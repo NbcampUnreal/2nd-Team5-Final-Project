@@ -10,6 +10,7 @@ enum class ETagType : uint8
 	TT_State 	UMETA(DisplayName = "State"),
 	TT_Battle	UMETA(DisplayName = "Battle"),
 	TT_Strategy	UMETA(DisplayName = "Strategy"),
+	TT_MonsterMode	UMETA(DisplayName = "MonsterMode"),
 };
 
 UCLASS()

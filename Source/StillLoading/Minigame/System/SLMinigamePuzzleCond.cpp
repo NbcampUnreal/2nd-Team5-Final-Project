@@ -79,6 +79,7 @@ void ASLMinigamePuzzleCond::SubmittedAnswer()
 void ASLMinigamePuzzleCond::RegisterStatue(ASLInteractableObjectStatue* InStatue)
 {
 	Statues.Add(InStatue);
+	CurrentStates.Add(0);
 }
 
 // Called when the game starts or when spawned
@@ -97,7 +98,10 @@ void ASLMinigamePuzzleCond::InitCondition()
 void ASLMinigamePuzzleCond::SendCondition(ESLMinigameResult InResult)
 {
 	Super::SendConditionToMinigameSubsystem(InResult);
-	
+	if (InResult == ESLMinigameResult::EMR_Success)
+	{
+		OnMinigameCompleted.Broadcast();
+	}	
 }
 
 void ASLMinigamePuzzleCond::DeactivateAllStatue()

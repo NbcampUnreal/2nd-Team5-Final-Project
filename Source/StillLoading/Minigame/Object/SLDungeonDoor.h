@@ -17,6 +17,9 @@ class STILLLOADING_API ASLDungeonDoor : public ASLDungeonActivator
 public:
 	ASLDungeonDoor();
 
+	UFUNCTION(BlueprintCallable)
+	bool GetIsOpened() const;
+
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void Activate() override;

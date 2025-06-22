@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "SL2DMovementHandlerComponent.h"
-#include "Character/DataAsset/AttackDataAsset.h"
 #include "Components/ActorComponent.h"
 #include "SL25DMovementHandlerComponent.generated.h"
 
@@ -80,6 +79,8 @@ protected:
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
 	UFUNCTION()
 	void Move(float AxisValue, EInputActionType ActionType);
+	UFUNCTION()
+	void FaceMouseCursorInstantly() const;
 
 	UPROPERTY()
 	FTimerHandle ReactionResetTimerHandle;

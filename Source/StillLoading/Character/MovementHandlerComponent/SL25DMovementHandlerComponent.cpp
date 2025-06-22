@@ -33,7 +33,7 @@ void USL25DMovementHandlerComponent::BeginPlay()
 	{
 		OwnerCharacter->CameraBoom->bUsePawnControlRotation = false;
 		OwnerCharacter->ThirdPersonCamera->bUsePawnControlRotation = false;
-		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
 		OwnerCharacter->CameraBoom->bInheritPitch = false;
 		OwnerCharacter->CameraBoom->bInheritYaw = false;
 		OwnerCharacter->CameraBoom->bInheritRoll = false;
@@ -148,15 +148,8 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 				CachedCombatComponent->SetEmpoweredCombatMode(10);
 				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
 
-				// 전체 슬로우 (자기 자신 포함)
-				//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, nullptr, 0.2f, 0.15f, true, false);
-				// 자기 자신 제외한 모두 슬로우
-				//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, OwnerCharacter, 0.2f, 0.3f, true, true);
-
 				return;
 			}
-			//FaceToMouse();
-			StartFacingMouse();
 			Attack();
 			break;
 		}
@@ -170,12 +163,9 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 			//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
 			return;
 		}
-		//FaceToMouse();
-		StartFacingMouse();
 		Block(true);
 		break;
 	case EInputActionType::EIAT_Walk:
-		StartFacingMouse();
 		DodgeLoco();
 		break;
 	case EInputActionType::EIAT_Menu:
@@ -213,7 +203,6 @@ void USL25DMovementHandlerComponent::OnActionCompleted_Implementation(EInputActi
 	case EInputActionType::EIAT_Menu:
 		break;
 	case EInputActionType::EIAT_Block:
-		StopFacingMouse();
 		Block(false);
 		break;
 
@@ -300,13 +289,13 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	case EHitAnimType::HAT_FallBack:
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
-			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
+			OwnerCharacter->SetActorRotation(TargetRotation);
 			CachedMontageComponent->PlayHitMontage(FName("Fall"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Falling);
 		}
 		else
 		{
-			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
+			OwnerCharacter->SetActorRotation(TargetRotation);
 			if (bIsFromBack)
 			{
 				CachedMontageComponent->PlayHitMontage(FName("KnockBack_Back"));
@@ -321,13 +310,13 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	case EHitAnimType::HAT_Exhausterd: // 기절
 		if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 		{
-			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
+			OwnerCharacter->SetActorRotation(TargetRotation);
 			CachedMontageComponent->PlayHitMontage(FName("Fall"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Falling);
 		}
 		else
 		{
-			CachedSkeletalMesh->SetRelativeRotation(TargetRotation);
+			OwnerCharacter->SetActorRotation(TargetRotation);
 			CachedMontageComponent->PlayHitMontage(FName("Groggy"));
 			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Groggy);
 		}
@@ -426,7 +415,8 @@ void USL25DMovementHandlerComponent::DodgeLoco()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
 		return;
 	}
-	
+
+	FaceMouseCursorInstantly();
 	CachedMontageComponent->PlayDodgeMontage("Forward");
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
 }
@@ -446,6 +436,8 @@ void USL25DMovementHandlerComponent::Block(const bool bIsBlocking)
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Defence Blocked"));
 		return;
 	}
+
+	FaceMouseCursorInstantly();
 	
 	if (bIsBlocking && !OwnerCharacter->GetCharacterMovement()->IsFalling())
 	{
@@ -467,6 +459,8 @@ void USL25DMovementHandlerComponent::Attack()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Attack Blocked"));
 		return;
 	}
+
+	FaceMouseCursorInstantly();
 
 	if (!CachedCombatComponent->GetCurrentComboInfo(Montage, SectionName))
 	{
@@ -581,42 +575,8 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 	
 	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
 
-	AController* Controller = OwnerCharacter->GetController();
-	if (!Controller) return;
-
-	const FRotator ControlRotation = Controller->GetControlRotation();
-	const FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
-
 	const FVector ForwardDir = FVector(1.f, -1.f, 0.f).GetSafeNormal();
 	const FVector RightDir = FVector(1.f, 1.f, 0.f).GetSafeNormal();
-	
-	if (CachedSkeletalMesh)
-	{
-		float YawRotationScalar = 0.0f;
-		switch (ActionType)
-		{
-		case EInputActionType::EIAT_MoveLeft:
-			YawRotationScalar = 180.0f;
-			break;
-		case EInputActionType::EIAT_MoveRight:
-			YawRotationScalar = 0.0f;
-			break;
-		case EInputActionType::EIAT_MoveUp:
-			YawRotationScalar = -90.0f;
-			break;
-		case EInputActionType::EIAT_MoveDown:
-			YawRotationScalar = 90.0f;
-			break;
-		default:
-			break;
-		}
-		
-		const FRotator TargetRotation(0.0f, YawRotationScalar, 0.0f);
-		const FRotator CurrentRotation = CachedSkeletalMesh->GetRelativeRotation();
-		const FRotator SmoothedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f);
-
-		CachedSkeletalMesh->SetRelativeRotation(SmoothedRotation);
-	}
 
 	switch (ActionType)
 	{
@@ -637,8 +597,38 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 	}
 
 	bIsMovingToTarget = false;
+}
 
-	//CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterWalk, OwnerCharacter->GetActorLocation());
+void USL25DMovementHandlerComponent::FaceMouseCursorInstantly() const
+{
+	if (!OwnerCharacter) return;
+    
+	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+	if (!PlayerController) return;
+
+	FVector WorldLocation, WorldDirection;
+	if (!PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+	{
+		return;
+	}
+
+	const FPlane CharacterPlane(OwnerCharacter->GetActorLocation(), FVector::UpVector);
+    
+	const FVector IntersectionPoint = FMath::LinePlaneIntersection(
+	   WorldLocation,
+	   WorldLocation + (WorldDirection * 15000.0f),
+	   CharacterPlane
+	);
+
+	const FVector DirectionToTarget = IntersectionPoint - OwnerCharacter->GetActorLocation();
+	const FVector FlattenedDirection = FVector(DirectionToTarget.X, DirectionToTarget.Y, 0.0f);
+
+	if (!FlattenedDirection.IsNearlyZero())
+	{
+		const FRotator TargetRotation = FlattenedDirection.Rotation();
+        
+		OwnerCharacter->SetActorRotation(FRotator(0.0f, TargetRotation.Yaw, 0.0f));
+	}
 }
 
 void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
@@ -648,7 +638,7 @@ void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
 		return;
 	}
 
-	if (!OwnerCharacter || !CachedSkeletalMesh) return;
+	if (!OwnerCharacter) return;
     
 	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
 	if (!PlayerController) return;
@@ -673,7 +663,9 @@ void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
 	{
 		const FRotator TargetRotation = FlattenedDirection.Rotation();
 		const FRotator CorrectedTargetRotation = FRotator(0.0f, TargetRotation.Yaw - 90.0f, 0.0f);
-		const FRotator CurrentRotation = CachedSkeletalMesh->GetRelativeRotation();
+       
+		const FRotator CurrentRotation = OwnerCharacter->GetActorRotation();
+       
 		const FRotator SmoothedRotation = FMath::RInterpTo(
 		  CurrentRotation,
 		  CorrectedTargetRotation,
@@ -681,7 +673,7 @@ void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
 		  RotationSpeed
 		);
 
-		CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, SmoothedRotation.Yaw, 0.0f));
+		OwnerCharacter->SetActorRotation(FRotator(0.0f, SmoothedRotation.Yaw, 0.0f));
 	}
 
 	//DrawDebugLine(GetWorld(), WorldLocation, IntersectionPoint, FColor::Green, false, -1.0f, 0, 1.0f);
@@ -733,6 +725,7 @@ void USL25DMovementHandlerComponent::MoveToTarget(float DeltaTime)
 	{
 		FVector DirectionToOriginalTarget = (TargetMoveLocation - CurrentLocation).GetSafeNormal();
 		FinalTargetLocation = HitResult.Location - DirectionToOriginalTarget * 5.0f;
+		StopFacingMouse();
 	}
 
 	FVector MoveDirection = (FinalTargetLocation - CurrentLocation);

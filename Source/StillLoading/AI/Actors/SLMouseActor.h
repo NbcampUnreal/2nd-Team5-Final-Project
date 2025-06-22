@@ -10,8 +10,6 @@ class UBattleComponent;
 class UNiagaraSystem;
 class ASLPlayerCharacter;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSLOnMouseActorDestroyed, ASLMouseActor*, MouseActor);
-
 UENUM(BlueprintType)
 enum class EMouseActorState : uint8
 {
@@ -19,8 +17,18 @@ enum class EMouseActorState : uint8
 	Orbiting	UMETA(DisplayName = "Orbiting"),
 	Descending	UMETA(DisplayName = "Descending"),
 	Grabbing	UMETA(DisplayName = "Grabbing"),
+	MovingToOrbit	UMETA(DisplayName = "Moving To Orbit"),
 	Destroyed	UMETA(DisplayName = "Destroyed")
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSLOnMouseActorDestroyed, ASLMouseActor*, MouseActor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSLOnMouseStateChanged, EMouseActorState, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseGrabCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseOrbitCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseCollisionReenabled);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseGrabCooldownFinished);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseActorStunned);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnMouseActorStunRecovered);
 
 UCLASS()
 class STILLLOADING_API ASLMouseActor : public AActor
@@ -30,6 +38,7 @@ class STILLLOADING_API ASLMouseActor : public AActor
 public:
 	ASLMouseActor();
 
+	// Public Functions
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
 	void StartOrbiting();
 
@@ -41,20 +50,67 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
 	EMouseActorState GetCurrentState() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Phase 3")
+	void StartPhase3HorrorMode();
+
+	UFUNCTION(BlueprintCallable, Category = "Phase 3")
+	TSubclassOf<ASLMouseActor> GetPhase3MouseActorClass() const { return Phase3MouseActorClass; }
+
+	UFUNCTION(BlueprintCallable, Category = "Phase 3")
+	void PerformSweepAttack();
+
+	UFUNCTION(BlueprintCallable, Category = "Phase 5")
+	void ApplyWallStun(float StunDuration);
+
+	UFUNCTION(BlueprintCallable, Category = "Phase 5")
+	bool IsStunned() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Phase 5")
+	void EnableAttackability();
+
+	UFUNCTION(BlueprintCallable, Category = "Phase 5")
+	void DisableAttackability();
+
+	UFUNCTION(BlueprintCallable, Category = "Debug")
+	void DebugAttackability();
+
+	UFUNCTION(BlueprintCallable, Category = "Debug")
+	bool IsAttackable() const { return bIsAttackable; }
 
 	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void TakeDamage(float DamageAmount);
+	bool IsGrabbingPlayer() const;
+	
+	void StartMultiHitTimer();
+	void OnMultiHitTimerFinished();
 
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void SetOrbitSettings(float NewOrbitRadius, float NewOrbitHeight, float NewOrbitSpeed);
-
-	UFUNCTION(BlueprintCallable, Category = "Mouse Actor")
-	void SetGrabSettings(float NewGrabDistance, float NewGrabHeight, float NewGrabDamage, float NewGrabCooldownMin, float NewGrabCooldownMax);
-
+	// Public Variables (Delegates)
 	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
 	FSLOnMouseActorDestroyed OnMouseActorDestroyed;
 
+	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
+	FSLOnMouseStateChanged OnMouseStateChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
+	FSLOnMouseGrabCompleted OnMouseGrabCompleted;
+
+	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
+	FSLOnMouseOrbitCompleted OnMouseOrbitCompleted;
+
+	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
+	FSLOnMouseCollisionReenabled OnMouseCollisionReenabled;
+
+	UPROPERTY(BlueprintAssignable, Category = "Mouse Actor")
+	FSLOnMouseGrabCooldownFinished OnMouseGrabCooldownFinished;
+
+	UPROPERTY(BlueprintAssignable, Category = "Phase 5")
+	FSLOnMouseActorStunned OnMouseActorStunned;
+
+	UPROPERTY(BlueprintAssignable, Category = "Phase 5")
+	FSLOnMouseActorStunRecovered OnMouseActorStunRecovered;
+
 protected:
+	// Protected Functions
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
@@ -64,10 +120,23 @@ protected:
 	UFUNCTION()
 	void OnBattleComponentHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType);
 
+	UFUNCTION()
+	void OnGrabCooldownFinished();
+
+	UFUNCTION()
+	void OnCollisionReenabled();
+
+	UFUNCTION()
+	void OnStunRecovery();
+
+	UFUNCTION()
+	void OnSweepAttackCooldownFinished();
+
 	void UpdateOrbitMovement(float DeltaTime);
 	void UpdateDescentMovement(float DeltaTime);
 	void UpdateGrabMovement(float DeltaTime);
 	void UpdateMeshRotation(float DeltaTime);
+	void UpdateMoveToOrbitMovement(float DeltaTime);
 	void StartGrabPlayer();
 	void CompleteGrabPlayer();
 	void ApplyGrabDamage();
@@ -76,7 +145,15 @@ protected:
 	bool IsPlayerInRange() const;
 	float GetRandomGrabCooldown() const;
 	bool CanGrabPlayer() const;
-
+	FVector CalculateOrbitPosition() const;
+	void UpdatePhase3Movement(float DeltaTime);
+	bool IsPlayerLookingAtMe() const;
+	void RestoreOriginalAppearance();
+	void ExecuteSweepAttack();
+	FVector FindSafeDropLocation(const FVector& CurrentLocation) const;
+	bool IsLocationSafe(const FVector& Location) const;
+	
+	// Protected Variables (Components)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> RootSceneComponent;
 
@@ -89,6 +166,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UBattleComponent> BattleComponent;
 
+	// Protected Variables (Settings)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit Settings")
 	float OrbitRadius;
 
@@ -97,6 +175,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit Settings")
 	float OrbitSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit Settings")
+	float MoveToOrbitSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Settings")
 	float DescentSpeed;
@@ -140,14 +221,80 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TObjectPtr<USoundBase> DestroySound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float Phase3ChaseSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float Phase3StopDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float PlayerLookCheckAngle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	TObjectPtr<UStaticMesh> Phase3HorrorMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	FVector Phase3HorrorScale;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	TSubclassOf<ASLMouseActor> Phase3MouseActorClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float SweepAttackDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float SweepAttackRange;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float SweepAttackCooldown;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	TObjectPtr<UNiagaraSystem> SweepAttackEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Debug")
+	bool bShowSweepDebug;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	int32 SweepAttackHitCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 3 Settings")
+	float SweepAttackHitInterval;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 5 Settings")
+	float DefaultWallStunDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 5 Settings")
+	TObjectPtr<UNiagaraSystem> StunEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 5 Settings")
+	TObjectPtr<USoundBase> StunSound;
+
 private:
+	// Private Variables (Runtime State)
 	EMouseActorState CurrentState;
 	float CurrentHealth;
+	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacter> TargetPlayer;
 	FVector GrabTargetLocation;
-	FTimerHandle GrabCooldownTimerHandle;
-	FTimerHandle CollisionTimerHandle;
+	FVector MoveToOrbitTargetLocation;
 	bool bCanGrab;
 	float OrbitAngle;
 	FVector OrbitCenter;
+
+	bool bIsInPhase3Mode;
+	bool bIsPlayerLookingAtMe;
+	UPROPERTY()
+	TObjectPtr<UStaticMesh> OriginalMesh;
+
+	bool bCanSweepAttack;
+	FTimerHandle SweepAttackCooldownTimer;
+
+	FTimerHandle MultiHitTimer;
+	int32 CurrentHitCount;
+	UPROPERTY()
+	TSet<TObjectPtr<AActor>> MultiHitTargets;
+
+	bool bIsStunned;
+	bool bIsAttackable;
+	FTimerHandle StunRecoveryTimer;
 };

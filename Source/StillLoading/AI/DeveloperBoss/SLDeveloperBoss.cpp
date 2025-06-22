@@ -1,48 +1,72 @@
 #include "SLDeveloperBoss.h"
+
+#include "NiagaraFunctionLibrary.h"
 #include "Character/SLAIBaseCharacter.h"
-#include "Character/SLBossCharacter.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "AI/Actors/SLDeveloperRoomCable.h"
 #include "AI/Actors/SLDeveloperRoomSpace.h"
 #include "AI/Actors/SLLaunchableWall.h"
 #include "AI/Actors/SLMouseActor.h"
+#include "Character/BattleComponent/BattleComponent.h"
+#include "Components/CapsuleComponent.h"
 
 ASLDeveloperBoss::ASLDeveloperBoss()
 {
     PrimaryActorTick.bCanEverTick = false;
 
     CurrentPhase = EDeveloperBossPhase::Phase0_Start;
-    DestroyedLinesCount = 0;
     bIsFightStarted = false;
     bCanLaunchWall = true;
+    
     WallAttackCooldown = 3.0f;
     CurrentWall = nullptr;
+    CurrentPhase5Wall = nullptr;
 
     Phase1BossHealthMultiplier = 0.3f;
     Phase1BossSpawnDelay = 2.0f;
     Phase1BossSpawnOffset = FVector(300.0f, 0.0f, 0.0f);
-
     bIsPhase1Active = false;
     Phase1CurrentBossIndex = 0;
     Phase1TotalBossCount = 0;
 
+    Phase2Room = nullptr;
     bIsPhase2Active = false;
+
+    Phase3WallAttackDelay = 5.0f;
+    Phase3WallIndex = -1;
+    Phase3WallAttackInterval = 3.0f;
+    bIsPhase3Active = false;
+    bIsPhase3WallAttackScheduled = false;
+    Phase3UsedWallIndex = 0;
+    Phase3MouseActor = nullptr;
+    Phase3AutoWallAttackInterval = 4.0f;
+    Phase3InitialWallAttackDelay = 2.0f;
+    bPhase3RandomWallSelection = false;
+    bIsPhase3AutoWallAttackActive = false;
+    Phase3CurrentWallIndex = 0;
+
+    Phase5MaxSimultaneousWalls = 3;
+    Phase5MultiWallDelayMin = 0.2f;
+    Phase5MultiWallDelayMax = 1.0f;
+    bPhase5EnableMultiWallAttack = true;
+    Phase5WallAttackInterval = 2.0f;
+    Phase5WallAttackDelay = 1.0f;
+    Phase5WallResetDelay = 1.5f;
+    bIsPhase5Active = false;
 
     MouseActor = nullptr;
     MouseActorClass = nullptr;
-    bIsPhase3Active = false;
-    bIsPhase5Active = false;
-    Phase3SurvivalTime = 10.0f;
+
+    PendingLineActivation.PhaseIndex = -1;
+    PendingLineActivation.LaunchedWall = nullptr;
 }
 
 void ASLDeveloperBoss::BeginPlay()
 {
     Super::BeginPlay();
-    
-    SetupBossLines();
-
-    if (MouseActorClass && !IsValid(MouseActor))
+    SetupPhaseLines();
+    if (MouseActorClass)
     {
         SpawnMouseActor();
     }
@@ -50,23 +74,43 @@ void ASLDeveloperBoss::BeginPlay()
 
 void ASLDeveloperBoss::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    // 기존 타이머들 정리
-    GetWorldTimerManager().ClearTimer(WallCooldownTimer);
-    GetWorldTimerManager().ClearTimer(Phase1SpawnTimer);
-    GetWorldTimerManager().ClearTimer(Phase3SurvivalTimer);
-    
-    // 상태 정리
     bIsPhase1Active = false;
     bIsPhase3Active = false;
     bIsPhase5Active = false;
+    bIsPhase3WallAttackScheduled = false;
+    bIsPhase3AutoWallAttackActive = false;
     
-    // 마우스 액터 정리
+    if (GetWorld())
+    {
+        if (Phase3WallAttackTimer.IsValid())
+        {
+            GetWorld()->GetTimerManager().ClearTimer(Phase3WallAttackTimer);
+        }
+        if (Phase5WallAttackTimer.IsValid())
+        {
+            GetWorld()->GetTimerManager().ClearTimer(Phase5WallAttackTimer);
+            UE_LOG(LogTemp, Display, TEXT("Phase5 wall attack timer cleared in EndPlay."));
+        }
+        if (Phase3AutoWallAttackTimer.IsValid())
+        {
+            GetWorld()->GetTimerManager().ClearTimer(Phase3AutoWallAttackTimer);
+        }
+    }
+    
     if (IsValid(MouseActor))
     {
         MouseActor->OnMouseActorDestroyed.RemoveAll(this);
     }
+    if (IsValid(Phase3MouseActor))
+    {
+        Phase3MouseActor->OnMouseActorDestroyed.RemoveAll(this);
+    }
+    if (IsValid(CurrentPhase5Wall))
+    {
+        CurrentPhase5Wall->OnAllWallPartsLaunched.RemoveAll(this);
+        CurrentPhase5Wall = nullptr;
+    }
     
-    ResetBossLines();
     ResetCurrentWall();
     DespawnAllBosses();
     Super::EndPlay(EndPlayReason);
@@ -89,8 +133,6 @@ ASLAIBaseCharacter* ASLDeveloperBoss::SpawnBossCharacter(TSubclassOf<ASLAIBaseCh
         SpawnedBoss->SetIsSpecialPattern(true);
         SpawnedBosses.Add(SpawnedBoss);
         RegisterBossEvents(SpawnedBoss);
-        
-        UE_LOG(LogTemp, Display, TEXT("Developer Boss spawned: %s"), *SpawnedBoss->GetName());
     }
     
     return SpawnedBoss;
@@ -110,8 +152,6 @@ void ASLDeveloperBoss::DespawnAllBosses()
     SpawnedBosses.Empty();
     
     OnDeveloperBossPatternFinished.Broadcast();
-    
-    UE_LOG(LogTemp, Display, TEXT("Developer Boss pattern finished - All bosses despawned"));
 }
 
 void ASLDeveloperBoss::InitializeBossFight()
@@ -123,25 +163,23 @@ void ASLDeveloperBoss::InitializeBossFight()
     }
 
     CurrentPhase = EDeveloperBossPhase::Phase0_Start;
-    DestroyedLinesCount = 0;
+    PhaseDestroyedLinesCount.Empty();
     bCanLaunchWall = true;
     
-    // Phase1 상태 초기화
     bIsPhase1Active = false;
     Phase1CurrentBossIndex = 0;
     Phase1TotalBossCount = 0;
-    GetWorldTimerManager().ClearTimer(Phase1SpawnTimer);
     
-    // 모든 선을 비활성 상태로 초기화
-    for (int32 i = 0; i < BossLines.Num(); i++)
+    for (auto& PhaseData : PhaseLineDataMap)
     {
-        if (IsValid(BossLines[i]))
+        for (ASLDeveloperRoomCable* Line : PhaseData.Value.Lines)
         {
-            BossLines[i]->DeactivateLine();
+            if (IsValid(Line))
+            {
+                Line->DeactivateLine();
+            }
         }
     }
-    
-    UE_LOG(LogTemp, Display, TEXT("Developer Boss fight initialized - waiting for dialogue trigger"));
 }
 
 void ASLDeveloperBoss::TriggerFirstWallDuringDialogue()
@@ -153,52 +191,135 @@ void ASLDeveloperBoss::TriggerFirstWallDuringDialogue()
     }
 
     bIsFightStarted = true;
-    
-    UE_LOG(LogTemp, Display, TEXT("Dialogue interrupted - First wall attack triggered!"));
-    
-    // 대화 중 첫 번째 벽 발사
-    LaunchWallAttack();
+    ManualLaunchWallAttack();
 }
 
-void ASLDeveloperBoss::LaunchWallAttack()
+void ASLDeveloperBoss::ManualLaunchWallAttack(int32 PhaseIndex, int32 WallIndex)
 {
-    if (!CanLaunchWallAttack() || LaunchableWalls.Num() == 0)
+    if (!CanLaunchWallAttack(PhaseIndex))
     {
         return;
     }
 
-    ResetCurrentWall();
-
-    // 사용 가능한 벽 찾기
-    ASLLaunchableWall* AvailableWall = nullptr;
-    for (ASLLaunchableWall* Wall : LaunchableWalls)
+    int32 TargetPhaseIndex = (PhaseIndex >= 0) ? PhaseIndex : static_cast<int32>(CurrentPhase);
+    
+    FPhaseLineData* PhaseData = PhaseLineDataMap.Find(TargetPhaseIndex);
+    if (!PhaseData)
     {
-        if (IsValid(Wall) && Wall->CanLaunch())
+        return;
+    }
+    
+    ASLLaunchableWall* TargetWall = nullptr;
+
+    if (WallIndex >= 0 && PhaseData->WallConnections.IsValidIndex(WallIndex))
+    {
+        TargetWall = PhaseData->WallConnections[WallIndex].Wall;
+    }
+    else
+    {
+        for (int32 i = 0; i < PhaseData->WallConnections.Num(); i++)
         {
-            AvailableWall = Wall;
-            break;
+            const FWallLineConnection& Connection = PhaseData->WallConnections[i];
+            if (IsValid(Connection.Wall) && Connection.Wall->CanLaunch())
+            {
+                TargetWall = Connection.Wall;
+                break;
+            }
         }
     }
 
-    if (!AvailableWall)
+    if (IsValid(TargetWall) && TargetWall->CanLaunch())
     {
-        UE_LOG(LogTemp, Warning, TEXT("No available wall found for attack"));
+        LaunchSpecificWall(TargetWall);
+        PendingLineActivation.PhaseIndex = TargetPhaseIndex;
+        PendingLineActivation.LaunchedWall = TargetWall;
+    }
+}
+
+void ASLDeveloperBoss::ManualActivateLine(int32 PhaseIndex, int32 LineIndex)
+{
+    FPhaseLineData* PhaseData = PhaseLineDataMap.Find(PhaseIndex);
+    if (!PhaseData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase %d not found"), PhaseIndex);
         return;
     }
 
-    CurrentWall = AvailableWall;
-    CurrentWall->OnAllWallPartsLaunched.AddDynamic(this, &ASLDeveloperBoss::HandleWallAttackFinished);
-    CurrentWall->LaunchWallToPlayer();
+    if (!PhaseData->Lines.IsValidIndex(LineIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Line index %d not valid for phase %d"), LineIndex, PhaseIndex);
+        return;
+    }
+
+    ASLDeveloperRoomCable* TargetLine = PhaseData->Lines[LineIndex];
+    if (IsValid(TargetLine))
+    {
+        TargetLine->ActivateLine();
+    }
+}
+
+void ASLDeveloperBoss::ActivateConnectedLines(int32 PhaseIndex, ASLLaunchableWall* LaunchedWall)
+{
+    if (!IsValid(LaunchedWall))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ActivateConnectedLines: LaunchedWall is invalid"));
+        return;
+    }
+
+    FPhaseLineData* PhaseData = PhaseLineDataMap.Find(PhaseIndex);
+    if (!PhaseData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase %d not found for line activation"), PhaseIndex);
+        return;
+    }
+
+    UE_LOG(LogTemp, Display, TEXT("🔍 ActivateConnectedLines: Phase %d, Wall %s"), 
+           PhaseIndex, *LaunchedWall->GetName());
+    UE_LOG(LogTemp, Display, TEXT("   Available wall connections: %d"), PhaseData->WallConnections.Num());
+
+    bool bFoundConnection = false;
+    for (int32 i = 0; i < PhaseData->WallConnections.Num(); i++)
+    {
+        const FWallLineConnection& Connection = PhaseData->WallConnections[i];
+        UE_LOG(LogTemp, Display, TEXT("   Checking connection [%d]: Wall %s"), 
+               i, Connection.Wall ? *Connection.Wall->GetName() : TEXT("NULL"));
+        
+        if (Connection.Wall == LaunchedWall)
+        {
+            bFoundConnection = true;
+            UE_LOG(LogTemp, Display, TEXT("   ✅ Found matching connection! Activating %d lines"), 
+                   Connection.ConnectedLineIndices.Num());
+            
+            for (int32 LineIndex : Connection.ConnectedLineIndices)
+            {
+                if (PhaseData->Lines.IsValidIndex(LineIndex))
+                {
+                    ASLDeveloperRoomCable* LineToActivate = PhaseData->Lines[LineIndex];
+                    if (IsValid(LineToActivate))
+                    {
+                        LineToActivate->ActivateLine();
+                        UE_LOG(LogTemp, Display, TEXT("   📍 Activated line %d in phase %d"), LineIndex, PhaseIndex);
+                    }
+                    else
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("   ❌ Line %d is invalid"), LineIndex);
+                    }
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("   ❌ Line index %d out of range (max: %d)"), 
+                           LineIndex, PhaseData->Lines.Num() - 1);
+                }
+            }
+            return;
+        }
+    }
     
-    bCanLaunchWall = false;
-    GetWorldTimerManager().SetTimer(
-        WallCooldownTimer,
-        [this]() { bCanLaunchWall = true; },
-        WallAttackCooldown,
-        false
-    );
-    
-    UE_LOG(LogTemp, Display, TEXT("Wall attack launched"));
+    if (!bFoundConnection)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("❌ No connection found for wall %s in phase %d"), 
+               *LaunchedWall->GetName(), PhaseIndex);
+    }
 }
 
 EDeveloperBossPhase ASLDeveloperBoss::GetCurrentPhase() const
@@ -206,14 +327,278 @@ EDeveloperBossPhase ASLDeveloperBoss::GetCurrentPhase() const
     return CurrentPhase;
 }
 
-int32 ASLDeveloperBoss::GetDestroyedLinesCount() const
+int32 ASLDeveloperBoss::GetCurrentPhaseIndex() const
 {
-    return DestroyedLinesCount;
+    return static_cast<int32>(CurrentPhase);
 }
 
-bool ASLDeveloperBoss::CanLaunchWallAttack() const
+int32 ASLDeveloperBoss::GetPhaseDestroyedLinesCount(int32 PhaseIndex) const
 {
-    return bCanLaunchWall && DestroyedLinesCount < BossLines.Num() && LaunchableWalls.Num() > 0;
+    if (const int32* Count = PhaseDestroyedLinesCount.Find(PhaseIndex))
+    {
+        return *Count;
+    }
+    return 0;
+}
+
+int32 ASLDeveloperBoss::GetCurrentPhaseDestroyedLinesCount() const
+{
+    return GetPhaseDestroyedLinesCount(static_cast<int32>(CurrentPhase));
+}
+
+bool ASLDeveloperBoss::CanLaunchWallAttack(int32 PhaseIndex) const
+{
+    if (!bCanLaunchWall)
+    {
+        return false;
+    }
+
+    int32 TargetPhaseIndex = (PhaseIndex >= 0) ? PhaseIndex : static_cast<int32>(CurrentPhase);
+    
+    const FPhaseLineData* PhaseData = PhaseLineDataMap.Find(TargetPhaseIndex);
+    if (!PhaseData)
+    {
+        return false;
+    }
+
+    return PhaseData->WallConnections.Num() > 0;
+}
+
+bool ASLDeveloperBoss::IsPhaseCompleted(int32 PhaseIndex) const
+{
+    const FPhaseLineData* PhaseData = PhaseLineDataMap.Find(PhaseIndex);
+    if (!PhaseData)
+    {
+        return false;
+    }
+
+    int32 DestroyedCount = GetPhaseDestroyedLinesCount(PhaseIndex);
+    return DestroyedCount >= PhaseData->Lines.Num();
+}
+
+bool ASLDeveloperBoss::IsCurrentPhaseCompleted() const
+{
+    return IsPhaseCompleted(static_cast<int32>(CurrentPhase));
+}
+
+bool ASLDeveloperBoss::IsPhase1Active() const
+{
+    return bIsPhase1Active;
+}
+
+int32 ASLDeveloperBoss::GetPhase1BossesRemaining() const
+{
+    if (!bIsPhase1Active)
+    {
+        return 0;
+    }
+    
+    int32 BossesToSpawn = AvailableBossClasses.Num() - Phase1CurrentBossIndex;
+    int32 SpawnedBossesAlive = SpawnedBosses.Num();
+    
+    return BossesToSpawn + SpawnedBossesAlive;
+}
+
+void ASLDeveloperBoss::SpawnMouseActor()
+{
+    if (IsValid(MouseActor))
+    {
+        DestroyMouseActor();
+    }
+    
+    if (!MouseActorClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Mouse Actor class not specified"));
+        return;
+    }
+    
+    FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 500.0f);
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    
+    MouseActor = GetWorld()->SpawnActor<ASLMouseActor>(MouseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+    
+    if (IsValid(MouseActor))
+    {
+        MouseActor->OnMouseActorDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandleMouseActorDestroyed);
+        MouseActor->SetActorHiddenInGame(false);
+        MouseActor->SetActorEnableCollision(true);
+        MouseActor->StartOrbiting();
+    }
+}
+
+void ASLDeveloperBoss::DestroyMouseActor()
+{
+    if (IsValid(MouseActor))
+    {
+        MouseActor->OnMouseActorDestroyed.RemoveAll(this);
+        MouseActor->Destroy();
+        MouseActor = nullptr;
+    }
+}
+
+void ASLDeveloperBoss::ActivateMouseActor()
+{
+    if (!IsValid(MouseActor))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No Mouse Actor to activate"));
+        return;
+    }
+    
+    MouseActor->SetActorHiddenInGame(false);
+    MouseActor->SetActorEnableCollision(true);
+    MouseActor->StartOrbiting();
+}
+
+void ASLDeveloperBoss::DeactivateMouseActor()
+{
+    if (!IsValid(MouseActor))
+    {
+        return;
+    }
+    
+    MouseActor->StopOrbiting();
+    MouseActor->SetActorHiddenInGame(true);
+    MouseActor->SetActorEnableCollision(false);
+}
+
+ASLMouseActor* ASLDeveloperBoss::GetMouseActor() const
+{
+    return MouseActor;
+}
+
+void ASLDeveloperBoss::StartPhase3AutoWallAttack()
+{
+    if (bIsPhase3AutoWallAttackActive || !bIsPhase3Active)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase3 Auto Wall Attack already active or Phase3 not active"));
+        return;
+    }
+
+    bIsPhase3AutoWallAttackActive = true;
+    Phase3CurrentWallIndex = 0;
+
+    if (IsValid(GetWorld()))
+    {
+        GetWorld()->GetTimerManager().SetTimer(
+            Phase3AutoWallAttackTimer,
+            this,
+            &ASLDeveloperBoss::OnPhase3AutoWallAttackTimer,
+            Phase3InitialWallAttackDelay,
+            false
+        );
+    }
+}
+
+void ASLDeveloperBoss::StopPhase3AutoWallAttack()
+{
+    if (!bIsPhase3AutoWallAttackActive)
+    {
+        return;
+    }
+
+    bIsPhase3AutoWallAttackActive = false;
+
+    if (IsValid(GetWorld()) && Phase3AutoWallAttackTimer.IsValid())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(Phase3AutoWallAttackTimer);
+    }
+
+}
+
+bool ASLDeveloperBoss::IsPhase3AutoWallAttackActive() const
+{
+    return bIsPhase3AutoWallAttackActive;
+}
+
+void ASLDeveloperBoss::TestKillAllBosses()
+{
+    for (ASLAIBaseCharacter* Boss : SpawnedBosses)
+    {
+        if (IsValid(Boss) && !Boss->GetIsDead())
+        {
+            Boss->SetCurrentHealth(0.f);
+            Boss->HandleDeath();
+        }
+    }
+}
+
+void ASLDeveloperBoss::TestDestroyNextLine()
+{
+    int32 CurrentPhaseIndex = static_cast<int32>(CurrentPhase);
+    FPhaseLineData* PhaseData = PhaseLineDataMap.Find(CurrentPhaseIndex);
+    
+    if (!PhaseData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Current phase data not found"));
+        return;
+    }
+
+    int32 DestroyedCount = GetCurrentPhaseDestroyedLinesCount();
+    
+    if (DestroyedCount >= PhaseData->Lines.Num())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("All lines in current phase already destroyed"));
+        return;
+    }
+
+    if (PhaseData->Lines.IsValidIndex(DestroyedCount) && IsValid(PhaseData->Lines[DestroyedCount]))
+    {
+        PhaseData->Lines[DestroyedCount]->DestroyLine();
+    }
+}
+
+void ASLDeveloperBoss::TestCompleteCurrentPhase()
+{
+    int32 CurrentPhaseIndex = static_cast<int32>(CurrentPhase);
+    FPhaseLineData* PhaseData = PhaseLineDataMap.Find(CurrentPhaseIndex);
+    
+    if (PhaseData)
+    {
+        for (ASLDeveloperRoomCable* Line : PhaseData->Lines)
+        {
+            if (IsValid(Line) && Line->GetCurrentLineState() != EBossLineState::Destroyed)
+            {
+                Line->DestroyLine();
+            }
+        }
+    }
+}
+
+void ASLDeveloperBoss::DebugPhaseData(int32 PhaseIndex)
+{
+    UE_LOG(LogTemp, Warning, TEXT("=== DEBUG PHASE %d ==="), PhaseIndex);
+    
+    FPhaseLineData* PhaseData = PhaseLineDataMap.Find(PhaseIndex);
+    if (!PhaseData)
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ Phase %d NOT FOUND in PhaseLineDataMap!"), PhaseIndex);
+        UE_LOG(LogTemp, Warning, TEXT("Available phases:"));
+        for (auto& Data : PhaseLineDataMap)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("  - Phase %d"), Data.Key);
+        }
+        return;
+    }
+    
+    UE_LOG(LogTemp, Display, TEXT("✅ Phase %d found"), PhaseIndex);
+    UE_LOG(LogTemp, Display, TEXT("Lines count: %d"), PhaseData->Lines.Num());
+    UE_LOG(LogTemp, Display, TEXT("Wall connections count: %d"), PhaseData->WallConnections.Num());
+    
+    for (int32 i = 0; i < PhaseData->WallConnections.Num(); i++)
+    {
+        const FWallLineConnection& Connection = PhaseData->WallConnections[i];
+        if (IsValid(Connection.Wall))
+        {
+            bool bCanLaunch = Connection.Wall->CanLaunch();
+            UE_LOG(LogTemp, Display, TEXT("  Wall [%d]: %s - CanLaunch: %s"), 
+                   i, *Connection.Wall->GetName(), bCanLaunch ? TEXT("YES") : TEXT("NO"));
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("  Wall [%d]: ❌ NULL"), i);
+        }
+    }
 }
 
 void ASLDeveloperBoss::HandleBossDeath(ASLAIBaseCharacter* DeadBoss)
@@ -224,10 +609,22 @@ void ASLDeveloperBoss::HandleBossDeath(ASLAIBaseCharacter* DeadBoss)
         UnregisterBossEvents(DeadBoss);
         SpawnedBosses.Remove(DeadBoss);
 
-        // Phase1일 때는 별도 처리
+        if (IsValid(DeadBoss))
+        {
+            DeadBoss->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            DeadBoss->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            DeadBoss->GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+            DeadBoss->GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
+        }
+
         if (bIsPhase1Active)
         {
             HandlePhase1BossDeath(DeadBoss);
+        }
+        
+        if (SpawnedBosses.Num() == 0 && !bIsPhase1Active && CanLaunchWallAttack())
+        {
+            ManualLaunchWallAttack();
         }
     }
 }
@@ -242,39 +639,514 @@ void ASLDeveloperBoss::HandlePatternFinished(ASLAIBaseCharacter* Boss)
 
 void ASLDeveloperBoss::HandleLineDestroyed(int32 LineIndex)
 {
-    if (LineIndex < 0 || LineIndex >= BossLines.Num())
+    int32 PhaseIndex = -1;
+    int32 PhaseLineIndex = -1;
+    
+    for (auto& PhaseData : PhaseLineDataMap)
+    {
+        for (int32 i = 0; i < PhaseData.Value.Lines.Num(); i++)
+        {
+            if (IsValid(PhaseData.Value.Lines[i]) && PhaseData.Value.Lines[i]->GetLineIndex() == LineIndex)
+            {
+                PhaseIndex = PhaseData.Key;
+                PhaseLineIndex = i;
+                break;
+            }
+        }
+        if (PhaseIndex >= 0) break;
+    }
+
+    if (PhaseIndex < 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Could not find phase for destroyed line %d"), LineIndex);
+        return;
+    }
+
+    int32& DestroyedCount = PhaseDestroyedLinesCount.FindOrAdd(PhaseIndex);
+    DestroyedCount++;
+
+    OnBossLineDestroyed.Broadcast(PhaseIndex, PhaseLineIndex);
+    
+    if (PhaseIndex == 1 && PhaseLineIndex == 1 && IsValid(MouseActor))
+    {
+        MouseActor->StopOrbiting();
+    }
+
+    if (PhaseIndex == static_cast<int32>(EDeveloperBossPhase::Phase3_Horror) && bIsPhase3Active)
+    {
+        CheckPhase3Completion();
+    }
+
+    CheckPhaseCompletion(PhaseIndex);
+}
+
+void ASLDeveloperBoss::HandleWallAttackFinished(ASLLaunchableWall* LaunchedWall)
+{
+    UE_LOG(LogTemp, Display, TEXT("🏁 HandleWallAttackFinished called"));
+    
+    if (PendingLineActivation.LaunchedWall.IsValid())
+    {
+        UE_LOG(LogTemp, Display, TEXT("   Processing pending line activation for Phase %d"), 
+               PendingLineActivation.PhaseIndex);
+        
+        ActivateConnectedLines(PendingLineActivation.PhaseIndex, PendingLineActivation.LaunchedWall.Get());
+        
+        PendingLineActivation.PhaseIndex = -1;
+        PendingLineActivation.LaunchedWall = nullptr;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("   ❌ No pending line activation found"));
+    }
+    
+    ResetCurrentWall();
+}
+
+void ASLDeveloperBoss::HandleMouseActorDestroyed(ASLMouseActor* DestroyedMouseActor)
+{
+    if (DestroyedMouseActor == MouseActor)
+    {
+        MouseActor = nullptr;
+        
+        if (bIsPhase5Active) 
+        {
+            bIsPhase5Active = false; 
+            
+            if (GetWorld() && Phase5WallAttackTimer.IsValid())
+            {
+                GetWorld()->GetTimerManager().ClearTimer(Phase5WallAttackTimer);
+                UE_LOG(LogTemp, Display, TEXT("Phase5 wall attack timer cleared - Main Mouse Actor destroyed for Phase 5"));
+            }
+            
+            OnPhase5FinalCompleted.Broadcast();
+            OnDeveloperBossPatternFinished.Broadcast(); 
+            UE_LOG(LogTemp, Display, TEXT("Phase5 Final Completed due to Mouse Actor destruction."));
+        }
+    }
+}
+
+void ASLDeveloperBoss::HandlePhase2RoomEscape(ASLDeveloperRoomSpace* Room)
+{
+    if (!bIsPhase2Active || Room != Phase2Room)
+    {
+        return;
+    }
+    
+    bIsPhase2Active = false;
+    
+    if (IsValid(Phase2Room))
+    {
+        Phase2Room->OnRoomEscapeWallDestroyed.RemoveAll(this);
+        Phase2Room->CleanupNPCs();
+        Phase2Room->DeactivateRoom();
+    }
+
+    if (IsValid(MouseActor))
+    {
+        ActivateMouseActor();
+    }
+    
+    OnPhase2HackSlashCompleted.Broadcast();
+}
+
+void ASLDeveloperBoss::OnWallCooldownFinishedInternal()
+{
+    bCanLaunchWall = true;
+    OnWallCooldownFinished.Broadcast();
+}
+
+void ASLDeveloperBoss::OnPhase1SpawnDelayFinished()
+{
+    SpawnNextPhase1Boss();
+}
+
+void ASLDeveloperBoss::HandlePhase3MouseActorDestroyed(ASLMouseActor* DestroyedMouseActor)
+{
+    if (DestroyedMouseActor == Phase3MouseActor)
+    {
+        Phase3MouseActor = nullptr;
+        
+        if (bIsPhase3Active)
+        {
+            bIsPhase3Active = false;
+            bIsPhase3WallAttackScheduled = false;
+            
+            StopPhase3AutoWallAttack();
+            
+            if (GetWorld() && Phase3WallAttackTimer.IsValid())
+            {
+                GetWorld()->GetTimerManager().ClearTimer(Phase3WallAttackTimer);
+            }
+            
+            ActivateMouseActor();
+            OnPhase3HorrorCompleted.Broadcast();
+        }
+    }
+}
+
+void ASLDeveloperBoss::ExecutePhase3WallAttack()
+{
+    if (!bIsPhase3Active || !bIsPhase3WallAttackScheduled)
+    {
+        return;
+    }
+    
+    bIsPhase3WallAttackScheduled = false;
+    
+    int32 Phase3Index = static_cast<int32>(EDeveloperBossPhase::Phase3_Horror);
+    
+    FPhaseLineData* Phase3Data = PhaseLineDataMap.Find(Phase3Index);
+    if (!Phase3Data || Phase3Data->WallConnections.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase3: No wall connections found"));
+        return;
+    }
+    
+    int32 WallIndexToUse = -1;
+    
+    if (Phase3WallIndex >= 0)
+    {
+        WallIndexToUse = Phase3WallIndex;
+    }
+    else
+    {
+        if (Phase3UsedWallIndex < Phase3Data->WallConnections.Num())
+        {
+            WallIndexToUse = Phase3UsedWallIndex;
+            Phase3UsedWallIndex++;
+        }
+        else
+        {
+            Phase3UsedWallIndex = 0;
+            WallIndexToUse = 0;
+        }
+    }
+    
+    ManualLaunchWallAttack(Phase3Index, WallIndexToUse);
+    
+    UE_LOG(LogTemp, Display, TEXT("Phase3: Wall attack executed (Wall Index: %d)"), WallIndexToUse);
+}
+
+void ASLDeveloperBoss::CheckPhase3Completion()
+{
+    if (!bIsPhase3Active)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase3 not active, skipping completion check"));
+        return;
+    }
+    
+    int32 Phase3Index = static_cast<int32>(EDeveloperBossPhase::Phase3_Horror);
+    
+    bool bPhaseCompleted = IsPhaseCompleted(Phase3Index);
+    
+    int32 DestroyedCount = GetPhaseDestroyedLinesCount(Phase3Index);
+    FPhaseLineData* Phase3Data = PhaseLineDataMap.Find(Phase3Index);
+    int32 TotalLines = Phase3Data ? Phase3Data->Lines.Num() : 0;
+    
+    /*UE_LOG(LogTemp, Warning, TEXT("Destroyed Lines: %d / %d"), DestroyedCount, TotalLines);
+    UE_LOG(LogTemp, Warning, TEXT("Phase Completed: %s"), bPhaseCompleted ? TEXT("YES") : TEXT("NO"));*/
+    
+    if (bPhaseCompleted)
+    {
+        
+        // Phase3 정리
+        bIsPhase3Active = false;
+        bIsPhase3WallAttackScheduled = false;
+        StopPhase3AutoWallAttack();
+        
+        if (GetWorld() && Phase3WallAttackTimer.IsValid())
+        {
+            GetWorld()->GetTimerManager().ClearTimer(Phase3WallAttackTimer);
+        }
+        
+        DestroyPhase3MouseActor();
+        ActivateMouseActor();
+        
+        OnPhase3HorrorCompleted.Broadcast();
+        
+        CheckPhaseCompletion(Phase3Index);
+    }
+}
+
+void ASLDeveloperBoss::LaunchNextPhase5Wall()
+{
+    if (!bIsPhase5Active)
+    {
+        UE_LOG(LogTemp, Display, TEXT("Phase5 wall attack stopped - Phase5 not active"));
+        if (GetWorld() && Phase5WallAttackTimer.IsValid()) 
+        {
+            GetWorld()->GetTimerManager().ClearTimer(Phase5WallAttackTimer);
+        }
+        return;
+    }
+
+    if (bPhase5EnableMultiWallAttack)
+    {
+        UE_LOG(LogTemp, Display, TEXT("Phase5: Launching Multi Wall Attack."));
+        LaunchPhase5MultiWallAttack();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Display, TEXT("Phase5: Launching Single Wall Attack."));
+        TArray<ASLLaunchableWall*> LaunchableWalls;
+        for (ASLLaunchableWall* Wall : Phase5AvailableWalls)
+        {
+            if (IsValid(Wall) && Wall->CanLaunch())
+            {
+                LaunchableWalls.Add(Wall);
+            }
+        }
+
+        if (LaunchableWalls.Num() == 0)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Phase5 (Single Mode): No available walls to launch. Waiting for next interval."));
+            return;
+        }
+
+        int32 RandomIndex = FMath::RandRange(0, LaunchableWalls.Num() - 1);
+        ASLLaunchableWall* SelectedWall = LaunchableWalls[RandomIndex];
+        LaunchPhase5SingleWall(SelectedWall);
+    }
+}
+
+void ASLDeveloperBoss::OnPhase5MultiWallCompleted(ASLLaunchableWall* CompletedWall)
+{
+    if (!bIsPhase5Active)
     {
         return;
     }
 
-    DestroyedLinesCount++;
-    OnBossLineDestroyed.Broadcast(LineIndex);
-    
-    UE_LOG(LogTemp, Display, TEXT("Line %d destroyed. Total destroyed: %d"), LineIndex, DestroyedLinesCount);
-
-    // 페이즈 전환만 수행 (벽 발사는 각 페이즈에서 별도 처리)
-    EDeveloperBossPhase NextPhase = static_cast<EDeveloperBossPhase>(static_cast<int32>(CurrentPhase) + 1);
-    
-    if (DestroyedLinesCount < BossLines.Num())
+    if (!bPhase5EnableMultiWallAttack)
     {
-        ChangePhase(NextPhase);
-        StartPhasePattern(NextPhase);
-    }
-    else
-    {
-        // 모든 선이 파괴됨 - 최종 페이즈
-        ChangePhase(EDeveloperBossPhase::Phase5_Final);
-        StartPhasePattern(EDeveloperBossPhase::Phase5_Final);
+        LaunchPhase5ReplacementWall();
     }
 }
 
-void ASLDeveloperBoss::HandleWallAttackFinished()
+void ASLDeveloperBoss::OnPhase5WallHitMouseActor(ASLMouseActor* HitMouseActor, int32 WallPartIndex)
 {
-    // 벽 공격이 완료되면 해당 벽 뒤의 선을 활성화
-    ActivateNextLine();
-    ResetCurrentWall();
+    if (!IsValid(HitMouseActor) || !bIsPhase5Active)
+    {
+        return;
+    }
     
-    UE_LOG(LogTemp, Display, TEXT("Wall attack finished - Line activated"));
+    HitMouseActor->ApplyWallStun(5.0f);
+    OnPhase5MouseActorHit.Broadcast(HitMouseActor, WallPartIndex);
+}
+
+void ASLDeveloperBoss::OnPhase3AutoWallAttackTimer()
+{
+    if (!bIsPhase3Active || !bIsPhase3AutoWallAttackActive)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase3 auto attack timer called but conditions not met"));
+        return;
+    }
+
+    int32 Phase3Index = static_cast<int32>(EDeveloperBossPhase::Phase3_Horror);
+    FPhaseLineData* Phase3Data = PhaseLineDataMap.Find(Phase3Index);
+    
+    if (!Phase3Data || Phase3Data->WallConnections.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase3: No wall connections found for auto attack"));
+        StopPhase3AutoWallAttack();
+        return;
+    }
+
+    ASLLaunchableWall* WallToLaunch = GetNextPhase3Wall();
+    
+    if (IsValid(WallToLaunch))
+    {
+        UE_LOG(LogTemp, Display, TEXT("🎯 Phase3 Auto Attack: Launching wall [%d]: %s"), 
+               Phase3CurrentWallIndex, *WallToLaunch->GetName());
+        
+        PendingLineActivation.PhaseIndex = Phase3Index;
+        PendingLineActivation.LaunchedWall = WallToLaunch;
+        
+        LaunchSpecificWall(WallToLaunch);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase3 Auto Attack: No available wall found"));
+    }
+
+    // 다음 공격 예약
+    if (bIsPhase3Active && bIsPhase3AutoWallAttackActive && IsValid(GetWorld()))
+    {
+        GetWorld()->GetTimerManager().SetTimer(
+            Phase3AutoWallAttackTimer,
+            this,
+            &ASLDeveloperBoss::OnPhase3AutoWallAttackTimer,
+            Phase3AutoWallAttackInterval,
+            false
+        );
+        
+        UE_LOG(LogTemp, Display, TEXT("📅 Phase3: Next auto attack scheduled in %f seconds"), 
+               Phase3AutoWallAttackInterval);
+    }
+}
+
+void ASLDeveloperBoss::LaunchPhase5MultiWallAttack()
+{
+    TArray<ASLLaunchableWall*> LaunchableWalls;
+    for (ASLLaunchableWall* Wall : Phase5AvailableWalls)
+    {
+        if (IsValid(Wall) && Wall->CanLaunch())
+        {
+            LaunchableWalls.Add(Wall);
+        }
+    }
+
+    if (LaunchableWalls.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase5 (Multi Mode): No available walls for multi-attack. Waiting for next interval."));
+        return;
+    }
+
+    int32 WallsToLaunchCount = FMath::Min(Phase5MaxSimultaneousWalls, LaunchableWalls.Num());
+    UE_LOG(LogTemp, Display, TEXT("Phase5 (Multi Mode): Attempting to launch %d walls."), WallsToLaunchCount);
+
+    for (int32 i = 0; i < WallsToLaunchCount; i++)
+    {
+        if (LaunchableWalls.Num() == 0) break; 
+
+        int32 RandomIndex = FMath::RandRange(0, LaunchableWalls.Num() - 1);
+        ASLLaunchableWall* SelectedWall = LaunchableWalls[RandomIndex];
+        LaunchableWalls.RemoveAt(RandomIndex); 
+
+        float RandomDelay = FMath::FRandRange(Phase5MultiWallDelayMin, Phase5MultiWallDelayMax);
+
+        FTimerHandle WallTimer;
+        GetWorldTimerManager().SetTimer(
+            WallTimer,
+            [this, SelectedWall]() { 
+                if (IsValid(SelectedWall)) 
+                {
+                    LaunchPhase5SingleWall(SelectedWall);
+                }
+            },
+            RandomDelay,
+            false
+        );
+        UE_LOG(LogTemp, Display, TEXT("Phase5 (Multi Mode): Scheduled wall %s to launch in %f seconds."), *SelectedWall->GetName(), RandomDelay);
+    }
+}
+
+void ASLDeveloperBoss::LaunchPhase5SingleWall(ASLLaunchableWall* Wall)
+{
+    if (!IsValid(Wall) || !bIsPhase5Active || !Wall->CanLaunch()) 
+    {
+        if (IsValid(Wall))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("LaunchPhase5SingleWall: Wall %s cannot be launched or phase not active."), *Wall->GetName());
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("LaunchPhase5SingleWall: Invalid wall or phase not active."));
+        }
+        return;
+    }
+    UE_LOG(LogTemp, Display, TEXT("Phase5: Launching single wall %s."), *Wall->GetName());
+
+    Wall->OnAllWallPartsLaunched.AddUniqueDynamic(this, &ASLDeveloperBoss::OnPhase5MultiWallCompleted);
+    Wall->OnWallHitMouseActor.AddUniqueDynamic(this, &ASLDeveloperBoss::OnPhase5WallHitMouseActor);
+
+    Wall->LaunchWallToPlayer(); 
+}
+
+void ASLDeveloperBoss::LaunchPhase5ReplacementWall()
+{
+    if (!bIsPhase5Active)
+    {
+        return;
+    }
+
+    TArray<ASLLaunchableWall*> LaunchableWalls;
+    for (ASLLaunchableWall* Wall : Phase5AvailableWalls)
+    {
+        if (IsValid(Wall) && Wall->CanLaunch())
+        {
+            LaunchableWalls.Add(Wall);
+        }
+    }
+
+    if (LaunchableWalls.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase5: No replacement walls available"));
+        return;
+    }
+
+    int32 RandomIndex = FMath::RandRange(0, LaunchableWalls.Num() - 1);
+    ASLLaunchableWall* ReplacementWall = LaunchableWalls[RandomIndex];
+
+    float RandomDelay = FMath::FRandRange(Phase5MultiWallDelayMin, Phase5MultiWallDelayMax);
+    
+    FTimerHandle ReplacementTimer;
+    GetWorldTimerManager().SetTimer(
+        ReplacementTimer,
+        [this, ReplacementWall]()
+        {
+            if (IsValid(ReplacementWall)) 
+            {
+                LaunchPhase5SingleWall(ReplacementWall);
+            }
+        },
+        RandomDelay,
+        false
+    );
+}
+
+void ASLDeveloperBoss::ResetPhase5Wall(ASLLaunchableWall* WallToReset)
+{
+    if (!IsValid(WallToReset))
+    {
+        return;
+    }
+    WallToReset->OnAllWallPartsLaunched.RemoveAll(this);
+    WallToReset->OnWallHitMouseActor.RemoveAll(this);
+    
+    WallToReset->ResetWall();
+}
+
+void ASLDeveloperBoss::SpawnPhase3MouseActor()
+{
+    if (IsValid(Phase3MouseActor))
+    {
+        DestroyPhase3MouseActor();
+    }
+    
+    TSubclassOf<ASLMouseActor> Phase3Class = nullptr;
+    if (IsValid(MouseActor))
+    {
+        Phase3Class = MouseActor->GetPhase3MouseActorClass();
+    }
+    
+    if (!Phase3Class)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No Phase3 Mouse Actor class specified"));
+        return;
+    }
+    
+    FVector SpawnLocation = MouseActor ? MouseActor->GetActorLocation() : GetActorLocation() + FVector(0, 0, 500.0f);
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    
+    Phase3MouseActor = GetWorld()->SpawnActor<ASLMouseActor>(Phase3Class, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+    
+    if (IsValid(Phase3MouseActor))
+    {
+        Phase3MouseActor->OnMouseActorDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandlePhase3MouseActorDestroyed);
+        Phase3MouseActor->StartPhase3HorrorMode();
+        
+        if (UBattleComponent* MouseBattleComp = Phase3MouseActor->FindComponentByClass<UBattleComponent>())
+        {
+            MouseBattleComp->SetComponentTickEnabled(false);
+        }
+        
+        if (USphereComponent* MouseCollision = Phase3MouseActor->FindComponentByClass<USphereComponent>())
+        {
+            MouseCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+            MouseCollision->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+        }
+    }
 }
 
 void ASLDeveloperBoss::RegisterBossEvents(ASLAIBaseCharacter* Boss)
@@ -299,39 +1171,23 @@ void ASLDeveloperBoss::UnregisterBossEvents(ASLAIBaseCharacter* Boss)
     Boss->OnPatternFinished.RemoveAll(this);
 }
 
-void ASLDeveloperBoss::SetupBossLines()
+void ASLDeveloperBoss::SetupPhaseLines()
 {
-    if (BossLines.Num() == 0)
+    for (auto& PhaseData : PhaseLineDataMap)
     {
-        UE_LOG(LogTemp, Warning, TEXT("No boss lines assigned in the editor"));
-        return;
-    }
-
-    for (int32 i = 0; i < BossLines.Num() && i < MaxBossLines; i++)
-    {
-        if (IsValid(BossLines[i]))
+        int32 PhaseIndex = PhaseData.Key;
+        
+        for (int32 i = 0; i < PhaseData.Value.Lines.Num(); i++)
         {
-            BossLines[i]->SetLineIndex(i);
-            BossLines[i]->OnBossLineDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandleLineDestroyed);
-            BossLines[i]->DeactivateLine(); // 초기 상태는 비활성
+            ASLDeveloperRoomCable* Line = PhaseData.Value.Lines[i];
+            if (IsValid(Line))
+            {
+                int32 UniqueLineIndex = PhaseIndex * 100 + i;
+                Line->SetLineIndex(UniqueLineIndex);
+                Line->OnBossLineDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandleLineDestroyed);
+                Line->DeactivateLine();
+            }
         }
-    }
-
-    UE_LOG(LogTemp, Display, TEXT("Boss lines setup complete. Using %d lines"), BossLines.Num());
-}
-
-void ASLDeveloperBoss::ActivateNextLine()
-{
-    if (DestroyedLinesCount >= BossLines.Num())
-    {
-        return;
-    }
-
-    int32 NextLineIndex = DestroyedLinesCount;
-    if (BossLines.IsValidIndex(NextLineIndex) && IsValid(BossLines[NextLineIndex]))
-    {
-        BossLines[NextLineIndex]->ActivateLine();
-        UE_LOG(LogTemp, Display, TEXT("Line %d activated"), NextLineIndex);
     }
 }
 
@@ -343,28 +1199,22 @@ void ASLDeveloperBoss::StartPhasePattern(EDeveloperBossPhase Phase)
         break;
 
     case EDeveloperBossPhase::Phase1_BossRush:
-        UE_LOG(LogTemp, Display, TEXT("Starting Phase 1: Boss Rush"));
         StartPhase1BossRush();
         break;
 
     case EDeveloperBossPhase::Phase2_HackSlash:
-        UE_LOG(LogTemp, Display, TEXT("Starting Phase 2: Hack & Slash"));
         StartPhase2HackSlash();
         break;
 
     case EDeveloperBossPhase::Phase3_Horror:
-        UE_LOG(LogTemp, Display, TEXT("Starting Phase 3: Horror"));
         StartPhase3Horror();
         break;
 
     case EDeveloperBossPhase::Phase4_Platformer:
-        UE_LOG(LogTemp, Display, TEXT("Starting Phase 4: Platformer"));
-        // TODO: 점프맵 구현
-        LaunchWallAttack(); // 임시로 바로 다음 벽 발사
+        StartPhase4Platformer();
         break;
 
     case EDeveloperBossPhase::Phase5_Final:
-        UE_LOG(LogTemp, Display, TEXT("Starting Phase 5: Final - Mouse Actor"));
         StartPhase5Final();
         break;
     }
@@ -376,191 +1226,68 @@ void ASLDeveloperBoss::ChangePhase(EDeveloperBossPhase NewPhase)
     {
         CurrentPhase = NewPhase;
         OnPhaseChanged.Broadcast(static_cast<int32>(NewPhase));
-        UE_LOG(LogTemp, Display, TEXT("Phase changed to: %d"), static_cast<int32>(NewPhase));
     }
 }
 
-void ASLDeveloperBoss::ResetBossLines()
+void ASLDeveloperBoss::CheckPhaseCompletion(int32 PhaseIndex)
 {
-    for (ASLDeveloperRoomCable* Line : BossLines)
+    if (IsPhaseCompleted(PhaseIndex))
     {
-        if (IsValid(Line))
-        {
-            Line->OnBossLineDestroyed.RemoveAll(this);
-            Line->DeactivateLine();
-        }
-    }
-}
-
-void ASLDeveloperBoss::ResetCurrentWall()
-{
-    if (IsValid(CurrentWall))
-    {
-        CurrentWall->OnAllWallPartsLaunched.RemoveAll(this);
-        CurrentWall = nullptr;
-    }
-}
-
-void ASLDeveloperBoss::TestSpawnRandomBoss()
-{
-    if (AvailableBossClasses.Num() == 0)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("No boss classes available to spawn"));
-        return;
-    }
-    
-    int32 RandomIndex = FMath::RandRange(0, AvailableBossClasses.Num() - 1);
-    TSubclassOf<ASLAIBaseCharacter> BossClass = AvailableBossClasses[RandomIndex];
-    
-    FVector SpawnLocation = GetActorLocation() + FVector(FMath::RandRange(-500.f, 500.f), FMath::RandRange(-500.f, 500.f), 100.f);
-    FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
-    
-    ASLAIBaseCharacter* SpawnedBoss = SpawnBossCharacter(BossClass, SpawnTransform);
-    
-    if (SpawnedBoss)
-    {
-        UE_LOG(LogTemp, Display, TEXT("Test: Spawned %s at %s"), 
-            *SpawnedBoss->GetClass()->GetName(), 
-            *SpawnLocation.ToString());
-    }
-}
-
-void ASLDeveloperBoss::TestSpawnAllBosses()
-{
-    float Radius = 500.f;
-    int32 BossCount = AvailableBossClasses.Num();
-    
-    for (int32 i = 0; i < BossCount; i++)
-    {
-        float Angle = (360.f / BossCount) * i;
-        float RadAngle = FMath::DegreesToRadians(Angle);
+        OnPhaseCompleted.Broadcast(PhaseIndex);
         
-        FVector SpawnLocation = GetActorLocation() + FVector(
-            FMath::Cos(RadAngle) * Radius,
-            FMath::Sin(RadAngle) * Radius,
-            100.f
-        );
-        
-        FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
-        SpawnBossCharacter(AvailableBossClasses[i], SpawnTransform);
-    }
-    
-    UE_LOG(LogTemp, Display, TEXT("Test: Spawned all %d bosses"), BossCount);
-}
-
-void ASLDeveloperBoss::TestKillAllBosses()
-{
-    for (ASLAIBaseCharacter* Boss : SpawnedBosses)
-    {
-        if (IsValid(Boss) && !Boss->GetIsDead())
+        if (PhaseIndex == static_cast<int32>(CurrentPhase))
         {
-            Boss->SetCurrentHealth(0.f);
-            Boss->HandleDeath();
+            EDeveloperBossPhase NextPhase = static_cast<EDeveloperBossPhase>(PhaseIndex + 1);
+            
+            if (static_cast<int32>(NextPhase) <= static_cast<int32>(EDeveloperBossPhase::Phase5_Final))
+            {
+                ChangePhase(NextPhase);
+                StartPhasePattern(NextPhase);
+            }
+            else
+            {
+                OnDeveloperBossPatternFinished.Broadcast();
+            }
         }
     }
-    
-    UE_LOG(LogTemp, Display, TEXT("Test: Killed all bosses"));
 }
 
-/**
- * @brief 다음 파괴 대상 라인을 제거하고 로그에 정보를 출력합니다.
- *
- * 해당 메소드는 사전에 설정된 BossLines 배열에서 DestroyedLinesCount의 값에 해당하는 라인을 파괴합니다.
- * 만약 DestroyedLinesCount가 BossLines 배열의 크기와 같거나 이를 초과하면, 모든 라인이 이미 파괴되었다고 로그를 남기고 아무 작업도 수행하지 않습니다.
- *
- * @details
- * 1. 현재 DestroyedLinesCount 값이 BossLines 배열 범위를 초과했는지 확인합니다.
- *    - 초과할 경우 로그를 출력하고 메서드를 종료합니다.
- * 2. BossLines 배열에서 DestroyedLinesCount 인덱스에 해당하는 라인이 유효한지 검사합니다.
- *    - 유효하다면 해당 라인을 DestroyLine() 메서드를 호출하여 파괴합니다.
- *    - 파괴된 라인의 인덱스를 로그에 출력합니다.
- *
- * @warning BossLines 배열 또는 각 요소가 올바르게 초기화되어 있지 않을 경우 정상 동작을 기대할 수 없습니다.
- */
-void ASLDeveloperBoss::TestDestroyNextLine()
+void ASLDeveloperBoss::LaunchSpecificWall(ASLLaunchableWall* Wall)
 {
-    if (DestroyedLinesCount >= BossLines.Num())
+    if (!IsValid(Wall))
     {
-        UE_LOG(LogTemp, Warning, TEXT("All lines already destroyed"));
         return;
     }
 
-    int32 NextLineIndex = DestroyedLinesCount;
-    if (BossLines.IsValidIndex(NextLineIndex) && IsValid(BossLines[NextLineIndex]))
-    {
-        BossLines[NextLineIndex]->DestroyLine();
-        UE_LOG(LogTemp, Display, TEXT("Test: Destroyed line %d"), NextLineIndex);
-    }
-}
-
-void ASLDeveloperBoss::TestResetAllLines()
-{
-    DestroyedLinesCount = 0;
-    CurrentPhase = EDeveloperBossPhase::Phase0_Start;
-    bIsFightStarted = false; // 전투 시작 상태도 리셋
+    ResetCurrentWall();
+    CurrentWall = Wall;
+    CurrentWall->OnAllWallPartsLaunched.AddDynamic(this, &ASLDeveloperBoss::HandleWallAttackFinished);
+    CurrentWall->LaunchWallToPlayer();
     
-    // Phase1 상태 리셋
-    bIsPhase1Active = false;
-    Phase1CurrentBossIndex = 0;
-    Phase1TotalBossCount = 0;
-    GetWorldTimerManager().ClearTimer(Phase1SpawnTimer);
+    bCanLaunchWall = false;
     
-    for (int32 i = 0; i < BossLines.Num(); i++)
-    {
-        if (IsValid(BossLines[i]))
-        {
-            BossLines[i]->DeactivateLine();
-        }
-    }
+    FTimerHandle CooldownTimer;
+    GetWorldTimerManager().SetTimer(
+        CooldownTimer,
+        this,
+        &ASLDeveloperBoss::OnWallCooldownFinishedInternal,
+        WallAttackCooldown,
+        false
+    );
     
-    // 소환된 보스들도 정리
-    DespawnAllBosses();
-    
-    UE_LOG(LogTemp, Display, TEXT("Test: Reset all lines - Call InitializeBossFight() to prepare"));
-}
-
-void ASLDeveloperBoss::TestTriggerDialogueWall()
-{
-    if (!bIsFightStarted)
-    {
-        TriggerFirstWallDuringDialogue();
-        UE_LOG(LogTemp, Display, TEXT("Test: Triggered dialogue wall attack"));
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Test: Fight already started"));
-    }
-}
-
-void ASLDeveloperBoss::TestStartPhase1()
-{
-    if (bIsPhase1Active)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Test: Phase1 already active"));
-        return;
-    }
-
-    CurrentPhase = EDeveloperBossPhase::Phase1_BossRush;
-    StartPhase1BossRush();
-    UE_LOG(LogTemp, Display, TEXT("Test: Started Phase1 Boss Rush"));
 }
 
 void ASLDeveloperBoss::StartPhase1BossRush()
 {
     if (AvailableBossClasses.Num() == 0)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Phase1: No boss classes available"));
-        CompletePhase1BossRush(); // 보스가 없으면 바로 완료
+        CompletePhase1BossRush();
         return;
     }
 
     bIsPhase1Active = true;
     Phase1CurrentBossIndex = 0;
     Phase1TotalBossCount = AvailableBossClasses.Num();
-
-    UE_LOG(LogTemp, Display, TEXT("Phase1: Starting Boss Rush with %d bosses"), Phase1TotalBossCount);
-
-    // 첫 번째 보스 즉시 소환
     SpawnNextPhase1Boss();
 }
 
@@ -573,7 +1300,6 @@ void ASLDeveloperBoss::SpawnNextPhase1Boss()
 
     TSubclassOf<ASLAIBaseCharacter> BossClass = AvailableBossClasses[Phase1CurrentBossIndex];
     
-    // 스폰 위치 계산 (개발자 보스 주변)
     FVector SpawnLocation = GetActorLocation() + Phase1BossSpawnOffset;
     SpawnLocation += FVector(FMath::RandRange(-100.f, 100.f), FMath::RandRange(-100.f, 100.f), 0.f);
     
@@ -583,26 +1309,21 @@ void ASLDeveloperBoss::SpawnNextPhase1Boss()
     
     if (SpawnedBoss)
     {
-        // 보스 약화 처리
+        OnBossSpawnCompleted.Broadcast(SpawnedBoss);
         WeakenBossForPhase1(SpawnedBoss);
-        
         Phase1CurrentBossIndex++;
-        
-        UE_LOG(LogTemp, Display, TEXT("Phase1: Spawned boss %d/%d - %s"), 
-            Phase1CurrentBossIndex, Phase1TotalBossCount, *SpawnedBoss->GetClass()->GetName());
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("Phase1: Failed to spawn boss %d"), Phase1CurrentBossIndex);
-        Phase1CurrentBossIndex++; // 실패해도 다음으로 진행
+        Phase1CurrentBossIndex++;
         
-        // 다음 보스 소환 시도
         if (Phase1CurrentBossIndex < AvailableBossClasses.Num())
         {
+            FTimerHandle SpawnTimer;
             GetWorldTimerManager().SetTimer(
-                Phase1SpawnTimer,
+                SpawnTimer,
                 this,
-                &ASLDeveloperBoss::SpawnNextPhase1Boss,
+                &ASLDeveloperBoss::OnPhase1SpawnDelayFinished,
                 Phase1BossSpawnDelay,
                 false
             );
@@ -616,25 +1337,20 @@ void ASLDeveloperBoss::HandlePhase1BossDeath(ASLAIBaseCharacter* DeadBoss)
     {
         return;
     }
-
-    UE_LOG(LogTemp, Display, TEXT("Phase1: Boss defeated - %s"), *DeadBoss->GetClass()->GetName());
-
-    // 다음 보스가 있으면 딜레이 후 소환
+    
     if (Phase1CurrentBossIndex < AvailableBossClasses.Num())
-    {
-        UE_LOG(LogTemp, Display, TEXT("Phase1: Spawning next boss in %f seconds"), Phase1BossSpawnDelay);
-        
+    {   
+        FTimerHandle SpawnTimer;
         GetWorldTimerManager().SetTimer(
-            Phase1SpawnTimer,
+            SpawnTimer,
             this,
-            &ASLDeveloperBoss::SpawnNextPhase1Boss,
+            &ASLDeveloperBoss::OnPhase1SpawnDelayFinished,
             Phase1BossSpawnDelay,
             false
         );
     }
     else
     {
-        // 모든 보스를 소환했고, 현재 살아있는 보스가 없으면 Phase1 완료
         if (SpawnedBosses.Num() == 0)
         {
             CompletePhase1BossRush();
@@ -646,14 +1362,8 @@ void ASLDeveloperBoss::CompletePhase1BossRush()
 {
     bIsPhase1Active = false;
     Phase1CurrentBossIndex = 0;
-    
-    // 타이머 정리
-    GetWorldTimerManager().ClearTimer(Phase1SpawnTimer);
-    
-    UE_LOG(LogTemp, Display, TEXT("Phase1: Boss Rush completed! Launching next wall attack"));
-    
-    // 다음 벽 공격 발사
-    LaunchWallAttack();
+    CleanupDeadBosses();
+    OnPhase1BossRushCompleted.Broadcast();
 }
 
 void ASLDeveloperBoss::WeakenBossForPhase1(ASLAIBaseCharacter* Boss)
@@ -663,199 +1373,87 @@ void ASLDeveloperBoss::WeakenBossForPhase1(ASLAIBaseCharacter* Boss)
         return;
     }
 
-    // 보스 체력 감소 (30%로 설정)
     float OriginalMaxHealth = Boss->GetMaxHealth();
     float WeakenedHealth = OriginalMaxHealth * Phase1BossHealthMultiplier;
     
     Boss->SetMaxHealth(WeakenedHealth);
     Boss->SetCurrentHealth(WeakenedHealth);
-    
-    // 특수 패턴 비활성화 (보스 러시용)
     Boss->SetIsSpecialPattern(false);
-}
-
-bool ASLDeveloperBoss::IsPhase1Active() const
-{
-    return bIsPhase1Active;
-}
-
-int32 ASLDeveloperBoss::GetPhase1BossesRemaining() const
-{
-    if (!bIsPhase1Active)
-    {
-        return 0;
-    }
-    
-    int32 BossesToSpawn = AvailableBossClasses.Num() - Phase1CurrentBossIndex;
-    int32 SpawnedBossesAlive = SpawnedBosses.Num();
-    
-    return BossesToSpawn + SpawnedBossesAlive;
 }
 
 void ASLDeveloperBoss::StartPhase2HackSlash()
 {
     if (!IsValid(Phase2Room))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Phase2: No room assigned"));
-        LaunchWallAttack(); // 룸이 없으면 바로 다음 벽 발사
         return;
     }
 
     bIsPhase2Active = true;
+
+    if (IsValid(MouseActor))
+    {
+        DeactivateMouseActor();
+    }
     
     Phase2Room->OnRoomEscapeWallDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandlePhase2RoomEscape);
-    
     Phase2Room->ActivateRoom();
+    
     Phase2Room->TeleportPlayerToRoom();
     Phase2Room->SpawnAllNPCs();
-    
-    UE_LOG(LogTemp, Display, TEXT("Phase2: Hack & Slash started"));
-}
-
-void ASLDeveloperBoss::HandlePhase2RoomEscape(ASLDeveloperRoomSpace* Room)
-{
-    if (!bIsPhase2Active || Room != Phase2Room)
-    {
-        return;
-    }
-    
-    bIsPhase2Active = false;
-    
-    if (IsValid(Phase2Room))
-    {
-        Phase2Room->OnRoomEscapeWallDestroyed.RemoveAll(this);
-        Phase2Room->DeactivateRoom();
-    }
-    
-    UE_LOG(LogTemp, Display, TEXT("Phase2: Player escaped room! Launching next wall attack"));
-    
-    LaunchWallAttack();
-}
-
-void ASLDeveloperBoss::SpawnMouseActor()
-{
-    if (!MouseActorClass || IsValid(MouseActor))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Mouse Actor already exists or no class specified"));
-        return;
-    }
-    
-    FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 500.0f);
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-    
-    MouseActor = GetWorld()->SpawnActor<ASLMouseActor>(MouseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
-    
-    if (IsValid(MouseActor))
-    {
-        MouseActor->OnMouseActorDestroyed.AddDynamic(this, &ASLDeveloperBoss::HandleMouseActorDestroyed);
-        
-        // 초기에는 비활성 상태로 설정
-        MouseActor->StopOrbiting();
-        MouseActor->SetActorHiddenInGame(true);
-        MouseActor->SetActorEnableCollision(false);
-        
-        UE_LOG(LogTemp, Display, TEXT("Mouse Actor spawned and hidden"));
-    }
-}
-
-void ASLDeveloperBoss::DestroyMouseActor()
-{
-    if (IsValid(MouseActor))
-    {
-        MouseActor->OnMouseActorDestroyed.RemoveAll(this);
-        MouseActor->Destroy();
-        MouseActor = nullptr;
-        
-        UE_LOG(LogTemp, Display, TEXT("Mouse Actor destroyed"));
-    }
-}
-
-void ASLDeveloperBoss::ActivateMouseActor()
-{
-    if (!IsValid(MouseActor))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("No Mouse Actor to activate"));
-        return;
-    }
-    
-    MouseActor->SetActorHiddenInGame(false);
-    MouseActor->SetActorEnableCollision(true);
-    MouseActor->StartOrbiting();
-    
-    UE_LOG(LogTemp, Display, TEXT("Mouse Actor activated"));
-}
-
-void ASLDeveloperBoss::DeactivateMouseActor()
-{
-    if (!IsValid(MouseActor))
-    {
-        return;
-    }
-    
-    MouseActor->StopOrbiting();
-    MouseActor->SetActorHiddenInGame(true);
-    MouseActor->SetActorEnableCollision(false);
-    
-    UE_LOG(LogTemp, Display, TEXT("Mouse Actor deactivated"));
-}
-
-ASLMouseActor* ASLDeveloperBoss::GetMouseActor() const
-{
-    return MouseActor;
-}
-
-void ASLDeveloperBoss::HandleMouseActorDestroyed(ASLMouseActor* DestroyedMouseActor)
-{
-    if (DestroyedMouseActor == MouseActor)
-    {
-        MouseActor = nullptr;
-        
-        if (bIsPhase5Active)
-        {
-            // Phase 5에서 마우스 액터가 파괴되면 보스전 완료
-            bIsPhase5Active = false;
-            UE_LOG(LogTemp, Display, TEXT("Phase 5 completed - Mouse Actor destroyed!"));
-            
-            // 보스전 완료 처리
-            OnDeveloperBossPatternFinished.Broadcast();
-        }
-    }
 }
 
 void ASLDeveloperBoss::StartPhase3Horror()
 {
     if (!IsValid(MouseActor))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Phase3: No mouse actor available"));
-        LaunchWallAttack(); // 마우스 액터가 없으면 바로 다음 벽 발사
         return;
     }
     
     bIsPhase3Active = true;
+    bIsPhase3WallAttackScheduled = false;
+    ResetPhase3WallIndex();
     
-    // 마우스 액터 활성화 및 무서운 형상으로 변경
-    ActivateMouseActor();
+    int32 Phase3Index = static_cast<int32>(EDeveloperBossPhase::Phase3_Horror);
+    FPhaseLineData* Phase3Data = PhaseLineDataMap.Find(Phase3Index);
+    if (Phase3Data)
+    {
+        for (int32 i = 0; i < Phase3Data->WallConnections.Num(); i++)
+        {
+            ASLLaunchableWall* Wall = Phase3Data->WallConnections[i].Wall;
+            if (IsValid(Wall))
+            {
+                Wall->SetActorHiddenInGame(false);
+                Wall->SetActorEnableCollision(true);
+                Wall->SetActorTickEnabled(true);
+                UE_LOG(LogTemp, Display, TEXT("Phase3: Reset wall [%d]: %s"), i, *Wall->GetName());
+            }
+        }
+    }
     
-    // TODO: 화면 어둡게 하기 (Fog 효과)
-    // TODO: 마우스 액터 형상 변경
+    DeactivateMouseActor();
+    SpawnPhase3MouseActor();
+    StartPhase3AutoWallAttack();
     
-    UE_LOG(LogTemp, Display, TEXT("Phase3: Horror phase started - survive for %f seconds"), Phase3SurvivalTime);
+}
+
+void ASLDeveloperBoss::StartPhase4Platformer()
+{
+    int32 Phase4Index = static_cast<int32>(EDeveloperBossPhase::Phase4_Platformer);
     
-    // N초 후 자동으로 다음 벽 발사
+    ManualLaunchWallAttack(Phase4Index, -1);
+    
+    FTimerHandle Phase4CheckTimer;
     GetWorldTimerManager().SetTimer(
-        Phase3SurvivalTimer,
+        Phase4CheckTimer,
         [this]()
         {
-            if (bIsPhase3Active)
+            if (CurrentPhase == EDeveloperBossPhase::Phase4_Platformer)
             {
-                bIsPhase3Active = false;
-                DeactivateMouseActor();
-                LaunchWallAttack();
-                UE_LOG(LogTemp, Display, TEXT("Phase3: Survival time completed! Launching next wall"));
+                ChangePhase(EDeveloperBossPhase::Phase5_Final);
+                StartPhasePattern(EDeveloperBossPhase::Phase5_Final);
             }
         },
-        Phase3SurvivalTime,
+        2.0f,
         false
     );
 }
@@ -864,56 +1462,170 @@ void ASLDeveloperBoss::StartPhase5Final()
 {
     if (!IsValid(MouseActor))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Phase5: No mouse actor available - spawning new one"));
-        SpawnMouseActor();
-        
-        if (!IsValid(MouseActor))
+        OnDeveloperBossPatternFinished.Broadcast();
+        return;
+    }
+
+    bIsPhase5Active = true;
+    CurrentPhase5Wall = nullptr; 
+
+    InitializePhase5WallAttack(); 
+
+    if (IsValid(MouseActor))
+    {
+        MouseActor->DisableAttackability();
+    }
+
+    ActivateMouseActor();
+
+    GetWorldTimerManager().SetTimer(
+        Phase5WallAttackTimer, 
+        this,
+        &ASLDeveloperBoss::LaunchNextPhase5Wall,
+        Phase5WallAttackInterval, 
+        true,                     
+        Phase5WallAttackDelay     
+    );
+}
+
+void ASLDeveloperBoss::CleanupDeadBosses()
+{
+    TArray<ASLAIBaseCharacter*> BossesToRemove;
+    
+    for (ASLAIBaseCharacter* Boss : SpawnedBosses)
+    {
+        if (IsValid(Boss) && Boss->GetIsDead())
         {
-            // 마우스 액터를 생성할 수 없으면 보스전 완료
-            OnDeveloperBossPatternFinished.Broadcast();
-            return;
+            BossesToRemove.Add(Boss);
         }
     }
     
-    bIsPhase5Active = true;
+    for (ASLAIBaseCharacter* DeadBoss : BossesToRemove)
+    {
+        SpawnedBosses.Remove(DeadBoss);
+        UnregisterBossEvents(DeadBoss);
+        
+        FTimerHandle DestroyTimer;
+        GetWorld()->GetTimerManager().SetTimer(
+            DestroyTimer,
+            [DeadBoss]()
+            {
+                if (IsValid(DeadBoss))
+                {
+                    DeadBoss->Destroy();
+                }
+            },
+            2.0f,
+            false
+        );
+    }
+}
+
+void ASLDeveloperBoss::ResetCurrentWall()
+{
+    if (IsValid(CurrentWall))
+    {
+        CurrentWall->OnAllWallPartsLaunched.RemoveAll(this);
+        CurrentWall = nullptr;
+    }
+}
+
+void ASLDeveloperBoss::DestroyPhase3MouseActor()
+{
+    if (IsValid(Phase3MouseActor))
+    {
+        Phase3MouseActor->OnMouseActorDestroyed.RemoveAll(this);
+        Phase3MouseActor->Destroy();
+        Phase3MouseActor = nullptr;
+    }
+}
+
+void ASLDeveloperBoss::InitializePhase5WallAttack()
+{
+    Phase5AvailableWalls.Empty();
+
+    for (auto& PhaseData : PhaseLineDataMap)
+    {
+        for (const FWallLineConnection& Connection : PhaseData.Value.WallConnections)
+        {
+            if (IsValid(Connection.Wall))
+            {
+                Phase5AvailableWalls.Add(Connection.Wall);
+            }
+        }
+    }
+    ResetAllWalls();
+}
+
+void ASLDeveloperBoss::ResetAllWalls()
+{
+    for (ASLLaunchableWall* Wall : Phase5AvailableWalls)
+    {
+        if (IsValid(Wall))
+        {
+            Wall->ResetWall();
+        }
+    }
+}
+
+ASLLaunchableWall* ASLDeveloperBoss::GetNextPhase3Wall()
+{
+    int32 Phase3Index = static_cast<int32>(EDeveloperBossPhase::Phase3_Horror);
+    FPhaseLineData* Phase3Data = PhaseLineDataMap.Find(Phase3Index);
     
-    // 마우스 액터를 공격 가능한 상태로 활성화
-    ActivateMouseActor();
-    
-    // TODO: 마우스 액터에게 플레이어 공격을 받을 수 있다고 알려주기
-    // 마우스 액터의 BattleComponent 활성화 등
-    
-    UE_LOG(LogTemp, Display, TEXT("Phase5: Final phase started - destroy the mouse actor to win!"));
+    if (!Phase3Data || Phase3Data->WallConnections.Num() == 0)
+    {
+        return nullptr;
+    }
+
+    ASLLaunchableWall* SelectedWall = nullptr;
+
+    if (bPhase3RandomWallSelection)
+    {
+        TArray<ASLLaunchableWall*> AvailableWalls;
+        
+        for (const FWallLineConnection& Connection : Phase3Data->WallConnections)
+        {
+            if (IsValid(Connection.Wall) && Connection.Wall->CanLaunch())
+            {
+                AvailableWalls.Add(Connection.Wall);
+            }
+        }
+        
+        if (AvailableWalls.Num() > 0)
+        {
+            int32 RandomIndex = FMath::RandRange(0, AvailableWalls.Num() - 1);
+            SelectedWall = AvailableWalls[RandomIndex];
+        }
+    }
+    else
+    {
+        int32 WallCount = Phase3Data->WallConnections.Num();
+        int32 CheckedWalls = 0;
+        
+        while (CheckedWalls < WallCount)
+        {
+            if (Phase3Data->WallConnections.IsValidIndex(Phase3CurrentWallIndex))
+            {
+                ASLLaunchableWall* Wall = Phase3Data->WallConnections[Phase3CurrentWallIndex].Wall;
+                
+                if (IsValid(Wall) && Wall->CanLaunch())
+                {
+                    SelectedWall = Wall;
+                    Phase3CurrentWallIndex = (Phase3CurrentWallIndex + 1) % WallCount;
+                    break;
+                }
+            }
+            
+            Phase3CurrentWallIndex = (Phase3CurrentWallIndex + 1) % WallCount;
+            CheckedWalls++;
+        }
+    }
+
+    return SelectedWall;
 }
 
-void ASLDeveloperBoss::TestSpawnMouseActor()
+void ASLDeveloperBoss::ResetPhase3WallIndex()
 {
-    SpawnMouseActor();
-    UE_LOG(LogTemp, Display, TEXT("Test: Mouse Actor spawned"));
-}
-
-void ASLDeveloperBoss::TestActivateMouseActor()
-{
-    ActivateMouseActor();
-    UE_LOG(LogTemp, Display, TEXT("Test: Mouse Actor activated"));
-}
-
-void ASLDeveloperBoss::TestDeactivateMouseActor()
-{
-    DeactivateMouseActor();
-    UE_LOG(LogTemp, Display, TEXT("Test: Mouse Actor deactivated"));
-}
-
-void ASLDeveloperBoss::TestStartPhase3()
-{
-    CurrentPhase = EDeveloperBossPhase::Phase3_Horror;
-    StartPhase3Horror();
-    UE_LOG(LogTemp, Display, TEXT("Test: Started Phase3 Horror"));
-}
-
-void ASLDeveloperBoss::TestStartPhase5()
-{
-    CurrentPhase = EDeveloperBossPhase::Phase5_Final;
-    StartPhase5Final();
-    UE_LOG(LogTemp, Display, TEXT("Test: Started Phase5 Final"));
+    Phase3CurrentWallIndex = 0;
 }

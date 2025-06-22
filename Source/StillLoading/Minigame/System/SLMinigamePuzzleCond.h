@@ -19,6 +19,8 @@ enum class ESLPuzzleType : uint8
 class ASLInteractableObjectStatue;
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMinigameCompleted);
+
 UCLASS()
 class STILLLOADING_API ASLMinigamePuzzleCond : public ASLBaseMinigameCond
 {
@@ -33,6 +35,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnMinigameObjectResetRequested ObjectResetRequested;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnMinigameCompleted OnMinigameCompleted;
+	
 	//석상이 활성화되었을 때 해당 석상의 고유 번호를 아래 함수로 전달
 	void UpdateStatueState(int8 InStatueIndex, int8 SubmittedValue);
 
@@ -74,9 +79,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	bool GameSucceedFlag = false;
 
-
-	
-
-
+	UPROPERTY()
 	TArray<TObjectPtr<ASLInteractableObjectStatue>> Statues;
 };

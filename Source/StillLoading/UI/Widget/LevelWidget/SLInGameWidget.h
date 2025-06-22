@@ -24,6 +24,7 @@ public:
 	void SetIsTimerActivate(bool bIsActived);
 	void SetIsPlayerStateActivate(bool bIsActived, bool bIsVisibleSpecial);
 	void SetIsObjectiveActivate();
+	void SetInvisibleObjective();
 	void SetIsHitEffectActivate(bool bIsActived);
 	void SetIsBossStateActivate(bool bIsActived);
 

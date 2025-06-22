@@ -3,11 +3,9 @@
 #include "AIController.h"
 #include "NavigationSystem.h"
 #include "NiagaraFunctionLibrary.h"
-#include "AI/RealAI/AISquadManager.h"
 #include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/BoxComponent.h"
 
 AMonsterSpawner::AMonsterSpawner()
@@ -120,7 +118,6 @@ void AMonsterSpawner::SpawnMonstersByType()
 
 					if (!Leader)
 					{
-						AIMonster->SetLeader(); // 리더 지정
 						Leader = AIMonster;
 					}
 				}
@@ -153,13 +150,6 @@ void AMonsterSpawner::SpawnMonstersByType()
 		
 		FVector SpawnLocation = FVector(100.f, 100.f, 100.f);
 		FRotator SpawnRotation = FRotator::ZeroRotator;
-
-		if (AAISquadManager* MyNewSquadManager = GetWorld()->SpawnActor<AAISquadManager>(AAISquadManager::StaticClass(), SpawnLocation, SpawnRotation))
-		{
-			MyNewSquadManager->InitializeSquad(SpawnedMonsters);
-			MyNewSquadManager->SetTargetDistanceRadius(TargetDetectionRadius);
-			Leader->SetSquadManager(MyNewSquadManager);
-		}
 	}
 }
 
@@ -250,7 +240,6 @@ void AMonsterSpawner::SpawnMonstersWithoutLeader()
 				if (!AIMonster->OnMonsterDied.IsAlreadyBound(this, &AMonsterSpawner::MonsterDied))
 				{
 					AIMonster->OnMonsterDied.AddDynamic(this, &AMonsterSpawner::MonsterDied);
-					AIMonster->SetStrategyState(TAG_JOBMOB_ATTACK);
 				}
 			}
 		}
