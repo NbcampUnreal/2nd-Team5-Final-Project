@@ -94,8 +94,13 @@ private:
 	UPROPERTY()
 	FSLWidgetActivateBuffer WidgetActivateBuffer;
 
+	UPROPERTY()
 	ESLChapterType CurrentDataChapter = ESLChapterType::EC_None;
+
+	UPROPERTY()
 	ESLInputModeType CurrentLevelInputMode = ESLInputModeType::EIM_UIOnly;
+
+	UPROPERTY()
 	bool bIsVisibleLevelCursor = true;
 
 	// Test
