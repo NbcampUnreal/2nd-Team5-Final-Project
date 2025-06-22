@@ -15,6 +15,17 @@ void ASwarmManager::BeginPlay()
 	Super::BeginPlay();
 }
 
+void ASwarmManager::DestroyAllAgents()
+{
+    for (ASwarmAgent* Agent : AllAgents)
+    {
+        if (IsValid(Agent))
+        {
+            Agent->Destroy();
+        }
+    }
+}
+
 void ASwarmManager::SetNewPath(const TArray<FVector>& NewPathPoints)
 {
 	CurrentPath = NewPathPoints;
@@ -57,9 +68,9 @@ void ASwarmManager::UnregisterAgent(ASwarmAgent* Agent)
 
 	if (OnMonstersUpdated.IsBound())
 	{
-		int32 DecreaseCount = TotalSpawnCount - AllAgents.Num();
-		OnMonstersUpdated.Broadcast(DecreaseCount);
-		LastMonsterCount = AllAgents.Num();
+		//int32 DecreaseCount = TotalSpawnCount - AllAgents.Num();
+		OnMonstersUpdated.Broadcast(1);
+		//LastMonsterCount = AllAgents.Num();
 	}
 }
 

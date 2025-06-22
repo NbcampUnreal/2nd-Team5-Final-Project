@@ -37,6 +37,8 @@ public:
 	void SetLeader(ASwarmAgent* InLeader) { LeaderAgent = InLeader; }
 	ASwarmAgent* GetLeader() const { return LeaderAgent.Get(); }
 
+	void DestroyAllAgents();
+
 	UPROPERTY(BlueprintAssignable, Category = "Monster Spawner | Events")
 	FOnMonstersUpdatedSignature OnMonstersUpdated;
 
