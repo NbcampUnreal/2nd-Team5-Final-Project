@@ -154,7 +154,9 @@ private:
 	UPROPERTY()
 	TMap<int32, FVector> AgentRandomOffsets;
 
+	TArray<FVector> CurrentPathPoints;
+
 	ESquadState CurrentSquadState = ESquadState::Patrolling_Wait;
 	int32 NextAgentID = 0;
-	
+	int32 CurrentPathIndex;
 };

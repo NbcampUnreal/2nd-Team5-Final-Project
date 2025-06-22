@@ -7,6 +7,8 @@
 #include "BoidMovementComponent/BoidMovementComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 ASwarmAgent::ASwarmAgent()
@@ -150,3 +152,27 @@ void ASwarmAgent::PlayAttackAnim()
 	}
 }
 
+void ASwarmAgent::BecomeGhostLeader()
+{
+	SetActorHiddenInGame(true);
+
+	SetActorEnableCollision(ECollisionEnabled::NoCollision);
+    
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	if (GetMesh())
+	{
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetMesh()->SetCastShadow(false);
+	}
+    
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->SetMovementMode(EMovementMode::MOVE_Flying);
+		MoveComp->SetCanEverAffectNavigation(false);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Agent [%s] has become a Ghost Leader."), *this->GetName());
+}

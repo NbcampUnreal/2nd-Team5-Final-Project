@@ -65,6 +65,9 @@ public:
 	bool bEnableAutoSpawn = true;
 
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
+	bool bUseCentralPathfinding = false;
+
+	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
 	EFollowerFormationType FormationType;
 
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")

@@ -3,6 +3,7 @@
 #include "SwarmAgent.h"
 #include "SwarmManager.h"
 #include "AnimInstances/SLCompanionAnimInstance.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/SphereComponent.h"
 #include "Engine/TargetPoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -34,8 +35,8 @@ void ASwarmSpawner::BeginSpawn()
 	UWorld* World = GetWorld();
 	if (World && SwarmManagerClass)
 	{
-		if (SpawnedManager = World->SpawnActor<ASwarmManager>(
-			SwarmManagerClass, GetActorLocation(), GetActorRotation()))
+		SpawnedManager = World->SpawnActor<ASwarmManager>(SwarmManagerClass, GetActorLocation(), GetActorRotation());
+		if (SpawnedManager)
 		{
 			// 군체 알고리즘 가중치 셋팅
 			SpawnedManager->SwarmPatrolPoints = PatrolPoints;
@@ -108,9 +109,23 @@ void ASwarmSpawner::BeginSpawn()
 								{
 									DeferredAgent->RequestBerserkMode();
 								}
+								
 								DeferredAgent->SetLeader(true, LeaderBehaviorTree, LeaderBlackBoard);
 								SpawnedManager->SetLeader(DeferredAgent);
 								SpawnedManager->DetectionRadius = DetectionRadius;
+
+								if (AAIController* AIController = Cast<AAIController>(DeferredAgent->GetController()))
+								{
+									if(UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent())
+									{
+										BlackboardComp->SetValueAsBool(TEXT("bUseCentralPathfinding"), bUseCentralPathfinding);
+									}
+								}
+
+								if (bUseCentralPathfinding)
+								{
+									DeferredAgent->BecomeGhostLeader(); 
+								}
 							}
 
 							UGameplayStatics::FinishSpawningActor(DeferredAgent, SpawnTransform);
