@@ -130,63 +130,50 @@ void USL2DMovementHandlerComponent::Move(const float AxisValue, const EInputActi
 	}
 	
 	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
-	
-	AController* Controller = OwnerCharacter->GetController();
-	if (!Controller) return;
-	
-	FRotator ControlRotation = Controller->GetControlRotation();
-	FRotator YawRotation(0.f, ControlRotation.Yaw, 0.f);
-	
-	FVector ForwardDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	FVector RightDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-	
-	ForwardDir.Z = 0.f;
-	RightDir.Z = 0.f;
-	ForwardDir.Normalize();
-	RightDir.Normalize();
-	
-	// Rotate mesh based on movement input
-	if (CachedSkeletalMesh)
-	{
-		float YawRotationScalar = 0.0f;
-		switch (ActionType)
-		{
-			case EInputActionType::EIAT_MoveLeft:
-				YawRotationScalar = 180.0f;
-				break;
-			case EInputActionType::EIAT_MoveRight:
-				YawRotationScalar = 0.0f;
-				break;
-			case EInputActionType::EIAT_MoveUp:
-				YawRotationScalar = -90.0f;
-				break;
-			case EInputActionType::EIAT_MoveDown:
-				YawRotationScalar = 90.0f;
-				break;
-			default:
-				break;
-		}
-		const FRotator NewRotation(0.0f, YawRotationScalar, 0.0f);
-			CachedSkeletalMesh->SetRelativeRotation(NewRotation);
-	}
 
+	float YawRotationScalar = 0.0f;
 	switch (ActionType)
 	{
-	case EInputActionType::EIAT_MoveUp:
-		OwnerCharacter->AddMovementInput(ForwardDir, AxisValue);
-		break;
-	case EInputActionType::EIAT_MoveDown:
-		OwnerCharacter->AddMovementInput(-ForwardDir, AxisValue);
-		break;
-	case EInputActionType::EIAT_MoveLeft:
-		OwnerCharacter->AddMovementInput(-RightDir, AxisValue);
-		break;
-	case EInputActionType::EIAT_MoveRight:
-		OwnerCharacter->AddMovementInput(RightDir, AxisValue);
-		break;
-	default:
-		break;
+		case EInputActionType::EIAT_MoveLeft:
+			YawRotationScalar = 270.0f;
+			break;
+		case EInputActionType::EIAT_MoveRight:
+			YawRotationScalar = 90.0f;
+			break;
+		case EInputActionType::EIAT_MoveUp:
+			YawRotationScalar = 0.0f;
+			break;
+		case EInputActionType::EIAT_MoveDown:
+			YawRotationScalar = 180.0f;
+			break;
+		default:
+			break;
 	}
+	
+	const FRotator NewRotation(0.0f, YawRotationScalar, 0.0f);
+
+	const FVector ForwardDir = FVector::ForwardVector;
+	const FVector RightDir = FVector::RightVector;
+
+	OwnerCharacter->SetActorRotation(NewRotation);
+	switch (ActionType)
+	{
+		case EInputActionType::EIAT_MoveUp:
+			OwnerCharacter->AddMovementInput(ForwardDir, AxisValue);
+			break;
+		case EInputActionType::EIAT_MoveDown:
+			OwnerCharacter->AddMovementInput(-ForwardDir, AxisValue);
+			break;
+		case EInputActionType::EIAT_MoveLeft:
+			OwnerCharacter->AddMovementInput(-RightDir, AxisValue);
+			break;
+		case EInputActionType::EIAT_MoveRight:
+			OwnerCharacter->AddMovementInput(RightDir, AxisValue);
+			break;
+		default:
+			break;
+	}
+	
 	AttackStateCount++;
 	if (AttackStateCount >= AttackStateCountLimit)
 	{
