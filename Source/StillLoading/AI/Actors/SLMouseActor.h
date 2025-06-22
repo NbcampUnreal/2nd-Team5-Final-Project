@@ -18,6 +18,7 @@ enum class EMouseActorState : uint8
 	Descending	UMETA(DisplayName = "Descending"),
 	Grabbing	UMETA(DisplayName = "Grabbing"),
 	MovingToOrbit	UMETA(DisplayName = "Moving To Orbit"),
+	MovingToDrop	UMETA(DisplayName = "Moving To Drop"),  // 새로 추가
 	Destroyed	UMETA(DisplayName = "Destroyed")
 };
 
@@ -152,6 +153,9 @@ protected:
 	void ExecuteSweepAttack();
 	FVector FindSafeDropLocation(const FVector& CurrentLocation) const;
 	bool IsLocationSafe(const FVector& Location) const;
+	void StartMoveToDropLocation();
+	void UpdateMoveToDropMovement(float DeltaTime);
+	void DropPlayerNaturally();
 	
 	// Protected Variables (Components)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -269,6 +273,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase 5 Settings")
 	TObjectPtr<USoundBase> StunSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drop Settings")
+	float MoveToDropSpeed;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drop Settings")
+	float DropHeight;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drop Settings")
+	float InitialDropVelocity;
+	
 private:
 	// Private Variables (Runtime State)
 	EMouseActorState CurrentState;
@@ -297,4 +310,7 @@ private:
 	bool bIsStunned;
 	bool bIsAttackable;
 	FTimerHandle StunRecoveryTimer;
+
+	FVector DropTargetLocation;
+	bool bIsMovingToDrop;
 };
