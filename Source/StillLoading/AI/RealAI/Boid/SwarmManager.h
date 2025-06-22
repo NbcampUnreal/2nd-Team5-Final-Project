@@ -22,6 +22,8 @@ enum class ESquadState : uint8
 	Engaging
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMonstersUpdatedSignature, int32, RemainingCount);
+
 UCLASS()
 class STILLLOADING_API ASwarmManager : public AActor
 {
@@ -35,8 +37,19 @@ public:
 	void SetLeader(ASwarmAgent* InLeader) { LeaderAgent = InLeader; }
 	ASwarmAgent* GetLeader() const { return LeaderAgent.Get(); }
 
+	void DestroyAllAgents();
+
+	UPROPERTY(BlueprintAssignable, Category = "Monster Spawner | Events")
+	FOnMonstersUpdatedSignature OnMonstersUpdated;
+
 	UFUNCTION(BlueprintCallable)
 	void SetNewPath(const TArray<FVector>& NewPathPoints);
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 TotalSpawnCount = 0;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 LastMonsterCount = 0;
 
 	// 팔로워 초기 셋팅 관련
 	void RegisterAgent(ASwarmAgent* Agent);
@@ -44,6 +57,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Formation", meta = (ToolTip = "각 슬롯에 적용될 최대 랜덤 오프셋 거리"))
 	float MaxRandomOffset = 25.0f;
+
+	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
+	float DetectionRadius = 700.0f;
 
 	const TArray<TObjectPtr<ASwarmAgent>>& GetAgents() const { return AllAgents; }
 
@@ -106,9 +122,8 @@ public:
 	float FormationOffsetBehindLeader = 100.0f;
 
 	// 팔로워 상태 관련
-	void SetSquadState(const ESquadState NewState) { CurrentSquadState = NewState; }
+	void SetSquadState(const ESquadState NewState);
 	ESquadState GetCurrentSquadState() const { return CurrentSquadState; }
-
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Swarm State")
 	TObjectPtr<AActor> CurrentTarget;
@@ -121,6 +136,10 @@ public:
 
 	UFUNCTION()
 	void AgentDead(ASwarmAgent* Agent);
+
+protected:
+	UFUNCTION()
+	void TryToAppointNewLeader();
 
 private:
 	UPROPERTY()

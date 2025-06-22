@@ -36,6 +36,8 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> DestroyEffect;
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	float EffectScale = 1.0f;
 	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UBattleComponent> BattleComponent;

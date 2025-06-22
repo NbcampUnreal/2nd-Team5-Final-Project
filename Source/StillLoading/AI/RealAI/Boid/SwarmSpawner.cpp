@@ -2,11 +2,7 @@
 
 #include "SwarmAgent.h"
 #include "SwarmManager.h"
-#include "AI/RealAI/Blackboardkeys.h"
-#include "AI/RealAI/MonsterAICharacter.h"
 #include "AnimInstances/SLCompanionAnimInstance.h"
-#include "BehaviorTree/BlackboardComponent.h"
-#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/SphereComponent.h"
 #include "Engine/TargetPoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -38,7 +34,7 @@ void ASwarmSpawner::BeginSpawn()
 	UWorld* World = GetWorld();
 	if (World && SwarmManagerClass)
 	{
-		if (ASwarmManager* SpawnedManager = World->SpawnActor<ASwarmManager>(
+		if (SpawnedManager = World->SpawnActor<ASwarmManager>(
 			SwarmManagerClass, GetActorLocation(), GetActorRotation()))
 		{
 			// 군체 알고리즘 가중치 셋팅
@@ -54,6 +50,7 @@ void ASwarmSpawner::BeginSpawn()
 			SpawnedManager->CombatGoalSeeking = CombatGoalSeekingWeight;
 
 			SpawnedManager->CurrentFormationType = FormationType;
+			SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
 
 			// 순찰 포인트 정렬
 			TArray<FVector> InitialPathPoints;
@@ -70,19 +67,26 @@ void ASwarmSpawner::BeginSpawn()
 				SpawnedManager->SetNewPath(InitialPathPoints);
 			}
 
+			TotalSpawnCount = 0;
+
 			for (const auto& [AgentClass, ControllerClass, SpawnCount, AvoidanceWeight, bIsLeader] : SwarmCompositions)
 			{
 				if (AgentClass)
 				{
+					TotalSpawnCount += SpawnCount;
+
 					for (int32 i = 0; i < SpawnCount; ++i)
 					{
 						const FVector SpawnLocation = GetActorLocation() + FMath::VRand() * FMath::FRandRange(0, SpawnRadius);
 						const FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
 
+						constexpr ESpawnActorCollisionHandlingMethod CollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
 						// 지연 스폰
-						if (ASwarmAgent* DeferredAgent = World->SpawnActorDeferred<ASwarmAgent>(AgentClass, SpawnTransform))
+						if (ASwarmAgent* DeferredAgent = World->SpawnActorDeferred<ASwarmAgent>(AgentClass, SpawnTransform, this, nullptr, CollisionHandlingOverride))
 						{
 							DeferredAgent->AIControllerClass = ControllerClass;
+							DeferredAgent->MySwarmManager = SpawnedManager;
 
 							if (UCharacterMovementComponent* MoveComp = DeferredAgent->GetCharacterMovement())
 							{
@@ -100,18 +104,43 @@ void ASwarmSpawner::BeginSpawn()
 
 							if (bIsLeader)
 							{
-								DeferredAgent->RequestBerserkMode();
+								if (bBeginBurserkMode)
+								{
+									DeferredAgent->RequestBerserkMode();
+								}
 								DeferredAgent->SetLeader(true, LeaderBehaviorTree, LeaderBlackBoard);
 								SpawnedManager->SetLeader(DeferredAgent);
+								SpawnedManager->DetectionRadius = DetectionRadius;
 							}
 
 							UGameplayStatics::FinishSpawningActor(DeferredAgent, SpawnTransform);
 							SpawnedManager->RegisterAgent(DeferredAgent); // 에이전트 등록
 						}
+						else
+						{
+							UE_LOG(LogTemp, Error, TEXT("ASwarmSpawner::BeginSpawn - Failed to spawn agent of class %s at location %s"), 
+								   *AgentClass->GetName(), 
+								   *SpawnLocation.ToString());
+						}
 					}
 				}
 			}
 		}
+	}
+}
+
+int32 ASwarmSpawner::GetSpawnCount() const
+{
+	return TotalSpawnCount;
+}
+
+void ASwarmSpawner::ResetSpawendMonster()
+{
+	if (IsValid(SpawnedManager))
+	{
+		SpawnedManager->DestroyAllAgents();
+		SpawnedManager->Destroy();
+		BeginSpawn();
 	}
 }
 
@@ -123,4 +152,10 @@ void ASwarmSpawner::BeginPlay()
 	{
 		BeginSpawn();
 	}
+}
+
+void ASwarmSpawner::OnMonstersUpdated_Handler(const int32 DecreaseCount)
+{
+	OnMonstersUpdated.Broadcast(DecreaseCount);
+	UE_LOG(LogTemp, Warning, TEXT("DecreaseCount MonsterCount[%d]"), DecreaseCount);
 }

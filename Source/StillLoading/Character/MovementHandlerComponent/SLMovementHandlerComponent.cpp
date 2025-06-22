@@ -102,6 +102,13 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick T
 			CameraZoomInterpSpeed // 보간 속도
 		);
 	}
+
+	// Shield Effect
+	if (ActiveShieldEffectComponent && !OwnerCharacter->IsInPrimaryState(TAG_Character_Defense_Block))
+	{
+		ActiveShieldEffectComponent->DestroyComponent();
+		ActiveShieldEffectComponent = nullptr;
+	}
 }
 
 void UMovementHandlerComponent::OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value)

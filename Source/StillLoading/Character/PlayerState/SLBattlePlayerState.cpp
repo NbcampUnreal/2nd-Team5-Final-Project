@@ -59,6 +59,12 @@ void ASLBattlePlayerState::SetHealth(const float NewHealth)
 	OnRep_Health();
 }
 
+void ASLBattlePlayerState::IncreaseHealth(const float Amount)
+{
+	Health = FMath::Clamp(Health + Amount, 0.f, MaxHealth);
+	OnRep_Health();
+}
+
 void ASLBattlePlayerState::DecreaseHealth(const float Amount)
 {
 	Health = FMath::Clamp(Health - Amount, 0.f, Health);
@@ -106,6 +112,8 @@ void ASLBattlePlayerState::ResetState()
 {
 	BurningGage = 0.f;
 	Health = MaxHealth;
+	HPDelegate.OnPlayerHpChanged.Broadcast(MaxHealth, Health);
+	OnPlayerHpChanged.Broadcast(MaxHealth, Health);
 }
 
 void ASLBattlePlayerState::OnRep_Health()

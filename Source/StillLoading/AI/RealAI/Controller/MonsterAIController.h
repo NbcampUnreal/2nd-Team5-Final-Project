@@ -37,10 +37,4 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
-
-	UPROPERTY(EditDefaultsOnly, Category = "AI")
-	TObjectPtr<UBehaviorTree> LeaderBehaviorTreeAsset;
-
-	UPROPERTY(EditDefaultsOnly, Category = "AI")
-	TObjectPtr<UBehaviorTree> SoldierBehaviorTreeAsset;
 };

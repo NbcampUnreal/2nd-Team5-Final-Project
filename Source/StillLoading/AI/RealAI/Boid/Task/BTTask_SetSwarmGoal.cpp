@@ -1,5 +1,7 @@
 #include "BTTask_SetSwarmGoal.h"
 
+#include "AIController.h"
+#include "AI/RealAI/Boid/SwarmAgent.h"
 #include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -13,12 +15,13 @@ EBTNodeResult::Type UBTTask_SetSwarmGoal::ExecuteTask(UBehaviorTreeComponent& Ow
 {
 	const AAIController* AIController = OwnerComp.GetAIOwner();
 	const UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
-	if (!AIController || !BlackboardComp)
+	const ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(AIController->GetPawn());
+	if (!AIController || !BlackboardComp || !OwningAgent)
 	{
 		return EBTNodeResult::Failed;
 	}
 
-	ASwarmManager* SwarmManager = Cast<ASwarmManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASwarmManager::StaticClass()));
+	ASwarmManager* SwarmManager = OwningAgent->GetMySwarmManager();
 	if (!SwarmManager)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("BTTask_SetSwarmGoal: SwarmManager not found in world."));

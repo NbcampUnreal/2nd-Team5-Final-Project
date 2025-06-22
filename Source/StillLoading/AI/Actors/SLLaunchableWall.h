@@ -8,29 +8,16 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "SLLaunchableWall.generated.h"
 
-// 카테고리 정의
-#define CATEGORY_COMPONENTS "LaunchableWall | Components"
-#define CATEGORY_WALL_SETTINGS "LaunchableWall | Wall Settings"
-#define CATEGORY_WALL "LaunchableWall | Wall"
-#define CATEGORY_MESH "LaunchableWall | Mesh"
-#define CATEGORY_WALL_LAYOUT "LaunchableWall | Wall Layout"
-#define CATEGORY_ROTATION_SETTINGS "LaunchableWall | Rotation Settings"
-#define CATEGORY_PLAYER_AIM_SETTINGS "LaunchableWall | Player Aim Settings"
-#define CATEGORY_SPAWN_ROTATION "LaunchableWall | Spawn Rotation"
-#define CATEGORY_PRE_LAUNCH_ANIMATION "LaunchableWall | Pre-Launch Animation"
-#define CATEGORY_EFFECTS_CHARACTER "LaunchableWall | Effects|Character"
-#define CATEGORY_EFFECTS_GROUND "LaunchableWall | Effects|Ground"
-#define CATEGORY_MESH_SETTINGS "LaunchableWall | Mesh Settings"
-#define CATEGORY_EVENTS "LaunchableWall | Events"
-#define CATEGORY_RUNTIME_DATA "LaunchableWall | Runtime Data"
-
+class ASLMouseActor;
 class UNiagaraSystem;
+class ASLLaunchableWall;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnAllWallPartsLaunched);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSLOnAllWallPartsLaunched, ASLLaunchableWall*, LaunchedWall);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnWallAnimationCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSLOnWallPartRotationCompleted, int32, WallPartIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnWallYMovementCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSLOnWallSpacingCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSLOnWallHitMouseActor, ASLMouseActor*, HitMouseActor, int32, WallPartIndex);
 
 UENUM(BlueprintType)
 enum class EWallPartState : uint8
@@ -49,58 +36,46 @@ class STILLLOADING_API ASLLaunchableWall : public AActor
 public:
 	ASLLaunchableWall();
 
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_WALL)
+	// Public Functions
+	UFUNCTION(BlueprintCallable, Category = "LaunchableWall")
 	void LaunchWallToPlayer();
 
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_WALL)
+	UFUNCTION(BlueprintCallable, Category = "LaunchableWall")
 	bool CanLaunch() const;
 
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_MESH)
+	UFUNCTION(BlueprintCallable, Category = "LaunchableWall")
 	void RefreshWallMeshes();
 
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_WALL_LAYOUT)
+	UFUNCTION(BlueprintCallable, Category = "LaunchableWall")
 	void RefreshWallLayout();
 
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_SPAWN_ROTATION)
+	UFUNCTION(BlueprintCallable, Category = "LaunchableWall")
 	void ApplySpawnRotation();
+	
+	UFUNCTION(BlueprintCallable, Category = "LaunchableWall")
+	void ResetWall();
 
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_SPAWN_ROTATION)
-	void SetSpawnRotation(const FRotator& NewRotation);
-
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_RUNTIME_DATA)
-	void SetLaunchSpeed(float NewSpeed);
-
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_RUNTIME_DATA)
-	void SetLaunchDelay(float NewDelay);
-
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_RUNTIME_DATA)
-	void SetNumberOfWallParts(int32 NewCount);
-
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_RUNTIME_DATA)
-	void SetRotationDuration(float NewDuration);
-
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_RUNTIME_DATA)
-	void SetPlayerAimDuration(float NewDuration);
-
-	UFUNCTION(BlueprintCallable, Category = CATEGORY_RUNTIME_DATA)
-	void SetAnimationDurations(float NewYMovementDuration, float NewSpacingDuration);
-
-	UPROPERTY(BlueprintAssignable, Category = CATEGORY_EVENTS)
+	// Public Variables (Delegates)
+	UPROPERTY(BlueprintAssignable, Category = "LaunchableWall")
 	FSLOnAllWallPartsLaunched OnAllWallPartsLaunched;
 
-	UPROPERTY(BlueprintAssignable, Category = CATEGORY_EVENTS)
+	UPROPERTY(BlueprintAssignable, Category = "LaunchableWall")
 	FSLOnWallAnimationCompleted OnWallAnimationCompleted;
 
-	UPROPERTY(BlueprintAssignable, Category = CATEGORY_EVENTS)
+	UPROPERTY(BlueprintAssignable, Category = "LaunchableWall")
 	FSLOnWallPartRotationCompleted OnWallPartRotationCompleted;
 
-	UPROPERTY(BlueprintAssignable, Category = CATEGORY_EVENTS)
+	UPROPERTY(BlueprintAssignable, Category = "LaunchableWall")
 	FSLOnWallYMovementCompleted OnWallYMovementCompleted;
 
-	UPROPERTY(BlueprintAssignable, Category = CATEGORY_EVENTS)
+	UPROPERTY(BlueprintAssignable, Category = "LaunchableWall")
 	FSLOnWallSpacingCompleted OnWallSpacingCompleted;
 
+	UPROPERTY(BlueprintAssignable, Category = "LaunchableWall")
+	FSLOnWallHitMouseActor OnWallHitMouseActor;
+
 protected:
+	// Protected Functions
 	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform& Transform) override;
 
@@ -153,118 +128,135 @@ protected:
 	void ApplySpawnRotationToWallPart(UStaticMeshComponent* WallPart, int32 PartIndex);
 	void SetupWallPartCollisions(UStaticMeshComponent* WallPart);
 	bool ShouldIgnoreCollision(AActor* OtherActor) const;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CATEGORY_COMPONENTS)
+	void HandleMouseActorHit(ASLMouseActor* MouseActor, const FHitResult& HitResult, int32 WallPartIndex);
+
+	// Protected Variables (Components)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> RootSceneComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CATEGORY_COMPONENTS)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TArray<TObjectPtr<UStaticMeshComponent>> WallParts;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CATEGORY_COMPONENTS)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TArray<TObjectPtr<UProjectileMovementComponent>> ProjectileMovements;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CATEGORY_COMPONENTS)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UTimelineComponent> RotationTimeline;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CATEGORY_COMPONENTS)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UTimelineComponent> PlayerAimTimeline;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CATEGORY_COMPONENTS)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UTimelineComponent> YMovementTimeline;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CATEGORY_COMPONENTS)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UTimelineComponent> SpacingTimeline;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_RUNTIME_DATA, meta = (ClampMin = "1", ClampMax = "20"))
+	// Protected Variables (Settings)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings", meta = (ClampMin = "1", ClampMax = "20"))
 	int32 NumberOfWallParts;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_WALL_SETTINGS)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings")
 	float WallPartSpacing;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_RUNTIME_DATA)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings")
 	float LaunchDelay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_RUNTIME_DATA)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings")
 	float LaunchSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_WALL_SETTINGS)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings")
 	FVector WallPartScale;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_WALL_SETTINGS)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings")
 	bool bArrangeHorizontally;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_WALL_SETTINGS)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings")
 	float ProjectileGravityScale;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_ROTATION_SETTINGS)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation Settings")
 	float RotationDelay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_RUNTIME_DATA, meta = (ClampMin = "0.1", ClampMax = "2.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation Settings", meta = (ClampMin = "0.1", ClampMax = "2.0"))
 	float RotationDuration;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_ROTATION_SETTINGS)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation Settings")
 	TObjectPtr<UCurveFloat> RotationCurve;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_RUNTIME_DATA)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Aim Settings")
 	float PlayerAimDuration;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_PLAYER_AIM_SETTINGS)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Aim Settings")
 	TObjectPtr<UCurveFloat> PlayerAimCurve;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_SPAWN_ROTATION)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Rotation")
 	FRotator SpawnRotation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_SPAWN_ROTATION)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Rotation")
 	bool bApplySpawnRotationOnConstruction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_PRE_LAUNCH_ANIMATION)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation")
 	bool bEnablePreLaunchAnimation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_PRE_LAUNCH_ANIMATION, meta = (EditCondition = "bEnablePreLaunchAnimation"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation"))
 	float YMovementDistance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_PRE_LAUNCH_ANIMATION, meta = (EditCondition = "bEnablePreLaunchAnimation"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation"))
 	float SpacingExpansionDistance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_RUNTIME_DATA, meta = (EditCondition = "bEnablePreLaunchAnimation", ClampMin = "0.1", ClampMax = "3.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation", ClampMin = "0.1", ClampMax = "3.0"))
 	float YMovementDuration;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_RUNTIME_DATA, meta = (EditCondition = "bEnablePreLaunchAnimation", ClampMin = "0.1", ClampMax = "3.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation", ClampMin = "0.1", ClampMax = "3.0"))
 	float SpacingAnimationDuration;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_PRE_LAUNCH_ANIMATION, meta = (EditCondition = "bEnablePreLaunchAnimation"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation"))
 	TObjectPtr<UCurveFloat> YMovementCurve;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_PRE_LAUNCH_ANIMATION, meta = (EditCondition = "bEnablePreLaunchAnimation"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pre-Launch Animation", meta = (EditCondition = "bEnablePreLaunchAnimation"))
 	TObjectPtr<UCurveFloat> SpacingAnimationCurve;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_EFFECTS_CHARACTER)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects|Character")
 	TObjectPtr<UNiagaraSystem> CharacterHitEffect;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_EFFECTS_CHARACTER)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects|Character")
 	TObjectPtr<USoundBase> CharacterHitSound;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_EFFECTS_GROUND)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects|Ground")
 	TObjectPtr<UNiagaraSystem> GroundHitEffect;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_EFFECTS_GROUND)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects|Ground")
 	TObjectPtr<USoundBase> GroundHitSound;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_MESH_SETTINGS)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh Settings")
 	TObjectPtr<UStaticMesh> DefaultWallMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_MESH_SETTINGS)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh Settings")
 	bool bUseCustomMeshPerPart;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CATEGORY_MESH_SETTINGS, meta = (EditCondition = "bUseCustomMeshPerPart"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh Settings", meta = (EditCondition = "bUseCustomMeshPerPart"))
 	TArray<TObjectPtr<UStaticMesh>> WallPartMeshes;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Actor")
+	float MouseActorStunDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Actor")
+	TObjectPtr<UNiagaraSystem> MouseHitEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Actor")
+	TObjectPtr<USoundBase> MouseHitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings", meta = (ClampMin = "0.0"))
+	float PostLaunchLifetime;
+	
 private:
+	// Private Functions
 	void CreateWallParts();
 	void CreateWallPart(int32 Index);
 	void UpdateWallPartsVisibility();
 	UStaticMesh* GetMeshForPart(int32 Index) const;
 
+	// Private Variables
 	static const int32 MaxWallParts = 5;
 
 	int32 CurrentLaunchIndex;

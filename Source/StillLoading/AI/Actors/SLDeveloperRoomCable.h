@@ -28,6 +28,7 @@ class STILLLOADING_API ASLDeveloperRoomCable : public ASLInteractableBreakable
 public:
     ASLDeveloperRoomCable();
 
+    // Public Functions
     UFUNCTION(BlueprintCallable, Category = "Boss Line")
     void ActivateLine();
 
@@ -58,10 +59,12 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "Boss Line")
     void OnLineDestroyed();
 
+    // Public Variables (Delegates)
     UPROPERTY(BlueprintAssignable, Category = "Boss Line")
     FSLOnBossLineDestroyed OnBossLineDestroyed;
 
 protected:
+    // Protected Functions
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
     virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType) override;
@@ -77,12 +80,14 @@ protected:
     void StartShakeEffect();
     void UpdateShakeEffect(float DeltaTime);
 
+    // Protected Variables (Components)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<UBoxComponent> LineCollisionComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<USkeletalMeshComponent> LineSkeletalMeshComponent;
 
+    // Protected Variables (Line Settings)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Line Settings")
     TObjectPtr<USkeletalMesh> CableSkeletalMesh;
 
@@ -114,6 +119,7 @@ protected:
     float ShakeFrequency;
 
 private:
+    // Private Variables
     EBossLineState CurrentLineState;
     int32 LineIndex;
     bool bIsShaking;
