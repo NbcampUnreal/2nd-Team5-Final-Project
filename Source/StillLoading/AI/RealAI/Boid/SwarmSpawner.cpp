@@ -80,8 +80,10 @@ void ASwarmSpawner::BeginSpawn()
 						const FVector SpawnLocation = GetActorLocation() + FMath::VRand() * FMath::FRandRange(0, SpawnRadius);
 						const FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
 
+						constexpr ESpawnActorCollisionHandlingMethod CollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
 						// 지연 스폰
-						if (ASwarmAgent* DeferredAgent = World->SpawnActorDeferred<ASwarmAgent>(AgentClass, SpawnTransform))
+						if (ASwarmAgent* DeferredAgent = World->SpawnActorDeferred<ASwarmAgent>(AgentClass, SpawnTransform, this, nullptr, CollisionHandlingOverride))
 						{
 							DeferredAgent->AIControllerClass = ControllerClass;
 							DeferredAgent->MySwarmManager = SpawnedManager;
@@ -113,6 +115,12 @@ void ASwarmSpawner::BeginSpawn()
 
 							UGameplayStatics::FinishSpawningActor(DeferredAgent, SpawnTransform);
 							SpawnedManager->RegisterAgent(DeferredAgent); // 에이전트 등록
+						}
+						else
+						{
+							UE_LOG(LogTemp, Error, TEXT("ASwarmSpawner::BeginSpawn - Failed to spawn agent of class %s at location %s"), 
+								   *AgentClass->GetName(), 
+								   *SpawnLocation.ToString());
 						}
 					}
 				}
