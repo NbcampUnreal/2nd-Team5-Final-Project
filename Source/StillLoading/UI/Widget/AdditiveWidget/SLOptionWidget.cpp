@@ -18,6 +18,7 @@
 #include "UI/HUD/SLBaseHUD.h"
 #include "UI/Widget/SLWidgetPrivateDataAsset.h"
 #include "NiagaraSystem.h"
+#include "SubSystem/SLUserDataSubsystem.h"
 
 const FName USLOptionWidget::TitleTextIndex = "TitleText";
 const FName USLOptionWidget::KeySettingButtonIndex = "KeySettingButton";
@@ -33,6 +34,7 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	WidgetInputMode = ESLInputModeType::EIM_UIOnly;
 	WidgetOrder = 15;
 	bIsVisibleCursor = true;
+	bIsFocusable = true;
 	// TODO : Bind OpenAnimation To OpenAnim, CloseAnimation To CloseAnim
 	Super::InitWidget(NewUISubsystem);
 
@@ -59,6 +61,8 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
 	Super::ActivateWidget(WidgetActivateBuffer);
+
+	SetFocus();
 
 	if (IsValid(OpenAnim))
 	{
@@ -187,6 +191,27 @@ void USLOptionWidget::OnClickedQuit()
 {
 	PlayUISound(ESLUISoundType::EUS_Click);
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
+}
+
+FReply USLOptionWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (!IsInViewport()) 
+	{
+		return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+	}
+
+	FKey OptionKey = InKeyEvent.GetKey();
+	USLUserDataSubsystem* UserDataSubsystem = GetGameInstance()->GetSubsystem<USLUserDataSubsystem>();
+
+	if (UserDataSubsystem->GetActionKeyMap().Contains(EInputActionType::EIAT_Menu))
+	{
+		if (OptionKey == UserDataSubsystem->GetActionKeyMap()[EInputActionType::EIAT_Menu].Key)
+		{
+			CloseWidget();
+		}
+	}
+
+	return FReply::Handled();
 }
 
 void USLOptionWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
