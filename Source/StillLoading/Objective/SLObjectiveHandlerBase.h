@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLObjectiveHandlerBase.generated.h"
 
 
@@ -28,6 +29,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "ObjectiveHandler")
 	USLObjectiveBase* GetObjective();
+
+	UFUNCTION(BlueprintCallable, Category = "ObjectiveHandler")
+	void SetObjectiveState(const ESLObjectiveState State);
 
 protected:
 	virtual void BeginPlay() override;
@@ -72,7 +76,7 @@ public:
 	
 protected:
 	UPROPERTY(EditAnywhere, Category = "ObjectiveHandler")
-	ESLChapterType Chapter;
+	ESLChapterType Chapter = ESLChapterType::EC_None;
 	UPROPERTY(EditAnywhere, Category = "ObjectiveHandler")
 	FName ObjectiveName;
 };

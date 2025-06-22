@@ -30,6 +30,12 @@ public:
 	ESLObjectiveState GetObjectiveState(ESLChapterType Chapter, FName Name);
 
 	UFUNCTION(BlueprintCallable)
+	void SetObjectiveState(ESLChapterType Chapter, FName Name, ESLObjectiveState State);
+
+	UFUNCTION(BlueprintCallable)
+	void SetObjectiveStateDelayed(ESLChapterType Chapter, FName Name, ESLObjectiveState State);
+	
+	UFUNCTION(BlueprintCallable)
 	TArray<USLObjectiveBase*> GetInProgressedObjectives();
 
 	TMap<ESLChapterType, FSLObjectiveRuntimeData>& GetCachedObjectiveDataRef();

@@ -46,11 +46,16 @@ void USLObjectiveBase::SetObjectiveState(const ESLObjectiveState InState)
 	OnObjectiveStateChanged.Broadcast(ObjectiveState);
 }
 
-void USLObjectiveBase::SetObjectiveStateDelayed(const ESLObjectiveState InState, const float DelayTime)
+void USLObjectiveBase::SetObjectiveStateDelayed(const ESLObjectiveState InState)
 {
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, InState]
+	TWeakObjectPtr WeakThis = this;
+    
+	GetWorld()->GetTimerManager().SetTimerForNextTick([WeakThis, InState]
 	{
-		SetObjectiveState(InState);
-	}, DelayTime, false);
+		if (WeakThis.IsValid())
+		{
+			WeakThis->SetObjectiveState(InState);
+		}
+	});
+
 }
