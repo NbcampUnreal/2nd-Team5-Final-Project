@@ -24,6 +24,8 @@ public:
 	UFUNCTION()
 	void SetHealth(float NewHealth);
 	UFUNCTION(BlueprintCallable)
+	void IncreaseHealth(float Amount);
+	UFUNCTION(BlueprintCallable)
 	void DecreaseHealth(float Amount);
 	UFUNCTION()
 	void SetWalking(bool bNewWalking);
