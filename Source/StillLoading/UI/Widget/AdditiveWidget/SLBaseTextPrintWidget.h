@@ -40,6 +40,8 @@ protected:
 	UFUNCTION()
 	void OnClickedRejectButton();
 
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+
 	void PrintTalkText();
 	void ChangeTargetText();
 	void SetChoiceVisibility(bool bIsVisible);
