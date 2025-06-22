@@ -31,7 +31,7 @@ public:
 private:
     void LoadObjectiveDefaultData();
     
-    void SaveWidgetData();
+    void SaveUserData();
     void SaveChapterData();
     void SaveObjectiveData();
     
