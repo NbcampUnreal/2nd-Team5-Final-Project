@@ -8,6 +8,7 @@
 #include "AI/Actors/SLDeveloperRoomSpace.h"
 #include "AI/Actors/SLLaunchableWall.h"
 #include "AI/Actors/SLMouseActor.h"
+#include "AI/Actors/SLPhase4FallingFloor.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Components/CapsuleComponent.h"
 
@@ -54,12 +55,18 @@ ASLDeveloperBoss::ASLDeveloperBoss()
     Phase5WallAttackDelay = 1.0f;
     Phase5WallResetDelay = 1.5f;
     bIsPhase5Active = false;
-
+    Phase5MaxActiveWalls = 2;
+    bPhase5LimitActiveWalls = true;
+    
     MouseActor = nullptr;
     MouseActorClass = nullptr;
 
     PendingLineActivation.PhaseIndex = -1;
     PendingLineActivation.LaunchedWall = nullptr;
+
+    Phase4FallingFloor = nullptr;
+    Phase4FloorCollapseDelay = 1.0f;
+    bIsPhase4Active = false;
 }
 
 void ASLDeveloperBoss::BeginPlay()
@@ -70,6 +77,11 @@ void ASLDeveloperBoss::BeginPlay()
     {
         SpawnMouseActor();
     }
+
+    if (IsValid(Phase4FallingFloor))
+    {
+        Phase4FallingFloor->OnFloorCollapseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhase4FloorCollapseCompleted);
+    }
 }
 
 void ASLDeveloperBoss::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -77,8 +89,10 @@ void ASLDeveloperBoss::EndPlay(const EEndPlayReason::Type EndPlayReason)
     bIsPhase1Active = false;
     bIsPhase3Active = false;
     bIsPhase5Active = false;
+    bIsPhase4Active = false;
     bIsPhase3WallAttackScheduled = false;
     bIsPhase3AutoWallAttackActive = false;
+    Phase5ActiveWalls.Empty();
     
     if (GetWorld())
     {
@@ -89,11 +103,14 @@ void ASLDeveloperBoss::EndPlay(const EEndPlayReason::Type EndPlayReason)
         if (Phase5WallAttackTimer.IsValid())
         {
             GetWorld()->GetTimerManager().ClearTimer(Phase5WallAttackTimer);
-            UE_LOG(LogTemp, Display, TEXT("Phase5 wall attack timer cleared in EndPlay."));
         }
         if (Phase3AutoWallAttackTimer.IsValid())
         {
             GetWorld()->GetTimerManager().ClearTimer(Phase3AutoWallAttackTimer);
+        }
+        if (Phase4AutoWallAttackTimer.IsValid())
+        {
+            GetWorld()->GetTimerManager().ClearTimer(Phase4AutoWallAttackTimer);
         }
     }
     
@@ -110,7 +127,10 @@ void ASLDeveloperBoss::EndPlay(const EEndPlayReason::Type EndPlayReason)
         CurrentPhase5Wall->OnAllWallPartsLaunched.RemoveAll(this);
         CurrentPhase5Wall = nullptr;
     }
-    
+    if (IsValid(Phase4FallingFloor))
+    {
+        Phase4FallingFloor->OnFloorCollapseCompleted.RemoveAll(this);
+    }
     ResetCurrentWall();
     DespawnAllBosses();
     Super::EndPlay(EndPlayReason);
@@ -711,6 +731,16 @@ void ASLDeveloperBoss::HandleMouseActorDestroyed(ASLMouseActor* DestroyedMouseAc
         if (bIsPhase5Active) 
         {
             bIsPhase5Active = false; 
+
+            Phase5ActiveWalls.Empty();
+
+            for (ASLLaunchableWall* Wall : Phase5AvailableWalls)
+            {
+                if (IsValid(Wall))
+                {
+                    Wall->SetAutoResetEnabled(false);
+                }
+            }
             
             if (GetWorld() && Phase5WallAttackTimer.IsValid())
             {
@@ -720,7 +750,6 @@ void ASLDeveloperBoss::HandleMouseActorDestroyed(ASLMouseActor* DestroyedMouseAc
             
             OnPhase5FinalCompleted.Broadcast();
             OnDeveloperBossPatternFinished.Broadcast(); 
-            UE_LOG(LogTemp, Display, TEXT("Phase5 Final Completed due to Mouse Actor destruction."));
         }
     }
 }
@@ -916,6 +945,8 @@ void ASLDeveloperBoss::OnPhase5MultiWallCompleted(ASLLaunchableWall* CompletedWa
         return;
     }
 
+    Phase5ActiveWalls.Remove(CompletedWall);
+    
     if (!bPhase5EnableMultiWallAttack)
     {
         LaunchPhase5ReplacementWall();
@@ -986,10 +1017,21 @@ void ASLDeveloperBoss::OnPhase3AutoWallAttackTimer()
 
 void ASLDeveloperBoss::LaunchPhase5MultiWallAttack()
 {
+    // 활성화된 벽 정리 (무효한 참조 제거)
+    CleanupInactiveWalls();
+    
+    // 활성 벽 개수 제한 확인
+    if (bPhase5LimitActiveWalls && Phase5ActiveWalls.Num() >= Phase5MaxActiveWalls)
+    {
+        UE_LOG(LogTemp, Display, TEXT("Phase5: Cannot launch - too many active walls (%d/%d)"), 
+               Phase5ActiveWalls.Num(), Phase5MaxActiveWalls);
+        return;
+    }
+    
     TArray<ASLLaunchableWall*> LaunchableWalls;
     for (ASLLaunchableWall* Wall : Phase5AvailableWalls)
     {
-        if (IsValid(Wall) && Wall->CanLaunch())
+        if (IsValid(Wall) && Wall->CanLaunch() && !Phase5ActiveWalls.Contains(Wall))
         {
             LaunchableWalls.Add(Wall);
         }
@@ -997,20 +1039,27 @@ void ASLDeveloperBoss::LaunchPhase5MultiWallAttack()
 
     if (LaunchableWalls.Num() == 0)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Phase5 (Multi Mode): No available walls for multi-attack. Waiting for next interval."));
+        UE_LOG(LogTemp, Warning, TEXT("Phase5: No available walls for launch"));
         return;
     }
 
-    int32 WallsToLaunchCount = FMath::Min(Phase5MaxSimultaneousWalls, LaunchableWalls.Num());
-    UE_LOG(LogTemp, Display, TEXT("Phase5 (Multi Mode): Attempting to launch %d walls."), WallsToLaunchCount);
+    // 발사 가능한 벽 개수 계산
+    int32 MaxLaunchable = bPhase5LimitActiveWalls ? 
+        FMath::Min(Phase5MaxActiveWalls - Phase5ActiveWalls.Num(), Phase5MaxSimultaneousWalls) : 
+        Phase5MaxSimultaneousWalls;
+    
+    int32 WallsToLaunchCount = FMath::Min(MaxLaunchable, LaunchableWalls.Num());
+    
+    UE_LOG(LogTemp, Display, TEXT("Phase5: Launching %d walls (Active: %d/%d)"), 
+           WallsToLaunchCount, Phase5ActiveWalls.Num(), Phase5MaxActiveWalls);
 
     for (int32 i = 0; i < WallsToLaunchCount; i++)
     {
-        if (LaunchableWalls.Num() == 0) break; 
+        if (LaunchableWalls.Num() == 0) break;
 
         int32 RandomIndex = FMath::RandRange(0, LaunchableWalls.Num() - 1);
         ASLLaunchableWall* SelectedWall = LaunchableWalls[RandomIndex];
-        LaunchableWalls.RemoveAt(RandomIndex); 
+        LaunchableWalls.RemoveAt(RandomIndex);
 
         float RandomDelay = FMath::FRandRange(Phase5MultiWallDelayMin, Phase5MultiWallDelayMax);
 
@@ -1026,7 +1075,6 @@ void ASLDeveloperBoss::LaunchPhase5MultiWallAttack()
             RandomDelay,
             false
         );
-        UE_LOG(LogTemp, Display, TEXT("Phase5 (Multi Mode): Scheduled wall %s to launch in %f seconds."), *SelectedWall->GetName(), RandomDelay);
     }
 }
 
@@ -1034,22 +1082,24 @@ void ASLDeveloperBoss::LaunchPhase5SingleWall(ASLLaunchableWall* Wall)
 {
     if (!IsValid(Wall) || !bIsPhase5Active || !Wall->CanLaunch()) 
     {
-        if (IsValid(Wall))
-        {
-            UE_LOG(LogTemp, Warning, TEXT("LaunchPhase5SingleWall: Wall %s cannot be launched or phase not active."), *Wall->GetName());
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("LaunchPhase5SingleWall: Invalid wall or phase not active."));
-        }
         return;
     }
-    UE_LOG(LogTemp, Display, TEXT("Phase5: Launching single wall %s."), *Wall->GetName());
+    
+    // 활성 벽 개수 제한 확인
+    if (Phase5ActiveWalls.Num() >= Phase5MaxActiveWalls)
+    {
+        return;
+    }
 
+    UE_LOG(LogTemp, Display, TEXT("Phase5: Launching wall %s"), *Wall->GetName());
+
+    // 활성 벽 목록에 추가
+    Phase5ActiveWalls.AddUnique(Wall);
+    
     Wall->OnAllWallPartsLaunched.AddUniqueDynamic(this, &ASLDeveloperBoss::OnPhase5MultiWallCompleted);
     Wall->OnWallHitMouseActor.AddUniqueDynamic(this, &ASLDeveloperBoss::OnPhase5WallHitMouseActor);
 
-    Wall->LaunchWallToPlayer(); 
+    Wall->LaunchWallToPlayer();
 }
 
 void ASLDeveloperBoss::LaunchPhase5ReplacementWall()
@@ -1104,6 +1154,7 @@ void ASLDeveloperBoss::ResetPhase5Wall(ASLLaunchableWall* WallToReset)
     WallToReset->OnWallHitMouseActor.RemoveAll(this);
     
     WallToReset->ResetWall();
+    
 }
 
 void ASLDeveloperBoss::SpawnPhase3MouseActor()
@@ -1438,24 +1489,9 @@ void ASLDeveloperBoss::StartPhase3Horror()
 
 void ASLDeveloperBoss::StartPhase4Platformer()
 {
-    int32 Phase4Index = static_cast<int32>(EDeveloperBossPhase::Phase4_Platformer);
+    bIsPhase4Active = true;
     
-    ManualLaunchWallAttack(Phase4Index, -1);
-    
-    FTimerHandle Phase4CheckTimer;
-    GetWorldTimerManager().SetTimer(
-        Phase4CheckTimer,
-        [this]()
-        {
-            if (CurrentPhase == EDeveloperBossPhase::Phase4_Platformer)
-            {
-                ChangePhase(EDeveloperBossPhase::Phase5_Final);
-                StartPhasePattern(EDeveloperBossPhase::Phase5_Final);
-            }
-        },
-        2.0f,
-        false
-    );
+    UE_LOG(LogTemp, Display, TEXT("🏗️ Phase 4 Platformer Started"));
 }
 
 void ASLDeveloperBoss::StartPhase5Final()
@@ -1468,8 +1504,20 @@ void ASLDeveloperBoss::StartPhase5Final()
 
     bIsPhase5Active = true;
     CurrentPhase5Wall = nullptr; 
+    
+    // Phase5 활성 벽 목록 초기화
+    Phase5ActiveWalls.Empty();
 
     InitializePhase5WallAttack(); 
+    
+    // Phase 5에서만 벽 자동 리셋 활성화
+    for (ASLLaunchableWall* Wall : Phase5AvailableWalls)
+    {
+        if (IsValid(Wall))
+        {
+            Wall->SetAutoResetEnabled(true);
+        }
+    }
 
     if (IsValid(MouseActor))
     {
@@ -1628,4 +1676,109 @@ ASLLaunchableWall* ASLDeveloperBoss::GetNextPhase3Wall()
 void ASLDeveloperBoss::ResetPhase3WallIndex()
 {
     Phase3CurrentWallIndex = 0;
+}
+
+void ASLDeveloperBoss::CleanupInactiveWalls()
+{
+    Phase5ActiveWalls.RemoveAll([](ASLLaunchableWall* Wall) {
+        return !IsValid(Wall) || Wall->CanLaunch(); // 리셋되어 다시 발사 가능한 상태면 비활성으로 간주
+    });
+}
+
+void ASLDeveloperBoss::StartPhase4FloorCollapse()
+{
+    if (!IsValid(Phase4FallingFloor) || !bIsPhase4Active)
+    {
+        return;
+    }
+    
+    UE_LOG(LogTemp, Display, TEXT("🏗️ Phase 4: Starting floor collapse"));
+    Phase4FallingFloor->StartFloorCollapse();
+}
+
+void ASLDeveloperBoss::ResetPhase4Floor()
+{
+    if (IsValid(Phase4FallingFloor))
+    {
+        Phase4FallingFloor->ResetFloor();
+    }
+}
+
+void ASLDeveloperBoss::HandlePhase4FloorCollapseCompleted()
+{
+    if (!bIsPhase4Active)
+    {
+        return;
+    }
+    
+    UE_LOG(LogTemp, Display, TEXT("🏗️ Phase 4: Floor collapse completed - Starting auto wall attacks"));
+    
+    OnPhase4PlatformerCompleted.Broadcast();
+    
+    // Phase 3과 동일한 방식으로 자동 벽 공격 시작
+    if (IsValid(GetWorld()))
+    {
+        GetWorld()->GetTimerManager().SetTimer(
+            Phase4AutoWallAttackTimer,
+            [this]()
+            {
+                if (bIsPhase4Active)
+                {
+                    int32 Phase4Index = static_cast<int32>(EDeveloperBossPhase::Phase4_Platformer);
+                    ManualLaunchWallAttack(Phase4Index, -1);
+                    
+                    // 다음 공격 예약 (4초마다)
+                    if (bIsPhase4Active && IsValid(GetWorld()))
+                    {
+                        GetWorld()->GetTimerManager().SetTimer(
+                            Phase4AutoWallAttackTimer,
+                            [this]() { 
+                                if (bIsPhase4Active) 
+                                {
+                                    int32 Phase4Index = static_cast<int32>(EDeveloperBossPhase::Phase4_Platformer);
+                                    ManualLaunchWallAttack(Phase4Index, -1);
+                                }
+                            },
+                            4.0f,
+                            true  // 반복
+                        );
+                    }
+                }
+            },
+            2.0f,  // 2초 후 첫 공격
+            false
+        );
+    }
+}
+
+// 바닥이 부서지길 원할때 호출할 함수
+void ASLDeveloperBoss::TriggerPhase4FloorCollapse()
+{
+    if (!bIsPhase4Active)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase 4 not active! Call StartPhase4Platformer() first"));
+        return;
+    }
+    
+    if (!IsValid(Phase4FallingFloor))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase4FallingFloor not assigned"));
+        return;
+    }
+    
+    if (Phase4FloorCollapseDelay > 0.0f)
+    {
+        FTimerHandle Phase4DelayTimer;
+        GetWorldTimerManager().SetTimer(
+            Phase4DelayTimer,
+            this,
+            &ASLDeveloperBoss::StartPhase4FloorCollapse,
+            Phase4FloorCollapseDelay,
+            false
+        );
+    }
+    else
+    {
+        StartPhase4FloorCollapse();
+    }
 }
