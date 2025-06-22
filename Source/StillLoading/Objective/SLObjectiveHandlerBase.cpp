@@ -24,6 +24,14 @@ USLObjectiveBase* USLObjectiveHandlerBase::GetObjective()
 	return Objective;
 }
 
+void USLObjectiveHandlerBase::SetObjectiveState(const ESLObjectiveState State)
+{
+	if (USLObjectiveBase* Objective = GetObjective())
+	{
+		Objective->SetObjectiveState(State);
+	}
+}
+
 void USLObjectiveHandlerBase::OnObjectiveStateChanged(const ESLObjectiveState ObjectiveState)
 {
 	switch (ObjectiveState)
