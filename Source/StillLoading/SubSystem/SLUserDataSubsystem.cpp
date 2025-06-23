@@ -206,7 +206,10 @@ void USLUserDataSubsystem::ApplyBrightness()
 	FPropertyChangedEvent PropertyChangedEvent(URendererSettings::StaticClass()->
 		FindPropertyByName(GET_MEMBER_NAME_CHECKED(URendererSettings, DefaultFeatureAutoExposureBias)));
 
+#if WITH_EDITOR
 	RendererSettings->PostEditChangeProperty(PropertyChangedEvent);
+#endif
+	
 	RendererSettings->SaveConfig();
 }
 

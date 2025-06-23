@@ -136,6 +136,7 @@ void UDynamicIMCComponent::BindInputForAction(const UInputAction* Action, const 
 {
 	switch (ActionType)
 	{
+	case EInputActionType::EIAT_CameraUnlock:
 	case EInputActionType::EIAT_MoveUp:
 	case EInputActionType::EIAT_MoveDown:
 	case EInputActionType::EIAT_MoveLeft:

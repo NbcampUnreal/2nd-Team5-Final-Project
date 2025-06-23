@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "SLDeveloperBoss.generated.h"
 
+class ASLPhase4FallingFloor;
 class ASLAIBaseCharacter;
 class ASLBossCharacter;
 class ASLDeveloperRoomCable;
@@ -183,7 +184,15 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Debug")
     void DebugPhaseData(int32 PhaseIndex);
- 
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase4")
+    void StartPhase4FloorCollapse();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase4")
+    void ResetPhase4Floor();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase5")
+    void TriggerPhase4FloorCollapse();
     // Public Variables (Delegates)
     UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
     FOnBossCharacterDeath OnBossCharacterDeath;
@@ -274,6 +283,10 @@ protected:
     UFUNCTION()
     void OnPhase3AutoWallAttackTimer();
 
+    UFUNCTION()
+    void HandlePhase4FloorCollapseCompleted();
+    
+    
     void LaunchPhase5MultiWallAttack();
     void LaunchPhase5SingleWall(ASLLaunchableWall* Wall);
     void LaunchPhase5ReplacementWall();
@@ -302,7 +315,8 @@ protected:
     void ResetAllWalls();
     ASLLaunchableWall* GetNextPhase3Wall();
     void ResetPhase3WallIndex();
-
+    void CleanupInactiveWalls();
+    void LaunchPhase4WallWithLines();
     // Protected Variables (Settings)
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Developer Boss")
     TArray<TSubclassOf<ASLAIBaseCharacter>> AvailableBossClasses;
@@ -370,6 +384,23 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Mouse Actor")
     TSubclassOf<ASLMouseActor> MouseActorClass;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase5", meta = (ClampMin = "1", ClampMax = "10"))
+    int32 Phase5MaxActiveWalls;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase5")
+    bool bPhase5LimitActiveWalls;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase4")
+    TObjectPtr<ASLPhase4FallingFloor> Phase4FallingFloor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase4")
+    float Phase4FloorCollapseDelay;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase4")
+    float Phase4AutoWallAttackInterval;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase4")
+    float Phase4InitialWallAttackDelay;
 private:
     // Private Variables (Runtime Data)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Developer Boss", meta = (AllowPrivateAccess = "true"))
@@ -408,4 +439,10 @@ private:
     FTimerHandle Phase3AutoWallAttackTimer;
     bool bIsPhase3AutoWallAttackActive;
     int32 Phase3CurrentWallIndex;
+
+    UPROPERTY()
+    TArray<TObjectPtr<ASLLaunchableWall>> Phase5ActiveWalls;
+
+    bool bIsPhase4Active;
+    FTimerHandle Phase4AutoWallAttackTimer;
 };

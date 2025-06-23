@@ -78,7 +78,8 @@ ASLLaunchableWall::ASLLaunchableWall()
 	PlayerAimStartRotation = FRotator::ZeroRotator;
 	PlayerAimTargetRotation = FRotator::ZeroRotator;
 	PostLaunchLifetime = 2.0f;
-	
+
+	bAutoResetEnabled = false;
 	CreateWallParts();
 }
 
@@ -980,7 +981,8 @@ void ASLLaunchableWall::CheckAllPartsLaunched()
 		bIsLaunching = false;
 		OnAllWallPartsLaunched.Broadcast(this); 
 
-		if (PostLaunchLifetime > 0.0f && GetWorld())
+		// Phase 5에서만 자동 리셋
+		if (bAutoResetEnabled && PostLaunchLifetime > 0.0f && GetWorld())
 		{
 			FTimerHandle SelfResetTimer;
 			GetWorldTimerManager().SetTimer(
@@ -1155,4 +1157,9 @@ void ASLLaunchableWall::OnPlayerAimTimelineUpdate(float Value)
 	
 	FRotator CurrentRotation = FMath::Lerp(PlayerAimStartRotation, PlayerAimTargetRotation, Value);
 	CurrentPart->SetWorldRotation(CurrentRotation);
+}
+
+void ASLLaunchableWall::SetAutoResetEnabled(bool bEnabled)
+{
+	bAutoResetEnabled = bEnabled;
 }

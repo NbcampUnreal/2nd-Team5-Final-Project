@@ -1,6 +1,7 @@
 #include "BoidMovementComponent.h"
 
 #include "AIController.h"
+#include "NavigationSystem.h"
 #include "NiagaraFunctionLibrary.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "AI/RealAI/Boid/SwarmAgent.h"
@@ -18,7 +19,6 @@ UBoidMovementComponent::UBoidMovementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
-
 
 void UBoidMovementComponent::BeginPlay()
 {
@@ -105,38 +105,59 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 	const AActor* CurrentTarget = Cast<AActor>(BlackboardComp->GetValueAsObject(TEXT("TargetActor")));
 	if (!Agent || !CurrentTarget) return;
 
-	// 공격 분기
-	TotalTime = GetWorld()->GetTimeSeconds() - Agent->LastAttackFinishTime;
-	/*
-	UE_LOG(LogTemp, Warning, TEXT("Total Time[%f][%s]"), TotalTime, *Agent->GetName());
-	UE_LOG(LogTemp, Warning, TEXT("CurrentCollDown[%f][%s]"), CurrentCollDown, *Agent->GetName());
-	UE_LOG(LogTemp, Warning, TEXT("LastAttackFinishTime[%f][%s]"), Agent->LastAttackFinishTime, *Agent->GetName());
-	*/
-	if (TotalTime > CurrentCollDown)
+	if (CurrentState == EBoidMonsterState::FS_Retreating) // 후퇴 분기
 	{
-		CurrentState = EBoidMonsterState::FS_AbleToAttack;
-	}
-	else
-	{
-		CurrentState = EBoidMonsterState::FS_UnAbleToAttack;
-	}
+		const float DistSqToRetreatTarget = FVector::DistSquared(OwnerCharacter->GetActorLocation(), RetreatTargetLocation);
 
-	const float DistanceToTarget = FVector::Dist(OwnerCharacter->GetActorLocation(), CurrentTarget->GetActorLocation());
-	if (DistanceToTarget < AttackRange && CurrentState == EBoidMonsterState::FS_AbleToAttack)
-	{
-		BeginAttack(DeltaTime, CurrentTarget, Agent);
-	}
-	else
-	{
-		const FVector DirectionToTarget = (CurrentTarget->GetActorLocation() - OwnerCharacter->
-				GetActorLocation()).
-			GetSafeNormal();
-		const FRotator TargetRotation = DirectionToTarget.Rotation();
-		OwnerCharacter->SetActorRotation(
-			FMath::RInterpTo(OwnerCharacter->GetActorRotation(), TargetRotation, DeltaTime, 10.0f));
+		if (DistSqToRetreatTarget < FMath::Square(100.0f))
+		{
+			CurrentState = EBoidMonsterState::FS_UnAbleToAttack;
+		}
+		else
+		{
+			const FVector DirectionToRetreatTarget = (RetreatTargetLocation - OwnerCharacter->GetActorLocation()).GetSafeNormal();
+			OwnerCharacter->AddMovementInput(DirectionToRetreatTarget);
 
-		// 공격 분기의 이동 처리
-		HandleMovementState(DeltaTime, Agent);
+			const FVector DirectionToEnemy = (CurrentTarget->GetActorLocation() - OwnerCharacter->GetActorLocation()).GetSafeNormal();
+			const FRotator TargetRotation = DirectionToEnemy.Rotation();
+			OwnerCharacter->SetActorRotation(
+				FMath::RInterpTo(OwnerCharacter->GetActorRotation(), TargetRotation, DeltaTime, 10.0f));
+		}
+	}
+	else // 공격 분기
+	{
+		TotalTime = GetWorld()->GetTimeSeconds() - Agent->LastAttackFinishTime;
+		/*
+		UE_LOG(LogTemp, Warning, TEXT("Total Time[%f][%s]"), TotalTime, *Agent->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("CurrentCollDown[%f][%s]"), CurrentCollDown, *Agent->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("LastAttackFinishTime[%f][%s]"), Agent->LastAttackFinishTime, *Agent->GetName());
+		*/
+		if (TotalTime > CurrentCoolDown)
+		{
+			CurrentState = EBoidMonsterState::FS_AbleToAttack;
+		}
+		else
+		{
+			CurrentState = EBoidMonsterState::FS_UnAbleToAttack;
+		}
+
+		const float DistanceToTarget = FVector::Dist(OwnerCharacter->GetActorLocation(), CurrentTarget->GetActorLocation());
+		if (DistanceToTarget < AttackRange && CurrentState == EBoidMonsterState::FS_AbleToAttack)
+		{
+			BeginAttack(DeltaTime, CurrentTarget, Agent);
+		}
+		else
+		{
+			const FVector DirectionToTarget = (CurrentTarget->GetActorLocation() - OwnerCharacter->
+					GetActorLocation()).
+				GetSafeNormal();
+			const FRotator TargetRotation = DirectionToTarget.Rotation();
+			OwnerCharacter->SetActorRotation(
+				FMath::RInterpTo(OwnerCharacter->GetActorRotation(), TargetRotation, DeltaTime, 10.0f));
+
+			// 공격 분기의 이동 처리
+			HandleMovementState(DeltaTime, Agent);
+		}
 	}
 }
 
@@ -192,7 +213,6 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 		{
 			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰
 		}
-		UE_LOG(LogTemp, Warning, TEXT("SeparationSq [%f]"), SeparationSq);
 	}
 	else
 	{
@@ -214,13 +234,15 @@ void UBoidMovementComponent::CheckAndHandleStuckTeleport(float DeltaTime)
 	const FVector GoalLocation = GetGoalLocation();
 	if (GoalLocation.IsZero()) return;
 
+	const FVector MyLocation = OwnerCharacter->GetActorLocation();
+	//DrawDebugLine(GetWorld(), MyLocation, GoalLocation, FColor::Yellow, false, 0.1f, 0, 1.0f);
+
 	const float DistanceToGoal = FVector::Dist(OwnerCharacter->GetActorLocation(), GoalLocation);
 	if (DistanceToGoal < StuckDistanceThreshold)
 	{
 		return;
 	}
 
-	const FVector MyLocation = OwnerCharacter->GetActorLocation();
 	FVector MoveDirection = OwnerCharacter->GetVelocity().GetSafeNormal();
 	if (MoveDirection.IsNearlyZero())
 	{
@@ -241,14 +263,17 @@ void UBoidMovementComponent::CheckAndHandleStuckTeleport(float DeltaTime)
 		{OwnerCharacter},
 		EDrawDebugTrace::None,
 		HitResult,
-		true
+		true,
+		FColor::Red,
+		FColor::Green,
+		2.0f 
 	);
 
 	if (bHitObstacle)
 	{
 		TArray<AActor*> OverlappedActors;
 		TArray<TEnumAsByte<EObjectTypeQuery>> OverlapObjectTypes;
-		OverlapObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)); // Pawn 타입만 검사
+		OverlapObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Visibility));
 
 		float CharacterCapsuleRadius, CharacterCapsuleHalfHeight;
 		OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleSize(CharacterCapsuleRadius, CharacterCapsuleHalfHeight);
@@ -263,23 +288,37 @@ void UBoidMovementComponent::CheckAndHandleStuckTeleport(float DeltaTime)
 			OverlappedActors
 		);
 
+		//FColor SphereColor = bIsOccupied ? FColor::Red : FColor::Green;
+		//DrawDebugSphere(GetWorld(), GoalLocation, CharacterCapsuleRadius, 16, SphereColor, false, 2.0f, 0, 2.0f);
+
 		if (!bIsOccupied)
 		{
-			if (TeleportEffect)
+			if (!GetWorld()->GetTimerManager().IsTimerActive(RestoreCollisionTimerHandle))
 			{
-				UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TeleportEffect, GoalLocation);
-			}
-			if (TeleportSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(GetWorld(), TeleportSound, GoalLocation);
-			}
+				if (UCapsuleComponent* CapsuleComp = OwnerCharacter->GetCapsuleComponent())
+				{
+					CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+				}
+			
+				if (TeleportEffect)
+				{
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TeleportEffect, GoalLocation);
+				}
+				if (TeleportSound)
+				{
+					UGameplayStatics::PlaySoundAtLocation(GetWorld(), TeleportSound, GoalLocation);
+				}
 
-			OwnerCharacter->SetActorLocation(GoalLocation, false, nullptr, ETeleportType::TeleportPhysics);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Log, TEXT("Agent %s teleport cancelled, destination is occupied."),
-			       *OwnerCharacter->GetName());
+				OwnerCharacter->SetActorLocation(GoalLocation, false, nullptr, ETeleportType::TeleportPhysics);
+
+				GetWorld()->GetTimerManager().SetTimer(
+				   RestoreCollisionTimerHandle,
+				   this,
+				   &UBoidMovementComponent::RestorePawnCollision,
+				   PostTeleportCollisionGracePeriod,
+				   false
+			   );
+			}
 		}
 	}
 }
@@ -322,8 +361,39 @@ void UBoidMovementComponent::InitializeComponent(const TObjectPtr<ASwarmManager>
 	this->SwarmManager = InSwarmManager;
 }
 
+void UBoidMovementComponent::RestorePawnCollision()
+{
+	if (OwnerCharacter)
+	{
+		if (UCapsuleComponent* CapsuleComp = OwnerCharacter->GetCapsuleComponent())
+		{
+			CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+		}
+	}
+}
+
 void UBoidMovementComponent::BeginAttack(const float DeltaTime, const AActor* CurrentTarget, ASwarmAgent* Agent)
 {
+	if (OwnerCharacter)
+	{
+		if (UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement())
+		{
+			OriginalMaxWalkSpeed = MoveComp->MaxWalkSpeed;
+			MoveComp->MaxWalkSpeed = RetreatSpeed;
+		}
+	}
+
+	CurrentState = EBoidMonsterState::FS_Retreating;
+	const FVector DirectionFromTarget = (OwnerCharacter->GetActorLocation() - CurrentTarget->GetActorLocation()).GetSafeNormal();
+	RetreatTargetLocation = OwnerCharacter->GetActorLocation() + DirectionFromTarget * RetreatDistance;
+
+	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	FNavLocation NavLocation;
+	if (NavSys && NavSys->GetRandomPointInNavigableRadius(RetreatTargetLocation, 50.f, NavLocation))
+	{
+	    RetreatTargetLocation = NavLocation.Location;
+	}
+	
 	AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(Agent);
 	if (!Monster) return;
 
@@ -340,7 +410,7 @@ void UBoidMovementComponent::BeginAttack(const float DeltaTime, const AActor* Cu
 			FMath::RInterpTo(OwnerCharacter->GetActorRotation(), TargetRotation, DeltaTime, 10.0f));
 
 		Monster->PlayAttackAnim();
-		CurrentCollDown = FMath::RandRange(MinAttackCoolDown, MaxAttackCoolDown);
+		CurrentCoolDown = FMath::RandRange(MinAttackCoolDown, MaxAttackCoolDown);
 	}
 }
 

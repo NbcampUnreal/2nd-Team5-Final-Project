@@ -7,6 +7,8 @@
 #include "BoidMovementComponent/BoidMovementComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 ASwarmAgent::ASwarmAgent()
@@ -149,4 +151,3 @@ void ASwarmAgent::PlayAttackAnim()
 		}
 	}
 }
-

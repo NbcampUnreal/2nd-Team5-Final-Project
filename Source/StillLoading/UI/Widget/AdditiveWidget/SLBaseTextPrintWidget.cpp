@@ -6,6 +6,7 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanel.h"
+#include "SubSystem/SLUserDataSubsystem.h"
 
 void USLBaseTextPrintWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -43,6 +44,8 @@ void USLBaseTextPrintWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 		ParentRejectButton->SetButtonText(FText::FromString(FString::Printf(TEXT("No"))));
 		ParentRejectButton->InitButton();
 	}
+
+	bIsFocusable = true;
 }
 
 void USLBaseTextPrintWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
@@ -59,6 +62,7 @@ void USLBaseTextPrintWidget::ActivateWidget(const FSLWidgetActivateBuffer& Widge
 		return;
 	}
 
+	SetFocus();
 	SetChoiceVisibility(false);
 	ChangeTargetText();
 }
@@ -146,6 +150,27 @@ void USLBaseTextPrintWidget::OnClickedRejectButton()
 
 	CloseTalk();
 	OnChoiceEnded.Broadcast(false);
+}
+
+FReply USLBaseTextPrintWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (!IsInViewport())
+	{
+		return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+	}
+
+	FKey InputKey = InKeyEvent.GetKey();
+	USLUserDataSubsystem* UserDataSubsystem = GetGameInstance()->GetSubsystem<USLUserDataSubsystem>();
+
+	if (UserDataSubsystem->GetActionKeyMap().Contains(EInputActionType::EIAT_Interaction))
+	{
+		if (InputKey == UserDataSubsystem->GetActionKeyMap()[EInputActionType::EIAT_Interaction].Key)
+		{
+			OnClickedNextButton();
+		}
+	}
+
+	return FReply::Handled();
 }
 
 void USLBaseTextPrintWidget::PrintTalkText()

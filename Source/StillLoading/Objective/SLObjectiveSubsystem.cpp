@@ -25,6 +25,22 @@ ESLObjectiveState USLObjectiveSubsystem::GetObjectiveState(const ESLChapterType 
     return ESLObjectiveState::None;
 }
 
+void USLObjectiveSubsystem::SetObjectiveState(ESLChapterType Chapter, FName Name, ESLObjectiveState State)
+{
+    if (USLObjectiveBase* Objective = GetObjective(Chapter, Name))
+    {
+        Objective->SetObjectiveState(State);
+    }
+}
+
+void USLObjectiveSubsystem::SetObjectiveStateDelayed(ESLChapterType Chapter, FName Name, ESLObjectiveState State)
+{
+    if (USLObjectiveBase* Objective = GetObjective(Chapter, Name))
+    {
+        Objective->SetObjectiveStateDelayed(State);
+    }
+}
+
 TArray<USLObjectiveBase*> USLObjectiveSubsystem::GetInProgressedObjectives()
 {
     TArray<USLObjectiveBase*> InProgressedObjectives;

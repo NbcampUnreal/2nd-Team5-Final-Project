@@ -55,6 +55,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "LaunchableWall")
 	void ResetWall();
 
+	UFUNCTION(BlueprintCallable, Category = "LaunchableWall")
+	void SetAutoResetEnabled(bool bEnabled);
+
+	UFUNCTION(BlueprintCallable, Category = "LaunchableWall")
+	bool IsAutoResetEnabled() const { return bAutoResetEnabled; }
+	
 	// Public Variables (Delegates)
 	UPROPERTY(BlueprintAssignable, Category = "LaunchableWall")
 	FSLOnAllWallPartsLaunched OnAllWallPartsLaunched;
@@ -283,4 +289,6 @@ private:
 	FRotator TargetRotation;
 	FRotator PlayerAimStartRotation;
 	FRotator PlayerAimTargetRotation;
+
+	bool bAutoResetEnabled;
 };

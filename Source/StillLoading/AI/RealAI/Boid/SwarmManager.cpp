@@ -4,6 +4,7 @@
 #include "SwarmAgent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "NavFilters/NavigationQueryFilter.h"
 
 ASwarmManager::ASwarmManager()
 {

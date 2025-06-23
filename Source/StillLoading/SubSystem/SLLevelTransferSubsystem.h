@@ -66,5 +66,6 @@ private:
 
 	FString OptionString = "";
 
+	UPROPERTY()
 	ESLChapterType DataChapter = ESLChapterType::EC_None;
 };

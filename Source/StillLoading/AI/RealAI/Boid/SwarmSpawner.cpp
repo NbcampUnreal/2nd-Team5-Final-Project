@@ -3,6 +3,7 @@
 #include "SwarmAgent.h"
 #include "SwarmManager.h"
 #include "AnimInstances/SLCompanionAnimInstance.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/SphereComponent.h"
 #include "Engine/TargetPoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -34,8 +35,8 @@ void ASwarmSpawner::BeginSpawn()
 	UWorld* World = GetWorld();
 	if (World && SwarmManagerClass)
 	{
-		if (SpawnedManager = World->SpawnActor<ASwarmManager>(
-			SwarmManagerClass, GetActorLocation(), GetActorRotation()))
+		SpawnedManager = World->SpawnActor<ASwarmManager>(SwarmManagerClass, GetActorLocation(), GetActorRotation());
+		if (SpawnedManager)
 		{
 			// 군체 알고리즘 가중치 셋팅
 			SpawnedManager->SwarmPatrolPoints = PatrolPoints;
@@ -48,7 +49,7 @@ void ASwarmSpawner::BeginSpawn()
 			SpawnedManager->CombatAlignment = CombatAlignmentWeight;
 			SpawnedManager->CombatCohesion = CombatCohesionWeight;
 			SpawnedManager->CombatGoalSeeking = CombatGoalSeekingWeight;
-
+			
 			SpawnedManager->CurrentFormationType = FormationType;
 			SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
 
@@ -69,7 +70,7 @@ void ASwarmSpawner::BeginSpawn()
 
 			TotalSpawnCount = 0;
 
-			for (const auto& [AgentClass, ControllerClass, SpawnCount, AvoidanceWeight, bIsLeader] : SwarmCompositions)
+			for (const auto& [AgentClass, ControllerClass, SpawnCount, AvoidanceWeight, bIsLeader, TeamIDToAssign] : SwarmCompositions)
 			{
 				if (AgentClass)
 				{
@@ -108,12 +109,19 @@ void ASwarmSpawner::BeginSpawn()
 								{
 									DeferredAgent->RequestBerserkMode();
 								}
+								
 								DeferredAgent->SetLeader(true, LeaderBehaviorTree, LeaderBlackBoard);
 								SpawnedManager->SetLeader(DeferredAgent);
 								SpawnedManager->DetectionRadius = DetectionRadius;
 							}
 
 							UGameplayStatics::FinishSpawningActor(DeferredAgent, SpawnTransform);
+
+							if (AAIController* AIController = Cast<AAIController>(DeferredAgent->GetController()))
+							{
+								AIController->SetGenericTeamId(TeamIDToAssign);
+							}
+							
 							SpawnedManager->RegisterAgent(DeferredAgent); // 에이전트 등록
 						}
 						else
@@ -134,6 +142,7 @@ int32 ASwarmSpawner::GetSpawnCount() const
 	return TotalSpawnCount;
 }
 
+// 무기 없애기
 void ASwarmSpawner::ResetSpawendMonster()
 {
 	if (IsValid(SpawnedManager))

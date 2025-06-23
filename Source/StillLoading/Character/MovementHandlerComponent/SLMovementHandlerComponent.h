@@ -66,6 +66,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
 	int AttackStateCount = 0;
 
+	// 카메라 입력 비 활성화 시 속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float CameraLagSpeed = 0.001f;
+
+	// 카메라 입력이 활성화되었는지 확인하는 플래그입니다.
+	bool bIsCameraInputActive = false;
+
 	// Lock on 용
 	UPROPERTY()
 	TObjectPtr<AActor> CameraFocusTarget;
@@ -119,7 +126,15 @@ private:
 	void BeginAttack();
 	void Look(const FVector2D& Value);
 	void Jump();
+	
 	void Move(const float AxisValue, const EInputActionType ActionType);
+
+	// TPS
+	void MoveTPS(const float AxisValue, const EInputActionType ActionType) const;
+	void MoveForwardBackward(const float Value, const FRotator& YawRotation) const;
+	void MoveLeftRight(const float Value, const FRotator& YawRotation) const;
+
+	void ToggleCameraState(bool bLock);
 	void ParryCheck();
 	void PointMove();
 	void DodgeLoco();
