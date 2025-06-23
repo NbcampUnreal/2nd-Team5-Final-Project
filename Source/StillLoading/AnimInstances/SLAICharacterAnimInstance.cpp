@@ -45,6 +45,7 @@ USLAICharacterAnimInstance::USLAICharacterAnimInstance()
 	// 이전 프레임 데이터 초기화
 	PreviousVelocity = FVector::ZeroVector;
 	PreviousGroundSpeed = 0.0f;
+	bOrientRotationToMovement = true;
 }
 
 void USLAICharacterAnimInstance::NativeInitializeAnimation()
@@ -122,9 +123,12 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 	
 	PreviousVelocity = CurrentVelocity;
 	PreviousGroundSpeed = GroundSpeed;
-    
 	LocomotionDirection = UKismetAnimationLibrary::CalculateDirection(CurrentVelocity, OwningCharacter->GetActorRotation());
-							
+	if (OwningMovementComponent)
+	{
+		bOrientRotationToMovement = OwningMovementComponent->bOrientRotationToMovement;
+	}
+	
 	FallSpeed = CurrentVelocity.Z;
     
 	float DistanceToGround = GetDistanceToGround();

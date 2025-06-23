@@ -112,6 +112,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "AnimData|Movement")
 	bool bIsJump;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AnimData|Movement")
+	bool bOrientRotationToMovement;
+	
 	// --- Anim Data | Aiming & Looking ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AnimData|Movement")	// 수정 예정
 	float Angle;
