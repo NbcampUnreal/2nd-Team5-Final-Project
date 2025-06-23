@@ -26,13 +26,15 @@ void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 void USLSaveGameSubsystem::Deinitialize()
 {
     Super::Deinitialize();
+
+    SaveUserData();
+    UGameplayStatics::SaveGameToSlot(CurrentSaveData, SlotName, 0);
 }
 
 void USLSaveGameSubsystem::SaveGameData()
 {
     check(CurrentSaveData);
 
-    SaveWidgetData();
     SaveChapterData();
     SaveObjectiveData();
     
@@ -95,7 +97,7 @@ void USLSaveGameSubsystem::LoadObjectiveDefaultData()
     }
 }
 
-void USLSaveGameSubsystem::SaveWidgetData()
+void USLSaveGameSubsystem::SaveUserData()
 { 
     UGameInstance* GameInstance = GetGameInstance();
 
