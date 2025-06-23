@@ -78,7 +78,9 @@ ASLLaunchableWall::ASLLaunchableWall()
 	PlayerAimStartRotation = FRotator::ZeroRotator;
 	PlayerAimTargetRotation = FRotator::ZeroRotator;
 	PostLaunchLifetime = 2.0f;
-
+	WallPartCollisionDelay = 0.1f;
+	WallPartCollisionTimers.SetNum(MaxWallParts);
+	
 	bAutoResetEnabled = false;
 	CreateWallParts();
 }
@@ -370,7 +372,16 @@ bool ASLLaunchableWall::ShouldIgnoreCollision(AActor* OtherActor) const
 
 void ASLLaunchableWall::ResetWall()
 {
-    
+	if (GetWorld())
+	{
+		for (int32 i = 0; i < WallPartCollisionTimers.Num(); i++)
+		{
+			if (WallPartCollisionTimers[i].IsValid())
+			{
+				GetWorld()->GetTimerManager().ClearTimer(WallPartCollisionTimers[i]);
+			}
+		}
+	}
     
     bIsLaunching = false;
     bIsYMovementAnimating = false;
@@ -1035,12 +1046,31 @@ void ASLLaunchableWall::LaunchCurrentPart()
 			WallPartStates[CurrentLaunchIndex] = EWallPartState::Launched;
 		}
 
+		// 발사 시 콜리전 비활성화
+		CurrentPart->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 		CurrentMovement->InitialSpeed = LaunchSpeed;
 		CurrentMovement->MaxSpeed = LaunchSpeed;
-		
+        
 		FVector LaunchDirection = -CurrentPart->GetUpVector();
 		CurrentMovement->Velocity = LaunchDirection * LaunchSpeed;
 		CurrentMovement->SetActive(true);
+
+		// 콜리전 딜레이 타이머 설정
+		if (IsValid(GetWorld()) && WallPartCollisionDelay > 0.0f)
+		{
+			GetWorld()->GetTimerManager().SetTimer(
+				WallPartCollisionTimers[CurrentLaunchIndex],
+				FTimerDelegate::CreateUFunction(this, FName("OnWallPartCollisionEnabled"), CurrentLaunchIndex),
+				WallPartCollisionDelay,
+				false
+			);
+		}
+		else
+		{
+			// 딜레이가 0이면 즉시 콜리전 활성화
+			EnableWallPartCollision(CurrentLaunchIndex);
+		}
 
 		LaunchedPartsCount++;
 		CurrentLaunchIndex++;
@@ -1162,4 +1192,31 @@ void ASLLaunchableWall::OnPlayerAimTimelineUpdate(float Value)
 void ASLLaunchableWall::SetAutoResetEnabled(bool bEnabled)
 {
 	bAutoResetEnabled = bEnabled;
+}
+
+void ASLLaunchableWall::OnWallPartCollisionEnabled(int32 WallPartIndex)
+{
+	EnableWallPartCollision(WallPartIndex);
+}
+
+void ASLLaunchableWall::EnableWallPartCollision(int32 WallPartIndex)
+{
+	if (!WallParts.IsValidIndex(WallPartIndex) || !IsValid(WallParts[WallPartIndex]))
+	{
+		return;
+	}
+
+	UStaticMeshComponent* WallPart = WallParts[WallPartIndex];
+    
+	// 콜리전 활성화
+	WallPart->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WallPart->SetCollisionObjectType(ECC_WorldDynamic);
+	WallPart->SetCollisionResponseToAllChannels(ECR_Block);
+	WallPart->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+    
+	// 이미 바인딩되어 있지 않다면 히트 이벤트 바인딩
+	if (!WallPart->OnComponentHit.IsBound())
+	{
+		WallPart->OnComponentHit.AddDynamic(this, &ASLLaunchableWall::OnWallPartHit);
+	}
 }

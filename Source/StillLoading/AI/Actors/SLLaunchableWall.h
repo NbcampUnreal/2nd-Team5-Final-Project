@@ -112,6 +112,9 @@ protected:
 	UFUNCTION()
 	void OnSpacingTimelineFinished();
 
+	UFUNCTION()
+	void OnWallPartCollisionEnabled(int32 WallPartIndex);
+
 	void SetupWallParts();
 	void LaunchNextPart();
 	void CheckAllPartsLaunched();
@@ -135,6 +138,7 @@ protected:
 	void SetupWallPartCollisions(UStaticMeshComponent* WallPart);
 	bool ShouldIgnoreCollision(AActor* OtherActor) const;
 	void HandleMouseActorHit(ASLMouseActor* MouseActor, const FHitResult& HitResult, int32 WallPartIndex);
+	void EnableWallPartCollision(int32 WallPartIndex);
 
 	// Protected Variables (Components)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -179,6 +183,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings")
 	float ProjectileGravityScale;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Settings")
+	float WallPartCollisionDelay;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation Settings")
 	float RotationDelay;
@@ -291,4 +298,5 @@ private:
 	FRotator PlayerAimTargetRotation;
 
 	bool bAutoResetEnabled;
+	TArray<FTimerHandle> WallPartCollisionTimers;
 };
