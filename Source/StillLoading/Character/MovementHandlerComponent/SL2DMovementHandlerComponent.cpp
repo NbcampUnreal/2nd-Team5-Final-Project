@@ -8,6 +8,8 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "SubSystem/SLSoundSubsystem.h"
+#include "SubSystem/SLSoundTypes.h"
 
 USL2DMovementHandlerComponent::USL2DMovementHandlerComponent()
 {
@@ -130,6 +132,8 @@ void USL2DMovementHandlerComponent::Move(const float AxisValue, const EInputActi
 	}
 	
 	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
+
+	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuardBreak, OwnerCharacter->GetActorLocation());
 
 	float YawRotationScalar = 0.0f;
 	switch (ActionType)
