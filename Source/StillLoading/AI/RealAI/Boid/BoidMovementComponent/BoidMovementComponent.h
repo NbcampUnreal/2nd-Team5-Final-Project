@@ -63,9 +63,13 @@ protected:
 	FVector GetGoalLocation() const;
 	void InitializeComponent(const TObjectPtr<ASwarmManager>& InSwarmManager);
 
+	// 텔포 후 콜리전 비활성화 시간
+	UPROPERTY(EditAnywhere, Category = "Teleport")
+	float PostTeleportCollisionGracePeriod = 0.5f;
+	
 	// 텔포 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")
-	float StuckDistanceThreshold = 800.0f;
+	float StuckDistanceThreshold = 1200.0f;
 
 	// 텔포 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")
@@ -92,6 +96,9 @@ protected:
 	TObjectPtr<USoundCue> TeleportSound = nullptr;
 
 private:
+	UFUNCTION()
+	void RestorePawnCollision();
+	
 	void BeginAttack(float DeltaTime, const AActor* CurrentTarget, ASwarmAgent* SwarmAgent);
 	
 	FVector CalculateSeparationForce(const TArray<AActor*>& Neighbors);
@@ -100,6 +107,8 @@ private:
 	FVector CalculateGoalSeekingForce();
 
 	FVector SmoothedSteeringForce = FVector::ZeroVector;
+
+	FTimerHandle RestoreCollisionTimerHandle;
 
 	UPROPERTY()
 	TObjectPtr<ASwarmAgent> OwnerCharacter = nullptr;

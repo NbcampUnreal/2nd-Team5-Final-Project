@@ -20,7 +20,6 @@ UBoidMovementComponent::UBoidMovementComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-
 void UBoidMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -214,7 +213,6 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 		{
 			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰
 		}
-		UE_LOG(LogTemp, Warning, TEXT("SeparationSq [%f]"), SeparationSq);
 	}
 	else
 	{
@@ -236,13 +234,15 @@ void UBoidMovementComponent::CheckAndHandleStuckTeleport(float DeltaTime)
 	const FVector GoalLocation = GetGoalLocation();
 	if (GoalLocation.IsZero()) return;
 
+	const FVector MyLocation = OwnerCharacter->GetActorLocation();
+	//DrawDebugLine(GetWorld(), MyLocation, GoalLocation, FColor::Yellow, false, 0.1f, 0, 1.0f);
+
 	const float DistanceToGoal = FVector::Dist(OwnerCharacter->GetActorLocation(), GoalLocation);
 	if (DistanceToGoal < StuckDistanceThreshold)
 	{
 		return;
 	}
 
-	const FVector MyLocation = OwnerCharacter->GetActorLocation();
 	FVector MoveDirection = OwnerCharacter->GetVelocity().GetSafeNormal();
 	if (MoveDirection.IsNearlyZero())
 	{
@@ -263,7 +263,10 @@ void UBoidMovementComponent::CheckAndHandleStuckTeleport(float DeltaTime)
 		{OwnerCharacter},
 		EDrawDebugTrace::None,
 		HitResult,
-		true
+		true,
+		FColor::Red,
+		FColor::Green,
+		2.0f 
 	);
 
 	if (bHitObstacle)
@@ -285,23 +288,37 @@ void UBoidMovementComponent::CheckAndHandleStuckTeleport(float DeltaTime)
 			OverlappedActors
 		);
 
+		//FColor SphereColor = bIsOccupied ? FColor::Red : FColor::Green;
+		//DrawDebugSphere(GetWorld(), GoalLocation, CharacterCapsuleRadius, 16, SphereColor, false, 2.0f, 0, 2.0f);
+
 		if (!bIsOccupied)
 		{
-			if (TeleportEffect)
+			if (!GetWorld()->GetTimerManager().IsTimerActive(RestoreCollisionTimerHandle))
 			{
-				UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TeleportEffect, GoalLocation);
-			}
-			if (TeleportSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(GetWorld(), TeleportSound, GoalLocation);
-			}
+				if (UCapsuleComponent* CapsuleComp = OwnerCharacter->GetCapsuleComponent())
+				{
+					CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+				}
+			
+				if (TeleportEffect)
+				{
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TeleportEffect, GoalLocation);
+				}
+				if (TeleportSound)
+				{
+					UGameplayStatics::PlaySoundAtLocation(GetWorld(), TeleportSound, GoalLocation);
+				}
 
-			OwnerCharacter->SetActorLocation(GoalLocation, false, nullptr, ETeleportType::TeleportPhysics);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Log, TEXT("Agent %s teleport cancelled, destination is occupied."),
-			       *OwnerCharacter->GetName());
+				OwnerCharacter->SetActorLocation(GoalLocation, false, nullptr, ETeleportType::TeleportPhysics);
+
+				GetWorld()->GetTimerManager().SetTimer(
+				   RestoreCollisionTimerHandle,
+				   this,
+				   &UBoidMovementComponent::RestorePawnCollision,
+				   PostTeleportCollisionGracePeriod,
+				   false
+			   );
+			}
 		}
 	}
 }
@@ -342,6 +359,17 @@ FVector UBoidMovementComponent::GetGoalLocation() const
 void UBoidMovementComponent::InitializeComponent(const TObjectPtr<ASwarmManager>& InSwarmManager)
 {
 	this->SwarmManager = InSwarmManager;
+}
+
+void UBoidMovementComponent::RestorePawnCollision()
+{
+	if (OwnerCharacter)
+	{
+		if (UCapsuleComponent* CapsuleComp = OwnerCharacter->GetCapsuleComponent())
+		{
+			CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+		}
+	}
 }
 
 void UBoidMovementComponent::BeginAttack(const float DeltaTime, const AActor* CurrentTarget, ASwarmAgent* Agent)

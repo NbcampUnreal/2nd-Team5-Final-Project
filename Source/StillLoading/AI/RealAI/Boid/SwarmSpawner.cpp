@@ -49,7 +49,7 @@ void ASwarmSpawner::BeginSpawn()
 			SpawnedManager->CombatAlignment = CombatAlignmentWeight;
 			SpawnedManager->CombatCohesion = CombatCohesionWeight;
 			SpawnedManager->CombatGoalSeeking = CombatGoalSeekingWeight;
-
+			
 			SpawnedManager->CurrentFormationType = FormationType;
 			SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
 
@@ -70,7 +70,7 @@ void ASwarmSpawner::BeginSpawn()
 
 			TotalSpawnCount = 0;
 
-			for (const auto& [AgentClass, ControllerClass, SpawnCount, AvoidanceWeight, bIsLeader] : SwarmCompositions)
+			for (const auto& [AgentClass, ControllerClass, SpawnCount, AvoidanceWeight, bIsLeader, TeamIDToAssign] : SwarmCompositions)
 			{
 				if (AgentClass)
 				{
@@ -113,22 +113,15 @@ void ASwarmSpawner::BeginSpawn()
 								DeferredAgent->SetLeader(true, LeaderBehaviorTree, LeaderBlackBoard);
 								SpawnedManager->SetLeader(DeferredAgent);
 								SpawnedManager->DetectionRadius = DetectionRadius;
-
-								if (AAIController* AIController = Cast<AAIController>(DeferredAgent->GetController()))
-								{
-									if(UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent())
-									{
-										BlackboardComp->SetValueAsBool(TEXT("bUseCentralPathfinding"), bUseCentralPathfinding);
-									}
-								}
-
-								if (bUseCentralPathfinding)
-								{
-									DeferredAgent->BecomeGhostLeader(); 
-								}
 							}
 
 							UGameplayStatics::FinishSpawningActor(DeferredAgent, SpawnTransform);
+
+							if (AAIController* AIController = Cast<AAIController>(DeferredAgent->GetController()))
+							{
+								AIController->SetGenericTeamId(TeamIDToAssign);
+							}
+							
 							SpawnedManager->RegisterAgent(DeferredAgent); // 에이전트 등록
 						}
 						else
@@ -149,6 +142,7 @@ int32 ASwarmSpawner::GetSpawnCount() const
 	return TotalSpawnCount;
 }
 
+// 무기 없애기
 void ASwarmSpawner::ResetSpawendMonster()
 {
 	if (IsValid(SpawnedManager))

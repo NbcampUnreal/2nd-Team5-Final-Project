@@ -5,7 +5,6 @@
 #include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
-#include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 
 UBTService_FindPlayer::UBTService_FindPlayer()
@@ -60,6 +59,27 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 			}
 		}
 	}
+}
+
+bool UBTService_FindPlayer::IsInFieldOfView(const AActor* TargetActor, const APawn* ControlledPawn, const ASwarmManager* SwarmManager)
+{
+	if (!TargetActor)
+		return false;
+
+	FVector MyLocation = ControlledPawn->GetActorLocation();
+	FVector TargetLocation = TargetActor->GetActorLocation();
+
+	float Distance = FVector::Dist(MyLocation, TargetLocation);
+	if (Distance > SwarmManager->DetectionRadius)
+		return false;
+
+	FVector ForwardVector = ControlledPawn->GetActorForwardVector().GetSafeNormal();
+	FVector ToTarget = (TargetLocation - MyLocation).GetSafeNormal();
+
+	float DotProduct = FVector::DotProduct(ForwardVector, ToTarget);
+	float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(100 * 0.5f));
+
+	return DotProduct >= CosHalfFOV;
 }
 
 bool UBTService_FindPlayer::CheckTag(const UBehaviorTreeComponent& OwnerComp)
