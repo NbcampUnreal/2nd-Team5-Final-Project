@@ -7,6 +7,7 @@
 class UNiagaraSystem;
 class ASwarmAgent;
 class ASwarmManager;
+class USoundCue;
 
 UENUM(BlueprintType)
 enum class EBoidMonsterState : uint8
