@@ -48,16 +48,6 @@ public:
 	UDataAsset* GetPublicImageData();
 	USLBaseTextPrintWidget* GetTalkWidget();
 
-	// Test
-	UFUNCTION(BlueprintCallable)
-	void OnPlayerHpChanged();
-
-	UFUNCTION(BlueprintCallable)
-	void OnPlayerSpecialChanged();
-
-	UFUNCTION(BlueprintCallable)
-	void OnBossHpChanged();
-
 private:
 	void SetInputModeAndCursor(bool bIsRemove);
 
@@ -65,21 +55,6 @@ private:
 	void CheckValidOfUISettings();
 	void CheckValidOfWidgetDataAsset();
 	void CheckValidOfOptiondDataAsset();
-
-	// Test
-	void DecreasePlayerHp();
-	void DecreaseBossHp();
-	void IncreaseSpecialValue();
-
-public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	FSLPlayerHpDelegateBuffer PlayerHpBuffer;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	FSLSpecialValueDelegateBuffer SpecialValueBuffer;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	FSLBossHpDelegateBuffer BossHpBuffer;
 
 private:
 	UPROPERTY()
@@ -102,16 +77,4 @@ private:
 
 	UPROPERTY()
 	bool bIsVisibleLevelCursor = true;
-
-	// Test
-	FTimerHandle PlayerHpTimer;
-	FTimerHandle SpecialValueTimer;
-	FTimerHandle BossHpTimer;
-
-	float PlayerMaxHp = 100;
-	float PlayerCurrentHp = 100;
-	float SpecialMaxValue = 100;
-	float SpecialCurrentValue = 0;
-	float BossMaxHp = 100;
-	float BossCurrentHp = 100;
 };
