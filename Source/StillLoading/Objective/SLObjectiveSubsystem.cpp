@@ -10,8 +10,8 @@
 
 USLObjectiveBase* USLObjectiveSubsystem::GetObjective(const ESLChapterType Chapter, const FName Name)
 {
-    const FSLObjectiveRuntimeData& ChapterDataAsset = CachedObjectiveData.FindRef(Chapter);
-    USLObjectiveBase* Objective = ChapterDataAsset.ChapterObjectiveMap.FindRef(Name);
+    const FSLObjectiveRuntimeData& ChapterDataAsset = *CachedObjectiveData.Find(Chapter);
+    USLObjectiveBase* Objective = *ChapterDataAsset.ChapterObjectiveMap.Find(Name);
     return Objective;
 }
 
