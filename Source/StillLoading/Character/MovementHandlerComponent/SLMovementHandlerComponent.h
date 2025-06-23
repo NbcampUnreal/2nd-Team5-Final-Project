@@ -70,12 +70,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	float CameraLagSpeed = 0.001f;
 
-	// 카메라 입력이 활성화되었는지 확인하는 플래그입니다.
-	bool bIsCameraInputActive = false;
-
 	// Lock on 용
 	UPROPERTY()
 	TObjectPtr<AActor> CameraFocusTarget;
+
+	// TPS Camera View
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|View")
+	bool bActivateTPSView = false;
 
 protected:
 	virtual void BeginPlay() override;
@@ -94,7 +95,7 @@ protected:
 	UFUNCTION()
 	void FixCharacterVelocity();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> EmpoweredShieldEffect;
 
 	UPROPERTY()
@@ -126,7 +127,8 @@ private:
 	void BeginAttack();
 	void Look(const FVector2D& Value);
 	void Jump();
-	
+
+	// Zelda-Like
 	void Move(const float AxisValue, const EInputActionType ActionType);
 
 	// TPS
@@ -134,8 +136,9 @@ private:
 	void MoveForwardBackward(const float Value, const FRotator& YawRotation) const;
 	void MoveLeftRight(const float Value, const FRotator& YawRotation) const;
 
+	void SetViewMode(bool bIsTPS);
 	void ToggleCameraState(bool bLock);
-	void ParryCheck();
+	bool ParryCheck();
 	void PointMove();
 	void DodgeLoco();
 	void ToggleLockState();
@@ -180,4 +183,8 @@ private:
 	bool bDidBeginAttack = false;
 
 	float DesiredArmLength = 0;
+
+	// 공중 공격 상태 저장 변수
+	float DefaultGravityScale;
+	float DefaultBrakingDecelerationFalling;
 };

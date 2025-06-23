@@ -41,9 +41,10 @@ void UMovementHandlerComponent::BeginPlay()
 		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
 		OwnerCharacter->GetCharacterMovement()->MaxAcceleration = 8192.0f;
 
-		// TPS
-		OwnerCharacter->bUseControllerRotationYaw = true;
-		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+		DefaultGravityScale = OwnerCharacter->GetCharacterMovement()->GravityScale;
+		DefaultBrakingDecelerationFalling = OwnerCharacter->GetCharacterMovement()->BrakingDecelerationFalling;
+
+		SetViewMode(false);
 	}
 
 	if (CachedRadarComponent)
@@ -91,23 +92,6 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick T
 			RotateCameraToTarget(CameraFocusTarget, DeltaTime);
 		}
 	}
-	else
-	{
-		// Zelda-Like (카메라가 케릭터 팔로우)
-		/*
-		if (bIsCameraInputActive)
-		{
-			if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
-			{
-				const FRotator CurrentRotation = PC->GetControlRotation();
-				const FRotator TargetRotation = FRotator(CurrentRotation.Pitch, OwnerCharacter->GetActorRotation().Yaw, CurrentRotation.Roll);
-				const FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, CameraLagSpeed / 10);
-
-				PC->SetControlRotation(NewRotation);
-			}
-		}
-		*/
-	}
 
 	if (OwnerCharacter && OwnerCharacter->CameraBoom)
 	{
@@ -122,13 +106,6 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick T
 			DeltaTime, // 프레임 시간
 			CameraZoomInterpSpeed // 보간 속도
 		);
-	}
-
-	// Shield Effect
-	if (ActiveShieldEffectComponent && !OwnerCharacter->IsInPrimaryState(TAG_Character_Defense_Block))
-	{
-		ActiveShieldEffectComponent->DestroyComponent();
-		ActiveShieldEffectComponent = nullptr;
 	}
 }
 
@@ -157,7 +134,14 @@ void UMovementHandlerComponent::OnActionTriggered_Implementation(EInputActionTyp
 	case EInputActionType::EIAT_MoveDown:
 	case EInputActionType::EIAT_MoveLeft:
 	case EInputActionType::EIAT_MoveRight:
-		MoveTPS(Value.Get<float>(), ActionType);
+		if (bActivateTPSView)
+		{
+			MoveTPS(Value.Get<float>(), ActionType);
+		}
+		else
+		{
+			Move(Value.Get<float>(), ActionType);
+		}
 		break;
 
 	default:
@@ -185,7 +169,7 @@ void UMovementHandlerComponent::OnActionStarted_Implementation(EInputActionType 
 		Jump();
 		break;
 	case EInputActionType::EIAT_Attack:
-		ParryCheck();
+		if (ParryCheck()) break;
 	case EInputActionType::EIAT_PointMove:
 	case EInputActionType::EIAT_Block:
 		if (UInputBufferComponent* BufferComp = GetOwner()->FindComponentByClass<UInputBufferComponent>())
@@ -194,13 +178,15 @@ void UMovementHandlerComponent::OnActionStarted_Implementation(EInputActionType 
 		}
 		break;
 	case EInputActionType::EIAT_Interaction:
-		bIsCameraInputActive ? bIsCameraInputActive = false : bIsCameraInputActive = true;
 		break;
 	case EInputActionType::EIAT_Walk:
 		DodgeLoco();
 		break;
 	case EInputActionType::EIAT_LockObject:
 		ToggleLockState();
+		break;
+	case EInputActionType::EIAT_ChangeView:
+		SetViewMode(!bActivateTPSView);
 		break;
 
 	default:
@@ -309,10 +295,22 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 
 void UMovementHandlerComponent::FixCharacterVelocity()
 {
+	/*
 	FVector Velocity = OwnerCharacter->GetCharacterMovement()->Velocity;
 	Velocity.Z = 0.f;
 	OwnerCharacter->GetCharacterMovement()->Velocity = Velocity;
 	OwnerCharacter->GetCharacterMovement()->GravityScale = 0.f;
+	*/
+
+	if (!OwnerCharacter) return;
+    
+	UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement();
+	MoveComp->BrakingDecelerationFalling = 10.f;
+	MoveComp->GravityScale = 0.1f;
+	
+	FVector CurrentVelocity = MoveComp->Velocity;
+	CurrentVelocity.Z = 0;
+	MoveComp->Velocity = CurrentVelocity;
 }
 
 void UMovementHandlerComponent::RemoveInvulnerability() const
@@ -401,8 +399,7 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 	// 피격
 	OwnerCharacter->ClearStateTags({TAG_Character_Movement_Dodge}, {
 		                               TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
-		                               TAG_Character_Empowered
-	                               });
+		                               TAG_Character_Empowered});
 	CachedMontageComponent->StopAllMontages(0.2f);
 	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
 
@@ -531,7 +528,6 @@ void UMovementHandlerComponent::RotateToHitCauser(const AActor* Causer, FRotator
 
 void UMovementHandlerComponent::Look(const FVector2D& Value)
 {
-	if (bIsCameraInputActive) return;
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_LookBlock))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Look Blocked"));
@@ -583,6 +579,11 @@ void UMovementHandlerComponent::OnLanded(const FHitResult& Hit)
 	AttackStateCount = 0;
 	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterOnGround,
 	                                            OwnerCharacter->GetActorLocation());
+
+	if (!OwnerCharacter) return;
+	UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement();
+	MoveComp->BrakingDecelerationFalling = DefaultBrakingDecelerationFalling;
+	MoveComp->GravityScale = DefaultGravityScale;
 }
 
 void UMovementHandlerComponent::StartKnockback(float Speed, float Duration)
@@ -695,22 +696,53 @@ void UMovementHandlerComponent::MoveLeftRight(const float Value, const FRotator&
 	OwnerCharacter->AddMovementInput(Direction, Value);
 }
 
+void UMovementHandlerComponent::SetViewMode(bool bIsTPS)
+{
+    if (!OwnerCharacter || !OwnerCharacter->CameraBoom || !OwnerCharacter->GetCharacterMovement())
+    {
+        return;
+    }
+    
+    if (bIsTPS)
+    {
+        OwnerCharacter->bUseControllerRotationYaw = true;
+        OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+        //OwnerCharacter->CameraBoom->bUsePawnControlRotation = true;
+
+    	OwnerCharacter->CameraBoom->SetRelativeLocation(FVector(85.f, 60.f, 60.f));
+    	OwnerCharacter->CameraBoom->SetRelativeRotation(FRotator(0.f, -30.f, 0.f));
+    	bActivateTPSView = true;
+    }
+    else
+    {
+    	OwnerCharacter->bUseControllerRotationYaw = false;
+    	OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
+
+    	OwnerCharacter->CameraBoom->SetRelativeLocation(FVector(-34.f, 60.f, 130.f));
+    	OwnerCharacter->CameraBoom->SetRelativeRotation(FRotator(0.f, -30.f, 0.f));
+    	bActivateTPSView = false;
+    }
+}
+
 void UMovementHandlerComponent::ToggleCameraState(bool bLock)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Toggle Camera State [%d]"), bLock);
+	if (!bActivateTPSView) return;
+	
 	if (bLock)
 	{
 		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
 		OwnerCharacter->bUseControllerRotationYaw = false;
+		OwnerCharacter->CameraBoom->SetRelativeLocation_Direct(FVector(0, 0, 60));
 	}
 	else
 	{
 		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 		OwnerCharacter->bUseControllerRotationYaw = true;
+		OwnerCharacter->CameraBoom->SetRelativeLocation_Direct(FVector(85, 60, 70));
 	}
 }
 
-void UMovementHandlerComponent::ParryCheck()
+bool UMovementHandlerComponent::ParryCheck()
 {
 	const float CurrentTime = GetWorld()->GetTimeSeconds();
 	if (CurrentTime - LastBlockTime <= ParryDuration)
@@ -737,14 +769,22 @@ void UMovementHandlerComponent::ParryCheck()
 		// 자기 자신 제외한 모두 슬로우
 		//USlowMotionHelper::QueueSlowMotionRequest(OwnerCharacter, OwnerCharacter, 0.2f, 0.3f, true, true);
 
-		return;
+		return true;
 	}
+
+	return false;
 }
 
 void UMovementHandlerComponent::Attack()
 {
 	UAnimMontage* Montage = nullptr;
 	FName SectionName;
+
+	if (ActiveShieldEffectComponent)
+	{
+		ActiveShieldEffectComponent->DestroyComponent();
+		ActiveShieldEffectComponent = nullptr;
+	}
 
 	if (CameraFocusTarget
 		&& !CameraFocusTarget->IsA(ASLAIBaseCharacter::StaticClass())
@@ -763,7 +803,7 @@ void UMovementHandlerComponent::Attack()
 			const float Dot = FVector::DotProduct(TargetForward, ToOwner);
 			if (Dot < -0.94f)
 			{
-				Execution();
+				//Execution();
 				return;
 			}
 		}

@@ -142,7 +142,7 @@ int32 ASwarmSpawner::GetSpawnCount() const
 	return TotalSpawnCount;
 }
 
-// 무기 없애기
+// TODO::무기 없애기
 void ASwarmSpawner::ResetSpawendMonster()
 {
 	if (IsValid(SpawnedManager))

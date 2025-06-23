@@ -47,11 +47,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Base Action")
 	void Interact() const;
 	UFUNCTION(BlueprintCallable, Category = "Base Action")
+	void PresentGoal() const;
+	UFUNCTION(BlueprintCallable, Category = "Base Action")
 	void DanceTime() const;
 
 	UPROPERTY()
 	TObjectPtr<USkeletalMeshComponent> CachedSkeletalMesh = nullptr;
-	
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value);
