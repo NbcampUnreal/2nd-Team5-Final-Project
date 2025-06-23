@@ -69,6 +69,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Movement_OnAir, "Character.Movement.OnAir")
 // AI
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI, "AI");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Hit, "AI.Hit");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Hit_FallBack, "AI.Hit.FallBack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Hit_Air, "AI.Hit.Air");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Dead, "AI.Dead");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_IsAttacking, "AI.IsAttacking");

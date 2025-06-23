@@ -340,6 +340,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	case EHitAnimType::HAT_HardHit:
 		{
 			SetBattleState(TAG_AI_Hit);
+			SetStrategyState(TAG_AI_IsPlayingMontage);
 			PlayHitMontageAndSetupRecovery(2);
 
 			FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
@@ -374,6 +375,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	case EHitAnimType::HAT_AirBorne:
 		AnimationComponent->PlayAIHitMontage("Airborne");
 		SetBattleState(TAG_AI_Hit);
+		SetStrategyState(TAG_AI_IsPlayingMontage);
 		if (CurrentHealth < 0.f)
 		{
 			//Dead(Causer, true);
@@ -383,6 +385,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	case EHitAnimType::HAT_AirUp:
 		AnimationComponent->PlayAIHitMontage("AirUp");
 		SetBattleState(TAG_AI_Hit);
+		SetStrategyState(TAG_AI_IsPlayingMontage);
 		if (CurrentHealth < 0.f)
 		{
 			//Dead(Causer, true);
@@ -392,7 +395,8 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	case EHitAnimType::HAT_FallBack:
 		AnimationComponent->PlayAIHitMontage("GroundHit");
 		RotateToHitCauser(Causer);
-		SetBattleState(TAG_AI_Hit);
+		SetStrategyState(TAG_AI_IsPlayingMontage);
+		SetBattleState(TAG_AI_Hit_FallBack);
 		if (CurrentHealth < 0.f)
 		{
 			//Dead(Causer, true);

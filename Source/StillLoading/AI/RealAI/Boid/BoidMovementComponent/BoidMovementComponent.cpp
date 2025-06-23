@@ -127,11 +127,6 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 	else // 공격 분기
 	{
 		TotalTime = GetWorld()->GetTimeSeconds() - Agent->LastAttackFinishTime;
-		/*
-		UE_LOG(LogTemp, Warning, TEXT("Total Time[%f][%s]"), TotalTime, *Agent->GetName());
-		UE_LOG(LogTemp, Warning, TEXT("CurrentCollDown[%f][%s]"), CurrentCollDown, *Agent->GetName());
-		UE_LOG(LogTemp, Warning, TEXT("LastAttackFinishTime[%f][%s]"), Agent->LastAttackFinishTime, *Agent->GetName());
-		*/
 		if (TotalTime > CurrentCoolDown)
 		{
 			CurrentState = EBoidMonsterState::FS_AbleToAttack;
@@ -211,7 +206,7 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	{
 		if (SeparationSq > 600) // 뒤에있어서 멀어지려는 힘이 약하고
 		{
-			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰
+			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰 or Anim
 		}
 	}
 	else
