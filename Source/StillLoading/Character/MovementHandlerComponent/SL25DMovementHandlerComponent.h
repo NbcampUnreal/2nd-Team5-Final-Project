@@ -43,6 +43,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Movement", meta = (ClampMin = "0.0"))
 	float AcceptanceRadius = 25.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
+	int AttackStateCount = 0;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
+	int AttackStateCountLimit = 25;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,

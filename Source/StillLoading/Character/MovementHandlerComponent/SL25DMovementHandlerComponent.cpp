@@ -86,6 +86,15 @@ void USL25DMovementHandlerComponent::OnActionTriggered_Implementation(EInputActi
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
 		return;
 	}
+
+	if (ActionType != EInputActionType::EIAT_Attack)
+	{
+		AttackStateCount++;
+		if (AttackStateCount >= AttackStateCountLimit)
+		{
+			CachedCombatComponent->ResetCombo();
+		}
+	}
 	
 	switch (ActionType)
 	{
@@ -115,6 +124,15 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
 		return;
+	}
+
+	if (ActionType != EInputActionType::EIAT_Attack)
+	{
+		AttackStateCount++;
+		if (AttackStateCount >= AttackStateCountLimit)
+		{
+			CachedCombatComponent->ResetCombo();
+		}
 	}
 	
 	switch (ActionType)

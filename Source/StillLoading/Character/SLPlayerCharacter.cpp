@@ -19,10 +19,10 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 
 	//bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
-
 	bUseControllerRotationYaw = false;
+	
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -34,7 +34,7 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 	// Spring Arm Collision
 	CameraBoom->bDoCollisionTest = true;
 	CameraBoom->ProbeChannel = ECC_Camera;
-
+	
 	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
 	ThirdPersonCamera->SetupAttachment(CameraBoom);
 }
