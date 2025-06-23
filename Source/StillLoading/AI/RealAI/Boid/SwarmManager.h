@@ -58,8 +58,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Formation", meta = (ToolTip = "각 슬롯에 적용될 최대 랜덤 오프셋 거리"))
 	float MaxRandomOffset = 25.0f;
 
+	// 리더 감지 범위
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
-	float DetectionRadius = 700.0f;
+	float DetectionRadius = 1000.0f;
 
 	const TArray<TObjectPtr<ASwarmAgent>>& GetAgents() const { return AllAgents; }
 
@@ -113,13 +114,13 @@ public:
 	int32 NumRows = 3;
 
 	UPROPERTY(EditAnywhere, Category = "Formation Settings", meta = (ClampMin = "0.0"))
-	float RowSpacing = 150.0f; // 대형 앞뒤 깊이
+	float RowSpacing = 200.0f; // 대형 앞뒤 깊이
 
 	UPROPERTY(EditAnywhere, Category = "Formation Settings", meta = (ClampMin = "0.0"))
-	float ColumnSpacing = 150.0f; // 병사들 사이 좌우 간격
+	float ColumnSpacing = 200.0f; // 병사들 사이 좌우 간격
 
 	UPROPERTY(EditAnywhere, Category = "Formation Settings", meta = (ClampMin = "0.0"))
-	float FormationOffsetBehindLeader = 100.0f;
+	float FormationOffsetBehindLeader = 200.0f;
 
 	// 팔로워 상태 관련
 	void SetSquadState(const ESquadState NewState);
@@ -154,7 +155,9 @@ private:
 	UPROPERTY()
 	TMap<int32, FVector> AgentRandomOffsets;
 
+	TArray<FVector> CurrentPathPoints;
+
 	ESquadState CurrentSquadState = ESquadState::Patrolling_Wait;
 	int32 NextAgentID = 0;
-	
+	int32 CurrentPathIndex;
 };

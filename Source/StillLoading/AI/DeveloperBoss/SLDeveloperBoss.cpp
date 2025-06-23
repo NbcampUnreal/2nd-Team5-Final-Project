@@ -989,10 +989,13 @@ void ASLDeveloperBoss::OnPhase3AutoWallAttackTimer()
         UE_LOG(LogTemp, Display, TEXT("🎯 Phase3 Auto Attack: Launching wall [%d]: %s"), 
                Phase3CurrentWallIndex, *WallToLaunch->GetName());
         
+        // 기존 로직 사용
         PendingLineActivation.PhaseIndex = Phase3Index;
         PendingLineActivation.LaunchedWall = WallToLaunch;
         
         LaunchSpecificWall(WallToLaunch);
+
+        ActivateConnectedLines(Phase3Index, WallToLaunch);
     }
     else
     {
@@ -1685,6 +1688,50 @@ void ASLDeveloperBoss::CleanupInactiveWalls()
     });
 }
 
+void ASLDeveloperBoss::LaunchPhase4WallWithLines()
+{
+    if (!bIsPhase4Active)
+    {
+        return;
+    }
+    
+    int32 Phase4Index = static_cast<int32>(EDeveloperBossPhase::Phase4_Platformer);
+    FPhaseLineData* Phase4Data = PhaseLineDataMap.Find(Phase4Index);
+    
+    if (!Phase4Data || Phase4Data->WallConnections.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase4: No wall connections found"));
+        return;
+    }
+    
+    // 발사 가능한 벽 찾기
+    ASLLaunchableWall* TargetWall = nullptr;
+    for (const FWallLineConnection& Connection : Phase4Data->WallConnections)
+    {
+        if (IsValid(Connection.Wall) && Connection.Wall->CanLaunch())
+        {
+            TargetWall = Connection.Wall;
+            break;
+        }
+    }
+    
+    if (IsValid(TargetWall))
+    {
+        UE_LOG(LogTemp, Display, TEXT("Phase4: Launching wall with immediate line activation: %s"), 
+               *TargetWall->GetName());
+        
+        // 벽 발사
+        LaunchSpecificWall(TargetWall);
+        
+        // 즉시 선 활성화
+        ActivateConnectedLines(Phase4Index, TargetWall);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase4: No available walls to launch"));
+    }
+}
+
 void ASLDeveloperBoss::StartPhase4FloorCollapse()
 {
     if (!IsValid(Phase4FallingFloor) || !bIsPhase4Active)
@@ -1715,7 +1762,6 @@ void ASLDeveloperBoss::HandlePhase4FloorCollapseCompleted()
     
     OnPhase4PlatformerCompleted.Broadcast();
     
-    // Phase 3과 동일한 방식으로 자동 벽 공격 시작
     if (IsValid(GetWorld()))
     {
         GetWorld()->GetTimerManager().SetTimer(
@@ -1724,8 +1770,7 @@ void ASLDeveloperBoss::HandlePhase4FloorCollapseCompleted()
             {
                 if (bIsPhase4Active)
                 {
-                    int32 Phase4Index = static_cast<int32>(EDeveloperBossPhase::Phase4_Platformer);
-                    ManualLaunchWallAttack(Phase4Index, -1);
+                    LaunchPhase4WallWithLines(); // 새 함수 사용
                     
                     // 다음 공격 예약 (4초마다)
                     if (bIsPhase4Active && IsValid(GetWorld()))
@@ -1735,8 +1780,7 @@ void ASLDeveloperBoss::HandlePhase4FloorCollapseCompleted()
                             [this]() { 
                                 if (bIsPhase4Active) 
                                 {
-                                    int32 Phase4Index = static_cast<int32>(EDeveloperBossPhase::Phase4_Platformer);
-                                    ManualLaunchWallAttack(Phase4Index, -1);
+                                    LaunchPhase4WallWithLines(); // 여기도 새 함수 사용
                                 }
                             },
                             4.0f,

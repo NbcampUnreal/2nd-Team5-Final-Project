@@ -286,7 +286,7 @@ protected:
     UFUNCTION()
     void HandlePhase4FloorCollapseCompleted();
     
-
+    
     void LaunchPhase5MultiWallAttack();
     void LaunchPhase5SingleWall(ASLLaunchableWall* Wall);
     void LaunchPhase5ReplacementWall();
@@ -316,7 +316,7 @@ protected:
     ASLLaunchableWall* GetNextPhase3Wall();
     void ResetPhase3WallIndex();
     void CleanupInactiveWalls();
-
+    void LaunchPhase4WallWithLines();
     // Protected Variables (Settings)
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Developer Boss")
     TArray<TSubclassOf<ASLAIBaseCharacter>> AvailableBossClasses;

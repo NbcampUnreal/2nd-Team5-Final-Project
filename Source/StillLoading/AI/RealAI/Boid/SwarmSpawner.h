@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameFramework/Actor.h"
 #include "SwarmSpawner.generated.h"
 
@@ -32,6 +33,9 @@ struct FSwarmComposition
 
 	UPROPERTY(EditAnywhere, Category = "Swarm Composition")
 	bool bIsLeader = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swarm AI")
+	FGenericTeamId TeamIDToAssign;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpawnedMonstersCountUpdated, int32, DecreaseCount);

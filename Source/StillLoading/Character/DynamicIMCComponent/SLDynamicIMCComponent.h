@@ -14,6 +14,7 @@ enum class EInputActionType : uint8
 	EIAT_MoveDown UMETA(DisplayName = "MoveDown"),
 	EIAT_MoveLeft UMETA(DisplayName = "MoveLeft"),
 	EIAT_MoveRight UMETA(DisplayName = "MoveRight"),
+	EIAT_CameraUnlock UMETA(DisplayName = "CameraUnlock"),
 	EIAT_Jump UMETA(DisplayName = "Jump"),
 	EIAT_Look UMETA(DisplayName = "Look"),
 	EIAT_Attack UMETA(DisplayName = "Attack"),

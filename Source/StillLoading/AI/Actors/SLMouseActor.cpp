@@ -8,6 +8,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ASLMouseActor::ASLMouseActor()
@@ -728,7 +729,19 @@ bool ASLMouseActor::CanGrabPlayer() const
 	{
 		return false;
 	}
-    
+
+	if (IsValid(TargetPlayer))
+	{
+		if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(TargetPlayer))
+		{
+			// TAG_Character_Dead 상태인지 확인
+			if (PlayerCharacter->IsInPrimaryState(TAG_Character_Dead))
+			{
+				return false;
+			}
+		}
+	}
+	
 	return bCanGrab && (CurrentState == EMouseActorState::Orbiting || CurrentState == EMouseActorState::Descending);
 }
 
