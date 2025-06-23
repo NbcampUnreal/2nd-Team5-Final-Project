@@ -69,7 +69,7 @@ protected:
 	
 	// 텔포 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")
-	float StuckDistanceThreshold = 1200.0f;
+	float StuckDistanceThreshold = 800.0f;
 
 	// 텔포 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")

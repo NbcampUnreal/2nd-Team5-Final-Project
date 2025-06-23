@@ -25,6 +25,8 @@ enum class EInputActionType : uint8
 	EIAT_Menu UMETA(DisplayName = "Menu"),
 	EIAT_LockObject UMETA(DisplayName = "LockObject"),
 	EIAT_Special UMETA(DisplayName = "Special"),
+	EIAT_PresentGoal UMETA(DisplayName = "Present Goal"),
+	EIAT_ChangeView UMETA(DisplayName = "Change View"),
 	EIAT_Max UMETA(DisplayName = "Max")
 };
 

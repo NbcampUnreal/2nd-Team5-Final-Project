@@ -26,6 +26,7 @@ enum class EQueryType : uint8 // enum class 는 앞에 안붙이는게 더 낫�
 	EQT_LockOnBlock UMETA(DisplayName = "LockOn Block"),
 	EQT_FacingBlock UMETA(DisplayName = "Facing Block"),
 	EQT_DogeBlock UMETA(DisplayName = "Doge Block"),
+	EQT_UIBlock UMETA(DisplayName = "UI Block"),
 	EQT_HitBlock UMETA(DisplayName = "Hit Block"),
 };
 

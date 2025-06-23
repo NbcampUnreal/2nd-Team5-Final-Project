@@ -91,6 +91,21 @@ void AMonsterAICharacter::BeginPlay()
 	}
 }
 
+void AMonsterAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (Sword)
+	{
+		Sword->Destroy();
+	}
+
+	if (Shield)
+	{
+		Shield->Destroy();
+	}
+}
+
 void AMonsterAICharacter::BeginSpawning(const FVector& FinalLocation, const float RiseHeight)
 {
 	SpawnEndLocation = FinalLocation;
