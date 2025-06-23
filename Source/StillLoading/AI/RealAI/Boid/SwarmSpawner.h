@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameFramework/Actor.h"
 #include "SwarmSpawner.generated.h"
 
@@ -32,6 +33,9 @@ struct FSwarmComposition
 
 	UPROPERTY(EditAnywhere, Category = "Swarm Composition")
 	bool bIsLeader = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swarm AI")
+	FGenericTeamId TeamIDToAssign;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpawnedMonstersCountUpdated, int32, DecreaseCount);
@@ -63,9 +67,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
 	bool bEnableAutoSpawn = true;
-
-	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
-	bool bUseCentralPathfinding = false;
 
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
 	EFollowerFormationType FormationType;

@@ -294,6 +294,22 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 {
 	AnimationComponent->StopAllMontages(0.2f);
 	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
+
+	if (Causer != nullptr && Causer != this)
+	{
+		AAIController* AIController = Cast<AAIController>(GetController());
+		if (AIController != nullptr)
+		{
+			bUseControllerRotationYaw = true;
+			GetCharacterMovement()->bOrientRotationToMovement = false;
+
+			const FVector CauserLocation = Causer->GetActorLocation();
+			const FVector DirectionToCauser = (CauserLocation - GetActorLocation()).GetSafeNormal();
+			const FRotator NewRotation = FRotationMatrix::MakeFromX(DirectionToCauser).Rotator();
+            
+			AIController->SetControlRotation(FRotator(0.f, NewRotation.Yaw, 0.f));
+		}
+	}
 	
 	HitDirection(Causer);
 	RotateToHitCauser(Causer);

@@ -31,8 +31,6 @@ public:
 	void PlayAttackAnim();
 	UFUNCTION()
 	void RequestBerserkMode();
-	UFUNCTION()
-	void BecomeGhostLeader();
 
 	UFUNCTION()
 	FORCEINLINE_DEBUGGABLE bool IsLeader() { return bIsLeader; }

@@ -40,6 +40,10 @@ void UMovementHandlerComponent::BeginPlay()
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
 		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
 		OwnerCharacter->GetCharacterMovement()->MaxAcceleration = 8192.0f;
+
+		// TPS
+		OwnerCharacter->bUseControllerRotationYaw = true;
+		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	}
 
 	if (CachedRadarComponent)
@@ -87,6 +91,23 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick T
 			RotateCameraToTarget(CameraFocusTarget, DeltaTime);
 		}
 	}
+	else
+	{
+		// Zelda-Like (카메라가 케릭터 팔로우)
+		/*
+		if (bIsCameraInputActive)
+		{
+			if (APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController()))
+			{
+				const FRotator CurrentRotation = PC->GetControlRotation();
+				const FRotator TargetRotation = FRotator(CurrentRotation.Pitch, OwnerCharacter->GetActorRotation().Yaw, CurrentRotation.Roll);
+				const FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, CameraLagSpeed / 10);
+
+				PC->SetControlRotation(NewRotation);
+			}
+		}
+		*/
+	}
 
 	if (OwnerCharacter && OwnerCharacter->CameraBoom)
 	{
@@ -129,12 +150,14 @@ void UMovementHandlerComponent::OnActionTriggered_Implementation(EInputActionTyp
 	case EInputActionType::EIAT_Look:
 		Look(Value.Get<FVector2D>());
 		break;
+	case EInputActionType::EIAT_CameraUnlock:
+		ToggleCameraState(true);
+		break;
 	case EInputActionType::EIAT_MoveUp:
 	case EInputActionType::EIAT_MoveDown:
 	case EInputActionType::EIAT_MoveLeft:
 	case EInputActionType::EIAT_MoveRight:
-		Move(Value.Get<float>(), ActionType);
-		//Move(Value.Get<float>(), ActionType);
+		MoveTPS(Value.Get<float>(), ActionType);
 		break;
 
 	default:
@@ -170,6 +193,9 @@ void UMovementHandlerComponent::OnActionStarted_Implementation(EInputActionType 
 			BufferComp->OnIMCActionStarted(ActionType);
 		}
 		break;
+	case EInputActionType::EIAT_Interaction:
+		bIsCameraInputActive ? bIsCameraInputActive = false : bIsCameraInputActive = true;
+		break;
 	case EInputActionType::EIAT_Walk:
 		DodgeLoco();
 		break;
@@ -191,13 +217,15 @@ void UMovementHandlerComponent::OnActionCompleted_Implementation(EInputActionTyp
 
 	switch (ActionType)
 	{
+	case EInputActionType::EIAT_CameraUnlock:
+		ToggleCameraState(false);
+		break;
 	case EInputActionType::EIAT_MoveUp:
 	case EInputActionType::EIAT_MoveDown:
 	case EInputActionType::EIAT_MoveLeft:
 	case EInputActionType::EIAT_MoveRight:
 		break;
 	case EInputActionType::EIAT_Walk:
-
 		break;
 	case EInputActionType::EIAT_Jump:
 		break;
@@ -503,6 +531,7 @@ void UMovementHandlerComponent::RotateToHitCauser(const AActor* Causer, FRotator
 
 void UMovementHandlerComponent::Look(const FVector2D& Value)
 {
+	if (bIsCameraInputActive) return;
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_LookBlock))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Look Blocked"));
@@ -617,6 +646,67 @@ void UMovementHandlerComponent::Move(const float AxisValue, const EInputActionTy
 		break;
 	default:
 		break;
+	}
+}
+
+void UMovementHandlerComponent::MoveTPS(const float AxisValue, const EInputActionType ActionType) const
+{
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_MovementBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Movement Blocked"));
+		return;
+	}
+
+	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
+	
+	AController* Controller = OwnerCharacter->GetController();
+	if (!Controller) return;
+
+	const FRotator YawRotation(0, Controller->GetControlRotation().Yaw, 0);
+	
+	switch (ActionType)
+	{
+	case EInputActionType::EIAT_MoveUp:
+		MoveForwardBackward(AxisValue, YawRotation);
+		break;
+	case EInputActionType::EIAT_MoveDown:
+		MoveForwardBackward(-AxisValue, YawRotation);
+		break;
+	case EInputActionType::EIAT_MoveLeft:
+		MoveLeftRight(-AxisValue, YawRotation);
+		break;
+	case EInputActionType::EIAT_MoveRight:
+		MoveLeftRight(AxisValue, YawRotation);
+		break;
+	default:
+		break;
+	}
+}
+
+void UMovementHandlerComponent::MoveForwardBackward(const float Value, const FRotator& YawRotation) const
+{
+	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	OwnerCharacter->AddMovementInput(Direction, Value);
+}
+
+void UMovementHandlerComponent::MoveLeftRight(const float Value, const FRotator& YawRotation) const
+{
+	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	OwnerCharacter->AddMovementInput(Direction, Value);
+}
+
+void UMovementHandlerComponent::ToggleCameraState(bool bLock)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Toggle Camera State [%d]"), bLock);
+	if (bLock)
+	{
+		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
+		OwnerCharacter->bUseControllerRotationYaw = false;
+	}
+	else
+	{
+		OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+		OwnerCharacter->bUseControllerRotationYaw = true;
 	}
 }
 
