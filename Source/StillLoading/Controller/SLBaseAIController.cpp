@@ -318,10 +318,10 @@ bool ASLBaseAIController::IsActorAlive(AActor* Actor) const
 	}
 	
 	// 플레이어 캐릭터인 경우
-	/*if (ASLPlayerCharacterBase* PlayerCharacter = Cast<ASLPlayerCharacterBase>(Actor))
+	if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(Actor))
 	{
-		return PlayerCharacter->GetCurrentHealth() > 0;
-	}*/
+		return !PlayerCharacter->PrimaryStateTags.HasTag(TAG_Character_Dead);
+	}
 	
 	return true;
 }
@@ -387,9 +387,12 @@ void ASLBaseAIController::OnPossess(APawn* InPawn)
 		BlackboardComponent->SetValueAsVector(FName("StartLocation"), InPawn->GetActorLocation());
 
 		ASLAIBaseCharacter* AiCharacter = Cast<ASLAIBaseCharacter>(InPawn);
-		BlackboardComponent->SetValueAsFloat(FName("DefaultMaxWalkSpeed"), AiCharacter->GetCharacterMovement()->MaxWalkSpeed);
-		BlackboardComponent->SetValueAsFloat(FName("MaxHealth"), AiCharacter->GetMaxHealth());
-		BlackboardComponent->SetValueAsFloat(FName("CurrentHealth"), AiCharacter->GetCurrentHealth());
+		if (AiCharacter)
+		{
+			BlackboardComponent->SetValueAsFloat(FName("DefaultMaxWalkSpeed"), AiCharacter->GetCharacterMovement()->MaxWalkSpeed);
+			BlackboardComponent->SetValueAsFloat(FName("MaxHealth"), AiCharacter->GetMaxHealth());
+			BlackboardComponent->SetValueAsFloat(FName("CurrentHealth"), AiCharacter->GetCurrentHealth());
+		}
 	}
 }
 

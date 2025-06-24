@@ -139,7 +139,8 @@ protected:
 	bool ShouldIgnoreCollision(AActor* OtherActor) const;
 	void HandleMouseActorHit(ASLMouseActor* MouseActor, const FHitResult& HitResult, int32 WallPartIndex);
 	void EnableWallPartCollision(int32 WallPartIndex);
-
+	bool IsPlayerAlive() const;
+	
 	// Protected Variables (Components)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> RootSceneComponent;
