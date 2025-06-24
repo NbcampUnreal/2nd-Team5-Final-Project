@@ -67,9 +67,6 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION()
-	void Hited(AActor* Causer);
-
 	void ApplyBerserkState();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
