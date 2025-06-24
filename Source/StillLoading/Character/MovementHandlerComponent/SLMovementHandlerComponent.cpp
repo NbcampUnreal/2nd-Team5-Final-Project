@@ -1143,7 +1143,7 @@ void UMovementHandlerComponent::BeginBuff()
 	ToggleCameraZoom(false);
 	const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
 
-	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
+	OwnerCharacter->ClearStateTags({TAG_Character_OnBuff}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_OnBuff);
 	CachedMontageComponent->StopAllMontages(0.2f);
 

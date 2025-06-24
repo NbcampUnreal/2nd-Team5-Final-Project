@@ -17,9 +17,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Cooldown")
 	FName LastAttackTimeKey = "LastAttackTime";
 
-	UPROPERTY(EditAnywhere, Category = "AttackType")
-	EAttackAnimType AttackType;
-
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

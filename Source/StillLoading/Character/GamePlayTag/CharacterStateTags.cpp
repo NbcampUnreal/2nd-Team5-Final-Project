@@ -78,3 +78,4 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Leader, "AI.Leader");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Idle, "AI.Idle");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_AbleToAttack, "AI.AbleToAttack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_IsPlayingMontage, "AI.IsPlayingMontage");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_PlayedMontage, "AI.PlayedMontage");
