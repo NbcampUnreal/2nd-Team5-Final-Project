@@ -193,7 +193,8 @@ class STILLLOADING_API ASLCompanionCharacter : public ASLAIBaseCharacter
 
 public:
 	ASLCompanionCharacter();
-
+	virtual void PossessedBy(AController* NewController) override;
+	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetCombatMode(bool bInCombat);
 
