@@ -15,6 +15,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Controller/SLBaseAIController.h"
 #include "Controller/SLCompanionNormalAIController.h"
+#include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AISense_Damage.h"
 
@@ -482,67 +483,55 @@ void ASLCompanionCharacter::ApplyExplosionDamage(FVector ExplosionLocation, floa
         return;
     }
     
-    TArray<FHitResult> HitResults;
+    // Overlap으로 변경
+    TArray<FOverlapResult> OverlapResults;
     FCollisionShape ExplosionShape = FCollisionShape::MakeSphere(ExplosionRadius);
     
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(this);
     
-    GetWorld()->SweepMultiByChannel(
-        HitResults,
+    GetWorld()->OverlapMultiByChannel(
+        OverlapResults,
         ExplosionLocation,
-        ExplosionLocation + FVector(0, 0, 1),
         FQuat::Identity,
         ECC_GameTraceChannel1,
         ExplosionShape,
         QueryParams
     );
     
-    // 히트된 액터들 처리
     TSet<AActor*> HitActors;
-    for (const FHitResult& Hit : HitResults)
+    for (const FOverlapResult& Overlap : OverlapResults)
     {
-        if (AActor* HitActor = Hit.GetActor())
+        AActor* HitActor = Overlap.GetActor();
+        if (!HitActor || HitActors.Contains(HitActor))
         {
-            // 중복 히트 방지 (같은 프레임 내)
-            if (!HitActors.Contains(HitActor))
-            {
-                HitActors.Add(HitActor);
-                
-                if (ASLAIBaseCharacter* OwnerCharacter = Cast<ASLAIBaseCharacter>(GetInstigator()))
-                {
-                    OwnerCharacter->GetBattleComponent()->SendHitResult(HitActor, Hit, AttackAnimType);
-                }
-            }
+            continue;
+        }
+        
+        // 실제 거리 검증 추가
+        float Distance = FVector::Dist(ExplosionLocation, HitActor->GetActorLocation());
+        if (Distance > ExplosionRadius)
+        {
+            continue;
+        }
+        
+        HitActors.Add(HitActor);
+        
+        if (BattleComponent)
+        {
+            FHitResult HitResult;
+            HitResult.Location = HitActor->GetActorLocation();
+            HitResult.ImpactPoint = HitResult.Location;
+            
+            BattleComponent->SendHitResult(HitActor, HitResult, AttackAnimType);
         }
     }
     
-    // 디버그 표시
+    // 디버그
     if (bIsDebugMode)
     {
-        FColor DebugColor = bIsFirstHit ? FColor::Red : FColor::Orange;
-        DrawDebugSphere(
-            GetWorld(),
-            ExplosionLocation,
-            ExplosionRadius,
-            32,
-            DebugColor,
-            false,
-            0.5f
-        );
-        
-        // 히트 카운트 표시
-        if (!bIsFirstHit)
-        {
-            DrawDebugString(
-                GetWorld(),
-                ExplosionLocation + FVector(0, 0, ExplosionRadius),
-                TEXT("Multi-Hit!"),
-                nullptr,
-                FColor::Yellow,
-                0.5f
-            );
-        }
+        DrawDebugSphere(GetWorld(), ExplosionLocation, ExplosionRadius, 32, 
+            bIsFirstHit ? FColor::Red : FColor::Orange, false, 1.0f);
     }
 }
 
