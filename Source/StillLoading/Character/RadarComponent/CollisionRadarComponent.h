@@ -42,6 +42,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Radar")
     void DetectClosestActorInFOV();
 
+    UFUNCTION(BlueprintCallable, Category = "Radar")
+    void ToggleRadarComponent(bool bOnRader, float InDetectionRadius = 1000.0f);
+
     UPROPERTY(BlueprintAssignable, Category = "Radar|Events")
     FOnActorDetectedEnhanced OnActorDetectedEnhanced;
 
@@ -63,9 +66,6 @@ protected:
     virtual void BeginPlay() override;
     virtual const FVector GetForwardVector();
 
-private:
-    void DrawDebugVisualization();
-
     UFUNCTION()
     void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
@@ -75,8 +75,9 @@ private:
     void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-    
 private:
+    void DrawDebugVisualization();
+    
     UPROPERTY(VisibleAnywhere, Category = "Radar|Components")
     USphereComponent* DetectionZone = nullptr;
 
@@ -84,7 +85,7 @@ private:
     float DetectionRadius = 1000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Radar|Settings", meta = (ClampMin = "0.0", ClampMax = "180.0"))
-    float FieldOfView = 100.0f;
+    float FieldOfView = 130.0f;
 
     UPROPERTY(EditAnywhere, Category = "Radar|Settings", meta = (ClampMin = "0.01"))
     float UpdateInterval = 0.2f; // 추가: Timer 간격 (초)

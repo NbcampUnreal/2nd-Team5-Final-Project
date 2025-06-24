@@ -77,11 +77,6 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	case ESquadState::Patrolling_Wait:
 		// '대기'
 		OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
-		if (UAnimationMontageComponent* AnimComp = Monster->FindComponentByClass<UAnimationMontageComponent>())
-		{
-			AnimComp->PlayAIETCMontage("WaitA");
-			Monster->SetStrategyState(TAG_AI_IsPlayingMontage);
-		}
 		break;
 
 	case ESquadState::Engaging:
@@ -127,6 +122,7 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 	else // 공격 분기
 	{
 		TotalTime = GetWorld()->GetTimeSeconds() - Agent->LastAttackFinishTime;
+		CurrentCoolDown = FMath::RandRange(2, 7);
 		if (TotalTime > CurrentCoolDown)
 		{
 			CurrentState = EBoidMonsterState::FS_AbleToAttack;

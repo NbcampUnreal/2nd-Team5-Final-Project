@@ -17,9 +17,6 @@ public:
 protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
-	UFUNCTION()
-	bool IsInFieldOfView(const AActor* TargetActor, const APawn* ControlledPawn, const ASwarmManager* SwarmManager);
-
 	UPROPERTY(EditAnywhere, Category="AI")
 	float ForgettingTime = 2.0f;
 	
