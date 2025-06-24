@@ -5,6 +5,7 @@
 #include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
+#include "Kismet/GameplayStatics.h"
 
 UBTService_FindPlayer::UBTService_FindPlayer()
 {
@@ -28,6 +29,16 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 	ASwarmManager* SwarmManager = OwningAgent->GetMySwarmManager();
 	if (!ControlledPawn || !BlackboardComp || !SwarmManager) return;
 
+	if (const AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(OwningAgent))
+	{
+		if (Monster->HasMonsterModeState(TAG_AI_Berserk))
+		{
+			ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+			BlackboardComp->SetValueAsObject(TEXT("TargetActor"), PlayerCharacter);
+			return;
+		}
+	}
+
 	const float DistanceToTarget = OwningAgent->GetDistanceTo(OwningAgent->CurrentDetectedActor);
 
 	if (DistanceToTarget <= SwarmManager->DetectionRadius)
@@ -41,9 +52,12 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 			{
 				if (OwningTeamAgent->GetGenericTeamId() != TargetTeamAgent->GetGenericTeamId())
 				{
+					SwarmManager->ReportTargetSighting(OwningAgent->CurrentDetectedActor);
+					/*
 					BlackboardComp->SetValueAsObject(TargetActorKey.SelectedKeyName, OwningAgent->CurrentDetectedActor);
 					BlackboardComp->SetValueAsFloat(TEXT("LastSeenTime"), GetWorld()->GetTimeSeconds());
 					SwarmManager->SetSquadState(ESquadState::Engaging);
+					*/
 				}
 			}
 		}
