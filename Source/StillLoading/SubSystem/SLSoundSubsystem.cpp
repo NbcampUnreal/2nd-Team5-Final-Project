@@ -51,6 +51,7 @@ void USLSoundSubsystem::PlayBgmSound(ESLBgmSoundType SoundType)
 
 	if (!IsValid(SoundSource))
 	{
+		StopBgmSound();
 		return;
 	}
 
