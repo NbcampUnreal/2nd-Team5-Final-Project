@@ -71,6 +71,19 @@ ASLCompanionCharacter::ASLCompanionCharacter()
     
 }
 
+void ASLCompanionCharacter::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+
+    if (AIController)
+    {
+        if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+        {
+            BlackboardComponent->SetValueAsBool(FName("IsBattleMage"), IsBattleMage);
+        }
+    }
+}
+
 void ASLCompanionCharacter::BeginPlay()
 {
     Super::BeginPlay();
@@ -127,6 +140,15 @@ bool ASLCompanionCharacter::GetIsBattleMage()
 void ASLCompanionCharacter::SetIsBattleMage(bool bInBattleMage)
 {
     IsBattleMage = bInBattleMage;
+
+    if (AIController)
+    {
+        if (UBlackboardComponent* BlackboardComponent = AIController->GetBlackboardComponent())
+        {
+            BlackboardComponent->SetValueAsBool(FName("IsBattleMage"), IsBattleMage);
+        }
+    }
+    
 }
 
 FGameplayTagContainer ASLCompanionCharacter::GetAvailablePatternsByDistance(float DistanceToTarget) const
