@@ -335,6 +335,8 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	LastAttacker = Causer;
 	CurrentHealth -= Damage;
 
+	UE_LOG(LogTemp, Warning, TEXT("Monster Current Health[%f]"), CurrentHealth);
+
 	switch (AnimType)
 	{
 	case EHitAnimType::HAT_WeakHit:

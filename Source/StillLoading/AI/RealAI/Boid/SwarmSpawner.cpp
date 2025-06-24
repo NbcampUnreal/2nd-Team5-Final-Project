@@ -1,9 +1,11 @@
 #include "SwarmSpawner.h"
 
+#include "NiagaraFunctionLibrary.h"
 #include "SwarmAgent.h"
 #include "SwarmManager.h"
 #include "AnimInstances/SLCompanionAnimInstance.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Engine/TargetPoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -13,21 +15,16 @@ ASwarmSpawner::ASwarmSpawner()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	SpawnRadiusSphere = CreateDefaultSubobject<USphereComponent>(TEXT("SpawnRadiusSphere"));
-	RootComponent = SpawnRadiusSphere;
-
-	SpawnRadiusSphere->SetCollisionProfileName(TEXT("NoCollision"));
-	SpawnRadiusSphere->SetCanEverAffectNavigation(false);
+	SpawnBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawnBox"));
+	RootComponent = SpawnBox;
+	
+	SpawnBox->SetCollisionProfileName(TEXT("NoCollision"));
+	SpawnBox->SetCanEverAffectNavigation(false);
 }
 
 void ASwarmSpawner::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-
-	if (SpawnRadiusSphere)
-	{
-		SpawnRadiusSphere->SetSphereRadius(SpawnRadius);
-	}
 }
 
 void ASwarmSpawner::BeginSpawn()
@@ -35,6 +32,18 @@ void ASwarmSpawner::BeginSpawn()
 	UWorld* World = GetWorld();
 	if (World && SwarmManagerClass)
 	{
+		if (SpawnEffectTemplate)
+		{
+			const FVector SpawnLocation = GetActorLocation() + FVector(0.f, 0.f, EffectSpawnHeightOffset);
+
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+				GetWorld(),
+				SpawnEffectTemplate,
+				SpawnLocation,
+				EffectSpawnRotation 
+			);
+		}
+		
 		SpawnedManager = World->SpawnActor<ASwarmManager>(SwarmManagerClass, GetActorLocation(), GetActorRotation());
 		if (SpawnedManager)
 		{
@@ -78,9 +87,11 @@ void ASwarmSpawner::BeginSpawn()
 
 					for (int32 i = 0; i < SpawnCount; ++i)
 					{
-						const FVector SpawnLocation = GetActorLocation() + FMath::VRand() * FMath::FRandRange(0, SpawnRadius);
+						const FBox SpawnableArea = FBox(GetActorLocation() - SpawnBox->GetScaledBoxExtent(),
+												GetActorLocation() + SpawnBox->GetScaledBoxExtent());
+						const FVector SpawnLocation = FMath::RandPointInBox(SpawnableArea);
 						const FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
-
+						
 						constexpr ESpawnActorCollisionHandlingMethod CollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 						// 지연 스폰

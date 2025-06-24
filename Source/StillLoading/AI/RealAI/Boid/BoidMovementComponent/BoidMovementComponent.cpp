@@ -61,7 +61,7 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(OwningAgent);
 	if (!Monster) return;
 
-	if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)) return;
+	if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage) || Monster->HasBattleState(TAG_AI_Dead)) return;
 
 	CheckAndHandleStuckTeleport(DeltaTime);
 
@@ -122,7 +122,6 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 	else // 공격 분기
 	{
 		TotalTime = GetWorld()->GetTimeSeconds() - Agent->LastAttackFinishTime;
-		CurrentCoolDown = FMath::RandRange(2, 7);
 		if (TotalTime > CurrentCoolDown)
 		{
 			CurrentState = EBoidMonsterState::FS_AbleToAttack;
@@ -136,6 +135,7 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 		if (DistanceToTarget < AttackRange && CurrentState == EBoidMonsterState::FS_AbleToAttack)
 		{
 			BeginAttack(DeltaTime, CurrentTarget, Agent);
+			AbleToPlayWonderMontage = true;
 		}
 		else
 		{
@@ -192,8 +192,6 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	const FVector CohesionForce = CalculateCohesionForce(Neighbors) * CurrentCohesion;
 
 	const float SeparationSq = SeparationForce.SizeSquared();
-	const float AlignmentSq = AlignmentForce.SizeSquared();
-	const float CohesionSq = CohesionForce.SizeSquared();
 
 	FVector FinalGoalForce = FVector::ZeroVector; 
 
@@ -205,7 +203,11 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰 or Anim
 			AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(Agent);
 			if (!Monster) return;
-			Monster->PlayETCAnim();
+			if (AbleToPlayWonderMontage)
+			{
+				Monster->PlayETCAnim();
+				AbleToPlayWonderMontage = false;
+			}
 		}
 	}
 	else
