@@ -45,6 +45,7 @@ void ASLInteractableObjectPortal::BeginPlay()
 
 void ASLInteractableObjectPortal::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
+    Super::OnInteracted(InCharacter, InTriggerType);
     if (InTriggerType == ESLReactiveTriggerType::ERT_InteractKey)
     {
         if (ObjectHp <= 0) return;

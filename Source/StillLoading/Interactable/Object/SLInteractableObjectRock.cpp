@@ -127,6 +127,7 @@ void ASLInteractableObjectRock::Tick(float DeltaTime)
 
 void ASLInteractableObjectRock::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
+	Super::OnInteracted(InCharacter, InTriggerType);
 	// 캐릭터 유효성 검사
 	if (!IsValid(InCharacter))
 	{

@@ -15,6 +15,7 @@ ASLInteractableObjectRotationStatue::ASLInteractableObjectRotationStatue()
 
 void ASLInteractableObjectRotationStatue::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
+	Super::OnInteracted(InCharacter, InTriggerType);
 	if (RotationStates.Num() == 0 || bRotateTrigger)
 	{
 		return;

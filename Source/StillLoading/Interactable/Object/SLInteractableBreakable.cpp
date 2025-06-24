@@ -5,6 +5,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/BattleComponent/BattleComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 ASLInteractableBreakable::ASLInteractableBreakable()
 {
@@ -16,9 +17,14 @@ void ASLInteractableBreakable::OnInteracted(const ASLPlayerCharacterBase* InChar
 {
     if (CurrentHp > 0)
     {
+        if (InteractionSound)
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, InteractionSound, GetActorLocation());
+        }
         CurrentHp--;
         return;
     }
+    
     if (DestroyEffect) // UNiagaraSystem* 변수
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(
@@ -33,6 +39,12 @@ void ASLInteractableBreakable::OnInteracted(const ASLPlayerCharacterBase* InChar
             true                          // PreCullCheck
         );
     }
+
+    if (DestroySound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(this, DestroySound, GetActorLocation());       
+    }
+    
     SetActorHiddenInGame(true);
     SetActorEnableCollision(false);
     SetActorTickEnabled(false);

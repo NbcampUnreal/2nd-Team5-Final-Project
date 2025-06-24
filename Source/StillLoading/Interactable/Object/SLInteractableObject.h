@@ -9,6 +9,7 @@
 class USLBaseTextPrintWidget;
 class USLUISubsystem;
 class USLTalkHandlerBase;
+class USoundBase;
 
 UCLASS()
 class STILLLOADING_API ASLInteractableObject : public ASLInteractableObjectBase
@@ -28,18 +29,26 @@ protected:
 	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType) override;
 	
 	UFUNCTION()
+	virtual void StartTalk();
+	
+	UFUNCTION()
 	void OnCurrentTalkEnd();
 	UFUNCTION()
 	void OnCurrentChoiceEnd(bool bResult);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject")
 	FName TargetName;
+	
 	UPROPERTY(VisibleInstanceOnly, Category = "InteractableObject", DisplayName = "현재 대화 핸들러")
 	TWeakObjectPtr<USLTalkHandlerBase> CurrentTalkHandler;
+	
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
+	
+	FTimerHandle TalkDelayTimer;
 	
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject", DisplayName="기본 대화 핸들러" ,meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USLTalkHandlerBase> DefaultTalkHandler;
+	
 };

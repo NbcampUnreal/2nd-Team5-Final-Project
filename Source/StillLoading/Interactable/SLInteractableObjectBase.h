@@ -56,4 +56,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Reactive")
 	ESLReactiveTriggerType TriggerType = ESLReactiveTriggerType::ERT_None;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject")
+	TObjectPtr<USoundBase> InteractionSound;
 };
