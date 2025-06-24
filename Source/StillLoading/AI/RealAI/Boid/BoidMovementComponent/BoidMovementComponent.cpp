@@ -61,7 +61,7 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(OwningAgent);
 	if (!Monster) return;
 
-	if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)) return;
+	if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage) || Monster->HasBattleState(TAG_AI_Dead)) return;
 
 	CheckAndHandleStuckTeleport(DeltaTime);
 
@@ -77,11 +77,6 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	case ESquadState::Patrolling_Wait:
 		// '대기'
 		OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
-		if (UAnimationMontageComponent* AnimComp = Monster->FindComponentByClass<UAnimationMontageComponent>())
-		{
-			AnimComp->PlayAIETCMontage("WaitA");
-			Monster->SetStrategyState(TAG_AI_IsPlayingMontage);
-		}
 		break;
 
 	case ESquadState::Engaging:
@@ -94,6 +89,8 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Agent)
 {
+	if (!Agent) return;
+	
 	const ASwarmAgent* Leader = SwarmManager->GetLeader();
 	if (!Leader) return;
 
@@ -102,8 +99,12 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 		LeaderController ? LeaderController->GetBlackboardComponent() : nullptr;
 	if (!BlackboardComp) return;
 
-	const AActor* CurrentTarget = Cast<AActor>(BlackboardComp->GetValueAsObject(TEXT("TargetActor")));
-	if (!Agent || !CurrentTarget) return;
+	const AActor* CurrentTarget = SwarmManager->CurrentSquadTarget;
+	if (!CurrentTarget)
+	{
+		SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
+		return;
+	}
 
 	if (CurrentState == EBoidMonsterState::FS_Retreating) // 후퇴 분기
 	{
@@ -127,11 +128,6 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 	else // 공격 분기
 	{
 		TotalTime = GetWorld()->GetTimeSeconds() - Agent->LastAttackFinishTime;
-		/*
-		UE_LOG(LogTemp, Warning, TEXT("Total Time[%f][%s]"), TotalTime, *Agent->GetName());
-		UE_LOG(LogTemp, Warning, TEXT("CurrentCollDown[%f][%s]"), CurrentCollDown, *Agent->GetName());
-		UE_LOG(LogTemp, Warning, TEXT("LastAttackFinishTime[%f][%s]"), Agent->LastAttackFinishTime, *Agent->GetName());
-		*/
 		if (TotalTime > CurrentCoolDown)
 		{
 			CurrentState = EBoidMonsterState::FS_AbleToAttack;
@@ -145,6 +141,7 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 		if (DistanceToTarget < AttackRange && CurrentState == EBoidMonsterState::FS_AbleToAttack)
 		{
 			BeginAttack(DeltaTime, CurrentTarget, Agent);
+			AbleToPlayWonderMontage = true;
 		}
 		else
 		{
@@ -163,10 +160,15 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 
 void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* Agent)
 {
+	UCharacterMovementComponent* MoveComp = Agent->GetCharacterMovement();
+	if (!MoveComp) return;
+	
 	float CurrentSeparation, CurrentCohesion, CurrentAlignment, CurrentGoalSeeking;
 
 	if (SwarmManager->GetCurrentSquadState() == ESquadState::Engaging)
 	{
+		MoveComp->bOrientRotationToMovement = false;
+		
 		CurrentSeparation = SwarmManager->CombatSeparation;
 		CurrentCohesion = SwarmManager->CombatCohesion;
 		CurrentAlignment = SwarmManager->CombatAlignment;
@@ -174,6 +176,8 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	}
 	else
 	{
+		MoveComp->bOrientRotationToMovement = true;
+		
 		CurrentSeparation = SwarmManager->PatrolSeparation;
 		CurrentCohesion = SwarmManager->PatrolCohesion;
 		CurrentAlignment = SwarmManager->PatrolAlignment;
@@ -201,8 +205,6 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	const FVector CohesionForce = CalculateCohesionForce(Neighbors) * CurrentCohesion;
 
 	const float SeparationSq = SeparationForce.SizeSquared();
-	const float AlignmentSq = AlignmentForce.SizeSquared();
-	const float CohesionSq = CohesionForce.SizeSquared();
 
 	FVector FinalGoalForce = FVector::ZeroVector; 
 
@@ -211,7 +213,14 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	{
 		if (SeparationSq > 600) // 뒤에있어서 멀어지려는 힘이 약하고
 		{
-			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰
+			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰 or Anim
+			AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(Agent);
+			if (!Monster) return;
+			if (AbleToPlayWonderMontage)
+			{
+				Monster->PlayETCAnim();
+				AbleToPlayWonderMontage = false;
+			}
 		}
 	}
 	else

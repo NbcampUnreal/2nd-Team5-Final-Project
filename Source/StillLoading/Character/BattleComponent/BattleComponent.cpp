@@ -152,19 +152,21 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 	if (AActor* OwnerActor = GetOwner())
 	{
 		FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 25);
-		FVector End = Start + OwnerActor->GetActorForwardVector() * 80;
+		FVector End = Start + OwnerActor->GetActorForwardVector() * 100;
 		FCollisionShape SweepShape = FCollisionShape::MakeCapsule(45.f, 60.f);
 
 		switch (AttackType)
 		{
 		case EAttackAnimType::AAT_Airborn:
 		case EAttackAnimType::AAT_Skill1:
+		case EAttackAnimType::AAT_AINormal:
+		case EAttackAnimType::AAT_AISpecial:
 			SweepShape = FCollisionShape::MakeCapsule(50.f, 70.f);
 			break;
 		case EAttackAnimType::AAT_Skill2:
 			Start = OwnerActor->GetActorLocation() + FVector(0, 0, 0);
-			End = Start * 200;
-			SweepShape = FCollisionShape::MakeSphere(200.f);
+			End = Start;
+			SweepShape = FCollisionShape::MakeSphere(100.f);
 			break;
 		default: break;
 		}

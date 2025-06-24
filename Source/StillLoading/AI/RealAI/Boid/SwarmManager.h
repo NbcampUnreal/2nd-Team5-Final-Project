@@ -33,6 +33,7 @@ public:
 	ASwarmManager();
 
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	void SetLeader(ASwarmAgent* InLeader) { LeaderAgent = InLeader; }
 	ASwarmAgent* GetLeader() const { return LeaderAgent.Get(); }
@@ -51,6 +52,23 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	int32 LastMonsterCount = 0;
 
+	// 팔로워 인지 관련
+	UFUNCTION()
+	void ReportTargetSighting(AActor* SightedTarget);
+	UFUNCTION()
+	void BroadcastNewTarget(AActor* NewTarget);
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Squad")
+	TObjectPtr<AActor> CurrentSquadTarget;
+
+	float LastTimeTargetSeen;
+
+	UPROPERTY(EditAnywhere, Category = "Squad")
+	float TargetForgettingTime = 3.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Squad")
+	float MaxDetectionRange = 3000.0f;
+
 	// 팔로워 초기 셋팅 관련
 	void RegisterAgent(ASwarmAgent* Agent);
 	void UnregisterAgent(ASwarmAgent* Agent);
@@ -60,7 +78,7 @@ public:
 
 	// 리더 감지 범위
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
-	float DetectionRadius = 1000.0f;
+	float DetectionRadius = 700.0f;
 
 	const TArray<TObjectPtr<ASwarmAgent>>& GetAgents() const { return AllAgents; }
 

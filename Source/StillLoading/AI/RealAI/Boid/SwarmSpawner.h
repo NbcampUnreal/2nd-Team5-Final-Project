@@ -5,6 +5,8 @@
 #include "GameFramework/Actor.h"
 #include "SwarmSpawner.generated.h"
 
+class UBoxComponent;
+class UNiagaraSystem;
 enum class EFollowerFormationType : uint8;
 class UBlackboardData;
 class AAIController;
@@ -81,6 +83,7 @@ public:
 	float DetectionRadius = 700.0f;
 
 	/*
+	 *<Sample>
 	새 떼 / 물고기 떼 (Classic Flock/School) -> Separation: 1.5, Cohesion: 2.0, Alignment: 2.0, GoalSeeking: 0.5
 	(뭉치고 방향을 맞추려는 힘이 강하지만, 서로 약간의 공간을 존중합니다.)
 
@@ -140,12 +143,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "AI | Swarm Settings")
 	TArray<FSwarmComposition> SwarmCompositions;
-    
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Swarm Settings")
-	float SpawnRadius = 1000.0f;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
-	TObjectPtr<USphereComponent> SpawnRadiusSphere;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UBoxComponent> SpawnBox;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Patrol", meta = (MakeEditWidget = "true"))
 	TArray<TObjectPtr<ATargetPoint>> PatrolPoints;
@@ -155,6 +155,16 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<ASwarmManager> SpawnedManager = nullptr;
+
+	// Spawn Effect
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	TObjectPtr<UNiagaraSystem> SpawnEffectTemplate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	float EffectSpawnHeightOffset = 150.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	FRotator EffectSpawnRotation;
 
 private:
 	bool bLeaderSet = false;

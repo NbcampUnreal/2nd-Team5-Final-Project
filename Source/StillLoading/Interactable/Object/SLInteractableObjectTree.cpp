@@ -27,7 +27,7 @@ void ASLInteractableObjectTree::BeginPlay()
 
 void ASLInteractableObjectTree::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
-	return;
+	Super::OnInteracted(InCharacter, InTriggerType);
 }
 void ASLInteractableObjectTree::Tick(float DeltaTime)
 {

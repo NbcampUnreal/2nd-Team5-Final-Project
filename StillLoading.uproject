@@ -13,7 +13,8 @@
 				"DeveloperSettings",
 				"UMG",
 				"CoreUObject",
-				"AIModule"
+				"AIModule",
+				"GeometryCollectionEngine"
 			]
 		}
 	],

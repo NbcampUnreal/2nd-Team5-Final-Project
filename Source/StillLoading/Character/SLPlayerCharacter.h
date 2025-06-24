@@ -28,6 +28,8 @@ enum class EQueryType : uint8 // enum class 는 앞에 안붙이는게 더 낫�
 	EQT_DogeBlock UMETA(DisplayName = "Doge Block"),
 	EQT_UIBlock UMETA(DisplayName = "UI Block"),
 	EQT_HitBlock UMETA(DisplayName = "Hit Block"),
+	EQT_PointMoveBlock UMETA(DisplayName = "Point Move Block"),
+	EQT_BuffBlock UMETA(DisplayName = "Buff Block"),
 };
 
 USTRUCT(BlueprintType)

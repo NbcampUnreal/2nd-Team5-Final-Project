@@ -25,7 +25,9 @@ public class StillLoading : ModuleRules
 			"Niagara",
             "GeometryCollectionEngine",
 			"NiagaraUIRenderer",
-            "GameplayAbilities"
+            "GameplayAbilities",
+            "Chaos",
+            "ChaosSolverEngine"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

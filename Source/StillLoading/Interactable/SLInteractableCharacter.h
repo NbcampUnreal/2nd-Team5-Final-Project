@@ -20,7 +20,7 @@ public:
 	ASLInteractableCharacter();
 	
 protected:
-	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType) override;
+	virtual void StartTalk() override;
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC", meta = (AllowPrivateAccess = "true"))
