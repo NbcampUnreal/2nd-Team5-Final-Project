@@ -30,6 +30,16 @@ ASLPlayerCharacterBase::ASLPlayerCharacterBase()
 	}
 }
 
+FGenericTeamId ASLPlayerCharacterBase::GetGenericTeamId() const
+{
+	if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(GetController()))
+	{
+		return TeamAgent->GetGenericTeamId();
+	}
+
+	return FGenericTeamId::NoTeam;
+}
+
 void ASLPlayerCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();

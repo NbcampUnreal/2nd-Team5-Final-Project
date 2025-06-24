@@ -14,7 +14,7 @@ ASLInteractableCharacter::ASLInteractableCharacter()
 	TargetName = "NPC";
 }
 
-void ASLInteractableCharacter::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+void ASLInteractableCharacter::StartTalk()
 {
 	if (USLTalkHandlerBase* TalkHandler = GetCurrentTalkHandler())
 	{

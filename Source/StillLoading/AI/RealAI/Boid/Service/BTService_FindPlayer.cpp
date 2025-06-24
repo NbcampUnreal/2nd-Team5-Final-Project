@@ -5,7 +5,6 @@
 #include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
-#include "Kismet/GameplayStatics.h"
 
 UBTService_FindPlayer::UBTService_FindPlayer()
 {
@@ -24,25 +23,31 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
 	const AAIController* AIController = OwnerComp.GetAIOwner();
 	if (!AIController) return;
-	const ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(AIController->GetPawn());
+	ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(AIController->GetPawn());
 	if (!OwningAgent) return;
 	ASwarmManager* SwarmManager = OwningAgent->GetMySwarmManager();
 	if (!ControlledPawn || !BlackboardComp || !SwarmManager) return;
 
-	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	if (!PlayerCharacter)
-	{
-		BlackboardComp->ClearValue(TargetActorKey.SelectedKeyName);
-		return;
-	}
+	const float DistanceToTarget = OwningAgent->GetDistanceTo(OwningAgent->CurrentDetectedActor);
 
-	const float Distance = FVector::Dist(ControlledPawn->GetActorLocation(), PlayerCharacter->GetActorLocation());
-
-	if (Distance < SwarmManager->DetectionRadius)
+	if (DistanceToTarget <= SwarmManager->DetectionRadius)
 	{
-		BlackboardComp->SetValueAsObject(TargetActorKey.SelectedKeyName, PlayerCharacter);
-		BlackboardComp->SetValueAsFloat(TEXT("LastSeenTime"), GetWorld()->GetTimeSeconds());
-		SwarmManager->SetSquadState(ESquadState::Engaging);
+		if (OwningAgent->CurrentDetectedActor != nullptr)
+		{
+			IGenericTeamAgentInterface* OwningTeamAgent = Cast<IGenericTeamAgentInterface>(OwningAgent);
+			IGenericTeamAgentInterface* TargetTeamAgent = Cast<IGenericTeamAgentInterface>(
+				OwningAgent->CurrentDetectedActor);
+
+			if (OwningTeamAgent && TargetTeamAgent)
+			{
+				if (OwningTeamAgent->GetGenericTeamId() != TargetTeamAgent->GetGenericTeamId())
+				{
+					BlackboardComp->SetValueAsObject(TargetActorKey.SelectedKeyName, OwningAgent->CurrentDetectedActor);
+					BlackboardComp->SetValueAsFloat(TEXT("LastSeenTime"), GetWorld()->GetTimeSeconds());
+					SwarmManager->SetSquadState(ESquadState::Engaging);
+				}
+			}
+		}
 	}
 	else
 	{
@@ -59,27 +64,6 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 			}
 		}
 	}
-}
-
-bool UBTService_FindPlayer::IsInFieldOfView(const AActor* TargetActor, const APawn* ControlledPawn, const ASwarmManager* SwarmManager)
-{
-	if (!TargetActor)
-		return false;
-
-	FVector MyLocation = ControlledPawn->GetActorLocation();
-	FVector TargetLocation = TargetActor->GetActorLocation();
-
-	float Distance = FVector::Dist(MyLocation, TargetLocation);
-	if (Distance > SwarmManager->DetectionRadius)
-		return false;
-
-	FVector ForwardVector = ControlledPawn->GetActorForwardVector().GetSafeNormal();
-	FVector ToTarget = (TargetLocation - MyLocation).GetSafeNormal();
-
-	float DotProduct = FVector::DotProduct(ForwardVector, ToTarget);
-	float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(100 * 0.5f));
-
-	return DotProduct >= CosHalfFOV;
 }
 
 bool UBTService_FindPlayer::CheckTag(const UBehaviorTreeComponent& OwnerComp)

@@ -12,6 +12,7 @@
 #include "Interactable/SLInteractableObjectBase.h"
 #include "SubSystem/SLSoundSubsystem.h"
 #include "UI/HUD/SLBaseHUD.h"
+#include "UI/HUD/SLInGameHUD.h"
 
 USLMovementComponentBase::USLMovementComponentBase()
 {
@@ -91,6 +92,23 @@ void USLMovementComponentBase::Interact() const
 	}
 }
 
+void USLMovementComponentBase::PresentGoal() const
+{
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_UIBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("USLMovementComponentBase: UI Blocked"));
+		return;
+	}
+
+	if (const APlayerController* Controller = Cast<APlayerController>(OwnerCharacter->GetController()))
+	{
+		if (ASLInGameHUD* InGameHUD = Cast<ASLInGameHUD>(Controller->GetHUD()))
+		{
+			InGameHUD->ApplyObjective();
+		}
+	}
+}
+
 void USLMovementComponentBase::DanceTime() const
 {
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_InputBlock))
@@ -112,6 +130,9 @@ void USLMovementComponentBase::OnActionStarted_Implementation(EInputActionType A
 {
 	switch (ActionType)
 	{
+	case EInputActionType::EIAT_PresentGoal:
+		PresentGoal();
+		break;
 	case EInputActionType::EIAT_Interaction:
 		Interact();
 		break;

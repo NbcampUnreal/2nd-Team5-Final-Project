@@ -146,6 +146,7 @@ void UDynamicIMCComponent::BindInputForAction(const UInputAction* Action, const 
 		InputComp->BindAction(Action, ETriggerEvent::Triggered, this, &UDynamicIMCComponent::HandleActionTriggered);
 		break;
 
+	case EInputActionType::EIAT_PresentGoal:
 	case EInputActionType::EIAT_Walk:
 	case EInputActionType::EIAT_Jump:
 	case EInputActionType::EIAT_Interaction:
@@ -155,6 +156,7 @@ void UDynamicIMCComponent::BindInputForAction(const UInputAction* Action, const 
 	case EInputActionType::EIAT_Block:
 	case EInputActionType::EIAT_LockObject:
 	case EInputActionType::EIAT_Special:
+	case EInputActionType::EIAT_ChangeView:
 		InputComp->BindAction(Action, ETriggerEvent::Started, this, &UDynamicIMCComponent::HandleActionStarted);
 		InputComp->BindAction(Action, ETriggerEvent::Completed, this, &UDynamicIMCComponent::HandleActionCompleted);
 		break;

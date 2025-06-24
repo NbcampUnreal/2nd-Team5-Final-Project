@@ -38,10 +38,10 @@ public:
 	float PerceptionRadius = 500.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boids | Global Settings")
-	float MaxAttackCoolDown = 8.0f;
+	float MaxAttackCoolDown = 5.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boids | Global Settings")
-	float MinAttackCoolDown = 5.0f;
+	float MinAttackCoolDown = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boids | Global Settings")
 	float AttackRange = 150.0f;
@@ -69,7 +69,7 @@ protected:
 	
 	// 텔포 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")
-	float StuckDistanceThreshold = 1200.0f;
+	float StuckDistanceThreshold = 800.0f;
 
 	// 텔포 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")
@@ -127,6 +127,8 @@ private:
 	float TotalTime = 3.0f;
 	FVector RetreatTargetLocation = FVector::ZeroVector;
 	float OriginalMaxWalkSpeed;
+
+	bool AbleToPlayWonderMontage = true;
 
 	EBoidMonsterState CurrentState = EBoidMonsterState::FS_None;
 };

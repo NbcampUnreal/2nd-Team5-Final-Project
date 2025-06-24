@@ -60,7 +60,7 @@ public:
 
 	// 리더 감지 범위
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
-	float DetectionRadius = 1000.0f;
+	float DetectionRadius = 700.0f;
 
 	const TArray<TObjectPtr<ASwarmAgent>>& GetAgents() const { return AllAgents; }
 

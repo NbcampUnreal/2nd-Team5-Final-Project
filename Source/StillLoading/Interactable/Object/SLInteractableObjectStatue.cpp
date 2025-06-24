@@ -26,7 +26,7 @@ void ASLInteractableObjectStatue::BeginPlay()
 
 void ASLInteractableObjectStatue::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
-
+	Super::OnInteracted(InCharacter, InTriggerType);
 }
 
 void ASLInteractableObjectStatue::DeactivateStatue()

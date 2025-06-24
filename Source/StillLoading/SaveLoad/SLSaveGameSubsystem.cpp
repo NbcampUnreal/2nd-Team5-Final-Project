@@ -54,6 +54,7 @@ void USLSaveGameSubsystem::LoadGameData()
     else
     {
         ResetGameData();
+        SendChapterData();
         SendWidgetData(true);
     }
 }

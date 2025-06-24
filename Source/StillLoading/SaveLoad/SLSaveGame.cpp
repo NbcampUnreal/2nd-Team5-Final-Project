@@ -6,4 +6,5 @@
 USLSaveGame::USLSaveGame()
 {
 	CurrentMiniGameLevel = 0;
+	CurrentChapter = ESLChapterType::EC_Chapter0;
 }

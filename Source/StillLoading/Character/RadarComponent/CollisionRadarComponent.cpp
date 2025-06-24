@@ -23,7 +23,7 @@ void UCollisionRadarComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (!bIsUseRadar || !DetectionZone)
+    if (!DetectionZone)
     {
         return;
     }
@@ -46,8 +46,6 @@ void UCollisionRadarComponent::BeginPlay()
             DetectionZone->AttachToComponent(Owner->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
         }
     }
-
-    GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, this, &UCollisionRadarComponent::DetectClosestActorInFOV, UpdateInterval, true);
 }
 
 bool UCollisionRadarComponent::IsInFieldOfView(const AActor* TargetActor)
@@ -64,7 +62,7 @@ bool UCollisionRadarComponent::IsInFieldOfView(const AActor* TargetActor)
     if (Distance > DetectionRadius)
         return false;
 
-    FVector ForwardVector = GetForwardVector().GetSafeNormal();
+    FVector ForwardVector = GetOwner()->GetActorForwardVector().GetSafeNormal();
     FVector ToTarget = (TargetLocation - MyLocation).GetSafeNormal();
 
     float DotProduct = FVector::DotProduct(ForwardVector, ToTarget);
@@ -106,10 +104,26 @@ void UCollisionRadarComponent::DetectClosestActorInFOV()
     DrawDebugVisualization();
 }
 
+void UCollisionRadarComponent::ToggleRadarComponent(bool bOnRader, const float InDetectionRadius)
+{
+    bOnRader ? bIsUseRadar = true : bIsUseRadar = false;
+    DetectionRadius = InDetectionRadius;
+}
+
 void UCollisionRadarComponent::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
                                               UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
                                               bool bFromSweep, const FHitResult& SweepResult)
 {
+    if (!bIsUseRadar)
+    {
+        return;
+    }
+
+    if (!GetWorld()->GetTimerManager().IsTimerActive(UpdateTimerHandle))
+    {
+        GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, this, &UCollisionRadarComponent::DetectClosestActorInFOV, UpdateInterval, true);
+    }
+    
     if (OtherActor && OtherActor != GetOwner())
     {
         NearbyActors.AddUnique(OtherActor);
@@ -145,7 +159,7 @@ const FVector UCollisionRadarComponent::GetForwardVector()
         return OwnerActor->GetActorForwardVector();
     }
     return FVector::ZeroVector;
-}
+} 
 
 void UCollisionRadarComponent::DrawDebugVisualization()
 {
@@ -154,7 +168,7 @@ void UCollisionRadarComponent::DrawDebugVisualization()
         return;
 
     FVector Location = GetOwner()->GetActorLocation();
-    FVector Forward = GetForwardVector();
+    FVector Forward = GetOwner()->GetActorForwardVector();
 
     if (bShowDetectionRadius)
     {
