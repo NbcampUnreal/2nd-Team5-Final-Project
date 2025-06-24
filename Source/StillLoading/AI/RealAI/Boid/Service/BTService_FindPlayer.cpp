@@ -35,8 +35,7 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 		if (OwningAgent->CurrentDetectedActor != nullptr)
 		{
 			IGenericTeamAgentInterface* OwningTeamAgent = Cast<IGenericTeamAgentInterface>(OwningAgent);
-			IGenericTeamAgentInterface* TargetTeamAgent = Cast<IGenericTeamAgentInterface>(
-				OwningAgent->CurrentDetectedActor);
+			IGenericTeamAgentInterface* TargetTeamAgent = Cast<IGenericTeamAgentInterface>(OwningAgent->CurrentDetectedActor);
 
 			if (OwningTeamAgent && TargetTeamAgent)
 			{
