@@ -14,9 +14,7 @@ UCollisionRadarComponent::UCollisionRadarComponent()
     
     DetectionZone->SetGenerateOverlapEvents(true);
     DetectionZone->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    DetectionZone->SetCollisionObjectType(ECC_GameTraceChannel2);
     DetectionZone->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-    DetectionZone->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Overlap);
 }
 
 void UCollisionRadarComponent::BeginPlay()
