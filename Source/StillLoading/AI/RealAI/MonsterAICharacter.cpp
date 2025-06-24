@@ -330,6 +330,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	RotateToHitCauser(Causer);
 	ChangeMeshTemporarily();
 	StartFlyingState();
+	Hited(Causer);
 
 	LastAttacker = Causer;
 	CurrentHealth -= Damage;

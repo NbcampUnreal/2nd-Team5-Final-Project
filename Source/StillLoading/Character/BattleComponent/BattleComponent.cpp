@@ -164,7 +164,7 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 		case EAttackAnimType::AAT_Skill2:
 			Start = OwnerActor->GetActorLocation() + FVector(0, 0, 0);
 			End = Start * 200;
-			SweepShape = FCollisionShape::MakeSphere(200.f);
+			SweepShape = FCollisionShape::MakeSphere(500.f);
 			break;
 		default: break;
 		}

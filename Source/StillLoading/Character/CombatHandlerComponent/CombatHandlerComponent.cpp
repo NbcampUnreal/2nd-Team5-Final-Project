@@ -29,6 +29,7 @@ void UCombatHandlerComponent::BeginPlay()
 
 void UCombatHandlerComponent::SetEmpoweredCombatMode(const float Duration)
 {
+	UE_LOG(LogTemp, Warning, TEXT("SetEmpoweredCombatMode [%f]"), Duration);
 	OwnerCharacter->AddSecondaryState(TAG_Character_Empowered);
 
 	OnEmpoweredStateChanged.Broadcast(true);

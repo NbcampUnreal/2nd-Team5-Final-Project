@@ -207,6 +207,9 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 		if (SeparationSq > 600) // 뒤에있어서 멀어지려는 힘이 약하고
 		{
 			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰 or Anim
+			AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(Agent);
+			if (!Monster) return;
+			Monster->PlayETCAnim();
 		}
 	}
 	else
