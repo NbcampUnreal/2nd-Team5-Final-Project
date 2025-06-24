@@ -30,6 +30,8 @@ public:
 	UFUNCTION()
 	void PlayAttackAnim();
 	UFUNCTION()
+	void PlayETCAnim();
+	UFUNCTION()
 	void RequestBerserkMode();
 
 	UFUNCTION()
@@ -55,9 +57,12 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
-	
-	void ApplyBerserkState();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION()
+	void Hited(AActor* Causer);
+
+	void ApplyBerserkState();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoidMovementComponent> BoidMovementComp;

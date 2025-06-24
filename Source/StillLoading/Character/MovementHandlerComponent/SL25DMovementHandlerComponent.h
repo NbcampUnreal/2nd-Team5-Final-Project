@@ -47,7 +47,7 @@ public:
 	int AttackStateCount = 0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	int AttackStateCountLimit = 25;
+	int AttackStateCountLimit = 50;
 
 protected:
 	virtual void BeginPlay() override;

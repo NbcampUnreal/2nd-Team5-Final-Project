@@ -2,6 +2,7 @@
 
 #include "AIController.h"
 #include "BrainComponent.h"
+#include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BoidMovementComponent/BoidMovementComponent.h"
@@ -69,6 +70,15 @@ void ASwarmAgent::ApplyBerserkState()
 void ASwarmAgent::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+// TODO:: 추후에 강제적으로 리더를 불러오는 로직 필요
+void ASwarmAgent::Hited(AActor* Causer)
+{
+	AAIController* LeaderController = Cast<AAIController>(GetController());
+	UBlackboardComponent* BlackboardComp = LeaderController->GetBlackboardComponent();
+	if (!BlackboardComp) return;
+	BlackboardComp->SetValueAsObject(BlackboardKeys::TargetActor, Causer);
 }
 
 void ASwarmAgent::SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree, UBlackboardData* LeaderBlackBoard)
@@ -148,6 +158,41 @@ void ASwarmAgent::PlayAttackAnim()
 		else
 		{
 			AnimComp->PlayAIAttackMontage("Attack3");
+		}
+	}
+}
+
+void ASwarmAgent::PlayETCAnim()
+{
+	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
+	{
+		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)) return;
+		
+		Monster->SetStrategyState(TAG_AI_IsPlayingMontage);
+	}
+	
+	if (UAnimationMontageComponent* AnimComp = FindComponentByClass<UAnimationMontageComponent>())
+	{
+		int8 RandNum = FMath::RandRange(0, 4);
+		if (RandNum == 0)
+		{
+			AnimComp->PlayAIETCMontage("WonderA");
+		}
+		else if (RandNum == 1)
+		{
+			AnimComp->PlayAIETCMontage("WonderB");
+		}
+		else if (RandNum == 2)
+		{
+			AnimComp->PlayAIETCMontage("WonderC");
+		}
+		else if (RandNum == 3)
+		{
+			AnimComp->PlayAIETCMontage("WonderD");
+		}
+		else if (RandNum == 4)
+		{
+			AnimComp->PlayAIETCMontage("WonderE");
 		}
 	}
 }
