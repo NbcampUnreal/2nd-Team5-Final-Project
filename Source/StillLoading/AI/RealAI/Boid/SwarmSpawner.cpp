@@ -60,6 +60,7 @@ void ASwarmSpawner::BeginSpawn()
 			SpawnedManager->CombatGoalSeeking = CombatGoalSeekingWeight;
 			
 			SpawnedManager->CurrentFormationType = FormationType;
+			SpawnedManager->DetectionRadius = DetectionRadius;
 			SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
 
 			// 순찰 포인트 정렬
@@ -123,7 +124,6 @@ void ASwarmSpawner::BeginSpawn()
 								
 								DeferredAgent->SetLeader(true, LeaderBehaviorTree, LeaderBlackBoard);
 								SpawnedManager->SetLeader(DeferredAgent);
-								SpawnedManager->DetectionRadius = DetectionRadius;
 							}
 
 							UGameplayStatics::FinishSpawningActor(DeferredAgent, SpawnTransform);

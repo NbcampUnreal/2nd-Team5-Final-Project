@@ -89,6 +89,8 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Agent)
 {
+	if (!Agent) return;
+	
 	const ASwarmAgent* Leader = SwarmManager->GetLeader();
 	if (!Leader) return;
 
@@ -97,8 +99,12 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 		LeaderController ? LeaderController->GetBlackboardComponent() : nullptr;
 	if (!BlackboardComp) return;
 
-	const AActor* CurrentTarget = Cast<AActor>(BlackboardComp->GetValueAsObject(TEXT("TargetActor")));
-	if (!Agent || !CurrentTarget) return;
+	const AActor* CurrentTarget = SwarmManager->CurrentSquadTarget;
+	if (!CurrentTarget)
+	{
+		SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
+		return;
+	}
 
 	if (CurrentState == EBoidMonsterState::FS_Retreating) // 후퇴 분기
 	{
@@ -154,10 +160,15 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 
 void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* Agent)
 {
+	UCharacterMovementComponent* MoveComp = Agent->GetCharacterMovement();
+	if (!MoveComp) return;
+	
 	float CurrentSeparation, CurrentCohesion, CurrentAlignment, CurrentGoalSeeking;
 
 	if (SwarmManager->GetCurrentSquadState() == ESquadState::Engaging)
 	{
+		MoveComp->bOrientRotationToMovement = false;
+		
 		CurrentSeparation = SwarmManager->CombatSeparation;
 		CurrentCohesion = SwarmManager->CombatCohesion;
 		CurrentAlignment = SwarmManager->CombatAlignment;
@@ -165,6 +176,8 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	}
 	else
 	{
+		MoveComp->bOrientRotationToMovement = true;
+		
 		CurrentSeparation = SwarmManager->PatrolSeparation;
 		CurrentCohesion = SwarmManager->PatrolCohesion;
 		CurrentAlignment = SwarmManager->PatrolAlignment;
