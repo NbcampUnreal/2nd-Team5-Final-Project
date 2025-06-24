@@ -29,29 +29,40 @@ void UCombatHandlerComponent::BeginPlay()
 
 void UCombatHandlerComponent::SetEmpoweredCombatMode(const float Duration)
 {
-	OwnerCharacter->AddSecondaryState(TAG_Character_Empowered);
-
-	OnEmpoweredStateChanged.Broadcast(true);
-
-	float TotalDuration = Duration;
-	TotalDuration = FMath::Min(TotalDuration, MaxEmpoweredDuration);
-
 	if (CurrentMode == ECharacterComboState::CCS_Empowered && GetWorld()->GetTimerManager().IsTimerActive(CombatModeResetTimer))
 	{
-		const float Remaining = GetWorld()->GetTimerManager().GetTimerRemaining(CombatModeResetTimer);
-		TotalDuration += Remaining;
+		const float RemainingTime = GetWorld()->GetTimerManager().GetTimerRemaining(CombatModeResetTimer);
+        
+		float NewDuration = RemainingTime + Duration;
+
+		NewDuration = FMath::Min(NewDuration, MaxEmpoweredDuration);
+		
+		GetWorld()->GetTimerManager().SetTimer(
+		   CombatModeResetTimer,
+		   this,
+		   &UCombatHandlerComponent::ResetCombatMode,
+		   NewDuration,
+		   false
+		);
+
+		UE_LOG(LogTemp, Warning, TEXT("Empowered Mode Extended. New duration: %f"), NewDuration);
 	}
+	else
+	{
+		OwnerCharacter->AddSecondaryState(TAG_Character_Empowered);
+		OnEmpoweredStateChanged.Broadcast(true);
+		CurrentMode = ECharacterComboState::CCS_Empowered;
 
-	CurrentMode = ECharacterComboState::CCS_Empowered;
+		const float InitialDuration = FMath::Min(Duration, MaxEmpoweredDuration);
 
-	GetWorld()->GetTimerManager().ClearTimer(CombatModeResetTimer);
-	GetWorld()->GetTimerManager().SetTimer(
-		CombatModeResetTimer,
-		this,
-		&UCombatHandlerComponent::ResetCombatMode,
-		TotalDuration,
-		false
-	);
+		GetWorld()->GetTimerManager().SetTimer(
+		   CombatModeResetTimer,
+		   this,
+		   &UCombatHandlerComponent::ResetCombatMode,
+		   InitialDuration,
+		   false
+		);
+	}
 }
 
 void UCombatHandlerComponent::SetUnlimitedEmpoweredCombatMode()

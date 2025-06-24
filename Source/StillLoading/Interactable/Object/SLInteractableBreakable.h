@@ -10,6 +10,7 @@
 enum class EHitAnimType : uint8;
 class UBattleComponent;
 class UNiagaraSystem;
+class USoundBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnObjectBreaked);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnObjectHit, const FHitResult&, HitResult);
@@ -36,6 +37,8 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> DestroyEffect;
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	TObjectPtr<USoundBase> DestroySound;
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	float EffectScale = 1.0f;
 	

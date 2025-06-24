@@ -62,6 +62,7 @@ void ASLInteractableObjectLuminousStatue::BeginPlay()
 
 void ASLInteractableObjectLuminousStatue::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
+	Super::OnInteracted(InCharacter, InTriggerType);
 	if (!bLightOn)
 	{
 		SetLightActive();

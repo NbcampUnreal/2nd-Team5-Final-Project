@@ -3,6 +3,7 @@
 
 #include "SLInteractableObjectBase.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "StillLoading\Character\SLPlayerCharacterBase.h"
 
 ASLInteractableObjectBase::ASLInteractableObjectBase()
@@ -48,6 +49,11 @@ void ASLInteractableObjectBase::BeginPlay()
 void ASLInteractableObjectBase::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnInteracted"));
+	
+	if (InteractionSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, InteractionSound, GetActorLocation());
+	}
 }
 
 bool ASLInteractableObjectBase::IsTriggerTypeAllowed(ESLReactiveTriggerType InComingType)

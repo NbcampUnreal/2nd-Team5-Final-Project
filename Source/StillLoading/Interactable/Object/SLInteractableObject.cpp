@@ -4,6 +4,7 @@
 #include "SLInteractableObject.h"
 
 #include "Interactable/SLTalkHandlerBase.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/SLUISubsystem.h"
 #include "UI/SLUITypes.h"
 #include "UI/Widget/AdditiveWidget/SLBaseTextPrintWidget.h"
@@ -35,6 +36,12 @@ USLTalkHandlerBase* ASLInteractableObject::GetCurrentTalkHandler()
 }
 
 void ASLInteractableObject::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
+{
+	Super::OnInteracted(InCharacter, InTriggerType);
+	StartTalk();
+}
+
+void ASLInteractableObject::StartTalk()
 {
 	if (USLTalkHandlerBase* TalkHandler = GetCurrentTalkHandler())
 	{

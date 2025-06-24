@@ -148,7 +148,7 @@ void ASLBattlePlayerState::OnRep_BurningGage()
 	const ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(Pawn);
 	if (!PlayerCharacter) return;
 
-	const UCombatHandlerComponent* CombatHandler = Pawn->FindComponentByClass<UCombatHandlerComponent>();
+	const UCombatHandlerComponent* CombatHandler = PlayerCharacter->FindComponentByClass<UCombatHandlerComponent>();
 	if (!CombatHandler) return;
 
 	if (CombatHandler->IsEmpowered())

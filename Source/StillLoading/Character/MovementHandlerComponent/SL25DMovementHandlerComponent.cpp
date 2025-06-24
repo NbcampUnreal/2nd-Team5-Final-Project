@@ -13,7 +13,6 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "SubSystem/SLSoundSubsystem.h"
 #include "SubSystem/SLSoundTypes.h"
 
@@ -26,7 +25,7 @@ USL25DMovementHandlerComponent::USL25DMovementHandlerComponent()
 void USL25DMovementHandlerComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
 
 	if (OwnerCharacter)
@@ -43,6 +42,8 @@ void USL25DMovementHandlerComponent::BeginPlay()
 		OwnerCharacter->CameraBoom->bDoCollisionTest = false;
 
 		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
+		OwnerCharacter->GetCapsuleComponent()->OnComponentHit.AddDynamic(
+			this, &USL25DMovementHandlerComponent::OnCharacterHit);
 	}
 }
 
@@ -74,7 +75,8 @@ void USL25DMovementHandlerComponent::StopFacingMouse()
 	bShouldFaceMouse = false;
 }
 
-void USL25DMovementHandlerComponent::OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value)
+void USL25DMovementHandlerComponent::OnActionTriggered_Implementation(EInputActionType ActionType,
+                                                                      FInputActionValue Value)
 {
 	//FString EnumName = StaticEnum<EInputActionType>()->GetNameStringByValue(static_cast<int64>(ActionType));
 	//EnumName.RemoveFromStart("EInputActionType::");
@@ -95,7 +97,7 @@ void USL25DMovementHandlerComponent::OnActionTriggered_Implementation(EInputActi
 			CachedCombatComponent->ResetCombo();
 		}
 	}
-	
+
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_Look:
@@ -134,7 +136,7 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 			CachedCombatComponent->ResetCombo();
 		}
 	}
-	
+
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_Jump:
@@ -162,7 +164,7 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 					OwnerCharacter->AddSecondaryState(TAG_Character_Defense_Parry);
 					BlockCount = 0;
 				}
-				
+
 				CachedCombatComponent->SetEmpoweredCombatMode(10);
 				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
 
@@ -172,7 +174,12 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 			break;
 		}
 	case EInputActionType::EIAT_PointMove:
-		StartFacingMouse();
+		if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_PointMoveBlock))
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("USL25DMovementHandlerComponent: Point Move Blocked"));
+			return;
+		}
+		//StartFacingMouse();
 		StartMoveToMouseCursorLocation();
 		break;
 	case EInputActionType::EIAT_Block:
@@ -229,8 +236,9 @@ void USL25DMovementHandlerComponent::OnActionCompleted_Implementation(EInputActi
 	}
 }
 
-void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult,
-                                              const EHitAnimType AnimType)
+void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, float Damage,
+                                                                  const FHitResult& HitResult,
+                                                                  const EHitAnimType AnimType)
 {
 	Super::OnHitReceived_Implementation(Causer, Damage, HitResult, AnimType);
 
@@ -239,11 +247,12 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 		//UE_LOG(LogTemp, Warning, TEXT("USLMovementComponentBase: Hit Blocked"));
 		return;
 	}
-	
+
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)
 		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)
-		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast)) return;
-	
+		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast))
+		return;
+
 	OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
 
 	bool bIsFromBack = false;
@@ -259,7 +268,8 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 			CachedMontageComponent->PlayBlockMontage(FName("BlockBreak"));
 			BlockCount = 0;
 			LastBlockTime = 0;
-			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuardBreak, OwnerCharacter->GetActorLocation());
+			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuardBreak,
+			                                            OwnerCharacter->GetActorLocation());
 
 			if (!GetWorld()->GetTimerManager().IsTimerActive(DelayTimerHandle))
 			{
@@ -281,7 +291,8 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 
 			CachedMontageComponent->PlayBlockMontage(FName("BlockHit"));
 			++BlockCount;
-			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuard, OwnerCharacter->GetActorLocation());
+			CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterGuard,
+			                                            OwnerCharacter->GetActorLocation());
 		}
 		return;
 	}
@@ -296,7 +307,8 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	                                                InvulnerableDuration, false);
 
 	// 피격
-	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable, TAG_Character_Empowered});
+	OwnerCharacter->ClearStateTags({TAG_Character_OnBuff}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
+		                               TAG_Character_Empowered });
 	CachedMontageComponent->StopAllMontages(0.2f);
 	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
 
@@ -392,7 +404,8 @@ void USL25DMovementHandlerComponent::HitDirection(AActor* Causer)
 	RightDot = FVector::DotProduct(Right, ToCauser);
 }
 
-void USL25DMovementHandlerComponent::RotateToHitCauser(const AActor* Causer, FRotator& TargetRotation, bool& bIsHitFromBack)
+void USL25DMovementHandlerComponent::RotateToHitCauser(const AActor* Causer, FRotator& TargetRotation,
+                                                       bool& bIsHitFromBack)
 {
 	if (!OwnerCharacter || !Causer) return;
 
@@ -420,6 +433,14 @@ void USL25DMovementHandlerComponent::RotateToHitCauser(const AActor* Causer, FRo
 
 void USL25DMovementHandlerComponent::BeginBuff()
 {
+	if (!CachedMontageComponent || !OwnerCharacter || !CachedCombatComponent) return;
+
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_BuffBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("USL25DMovementHandlerComponent: Buff Blocked"));
+		return;
+	}
+	
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_OnBuff);
 	CachedMontageComponent->StopAllMontages(0.2f);
@@ -456,7 +477,7 @@ void USL25DMovementHandlerComponent::Block(const bool bIsBlocking)
 	}
 
 	FaceMouseCursorInstantly();
-	
+
 	if (bIsBlocking && !OwnerCharacter->GetCharacterMovement()->IsFalling())
 	{
 		OwnerCharacter->SetPrimaryState(TAG_Character_Defense_Block);
@@ -501,7 +522,9 @@ void USL25DMovementHandlerComponent::Attack()
 
 void USL25DMovementHandlerComponent::StartMoveToMouseCursorLocation()
 {
-	APlayerController* PlayerController = OwnerCharacter ? Cast<APlayerController>(OwnerCharacter->GetController()) : nullptr;
+	APlayerController* PlayerController = OwnerCharacter
+		                                      ? Cast<APlayerController>(OwnerCharacter->GetController())
+		                                      : nullptr;
 	if (!PlayerController) return;
 
 	FVector WorldLocation, WorldDirection;
@@ -510,6 +533,7 @@ void USL25DMovementHandlerComponent::StartMoveToMouseCursorLocation()
 		return;
 	}
 
+	FaceMouseCursorInstantly();
 	const FPlane CharacterPlane(OwnerCharacter->GetActorLocation(), FVector::UpVector);
 	const FVector IntersectionPoint = FMath::LinePlaneIntersection(
 		WorldLocation,
@@ -541,7 +565,6 @@ void USL25DMovementHandlerComponent::StartMoveToMouseCursorLocation()
 		}),
 		0.2, false
 	);
-	
 }
 
 void USL25DMovementHandlerComponent::ApplyAttackState(const FName& SectionName, bool bIsFalling)
@@ -590,7 +613,7 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Movement Blocked"));
 		return;
 	}
-	
+
 	if (!OwnerCharacter || FMath::IsNearlyZero(AxisValue)) return;
 
 	const FVector ForwardDir = FVector(1.f, -1.f, 0.f).GetSafeNormal();
@@ -620,7 +643,7 @@ void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputAct
 void USL25DMovementHandlerComponent::FaceMouseCursorInstantly() const
 {
 	if (!OwnerCharacter) return;
-    
+
 	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
 	if (!PlayerController) return;
 
@@ -631,11 +654,11 @@ void USL25DMovementHandlerComponent::FaceMouseCursorInstantly() const
 	}
 
 	const FPlane CharacterPlane(OwnerCharacter->GetActorLocation(), FVector::UpVector);
-    
+
 	const FVector IntersectionPoint = FMath::LinePlaneIntersection(
-	   WorldLocation,
-	   WorldLocation + (WorldDirection * 15000.0f),
-	   CharacterPlane
+		WorldLocation,
+		WorldLocation + (WorldDirection * 15000.0f),
+		CharacterPlane
 	);
 
 	const FVector DirectionToTarget = IntersectionPoint - OwnerCharacter->GetActorLocation();
@@ -644,9 +667,62 @@ void USL25DMovementHandlerComponent::FaceMouseCursorInstantly() const
 	if (!FlattenedDirection.IsNearlyZero())
 	{
 		const FRotator TargetRotation = FlattenedDirection.Rotation();
-        
+
 		OwnerCharacter->SetActorRotation(FRotator(0.0f, TargetRotation.Yaw, 0.0f));
 	}
+}
+
+void USL25DMovementHandlerComponent::OnCharacterHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+                                                    UPrimitiveComponent* OtherComp, FVector NormalImpulse,
+                                                    const FHitResult& Hit)
+{
+	if (!bIsMovingToTarget) return;
+
+	if (!OtherActor || OtherActor == OwnerCharacter)
+	{
+		return;
+	}
+
+	if (OtherActor->IsA(APawn::StaticClass()))
+	{
+		return;
+	}
+
+	if (!OwnerCharacter->GetCharacterMovement()->IsMovingOnGround())
+	{
+		return;
+	}
+
+	if (OwnerCharacter->GetVelocity().Length() < 100)
+	{
+		OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
+		return;	
+	}
+
+	const FVector HitNormal = Hit.ImpactNormal;
+
+	const float DotProduct = FVector::DotProduct(OwnerCharacter->GetActorForwardVector(), HitNormal);
+
+	if (DotProduct < -0.7f)
+	{
+		OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
+		if (bIsMovingToTarget)
+		{
+			bIsMovingToTarget = false;
+		}
+
+		FRotator TargetRotation = (-HitNormal).Rotation();
+		TargetRotation.Pitch = 0.f;
+		TargetRotation.Roll = 0.f;
+		OwnerCharacter->SetActorRotation(TargetRotation);
+
+		if (CachedMontageComponent)
+
+			OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Knockback);
+		CachedMontageComponent->PlayHitMontage(FName("KnockBack"));
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Character hit a wall head-on!"));
 }
 
 void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
@@ -657,7 +733,7 @@ void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
 	}
 
 	if (!OwnerCharacter) return;
-    
+
 	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
 	if (!PlayerController) return;
 
@@ -681,14 +757,14 @@ void USL25DMovementHandlerComponent::HandleRotation(float DeltaTime)
 	{
 		const FRotator TargetRotation = FlattenedDirection.Rotation();
 		const FRotator CorrectedTargetRotation = FRotator(0.0f, TargetRotation.Yaw - 90.0f, 0.0f);
-       
+
 		const FRotator CurrentRotation = OwnerCharacter->GetActorRotation();
-       
+
 		const FRotator SmoothedRotation = FMath::RInterpTo(
-		  CurrentRotation,
-		  CorrectedTargetRotation,
-		  DeltaTime,
-		  RotationSpeed
+			CurrentRotation,
+			CorrectedTargetRotation,
+			DeltaTime,
+			RotationSpeed
 		);
 
 		OwnerCharacter->SetActorRotation(FRotator(0.0f, SmoothedRotation.Yaw, 0.0f));
@@ -704,49 +780,18 @@ void USL25DMovementHandlerComponent::MoveToTarget(float DeltaTime)
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_MovementBlock))
 	{
 		bIsMovingToTarget = false;
-		//UE_LOG(LogTemp, Warning, TEXT("USL25DMovementHandlerComponent: Movement Blocked"));
 		return;
 	}
-	
+
 	const FVector CurrentLocation = OwnerCharacter->GetActorLocation();
-    
+
 	if (FVector::DistSquared2D(CurrentLocation, TargetMoveLocation) < FMath::Square(AcceptanceRadius))
 	{
 		bIsMovingToTarget = false;
 		return;
 	}
 
-	FVector FinalTargetLocation = TargetMoveLocation;
-
-	FHitResult HitResult;
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(OwnerCharacter);
-
-	float CapsuleRadius, CapsuleHalfHeight;
-	OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleSize(CapsuleRadius, CapsuleHalfHeight);
-
-	const bool bHit = UKismetSystemLibrary::CapsuleTraceSingle(
-		GetWorld(),
-		CurrentLocation,
-		TargetMoveLocation,
-		CapsuleRadius,
-		CapsuleHalfHeight,
-		ETraceTypeQuery::TraceTypeQuery1,
-		false,
-		ActorsToIgnore,
-		EDrawDebugTrace::None,
-		HitResult,
-		true
-	);
-
-	if (bHit)
-	{
-		FVector DirectionToOriginalTarget = (TargetMoveLocation - CurrentLocation).GetSafeNormal();
-		FinalTargetLocation = HitResult.Location - DirectionToOriginalTarget * 5.0f;
-		StopFacingMouse();
-	}
-
-	FVector MoveDirection = (FinalTargetLocation - CurrentLocation);
+	FVector MoveDirection = (TargetMoveLocation - CurrentLocation);
 	MoveDirection.Z = 0.0f;
 	MoveDirection.Normalize();
 
@@ -786,6 +831,7 @@ void USL25DMovementHandlerComponent::OnAttackStageFinished(const ECharacterMonta
 	case ECharacterMontageState::ECS_Hit_Groggy:
 		break;
 	case ECharacterMontageState::ECS_Hit_Knockback:
+		//OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
 		break;
 	case ECharacterMontageState::ECS_Attack_Basic1:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Basic1);

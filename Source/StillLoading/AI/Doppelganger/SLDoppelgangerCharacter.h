@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "SLDoppelgangerCharacter.generated.h"
 
