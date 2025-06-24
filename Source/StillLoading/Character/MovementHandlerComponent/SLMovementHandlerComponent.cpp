@@ -49,6 +49,7 @@ void UMovementHandlerComponent::BeginPlay()
 
 	if (CachedRadarComponent)
 	{
+		CachedRadarComponent->ToggleRadarComponent(true);
 		CachedRadarComponent->OnActorDetectedEnhanced.
 		                      AddDynamic(this, &UMovementHandlerComponent::OnRadarDetectedActor);
 	}

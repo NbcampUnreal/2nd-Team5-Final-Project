@@ -14,7 +14,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> Attack2DMontage;
 	
-	// 3D
+	// 3D & 2.5D
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> AttackMontage;
 
@@ -45,7 +45,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> BluePrintableMontage;
 
-	// 3D
+	// AI
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> AIAttackMontage;
 
