@@ -15,7 +15,10 @@ AFallingSword::AFallingSword()
 
 	SwordMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SwordMesh"));
 	RootComponent = SwordMesh;
-	SwordMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	
+	SwordMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SwordMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SwordMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->InitialSpeed = 500.f;

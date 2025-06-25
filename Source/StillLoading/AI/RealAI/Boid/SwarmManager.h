@@ -33,6 +33,7 @@ public:
 	ASwarmManager();
 
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	void SetLeader(ASwarmAgent* InLeader) { LeaderAgent = InLeader; }
 	ASwarmAgent* GetLeader() const { return LeaderAgent.Get(); }
@@ -50,6 +51,23 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	int32 LastMonsterCount = 0;
+
+	// 팔로워 인지 관련
+	UFUNCTION()
+	void ReportTargetSighting(AActor* SightedTarget);
+	UFUNCTION()
+	void BroadcastNewTarget(AActor* NewTarget);
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Squad")
+	TObjectPtr<AActor> CurrentSquadTarget;
+
+	float LastTimeTargetSeen;
+
+	UPROPERTY(EditAnywhere, Category = "Squad")
+	float TargetForgettingTime = 3.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Squad")
+	float MaxDetectionRange = 3000.0f;
 
 	// 팔로워 초기 셋팅 관련
 	void RegisterAgent(ASwarmAgent* Agent);
@@ -125,9 +143,6 @@ public:
 	// 팔로워 상태 관련
 	void SetSquadState(const ESquadState NewState);
 	ESquadState GetCurrentSquadState() const { return CurrentSquadState; }
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Swarm State")
-	TObjectPtr<AActor> CurrentTarget;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Swarm State")
 	FVector SwarmGoalLocation;

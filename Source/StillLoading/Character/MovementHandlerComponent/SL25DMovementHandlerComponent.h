@@ -57,6 +57,7 @@ protected:
 	virtual void OnActionStarted_Implementation(EInputActionType ActionType) override;
 	virtual void OnActionCompleted_Implementation(EInputActionType ActionType) override;
 	virtual void OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType) override;
+
 	UFUNCTION()
 	void OnCharacterHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	

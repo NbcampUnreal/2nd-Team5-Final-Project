@@ -10,7 +10,7 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 
-USLBTTask_Attack::USLBTTask_Attack(): AttackType()
+USLBTTask_Attack::USLBTTask_Attack()
 {
 	NodeName = "Attack Player";
 }
@@ -38,29 +38,25 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	UAnimationMontageComponent* AnimComp = AIPawn->FindComponentByClass<UAnimationMontageComponent>();
 	if (!AnimComp) return EBTNodeResult::Failed;
 
-	ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(Target);
-	if (!PlayerCharacter) return EBTNodeResult::Failed;
-
 	if (AICharacter->HasBattleState(TAG_AI_Hit)
-		|| AICharacter->HasBattleState(TAG_AI_IsAttacking)) return EBTNodeResult::Failed;
+		|| AICharacter->HasBattleState(TAG_AI_IsAttacking))
+		return EBTNodeResult::Failed;
 
-	if (AttackType == EAttackAnimType::AAT_AINormal)
+	int8 RandNum = FMath::RandRange(0, 2);
+	if (RandNum == 0)
 	{
-		if (FMath::RandRange(0, 1) == 0)
-		{
-			AnimComp->PlayAIAttackMontage("Attack1");
-		}
-		else
-		{
-			AnimComp->PlayAIAttackMontage("Attack2");
-		}
+		AnimComp->PlayAIAttackMontage("Attack1");
 	}
-	else if (AttackType == EAttackAnimType::AAT_AISpecial)
+	else if (RandNum == 1)
+	{
+		AnimComp->PlayAIAttackMontage("Attack2");
+	}
+	else
 	{
 		AnimComp->PlayAIAttackMontage("Attack3");
 	}
-	
+	AICharacter->SetStrategyState(TAG_AI_IsPlayingMontage);
 	AICharacter->SetBattleState(TAG_AI_IsAttacking);
-	
+
 	return EBTNodeResult::Succeeded;
 }

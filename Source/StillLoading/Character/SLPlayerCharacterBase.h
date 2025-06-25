@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameFramework/Character.h"
 #include "SLPlayerCharacterBase.generated.h"
 
@@ -19,12 +20,14 @@ enum class ECharacterRenderingType : uint8
 };
 
 UCLASS()
-class STILLLOADING_API ASLPlayerCharacterBase : public ACharacter
+class STILLLOADING_API ASLPlayerCharacterBase : public ACharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
 	ASLPlayerCharacterBase();
+	
+	virtual FGenericTeamId GetGenericTeamId() const override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSource;

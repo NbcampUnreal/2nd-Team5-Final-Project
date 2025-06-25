@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "SwarmAgent.generated.h"
 
+class UCollisionRadarComponent;
 class ASwarmManager;
 class UBlackboardData;
 class UBehaviorTree;
@@ -14,15 +15,19 @@ class UBoidMovementComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMonsterDied, ASwarmAgent*, Actor);
 
 UCLASS()
-class STILLLOADING_API ASwarmAgent : public ACharacter
+class STILLLOADING_API ASwarmAgent : public ACharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
 	ASwarmAgent();
 
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
 	UFUNCTION()
 	void SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree = nullptr, UBlackboardData* LeaderBlackBoard = nullptr);
+	UFUNCTION()
+	void OnRadarDetectedActor(AActor* DetectedActor, float Distance);
 	UFUNCTION()
 	void ApplyLeaderState(AAIController* AIController);
 	UFUNCTION()
@@ -49,6 +54,9 @@ public:
 	UPROPERTY()
 	FOnMonsterDied FOnMonsterDied;
 
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<APawn> CurrentDetectedActor;
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Swarm")
 	TObjectPtr<ASwarmManager> MySwarmManager;
 
@@ -59,13 +67,13 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION()
-	void Hited(AActor* Causer);
-
 	void ApplyBerserkState();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UCollisionRadarComponent> CachedRadarComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UBoidMovementComponent> BoidMovementComp;
+	TObjectPtr<UBoidMovementComponent> CachedBoidMovementComp;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TObjectPtr<UBehaviorTree> CachedLeaderBehaviorTree;

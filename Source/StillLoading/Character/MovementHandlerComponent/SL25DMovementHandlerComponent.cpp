@@ -307,7 +307,7 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	                                                InvulnerableDuration, false);
 
 	// 피격
-	OwnerCharacter->ClearStateTags({}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
+	OwnerCharacter->ClearStateTags({TAG_Character_OnBuff}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
 		                               TAG_Character_Empowered });
 	CachedMontageComponent->StopAllMontages(0.2f);
 	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
@@ -433,6 +433,14 @@ void USL25DMovementHandlerComponent::RotateToHitCauser(const AActor* Causer, FRo
 
 void USL25DMovementHandlerComponent::BeginBuff()
 {
+	if (!CachedMontageComponent || !OwnerCharacter || !CachedCombatComponent) return;
+
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_BuffBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("USL25DMovementHandlerComponent: Buff Blocked"));
+		return;
+	}
+	
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_OnBuff);
 	CachedMontageComponent->StopAllMontages(0.2f);
