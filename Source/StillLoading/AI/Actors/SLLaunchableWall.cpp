@@ -13,6 +13,8 @@
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/DataAsset/AttackDataAsset.h"
 #include "AI/Actors/SLMouseActor.h"
+#include "Character/SLPlayerCharacter.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 
 ASLLaunchableWall::ASLLaunchableWall()
 {
@@ -213,6 +215,11 @@ FVector ASLLaunchableWall::GetPlayerLocation() const
 
 FVector ASLLaunchableWall::GetPlayerDirection() const
 {
+	if (!IsPlayerAlive())
+	{
+		return GetActorForwardVector();
+	}
+	
 	if (!GetWorld())
 	{
 		return GetActorForwardVector();
@@ -233,6 +240,11 @@ FVector ASLLaunchableWall::GetPlayerDirection() const
 
 FVector ASLLaunchableWall::GetPlayerDirectionFromPoint(const FVector& FromPoint) const
 {
+	if (!IsPlayerAlive())
+	{
+		return GetActorForwardVector();
+	}
+	
 	if (!GetWorld())
 	{
 		return GetActorForwardVector();
@@ -884,8 +896,13 @@ void ASLLaunchableWall::OnWallPartHit(UPrimitiveComponent* HitComponent, AActor*
 	}
 
 	// 플레이어 충돌
-	if (ASLPlayerCharacterBase* PlayerCharacter = Cast<ASLPlayerCharacterBase>(OtherActor))
+	if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(OtherActor))
 	{
+		if (PlayerCharacter->IsInPrimaryState(TAG_Character_Dead))
+		{
+			return; 
+		}
+		
 		ApplyDamageToPlayer(OtherActor, Hit, WallPartIndex);
 		PlayCharacterHitEffects(Hit.ImpactPoint, OtherActor);
 	}
@@ -1219,4 +1236,28 @@ void ASLLaunchableWall::EnableWallPartCollision(int32 WallPartIndex)
 	{
 		WallPart->OnComponentHit.AddDynamic(this, &ASLLaunchableWall::OnWallPartHit);
 	}
+}
+
+bool ASLLaunchableWall::IsPlayerAlive() const
+{
+	if (!GetWorld())
+	{
+		return false;
+	}
+
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (!PlayerController || !PlayerController->GetPawn())
+	{
+		return false;
+	}
+
+	if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(PlayerController->GetPawn()))
+	{
+		if (PlayerCharacter->IsInPrimaryState(TAG_Character_Dead))
+		{
+			return false;
+		}
+	}
+
+	return true;
 }

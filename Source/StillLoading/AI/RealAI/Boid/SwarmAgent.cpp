@@ -38,11 +38,12 @@ void ASwarmAgent::BeginPlay()
 
 	CachedRadarComponent = FindComponentByClass<UCollisionRadarComponent>();
 
-	if (MySwarmManager && CachedRadarComponent && bIsLeader)
+	if (MySwarmManager && CachedRadarComponent)
 	{
+		//if (!IsLeader()) return;
 		CachedRadarComponent->ToggleRadarComponent(true, MySwarmManager->DetectionRadius);
 		CachedRadarComponent->OnActorDetectedEnhanced.
-							  AddDynamic(this, &ASwarmAgent::OnRadarDetectedActor);
+		                      AddDynamic(this, &ASwarmAgent::OnRadarDetectedActor);
 	}
 }
 
@@ -94,15 +95,6 @@ void ASwarmAgent::ApplyBerserkState()
 	}
 }
 
-// TODO:: 추후에 강제적으로 리더를 불러오는 로직 필요
-void ASwarmAgent::Hited(AActor* Causer)
-{
-	AAIController* LeaderController = Cast<AAIController>(GetController());
-	UBlackboardComponent* BlackboardComp = LeaderController->GetBlackboardComponent();
-	if (!BlackboardComp) return;
-	BlackboardComp->SetValueAsObject(BlackboardKeys::TargetActor, Causer);
-}
-
 void ASwarmAgent::SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree, UBlackboardData* LeaderBlackBoard)
 {
 	if (bIsLeader == IsLeader)
@@ -130,6 +122,24 @@ void ASwarmAgent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
 	if (APawn* CastedActor = Cast<APawn>(DetectedActor))
 	{
 		CurrentDetectedActor = CastedActor;
+
+		const float DistanceToTarget = GetDistanceTo(CurrentDetectedActor);
+
+		if (DistanceToTarget <= MySwarmManager->DetectionRadius)
+		{
+			if (!CurrentDetectedActor) return;
+
+			IGenericTeamAgentInterface* OwningTeamAgent = Cast<IGenericTeamAgentInterface>(this);
+			IGenericTeamAgentInterface* TargetTeamAgent = Cast<IGenericTeamAgentInterface>(CurrentDetectedActor);
+
+			if (OwningTeamAgent && TargetTeamAgent)
+			{
+				if (OwningTeamAgent->GetGenericTeamId() != TargetTeamAgent->GetGenericTeamId())
+				{
+					MySwarmManager->ReportTargetSighting(CastedActor);
+				}
+			}
+		}
 	}
 }
 

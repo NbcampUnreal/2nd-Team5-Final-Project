@@ -4,6 +4,7 @@
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/DataAsset/AttackDataAsset.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
+#include "Character/Item/SpearProjectile.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
@@ -144,6 +145,50 @@ void AMonsterAICharacter::OnSpawnMovementFinished()
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	}
+}
+
+void AMonsterAICharacter::ToggleWeaponState(const bool bIsVisible)
+{
+	const bool bShouldBeHidden = !bIsVisible;
+
+	if (Sword)
+	{
+		Sword->SetActorHiddenInGame(bShouldBeHidden);
+	}
+
+	if (Shield)
+	{
+		Shield->SetActorHiddenInGame(bShouldBeHidden);
+	}
+}
+
+void AMonsterAICharacter::SpawnSpear()
+{
+	if (!ThrowableClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpearClass is not set in Character Blueprint!"));
+		return;
+	}
+
+	FVector SpawnLocation = GetMesh()->GetSocketLocation(TEXT("hand_rSocket"));
+	FRotator SpawnRotation = GetControlRotation();
+
+	const float RandomYaw = FMath::RandRange(-SpearInaccuracy, SpearInaccuracy);
+	const float RandomPitch = FMath::RandRange(-SpearInaccuracy, SpearInaccuracy);
+	const FRotator RandomOffset = FRotator(RandomPitch, RandomYaw, 0.0f);
+
+	const FRotator FinalRotation = SpawnRotation + RandomOffset;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	ToggleWeaponState(false);
+	
+	if (ASpearProjectile* SpawnedSpear = GetWorld()->SpawnActor<ASpearProjectile>(ThrowableClass, SpawnLocation, FinalRotation, SpawnParams))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Spear Spawned!"));
 	}
 }
 
@@ -330,7 +375,6 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	RotateToHitCauser(Causer);
 	ChangeMeshTemporarily();
 	StartFlyingState();
-	Hited(Causer);
 
 	LastAttacker = Causer;
 	CurrentHealth -= Damage;
@@ -342,24 +386,6 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	case EHitAnimType::HAT_WeakHit:
 	case EHitAnimType::HAT_HardHit:
 		{
-			SetBattleState(TAG_AI_Hit);
-			SetStrategyState(TAG_AI_IsPlayingMontage);
-			PlayHitMontageAndSetupRecovery(2);
-
-			FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
-			KnockbackDir.Z = 0;
-			KnockbackDir.Normalize();
-			
-			const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
-			if (GetCharacterMovement()->IsFalling() && GroundDistance > 20.0f)
-			{
-				LaunchCharacter(KnockbackDir * 1200, true, false);
-			}
-			else
-			{
-				LaunchCharacter(KnockbackDir * 1200, true, false);
-			}
-			
 			if (CurrentHealth < 0.f)
 			{
 				if (DeathMaterial)
@@ -370,40 +396,72 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 						GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
 					}
 				}
+				SetStrategyState(TAG_AI_IsPlayingMontage);
 				AnimationComponent->PlayAIHitMontage("Dead");
+			}
+			else
+			{
+				SetBattleState(TAG_AI_Hit);
+				SetStrategyState(TAG_AI_IsPlayingMontage);
+				PlayHitMontageAndSetupRecovery(2);
+
+				FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
+				KnockbackDir.Z = 0;
+				KnockbackDir.Normalize();
+			
+				const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
+				if (GetCharacterMovement()->IsFalling() && GroundDistance > 20.0f)
+				{
+					LaunchCharacter(KnockbackDir * 1200, true, false);
+				}
+				else
+				{
+					LaunchCharacter(KnockbackDir * 1200, true, false);
+				}
 			}
 			
 			break;
 		}
 	case EHitAnimType::HAT_AirBorne:
-		AnimationComponent->PlayAIHitMontage("Airborne");
-		SetBattleState(TAG_AI_Hit);
-		SetStrategyState(TAG_AI_IsPlayingMontage);
 		if (CurrentHealth < 0.f)
 		{
 			//Dead(Causer, true);
+			SetStrategyState(TAG_AI_IsPlayingMontage);
 			AnimationComponent->PlayAIHitMontage("Dead");
+		}
+		else
+		{
+			SetBattleState(TAG_AI_Hit);
+			AnimationComponent->PlayAIHitMontage("Airborne");
+			
 		}
 		break;
 	case EHitAnimType::HAT_AirUp:
-		AnimationComponent->PlayAIHitMontage("AirUp");
-		SetBattleState(TAG_AI_Hit);
-		SetStrategyState(TAG_AI_IsPlayingMontage);
 		if (CurrentHealth < 0.f)
 		{
 			//Dead(Causer, true);
+			SetStrategyState(TAG_AI_IsPlayingMontage);
 			AnimationComponent->PlayAIHitMontage("Dead");
+		}
+		else
+		{
+			SetBattleState(TAG_AI_Hit);
+			AnimationComponent->PlayAIHitMontage("AirUp");
 		}
 		break;
 	case EHitAnimType::HAT_FallBack:
-		AnimationComponent->PlayAIHitMontage("GroundHit");
 		RotateToHitCauser(Causer);
-		SetStrategyState(TAG_AI_IsPlayingMontage);
-		SetBattleState(TAG_AI_Hit_FallBack);
+		
 		if (CurrentHealth < 0.f)
 		{
 			//Dead(Causer, true);
+			SetStrategyState(TAG_AI_IsPlayingMontage);
 			AnimationComponent->PlayAIHitMontage("Dead");
+		}
+		else
+		{
+			SetBattleState(TAG_AI_Hit_FallBack);
+			AnimationComponent->PlayAIHitMontage("GroundHit");
 		}
 		break;
 	case EHitAnimType::HAT_KillMotionA:
@@ -584,6 +642,7 @@ void AMonsterAICharacter::RecoverFromHitState()
 {
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 	SetBattleState(TAG_AI_Idle);
+	SetStrategyState(TAG_AI_Idle);
 }
 
 void AMonsterAICharacter::PlayHitMontageAndSetupRecovery(const float Length)

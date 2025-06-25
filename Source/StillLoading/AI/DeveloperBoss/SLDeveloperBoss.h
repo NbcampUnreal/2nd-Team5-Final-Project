@@ -317,6 +317,8 @@ protected:
     void ResetPhase3WallIndex();
     void CleanupInactiveWalls();
     void LaunchPhase4WallWithLines();
+    bool IsPlayerAlive() const;
+    
     // Protected Variables (Settings)
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Developer Boss")
     TArray<TSubclassOf<ASLAIBaseCharacter>> AvailableBossClasses;

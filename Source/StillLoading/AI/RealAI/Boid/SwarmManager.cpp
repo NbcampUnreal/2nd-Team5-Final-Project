@@ -2,18 +2,43 @@
 
 #include "NavigationSystem.h"
 #include "SwarmAgent.h"
+#include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavFilters/NavigationQueryFilter.h"
 
 ASwarmManager::ASwarmManager()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ASwarmManager::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ASwarmManager::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (CurrentSquadTarget && GetCurrentSquadState() == ESquadState::Engaging)
+	{
+		if (GetWorld()->GetTimeSeconds() - LastTimeTargetSeen > TargetForgettingTime)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Squad lost target due to timeout."));
+			CurrentSquadTarget = nullptr;
+			LastTimeTargetSeen = 0.f;
+			BroadcastNewTarget(nullptr);
+			SetSquadState(ESquadState::Patrolling_Move);
+			for (TObjectPtr<ASwarmAgent> SwarmAgent : AllAgents)
+			{
+				AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(SwarmAgent);
+				if (!Monster) return;
+				Monster->SetPrimaryState(TAG_AI_Idle);
+			}
+		}
+	}
 }
 
 void ASwarmManager::DestroyAllAgents()
@@ -30,6 +55,35 @@ void ASwarmManager::DestroyAllAgents()
 void ASwarmManager::SetNewPath(const TArray<FVector>& NewPathPoints)
 {
 	CurrentPath = NewPathPoints;
+}
+
+void ASwarmManager::ReportTargetSighting(AActor* SightedTarget)
+{
+	if (SightedTarget)
+	{
+		if (CurrentSquadTarget == nullptr)
+		{
+			SetSquadState(ESquadState::Engaging);
+		}
+        
+		CurrentSquadTarget = SightedTarget;
+		LastTimeTargetSeen = GetWorld()->GetTimeSeconds();
+		BroadcastNewTarget(SightedTarget);
+	}
+}
+
+void ASwarmManager::BroadcastNewTarget(AActor* NewTarget)
+{
+	if (LeaderAgent)
+	{
+		if (AAIController* LeaderController = Cast<AAIController>(LeaderAgent->GetController()))
+		{
+			if (UBlackboardComponent* BlackboardComp = LeaderController->GetBlackboardComponent())
+			{
+				BlackboardComp->SetValueAsObject(TEXT("TargetActor"), NewTarget);
+			}
+		}
+	}
 }
 
 // 에이전트 등록 & 해제

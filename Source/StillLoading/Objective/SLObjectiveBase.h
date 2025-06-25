@@ -51,6 +51,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	int32 GetObjectiveProgressCount() const { return ObjectiveProgressCount; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Objective")
+	void SetObjectiveProgressCount(const int32 InCount) { ObjectiveProgressCount = InCount; }
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	int32 GetObjectiveCompleteCount() const { return ObjectiveCompleteCount; }
