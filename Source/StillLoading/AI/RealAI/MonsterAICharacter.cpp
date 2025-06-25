@@ -4,6 +4,7 @@
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/DataAsset/AttackDataAsset.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
+#include "Character/Item/SpearProjectile.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
@@ -57,6 +58,11 @@ void AMonsterAICharacter::BeginPlay()
 		Shield = GetWorld()->SpawnActor<AActor>(ShieldClass, GetActorLocation(), GetActorRotation());
 		AttachItemToHand(Shield, TEXT("hand_lSocket"));
 		Shield->SetOwner(this);
+	}
+
+	if (ThrowableClass)
+	{
+		ToggleWeaponState(false);
 	}
 
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
@@ -144,6 +150,50 @@ void AMonsterAICharacter::OnSpawnMovementFinished()
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	}
+}
+
+void AMonsterAICharacter::ToggleWeaponState(const bool bIsVisible)
+{
+	const bool bShouldBeHidden = !bIsVisible;
+
+	if (Sword)
+	{
+		Sword->SetActorHiddenInGame(bShouldBeHidden);
+	}
+
+	if (Shield)
+	{
+		Shield->SetActorHiddenInGame(bShouldBeHidden);
+	}
+}
+
+void AMonsterAICharacter::SpawnSpear()
+{
+	if (!ThrowableClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpearClass is not set in Character Blueprint!"));
+		return;
+	}
+
+	FVector SpawnLocation = GetMesh()->GetSocketLocation(TEXT("hand_rSocket"));
+	FRotator SpawnRotation = GetControlRotation();
+
+	const float RandomYaw = FMath::RandRange(-SpearInaccuracy, SpearInaccuracy);
+	const float RandomPitch = FMath::RandRange(-SpearInaccuracy, SpearInaccuracy);
+	const FRotator RandomOffset = FRotator(RandomPitch, RandomYaw, 0.0f);
+
+	const FRotator FinalRotation = SpawnRotation + RandomOffset;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	ToggleWeaponState(false);
+	
+	if (ASpearProjectile* SpawnedSpear = GetWorld()->SpawnActor<ASpearProjectile>(ThrowableClass, SpawnLocation, FinalRotation, SpawnParams))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Spear Spawned!"));
 	}
 }
 

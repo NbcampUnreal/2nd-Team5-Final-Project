@@ -99,6 +99,7 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 		LeaderController ? LeaderController->GetBlackboardComponent() : nullptr;
 	if (!BlackboardComp) return;
 
+	//const AActor* CurrentTarget = Agent->CurrentDetectedActor;
 	const AActor* CurrentTarget = SwarmManager->CurrentSquadTarget;
 	if (!CurrentTarget)
 	{
@@ -145,13 +146,14 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 		}
 		else
 		{
+			/*
 			const FVector DirectionToTarget = (CurrentTarget->GetActorLocation() - OwnerCharacter->
 					GetActorLocation()).
 				GetSafeNormal();
 			const FRotator TargetRotation = DirectionToTarget.Rotation();
 			OwnerCharacter->SetActorRotation(
 				FMath::RInterpTo(OwnerCharacter->GetActorRotation(), TargetRotation, DeltaTime, 10.0f));
-
+			*/
 			// 공격 분기의 이동 처리
 			HandleMovementState(DeltaTime, Agent);
 		}
@@ -167,7 +169,7 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 
 	if (SwarmManager->GetCurrentSquadState() == ESquadState::Engaging)
 	{
-		MoveComp->bOrientRotationToMovement = false;
+		MoveComp->bOrientRotationToMovement = true;
 		
 		CurrentSeparation = SwarmManager->CombatSeparation;
 		CurrentCohesion = SwarmManager->CombatCohesion;
@@ -478,38 +480,6 @@ FVector UBoidMovementComponent::CalculateGoalSeekingForce()
 
 	const ESquadState CurrentSquadState = SwarmManager->GetCurrentSquadState();
 
-	// 1. 교전(Engaging) 상태일 때의 목표 설정: 타겟
-	/*
-	if (CurrentState == ESquadState::Engaging)
-	{
-		const ASwarmAgent* Leader = SwarmManager->GetLeader();
-		if (!Leader) return FVector::ZeroVector;
-
-		AAIController* LeaderController = Cast<AAIController>(Leader->GetController());
-		const UBlackboardComponent* BlackboardComp = LeaderController
-			                                             ? LeaderController->GetBlackboardComponent()
-			                                             : nullptr;
-		if (!BlackboardComp) return FVector::ZeroVector;
-
-		const AActor* TargetPlayer = Cast<AActor>(BlackboardComp->GetValueAsObject(TEXT("TargetActor")));
-		if (!TargetPlayer) return FVector::ZeroVector;
-
-		const FVector MyLocation = OwnerCharacter->GetActorLocation();
-		const FVector VectorToTarget = TargetPlayer->GetActorLocation() - MyLocation;
-		const float DistanceToTarget = VectorToTarget.Size();
-
-		const float DesiredStoppingDistance = 100.0f;
-		if (DistanceToTarget <= DesiredStoppingDistance)
-		{
-			return FVector::ZeroVector;
-		}
-
-		const float MaxSpeed = OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed;
-		const FVector DesiredVelocity = VectorToTarget.GetSafeNormal() * MaxSpeed;
-		return DesiredVelocity - OwnerCharacter->GetVelocity();
-	}
-	*/
-
 	if (CurrentSquadState == ESquadState::Engaging)
 	{
 		const ASwarmAgent* Leader = SwarmManager->GetLeader();
@@ -521,7 +491,7 @@ FVector UBoidMovementComponent::CalculateGoalSeekingForce()
 			                                             : nullptr;
 		if (!BlackboardComp) return FVector::ZeroVector;
 
-		const AActor* TargetPlayer = Cast<AActor>(BlackboardComp->GetValueAsObject(TEXT("TargetActor")));
+		const AActor* TargetPlayer = SwarmManager->CurrentSquadTarget;
 		if (!TargetPlayer) return FVector::ZeroVector;
 
 		const FVector MyLocation = OwnerCharacter->GetActorLocation();
@@ -540,29 +510,32 @@ FVector UBoidMovementComponent::CalculateGoalSeekingForce()
 
 		const float MaxSpeed = OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed;
 		const FVector DesiredVelocity = VectorToGoal.GetSafeNormal() * MaxSpeed;
+		
 		return DesiredVelocity - OwnerCharacter->GetVelocity();
 	}
-
-	const ASwarmAgent* Leader = SwarmManager->GetLeader();
-	ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(OwnerCharacter);
-
-	if (Leader && OwningAgent && !OwningAgent->IsLeader())
+	else
 	{
-		const FVector MyFormationSlot = SwarmManager->GetFormationSlotLocationForAgent(OwningAgent->GetAgentID());
-		if (MyFormationSlot.IsZero()) return FVector::ZeroVector;
+		const ASwarmAgent* Leader = SwarmManager->GetLeader();
+		ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(OwnerCharacter);
 
-		const FVector ToSlot = MyFormationSlot - OwnerCharacter->GetActorLocation();
-		const float DistanceToSlot = ToSlot.Size();
-
-		const float MaxSpeed = OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed;
-		FVector DesiredVelocity = ToSlot.GetSafeNormal() * MaxSpeed;
-
-		if (DistanceToSlot < ArrivalSlowingRadius)
+		if (Leader && OwningAgent && !OwningAgent->IsLeader())
 		{
-			DesiredVelocity *= (DistanceToSlot / ArrivalSlowingRadius);
-		}
+			const FVector MyFormationSlot = SwarmManager->GetFormationSlotLocationForAgent(OwningAgent->GetAgentID());
+			if (MyFormationSlot.IsZero()) return FVector::ZeroVector;
 
-		return DesiredVelocity - OwnerCharacter->GetVelocity();
+			const FVector ToSlot = MyFormationSlot - OwnerCharacter->GetActorLocation();
+			const float DistanceToSlot = ToSlot.Size();
+
+			const float MaxSpeed = OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed;
+			FVector DesiredVelocity = ToSlot.GetSafeNormal() * MaxSpeed;
+
+			if (DistanceToSlot < ArrivalSlowingRadius)
+			{
+				DesiredVelocity *= (DistanceToSlot / ArrivalSlowingRadius);
+			}
+
+			return DesiredVelocity - OwnerCharacter->GetVelocity();
+		}
 	}
 
 	return FVector::ZeroVector;
