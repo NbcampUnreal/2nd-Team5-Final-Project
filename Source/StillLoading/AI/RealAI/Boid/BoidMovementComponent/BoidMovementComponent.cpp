@@ -8,7 +8,6 @@
 #include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
-#include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -36,8 +35,6 @@ void UBoidMovementComponent::BeginPlay()
 	{
 		SetComponentTickEnabled(false);
 	}
-
-	OrbitDirection = FMath::RandBool() ? 1.0f : -1.0f;
 }
 
 void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -90,7 +87,7 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Agent)
 {
 	if (!Agent) return;
-	
+
 	const ASwarmAgent* Leader = SwarmManager->GetLeader();
 	if (!Leader) return;
 
@@ -103,13 +100,14 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 	const AActor* CurrentTarget = SwarmManager->CurrentSquadTarget;
 	if (!CurrentTarget)
 	{
-		SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
+		//SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
 		return;
 	}
 
 	if (CurrentState == EBoidMonsterState::FS_Retreating) // 후퇴 분기
 	{
-		const float DistSqToRetreatTarget = FVector::DistSquared(OwnerCharacter->GetActorLocation(), RetreatTargetLocation);
+		const float DistSqToRetreatTarget = FVector::DistSquared(OwnerCharacter->GetActorLocation(),
+		                                                         RetreatTargetLocation);
 
 		if (DistSqToRetreatTarget < FMath::Square(100.0f))
 		{
@@ -117,10 +115,12 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 		}
 		else
 		{
-			const FVector DirectionToRetreatTarget = (RetreatTargetLocation - OwnerCharacter->GetActorLocation()).GetSafeNormal();
+			const FVector DirectionToRetreatTarget = (RetreatTargetLocation - OwnerCharacter->GetActorLocation()).
+				GetSafeNormal();
 			OwnerCharacter->AddMovementInput(DirectionToRetreatTarget);
 
-			const FVector DirectionToEnemy = (CurrentTarget->GetActorLocation() - OwnerCharacter->GetActorLocation()).GetSafeNormal();
+			const FVector DirectionToEnemy = (CurrentTarget->GetActorLocation() - OwnerCharacter->GetActorLocation()).
+				GetSafeNormal();
 			const FRotator TargetRotation = DirectionToEnemy.Rotation();
 			OwnerCharacter->SetActorRotation(
 				FMath::RInterpTo(OwnerCharacter->GetActorRotation(), TargetRotation, DeltaTime, 10.0f));
@@ -138,7 +138,8 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 			CurrentState = EBoidMonsterState::FS_UnAbleToAttack;
 		}
 
-		const float DistanceToTarget = FVector::Dist(OwnerCharacter->GetActorLocation(), CurrentTarget->GetActorLocation());
+		const float DistanceToTarget = FVector::Dist(OwnerCharacter->GetActorLocation(),
+		                                             CurrentTarget->GetActorLocation());
 		if (DistanceToTarget < AttackRange && CurrentState == EBoidMonsterState::FS_AbleToAttack)
 		{
 			BeginAttack(DeltaTime, CurrentTarget, Agent);
@@ -164,13 +165,11 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 {
 	UCharacterMovementComponent* MoveComp = Agent->GetCharacterMovement();
 	if (!MoveComp) return;
-	
+
 	float CurrentSeparation, CurrentCohesion, CurrentAlignment, CurrentGoalSeeking;
 
 	if (SwarmManager->GetCurrentSquadState() == ESquadState::Engaging)
 	{
-		MoveComp->bOrientRotationToMovement = true;
-		
 		CurrentSeparation = SwarmManager->CombatSeparation;
 		CurrentCohesion = SwarmManager->CombatCohesion;
 		CurrentAlignment = SwarmManager->CombatAlignment;
@@ -178,8 +177,6 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	}
 	else
 	{
-		MoveComp->bOrientRotationToMovement = true;
-		
 		CurrentSeparation = SwarmManager->PatrolSeparation;
 		CurrentCohesion = SwarmManager->PatrolCohesion;
 		CurrentAlignment = SwarmManager->PatrolAlignment;
@@ -208,14 +205,14 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 
 	const float SeparationSq = SeparationForce.SizeSquared();
 
-	FVector FinalGoalForce = FVector::ZeroVector; 
+	FVector FinalGoalForce = FVector::ZeroVector;
 
 	if (SwarmManager->GetCurrentSquadState() == ESquadState::Engaging
 		&& CurrentState == EBoidMonsterState::FS_UnAbleToAttack)
 	{
 		if (SeparationSq > 600) // 뒤에있어서 멀어지려는 힘이 약하고
 		{
-			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰 or Anim
+			//OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰 or Anim
 			AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(Agent);
 			if (!Monster) return;
 			if (AbleToPlayWonderMontage)
@@ -277,7 +274,7 @@ void UBoidMovementComponent::CheckAndHandleStuckTeleport(float DeltaTime)
 		true,
 		FColor::Red,
 		FColor::Green,
-		2.0f 
+		2.0f
 	);
 
 	if (bHitObstacle)
@@ -308,9 +305,10 @@ void UBoidMovementComponent::CheckAndHandleStuckTeleport(float DeltaTime)
 			{
 				if (UCapsuleComponent* CapsuleComp = OwnerCharacter->GetCapsuleComponent())
 				{
-					CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+					CapsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn,
+					                                           ECollisionResponse::ECR_Ignore);
 				}
-			
+
 				if (TeleportEffect)
 				{
 					UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TeleportEffect, GoalLocation);
@@ -323,12 +321,12 @@ void UBoidMovementComponent::CheckAndHandleStuckTeleport(float DeltaTime)
 				OwnerCharacter->SetActorLocation(GoalLocation, false, nullptr, ETeleportType::TeleportPhysics);
 
 				GetWorld()->GetTimerManager().SetTimer(
-				   RestoreCollisionTimerHandle,
-				   this,
-				   &UBoidMovementComponent::RestorePawnCollision,
-				   PostTeleportCollisionGracePeriod,
-				   false
-			   );
+					RestoreCollisionTimerHandle,
+					this,
+					&UBoidMovementComponent::RestorePawnCollision,
+					PostTeleportCollisionGracePeriod,
+					false
+				);
 			}
 		}
 	}
@@ -395,16 +393,17 @@ void UBoidMovementComponent::BeginAttack(const float DeltaTime, const AActor* Cu
 	}
 
 	CurrentState = EBoidMonsterState::FS_Retreating;
-	const FVector DirectionFromTarget = (OwnerCharacter->GetActorLocation() - CurrentTarget->GetActorLocation()).GetSafeNormal();
+	const FVector DirectionFromTarget = (OwnerCharacter->GetActorLocation() - CurrentTarget->GetActorLocation()).
+		GetSafeNormal();
 	RetreatTargetLocation = OwnerCharacter->GetActorLocation() + DirectionFromTarget * RetreatDistance;
 
 	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 	FNavLocation NavLocation;
 	if (NavSys && NavSys->GetRandomPointInNavigableRadius(RetreatTargetLocation, 50.f, NavLocation))
 	{
-	    RetreatTargetLocation = NavLocation.Location;
+		RetreatTargetLocation = NavLocation.Location;
 	}
-	
+
 	AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(Agent);
 	if (!Monster) return;
 
@@ -510,32 +509,30 @@ FVector UBoidMovementComponent::CalculateGoalSeekingForce()
 
 		const float MaxSpeed = OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed;
 		const FVector DesiredVelocity = VectorToGoal.GetSafeNormal() * MaxSpeed;
-		
+
 		return DesiredVelocity - OwnerCharacter->GetVelocity();
 	}
-	else
+
+	const ASwarmAgent* Leader = SwarmManager->GetLeader();
+	ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(OwnerCharacter);
+
+	if (Leader && OwningAgent && !OwningAgent->IsLeader())
 	{
-		const ASwarmAgent* Leader = SwarmManager->GetLeader();
-		ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(OwnerCharacter);
+		const FVector MyFormationSlot = SwarmManager->GetFormationSlotLocationForAgent(OwningAgent->GetAgentID());
+		if (MyFormationSlot.IsZero()) return FVector::ZeroVector;
 
-		if (Leader && OwningAgent && !OwningAgent->IsLeader())
+		const FVector ToSlot = MyFormationSlot - OwnerCharacter->GetActorLocation();
+		const float DistanceToSlot = ToSlot.Size();
+
+		const float MaxSpeed = OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed;
+		FVector DesiredVelocity = ToSlot.GetSafeNormal() * MaxSpeed;
+
+		if (DistanceToSlot < ArrivalSlowingRadius)
 		{
-			const FVector MyFormationSlot = SwarmManager->GetFormationSlotLocationForAgent(OwningAgent->GetAgentID());
-			if (MyFormationSlot.IsZero()) return FVector::ZeroVector;
-
-			const FVector ToSlot = MyFormationSlot - OwnerCharacter->GetActorLocation();
-			const float DistanceToSlot = ToSlot.Size();
-
-			const float MaxSpeed = OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed;
-			FVector DesiredVelocity = ToSlot.GetSafeNormal() * MaxSpeed;
-
-			if (DistanceToSlot < ArrivalSlowingRadius)
-			{
-				DesiredVelocity *= (DistanceToSlot / ArrivalSlowingRadius);
-			}
-
-			return DesiredVelocity - OwnerCharacter->GetVelocity();
+			DesiredVelocity *= (DistanceToSlot / ArrivalSlowingRadius);
 		}
+
+		return DesiredVelocity - OwnerCharacter->GetVelocity();
 	}
 
 	return FVector::ZeroVector;
