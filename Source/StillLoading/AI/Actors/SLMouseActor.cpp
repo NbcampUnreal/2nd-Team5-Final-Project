@@ -424,6 +424,15 @@ void ASLMouseActor::UpdateOrbitMovement(float DeltaTime)
 		return;
 	}
 
+	if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(TargetPlayer))
+	{
+		if (PlayerCharacter->IsInPrimaryState(TAG_Character_Dead))
+		{
+			StopOrbiting();
+			return;
+		}
+	}
+	
 	OrbitCenter = TargetPlayer->GetActorLocation();
 	
 	OrbitAngle += OrbitSpeed * DeltaTime;
@@ -734,7 +743,6 @@ bool ASLMouseActor::CanGrabPlayer() const
 	{
 		if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(TargetPlayer))
 		{
-			// TAG_Character_Dead 상태인지 확인
 			if (PlayerCharacter->IsInPrimaryState(TAG_Character_Dead))
 			{
 				return false;
@@ -789,6 +797,16 @@ void ASLMouseActor::UpdatePhase3Movement(float DeltaTime)
 		return;
 	}
 
+	if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(TargetPlayer))
+	{
+		if (PlayerCharacter->IsInPrimaryState(TAG_Character_Dead))
+		{
+			bIsInPhase3Mode = false;
+			SetMouseActorState(EMouseActorState::Inactive);
+			return;
+		}
+	}
+	
 	bIsPlayerLookingAtMe = IsPlayerLookingAtMe();
    
 	if (bIsPlayerLookingAtMe)
