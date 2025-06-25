@@ -60,11 +60,6 @@ void AMonsterAICharacter::BeginPlay()
 		Shield->SetOwner(this);
 	}
 
-	if (ThrowableClass)
-	{
-		ToggleWeaponState(false);
-	}
-
 	BattleComponent->OnCharacterHited.AddDynamic(this, &AMonsterAICharacter::OnHitReceived);
 
 	GetCharacterMovement()->bUseRVOAvoidance = true;
