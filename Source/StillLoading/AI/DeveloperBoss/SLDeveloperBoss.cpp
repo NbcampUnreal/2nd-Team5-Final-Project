@@ -9,7 +9,9 @@
 #include "AI/Actors/SLLaunchableWall.h"
 #include "AI/Actors/SLMouseActor.h"
 #include "AI/Actors/SLPhase4FallingFloor.h"
+#include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/CapsuleComponent.h"
 
 ASLDeveloperBoss::ASLDeveloperBoss()
@@ -216,6 +218,11 @@ void ASLDeveloperBoss::TriggerFirstWallDuringDialogue()
 
 void ASLDeveloperBoss::ManualLaunchWallAttack(int32 PhaseIndex, int32 WallIndex)
 {
+    if (!IsPlayerAlive())
+    {
+        return;
+    }
+    
     if (!CanLaunchWallAttack(PhaseIndex))
     {
         return;
@@ -899,6 +906,16 @@ void ASLDeveloperBoss::CheckPhase3Completion()
 
 void ASLDeveloperBoss::LaunchNextPhase5Wall()
 {
+    if (!IsPlayerAlive())
+    {
+        bIsPhase5Active = false; 
+        if (GetWorld() && Phase5WallAttackTimer.IsValid()) 
+        {
+            GetWorld()->GetTimerManager().ClearTimer(Phase5WallAttackTimer);
+        }
+        return;
+    }
+    
     if (!bIsPhase5Active)
     {
         UE_LOG(LogTemp, Display, TEXT("Phase5 wall attack stopped - Phase5 not active"));
@@ -966,6 +983,12 @@ void ASLDeveloperBoss::OnPhase5WallHitMouseActor(ASLMouseActor* HitMouseActor, i
 
 void ASLDeveloperBoss::OnPhase3AutoWallAttackTimer()
 {
+    if (!IsPlayerAlive())
+    {
+        StopPhase3AutoWallAttack(); 
+        return;
+    }
+    
     if (!bIsPhase3Active || !bIsPhase3AutoWallAttackActive)
     {
         UE_LOG(LogTemp, Warning, TEXT("Phase3 auto attack timer called but conditions not met"));
@@ -1825,4 +1848,28 @@ void ASLDeveloperBoss::TriggerPhase4FloorCollapse()
     {
         StartPhase4FloorCollapse();
     }
+}
+
+bool ASLDeveloperBoss::IsPlayerAlive() const
+{
+    if (!GetWorld())
+    {
+        return false;
+    }
+
+    APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+    if (!PlayerController || !PlayerController->GetPawn())
+    {
+        return false;
+    }
+
+    if (ASLPlayerCharacter* PlayerCharacter = Cast<ASLPlayerCharacter>(PlayerController->GetPawn()))
+    {
+        if (PlayerCharacter->IsInPrimaryState(TAG_Character_Dead))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
