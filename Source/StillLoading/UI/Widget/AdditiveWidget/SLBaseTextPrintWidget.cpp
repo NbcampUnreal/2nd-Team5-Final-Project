@@ -102,6 +102,7 @@ void USLBaseTextPrintWidget::OnClickedSkipButton()
 	}
 	else
 	{
+		CurrentTextIndex = -1;
 		CloseTalk();
 		OnChoiceEnded.Broadcast(false);
 	}

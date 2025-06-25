@@ -159,17 +159,7 @@ void ASLPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	if (Sword)
-	{
-		Sword->Destroy();
-		Sword = nullptr;
-	}
-
-	if (Shield)
-	{
-		Shield->Destroy();
-		Shield = nullptr;
-	}
+	DisableWeapons();
 }
 
 void ASLPlayerCharacter::OnEmpoweredStateChanged(const bool bIsEmpowered)

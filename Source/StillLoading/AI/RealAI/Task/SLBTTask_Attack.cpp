@@ -55,7 +55,7 @@ EBTNodeResult::Type USLBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	{
 		AnimComp->PlayAIAttackMontage("Attack3");
 	}
-
+	AICharacter->SetStrategyState(TAG_AI_IsPlayingMontage);
 	AICharacter->SetBattleState(TAG_AI_IsAttacking);
 
 	return EBTNodeResult::Succeeded;

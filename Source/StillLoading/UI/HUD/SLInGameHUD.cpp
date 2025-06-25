@@ -44,7 +44,7 @@ void ASLInGameHUD::OnAddObjective(USLObjectiveBase* TargetObjective)
 		{
 			ObjectiveMaxCount = CompleteCount;
 			SetObjectiveCounter(ObjectiveName, CompleteCount, 0);
-			TargetObjective->OnObjectiveProgressChanged.AddDynamic(this, &ThisClass::OnObjectiveCountChanged);
+			TargetObjective->OnObjectiveProgressChanged.AddUniqueDynamic(this, &ThisClass::OnObjectiveCountChanged);
 		}
 	}
 }

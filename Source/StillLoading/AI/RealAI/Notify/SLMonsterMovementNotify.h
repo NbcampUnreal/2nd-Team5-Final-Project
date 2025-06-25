@@ -23,6 +23,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
 	float KnockBackSpeed = 300.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
+	bool bIsVisible = false;
+
 	virtual void Notify(
 		USkeletalMeshComponent* MeshComp,
 		UAnimSequenceBase* Animation,

@@ -119,6 +119,8 @@ void ASwarmAgent::SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree, UB
 
 void ASwarmAgent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
 {
+	if (CurrentDetectedActor == DetectedActor) return;
+	
 	if (APawn* CastedActor = Cast<APawn>(DetectedActor))
 	{
 		CurrentDetectedActor = CastedActor;
@@ -127,8 +129,6 @@ void ASwarmAgent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
 
 		if (DistanceToTarget <= MySwarmManager->DetectionRadius)
 		{
-			if (!CurrentDetectedActor) return;
-
 			IGenericTeamAgentInterface* OwningTeamAgent = Cast<IGenericTeamAgentInterface>(this);
 			IGenericTeamAgentInterface* TargetTeamAgent = Cast<IGenericTeamAgentInterface>(CurrentDetectedActor);
 
@@ -136,7 +136,7 @@ void ASwarmAgent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
 			{
 				if (OwningTeamAgent->GetGenericTeamId() != TargetTeamAgent->GetGenericTeamId())
 				{
-					MySwarmManager->ReportTargetSighting(CastedActor);
+					MySwarmManager->ReportTargetSighting(this, CastedActor);
 				}
 			}
 		}
@@ -174,8 +174,32 @@ void ASwarmAgent::AgentDied()
 	FOnMonsterDied.Broadcast(this);
 }
 
+void ASwarmAgent::RotateToFaceTarget()
+{
+	if (!MySwarmManager) return;
+	
+	const AActor* TargetActor = MySwarmManager->CurrentSquadTarget;
+
+	if (!TargetActor)
+	{
+		return;
+	}
+
+	const FVector MyLocation = GetActorLocation();
+	const FVector TargetLocation = TargetActor->GetActorLocation();
+	FVector Direction = (TargetLocation - MyLocation).GetSafeNormal();
+
+	Direction.Z = 0.0f;
+
+	const FRotator TargetRotation = Direction.Rotation();
+
+	SetActorRotation(TargetRotation);
+}
+
 void ASwarmAgent::PlayAttackAnim()
 {
+	RotateToFaceTarget();
+	
 	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
 	{
 		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)) return;
@@ -204,6 +228,8 @@ void ASwarmAgent::PlayAttackAnim()
 
 void ASwarmAgent::PlayETCAnim()
 {
+	RotateToFaceTarget();
+	
 	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
 	{
 		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)) return;

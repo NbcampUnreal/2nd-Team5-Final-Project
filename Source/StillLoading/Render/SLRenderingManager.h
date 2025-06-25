@@ -42,7 +42,7 @@ struct FBaseOutlineSettings
     
 	// SceneDepth 기준 - 최대 깊이 거리입니다. 
 	// 이 값이 클수록 더 멀리 있는 물체까지 아웃라인이 적용됩니다.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Distance", DisplayName = "최대 뎁스 거리", meta = (ClampMin = "500.0", ClampMax = "20000.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Distance", DisplayName = "최대 뎁스 거리", meta = (ClampMin = "500.0", ClampMax = "100000.0"))
 	float MaxDepthRange = 10000.0f;
 	
 	// SceneDepth 기준 - 최소 깊이 거리입니다. 
