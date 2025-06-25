@@ -32,6 +32,7 @@ public:
 	void ApplyLeaderState(AAIController* AIController);
 	UFUNCTION()
 	void AgentDied();
+	void RotateToFaceTarget();
 	UFUNCTION()
 	void PlayAttackAnim();
 	UFUNCTION()

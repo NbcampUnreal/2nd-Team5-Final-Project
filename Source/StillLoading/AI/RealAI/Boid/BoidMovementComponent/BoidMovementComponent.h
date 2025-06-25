@@ -83,12 +83,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boid | Combat")
 	float ForceDistanceToTarget = 50000.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boid | Orbit")
-	float OrbitForceWeight = 0.8f; // 공전하는 힘의 세기 (클수록 빠르게 돕니다)
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boid | Orbit", meta = (ToolTip = "1.0 for counter-clockwise, -1.0 for clockwise"))
-	float OrbitDirection = 1.0f; // 1.0 또는 -1.0으로 공전 방향을 제어 
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Teleport")
 	TObjectPtr<UNiagaraSystem> TeleportEffect = nullptr;
 
@@ -118,7 +112,7 @@ private:
 
 	// 속도를 줄이는 시작 반경
 	UPROPERTY(EditAnywhere, Category = "Boids")
-	float ArrivalSlowingRadius = 100.0f;
+	float ArrivalSlowingRadius = 50.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Boids")
 	float MaxSteeringForce = 500.0f;
