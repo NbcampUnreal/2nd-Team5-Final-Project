@@ -62,6 +62,8 @@ void USLSkillComponent::ActiveSpawnSkillTemp()
 	SpawnParams.Instigator = Cast<APawn>(GetOwner());
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
+	UE_LOG(LogTemp, Warning, TEXT("SpawnLocation[%s]"), *SpawnLocation.ToString());
+
 	if (GetWorld())
 	{
 		GetWorld()->SpawnActor<AFallingSword>(SwordClassToSpawn, SpawnLocation, FRotator::ZeroRotator, SpawnParams);

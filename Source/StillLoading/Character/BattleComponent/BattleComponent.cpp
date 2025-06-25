@@ -166,14 +166,14 @@ void UBattleComponent::DoAttackSweep(EAttackAnimType AttackType)
 		case EAttackAnimType::AAT_Skill2:
 			Start = OwnerActor->GetActorLocation() + FVector(0, 0, 0);
 			End = Start;
-			SweepShape = FCollisionShape::MakeSphere(100.f);
+			SweepShape = FCollisionShape::MakeSphere(300.f);
 			break;
 		default: break;
 		}
 
 		if (const UCombatHandlerComponent* CombatHandler = OwnerActor->FindComponentByClass<UCombatHandlerComponent>())
 		{
-			if (CombatHandler->IsEmpowered())
+			if (CombatHandler->IsEmpowered() && AttackType != EAttackAnimType::AAT_Skill2)
 			{
 				SweepShape = FCollisionShape::MakeSphere(100.f);
 			}
@@ -389,7 +389,8 @@ EHitAnimType UBattleComponent::ConvertAttackAnimType(EAttackAnimType AttackType)
 	case EAttackAnimType::AAT_DG_Attack_Up_01: // 날라가는거 위로
 	case EAttackAnimType::AAT_DG_Attack_Up_Floor_To_Air_02: // 날라가는거 위로
 		return EHitAnimType::HAT_AirUp;
-		
+
+	case EAttackAnimType::AAT_AIUlti:
 	case EAttackAnimType::AAT_Skill2:
 	case EAttackAnimType::AAT_Attack_01: // 날라가는거
 	case EAttackAnimType::AAT_Attack_02: // 날라가는거
