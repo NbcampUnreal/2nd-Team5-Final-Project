@@ -52,12 +52,10 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 			{
 				if (OwningTeamAgent->GetGenericTeamId() != TargetTeamAgent->GetGenericTeamId())
 				{
-					SwarmManager->ReportTargetSighting(OwningAgent->CurrentDetectedActor);
-					/*
+					//SwarmManager->ReportTargetSighting(OwningAgent->CurrentDetectedActor);
 					BlackboardComp->SetValueAsObject(TargetActorKey.SelectedKeyName, OwningAgent->CurrentDetectedActor);
 					BlackboardComp->SetValueAsFloat(TEXT("LastSeenTime"), GetWorld()->GetTimeSeconds());
 					SwarmManager->SetSquadState(ESquadState::Engaging);
-					*/
 				}
 			}
 		}
@@ -72,7 +70,7 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 			if (TimeSinceLastSeen > ForgettingTime)
 			{
 				BlackboardComp->ClearValue(TargetActorKey.SelectedKeyName);
-				SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
+				//SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
 				UE_LOG(LogTemp, Warning, TEXT("Target LOST. Clearing TargetActor."));
 			}
 		}

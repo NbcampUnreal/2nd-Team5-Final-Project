@@ -54,7 +54,7 @@ public:
 
 	// 팔로워 인지 관련
 	UFUNCTION()
-	void ReportTargetSighting(AActor* SightedTarget);
+	void ReportTargetSighting(AActor* SelfTarget, AActor* SightedTarget);
 	UFUNCTION()
 	void BroadcastNewTarget(AActor* NewTarget);
 
