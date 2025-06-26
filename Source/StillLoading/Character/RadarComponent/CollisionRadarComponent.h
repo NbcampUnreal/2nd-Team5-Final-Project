@@ -57,9 +57,6 @@ public:
     UPROPERTY(EditAnywhere, Category = "Radar|Settings")
     bool bIsUseRadar = false;
 
-    UPROPERTY(EditAnywhere, Category = "Radar|Settings", meta = (ClampMin = "0.01"))
-    float UpdateInterval = 0.2f; // 추가: Timer 간격 (초)
-
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<class UMotionWarpingComponent> MotionWarpComponent;
 
@@ -89,6 +86,9 @@ private:
 
     UPROPERTY(EditAnywhere, Category = "Radar|Settings", meta = (ClampMin = "0.0", ClampMax = "180.0"))
     float FieldOfView = 130.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Radar|Settings", meta = (ClampMin = "0.01"))
+    float UpdateInterval = 0.2f; // 추가: Timer 간격 (초)
 
     UPROPERTY()
     TArray<AActor*> NearbyActors;

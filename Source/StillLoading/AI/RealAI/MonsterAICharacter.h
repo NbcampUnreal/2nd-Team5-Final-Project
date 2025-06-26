@@ -52,9 +52,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void SpawnSpear();
-
-	UFUNCTION(BlueprintCallable)
-	void SpawnArrow();
 	
 	UFUNCTION()
 	void BeginSpawning(const FVector& FinalLocation, float RiseHeight = 300.f);

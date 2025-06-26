@@ -39,12 +39,6 @@ void ASpearProjectile::BeginPlay()
 	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &ASpearProjectile::OnBeginOverlap);
 }
 
-void ASpearProjectile::SetSpeed(const float Speed) const
-{
-	ProjectileMovement->InitialSpeed = Speed;
-	ProjectileMovement->MaxSpeed = Speed;
-}
-
 void ASpearProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
                                       const FHitResult& SweepResult)
