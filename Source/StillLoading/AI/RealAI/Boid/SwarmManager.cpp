@@ -26,7 +26,6 @@ void ASwarmManager::Tick(float DeltaSeconds)
 	{
 		if (GetWorld()->GetTimeSeconds() - LastTimeTargetSeen > TargetForgettingTime)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Squad lost target due to timeout."));
 			CurrentSquadTarget = nullptr;
 			LastTimeTargetSeen = 0.f;
 			BroadcastNewTarget(nullptr);
@@ -43,13 +42,13 @@ void ASwarmManager::Tick(float DeltaSeconds)
 
 void ASwarmManager::DestroyAllAgents()
 {
-    for (ASwarmAgent* Agent : AllAgents)
-    {
-        if (IsValid(Agent))
-        {
-            Agent->Destroy();
-        }
-    }
+	for (ASwarmAgent* Agent : AllAgents)
+	{
+		if (IsValid(Agent))
+		{
+			Agent->Destroy();
+		}
+	}
 }
 
 void ASwarmManager::SetNewPath(const TArray<FVector>& NewPathPoints)
@@ -57,18 +56,26 @@ void ASwarmManager::SetNewPath(const TArray<FVector>& NewPathPoints)
 	CurrentPath = NewPathPoints;
 }
 
-void ASwarmManager::ReportTargetSighting(AActor* SightedTarget)
+void ASwarmManager::ReportTargetSighting(AActor* SelfTarget, AActor* SightedTarget)
 {
-	if (SightedTarget)
+	if (!SightedTarget) return;
+
+	const IGenericTeamAgentInterface* OwningTeamAgent = Cast<IGenericTeamAgentInterface>(SelfTarget);
+	const IGenericTeamAgentInterface* TargetTeamAgent = Cast<IGenericTeamAgentInterface>(SightedTarget);
+
+	if (OwningTeamAgent && TargetTeamAgent)
 	{
-		if (CurrentSquadTarget == nullptr)
+		if (OwningTeamAgent->GetGenericTeamId() != TargetTeamAgent->GetGenericTeamId())
 		{
-			SetSquadState(ESquadState::Engaging);
+			if (CurrentSquadTarget == nullptr)
+			{
+				SetSquadState(ESquadState::Engaging);
+			}
+
+			CurrentSquadTarget = SightedTarget;
+			LastTimeTargetSeen = GetWorld()->GetTimeSeconds();
+			BroadcastNewTarget(SightedTarget);
 		}
-        
-		CurrentSquadTarget = SightedTarget;
-		LastTimeTargetSeen = GetWorld()->GetTimeSeconds();
-		BroadcastNewTarget(SightedTarget);
 	}
 }
 
@@ -132,57 +139,57 @@ void ASwarmManager::UnregisterAgent(ASwarmAgent* Agent)
 // 대열셋팅 (안하면 벽비빔)
 FVector ASwarmManager::GetFormationSlotLocationForAgent(int32 AgentID) const
 {
-    ASwarmAgent* Leader = GetLeader();
-    if (!Leader || AgentID < 0) return FVector::ZeroVector;
+	ASwarmAgent* Leader = GetLeader();
+	if (!Leader || AgentID < 0) return FVector::ZeroVector;
 
-    const int32 Row = AgentID / NumColumns;
-    const int32 Column = AgentID % NumColumns;
+	const int32 Row = AgentID / NumColumns;
+	const int32 Column = AgentID % NumColumns;
 
-    FVector IdealSlotLocation = FVector::ZeroVector;
+	FVector IdealSlotLocation = FVector::ZeroVector;
 
-    switch (CurrentFormationType)
-    {
-        case EFollowerFormationType::BehindLeader:
-        {
-            const float ColumnOffset = static_cast<float>(Column) - (static_cast<float>(NumColumns - 1) / 2.0f);
-            
-            const float BehindDistance = FormationOffsetBehindLeader + (Row * RowSpacing);
-            const float SideDistance = ColumnOffset * ColumnSpacing;
+	switch (CurrentFormationType)
+	{
+	case EFollowerFormationType::BehindLeader:
+		{
+			const float ColumnOffset = static_cast<float>(Column) - (static_cast<float>(NumColumns - 1) / 2.0f);
 
-            IdealSlotLocation = Leader->GetActorLocation()
-                               - (Leader->GetActorForwardVector() * BehindDistance)
-                               + (Leader->GetActorRightVector() * SideDistance);
-            break;
-        }
-    	
-        case EFollowerFormationType::CenteredSquare:
-        {
-            const float ColumnOffset = static_cast<float>(Column) - (static_cast<float>(NumColumns - 1) / 2.0f);
-            const float RowOffset = static_cast<float>(Row) - (static_cast<float>(NumRows - 1) / 2.0f);
-            
-            const float SideDistance = ColumnOffset * ColumnSpacing;
-            const float ForwardDistance = RowOffset * RowSpacing;
+			const float BehindDistance = FormationOffsetBehindLeader + (Row * RowSpacing);
+			const float SideDistance = ColumnOffset * ColumnSpacing;
 
-            IdealSlotLocation = Leader->GetActorLocation()
-                               - (Leader->GetActorForwardVector() * ForwardDistance)
-                               + (Leader->GetActorRightVector() * SideDistance);
+			IdealSlotLocation = Leader->GetActorLocation()
+				- (Leader->GetActorForwardVector() * BehindDistance)
+				+ (Leader->GetActorRightVector() * SideDistance);
+			break;
+		}
 
-            if (const FVector* StoredOffset = AgentRandomOffsets.Find(AgentID))
-            {
-                IdealSlotLocation += *StoredOffset;
-            }
-            break;
-        }
-    }
-	
-    if (bShowFollowersDebugLine)
-    {
-       DrawDebugSphere(GetWorld(), IdealSlotLocation, 50.f, 12, FColor::Yellow, false, 0.1f, 0, 3.f);
-    }
+	case EFollowerFormationType::CenteredSquare:
+		{
+			const float ColumnOffset = static_cast<float>(Column) - (static_cast<float>(NumColumns - 1) / 2.0f);
+			const float RowOffset = static_cast<float>(Row) - (static_cast<float>(NumRows - 1) / 2.0f);
 
-    FHitResult HitResult;
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(Leader);
+			const float SideDistance = ColumnOffset * ColumnSpacing;
+			const float ForwardDistance = RowOffset * RowSpacing;
+
+			IdealSlotLocation = Leader->GetActorLocation()
+				- (Leader->GetActorForwardVector() * ForwardDistance)
+				+ (Leader->GetActorRightVector() * SideDistance);
+
+			if (const FVector* StoredOffset = AgentRandomOffsets.Find(AgentID))
+			{
+				IdealSlotLocation += *StoredOffset;
+			}
+			break;
+		}
+	}
+
+	if (bShowFollowersDebugLine)
+	{
+		DrawDebugSphere(GetWorld(), IdealSlotLocation, 50.f, 12, FColor::Yellow, false, 0.1f, 0, 3.f);
+	}
+
+	FHitResult HitResult;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(Leader);
 
 	TArray<AActor*> IgnoredActors;
 	for (const TObjectPtr<ASwarmAgent>& AgentPtr : AllAgents)
@@ -192,46 +199,48 @@ FVector ASwarmManager::GetFormationSlotLocationForAgent(int32 AgentID) const
 			IgnoredActors.Add(AgentPtr);
 		}
 	}
-    Params.AddIgnoredActors(IgnoredActors);
+	Params.AddIgnoredActors(IgnoredActors);
 
-    const bool bHit = GetWorld()->LineTraceSingleByChannel(
-       HitResult,
-       Leader->GetActorLocation(),
-       IdealSlotLocation,
-       ECollisionChannel::ECC_Visibility,
-       Params
-    );
+	const bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		Leader->GetActorLocation(),
+		IdealSlotLocation,
+		ECollisionChannel::ECC_Visibility,
+		Params
+	);
 
-    if (bShowFollowersDebugLine)
-    {
-       DrawDebugLine(GetWorld(), Leader->GetActorLocation(), IdealSlotLocation, bHit ? FColor::Red : FColor::Green, false, 0.1f, 0, 3.f);
-    }
+	if (bShowFollowersDebugLine)
+	{
+		DrawDebugLine(GetWorld(), Leader->GetActorLocation(), IdealSlotLocation, bHit ? FColor::Red : FColor::Green,
+		              false, 0.1f, 0, 3.f);
+	}
 
-    const FVector FinalTargetLocation = IdealSlotLocation;
-	
-    if (bHit)
-    {
-        // 만약 장애물에 막혔을 경우, 다른 위치를 지정하고 싶다면 이 안에 로직을 구현합니다.
-    }
+	const FVector FinalTargetLocation = IdealSlotLocation;
 
-    UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-    FNavLocation ProjectedLocation;
-    if (NavSys && NavSys->ProjectPointToNavigation(FinalTargetLocation, ProjectedLocation, FVector(200.f, 200.f, 200.f)))
-    {
-        if (bShowFollowersDebugLine)
-        {
-           DrawDebugSphere(GetWorld(), ProjectedLocation.Location, 60.f, 12, FColor::Purple, false, 0.1f, 0, 4.f);
-        }
-        
-        return ProjectedLocation.Location;
-    }
+	if (bHit)
+	{
+		// 만약 장애물에 막혔을 경우, 다른 위치를 지정하고 싶다면 이 안에 로직을 구현합니다.
+	}
 
-    if (bShowFollowersDebugLine)
-    {
-       DrawDebugSphere(GetWorld(), FinalTargetLocation, 60.f, 12, FColor::Orange, false, 0.1f, 0, 4.f);
-    }
+	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	FNavLocation ProjectedLocation;
+	if (NavSys && NavSys->
+		ProjectPointToNavigation(FinalTargetLocation, ProjectedLocation, FVector(200.f, 200.f, 200.f)))
+	{
+		if (bShowFollowersDebugLine)
+		{
+			DrawDebugSphere(GetWorld(), ProjectedLocation.Location, 60.f, 12, FColor::Purple, false, 0.1f, 0, 4.f);
+		}
 
-    return FinalTargetLocation;
+		return ProjectedLocation.Location;
+	}
+
+	if (bShowFollowersDebugLine)
+	{
+		DrawDebugSphere(GetWorld(), FinalTargetLocation, 60.f, 12, FColor::Orange, false, 0.1f, 0, 4.f);
+	}
+
+	return FinalTargetLocation;
 }
 
 void ASwarmManager::SetSquadState(const ESquadState NewState)
@@ -273,8 +282,8 @@ void ASwarmManager::TryToAppointNewLeader()
 					}
 				}
 			}
-            
-			SetLeader(NewLeader); 
+
+			SetLeader(NewLeader);
 
 			UE_LOG(LogTemp, Warning, TEXT("SwarmManager: %s is the new leader!"), *NewLeader->GetName());
 		}
