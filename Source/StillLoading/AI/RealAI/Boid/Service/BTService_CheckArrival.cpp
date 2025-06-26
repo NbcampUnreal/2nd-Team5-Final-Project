@@ -1,11 +1,14 @@
 #include "BTService_CheckArrival.h"
 
 #include "AIController.h"
+#include "AI/RealAI/MonsterAICharacter.h"
+#include "AI/RealAI/Boid/SwarmAgent.h"
+#include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 UBTService_CheckArrival::UBTService_CheckArrival()
 {
-	NodeName = TEXT("Check Swarm Arrival");
+	NodeName = TEXT("Stop Rotate");
 	
 	Interval = 0.2f;
 	RandomDeviation = 0.05f;
@@ -17,29 +20,18 @@ void UBTService_CheckArrival::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 
 	APawn* ControlledPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
-	if (!ControlledPawn || !BlackboardComp) return;
+	const AAIController* AIController = OwnerComp.GetAIOwner();
+	if (!AIController) return;
+	ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(AIController->GetPawn());
+	if (!OwningAgent) return;
+	ASwarmManager* SwarmManager = OwningAgent->GetMySwarmManager();
+	if (!SwarmManager) return;
 
-	FVector TargetLocation = FVector::ZeroVector;
-	bool bHasValidTarget = false;
-
-	if (AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetActorKey.SelectedKeyName)))
+	if (const AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(OwningAgent))
 	{
-		TargetLocation = TargetActor->GetActorLocation();
-		bHasValidTarget = true;
-	}
-	else if (BlackboardComp->IsVectorValueSet(PatrolTargetLocationKey.SelectedKeyName))
-	{
-		TargetLocation = BlackboardComp->GetValueAsVector(PatrolTargetLocationKey.SelectedKeyName);
-		bHasValidTarget = true;
-	}
-
-	if (bHasValidTarget)
-	{
-		const float DistanceToGoal = FVector::Dist(ControlledPawn->GetActorLocation(), TargetLocation);
-		BlackboardComp->SetValueAsBool(IsAtLocationKey.SelectedKeyName, DistanceToGoal < AcceptanceRadius);
-	}
-	else
-	{
-		BlackboardComp->SetValueAsBool(IsAtLocationKey.SelectedKeyName, false);
+		for (TObjectPtr<ASwarmAgent> SwarmAgent : SwarmManager->GetAgents())
+		{
+			SwarmAgent->StopSpinning();
+		}
 	}
 }
