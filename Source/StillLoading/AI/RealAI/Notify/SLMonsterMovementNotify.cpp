@@ -1,6 +1,7 @@
 #include "SLMonsterMovementNotify.h"
 
 #include "AI/RealAI/MonsterAICharacter.h"
+#include "AI/RealAI/Boid/SwarmManager.h"
 #include "Character/SLPlayerCharacter.h"
 
 void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -30,9 +31,37 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 		LaunchDirection.Normalize();
 
 		LaunchVelocity = LaunchDirection * LaunchPower;
-           
+
 		Character->LaunchCharacter(LaunchVelocity, true, true);
 		break;
+
+	case ECharacterMovementAction::CMA_AISpear:
+		Character->SpawnSpear();
+		break;
+
+	case ECharacterMovementAction::CMA_AIWeaponVisible:
+		Character->ToggleWeaponState(bIsVisible);
+		break;
+
+	case ECharacterMovementAction::CMA_RotateFaceToTarget:
+		{
+			ASwarmAgent* Agent = Cast<ASwarmAgent>(MeshComp->GetOwner());
+			if (!Agent) return;
+
+			AActor* Target = Agent->MySwarmManager->CurrentSquadTarget;
+			if (!Target) return;
+
+			FVector StartLocation = Agent->GetActorLocation();
+			FVector TargetLocation = Target->GetActorLocation();
+			FVector Direction = (TargetLocation - StartLocation).GetSafeNormal();
+
+			Direction.Z = 0.0f;
+
+			FRotator TargetRotation = Direction.Rotation();
+
+			Agent->SetActorRotation(TargetRotation);
+			break;
+		}
 
 	default:
 		break;

@@ -2,6 +2,8 @@
 
 
 #include "Objective/SLObjectiveManagerBase.h"
+
+#include "SLObjectiveBase.h"
 #include "Objective/SLObjectiveHandlerBase.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
 #include "UI/HUD/SLInGameHUD.h"
@@ -18,6 +20,13 @@ ASLObjectiveManagerBase::ASLObjectiveManagerBase()
 
 void ASLObjectiveManagerBase::ResetCurrentObjective()
 {
+	USLObjectiveBase* Objective =  ObjectiveHandler->GetObjective();
+
+	if (Objective)
+	{
+		Objective->SetObjectiveProgressCount(0);
+	}
+	
 	ResetCurrentGame();
 }
 

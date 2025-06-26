@@ -47,6 +47,12 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Delegate | Battle")
 	FOnAgentDied OnMonsterDied;
 
+	UFUNCTION(BlueprintCallable)
+	void ToggleWeaponState(bool bIsVisible);
+	
+	UFUNCTION(BlueprintCallable)
+	void SpawnSpear();
+	
 	UFUNCTION()
 	void BeginSpawning(const FVector& FinalLocation, float RiseHeight = 300.f);
 
@@ -99,9 +105,14 @@ public:
 	// ex) 버서커 모드등
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer MonsterModeTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float SpearInaccuracy = 5.0f;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<AActor> ThrowableClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> ShieldClass;
 
@@ -109,6 +120,8 @@ public:
 	TObjectPtr<AActor> Sword;
 	UPROPERTY()
 	TObjectPtr<AActor> Shield;
+	UPROPERTY()
+	TObjectPtr<AActor> Throwable;
 
 	// 피격시 BlendSpace 용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
