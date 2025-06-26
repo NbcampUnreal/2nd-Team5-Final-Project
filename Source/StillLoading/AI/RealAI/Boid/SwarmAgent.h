@@ -24,6 +24,12 @@ public:
 
 	virtual FGenericTeamId GetGenericTeamId() const override;
 
+	UFUNCTION(BlueprintCallable, Category = "AI|Movement")
+	void StartSpinning(float Degrees);
+	
+	UFUNCTION(BlueprintCallable, Category = "AI|Movement")
+	void StopSpinning();
+
 	UFUNCTION()
 	void SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree = nullptr, UBlackboardData* LeaderBlackBoard = nullptr);
 	UFUNCTION()
@@ -37,6 +43,8 @@ public:
 	void PlayAttackAnim();
 	UFUNCTION()
 	void PlayETCAnim();
+	UFUNCTION()
+	void PlayETCWaitAnim();
 	UFUNCTION()
 	void RequestBerserkMode();
 
@@ -61,10 +69,15 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Swarm")
 	TObjectPtr<ASwarmManager> MySwarmManager;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Movement", meta = (ClampMin = "0.0"))
+	float DegreesPerSecond = 1.0f;
+
 	float LastAttackFinishTime = -100.f;
+	bool bIsSpinning = false;
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 

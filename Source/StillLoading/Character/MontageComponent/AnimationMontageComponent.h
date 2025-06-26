@@ -58,8 +58,6 @@ public:
 	void StopAllMontages(float BlendOutTime);
 	UFUNCTION()
 	void StopActiveMontages(float BlendOutTime);
-	UFUNCTION()
-	bool IsAttackMontagePlaying() const;
 
 	// AI
 	UFUNCTION()

@@ -64,6 +64,8 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	const ESquadState SquadState = SwarmManager->GetCurrentSquadState();
 
+	//UE_LOG(LogTemp, Warning, TEXT("SquadState [%d]"), SquadState);
+
 	switch (SquadState)
 	{
 	case ESquadState::Patrolling_Move:
@@ -73,7 +75,7 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	case ESquadState::Patrolling_Wait:
 		// '대기'
-		OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
+		//OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
 		break;
 
 	case ESquadState::Engaging:
@@ -195,7 +197,7 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	{
 		if (CurrentState == EBoidMonsterState::FS_UnAbleToAttack)
 		{
-			CurrentSeparation = FMath::RandRange(50000, 70000);
+			CurrentSeparation = FMath::RandRange(5, 7);
 		}
 	}
 
@@ -212,7 +214,7 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	{
 		if (SeparationSq > 600) // 뒤에있어서 멀어지려는 힘이 약하고
 		{
-			//OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰 or Anim
+			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰 or Anim
 			AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(Agent);
 			if (!Monster) return;
 			if (AbleToPlayWonderMontage)
@@ -233,6 +235,19 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 
 	const float InterpSpeed = 50.0f;
 	SmoothedSteeringForce = FMath::VInterpTo(SmoothedSteeringForce, SteeringForce, DeltaTime, InterpSpeed);
+
+	if (!SmoothedSteeringForce.IsNearlyZero())
+	{
+		const FRotator TargetRotation = FRotator(0.f, SmoothedSteeringForce.Rotation().Yaw, 0.f);
+		const FRotator NewRotation = FMath::RInterpTo(
+			OwnerCharacter->GetActorRotation(),
+			TargetRotation,
+			DeltaTime,
+			5
+		);
+
+		OwnerCharacter->SetActorRotation(NewRotation);
+	}
 
 	OwnerCharacter->GetCharacterMovement()->AddInputVector(SmoothedSteeringForce);
 }

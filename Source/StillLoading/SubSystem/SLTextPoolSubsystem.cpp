@@ -62,7 +62,8 @@ void USLTextPoolSubsystem::CheckValidOfTextPool(ESLTextDataType TextDataType)
 {
 	CheckValidOfLevelSubsystem();
 
-	if (DataChapter == LevelSubsystem->GetCurrentChapter() &&
+	if (TextPoolChapterMap.Contains(TextDataType) &&
+		TextPoolChapterMap[TextDataType] == LevelSubsystem->GetCurrentChapter() &&
 		CurrentPoolLanguageMap.Contains(TextDataType) &&
 		CurrentPoolLanguageMap[TextDataType] == CurrentLanguage)
 	{
@@ -84,16 +85,18 @@ void USLTextPoolSubsystem::CheckValidOfTextPool(ESLTextDataType TextDataType)
 void USLTextPoolSubsystem::CheckValidOfTextPoolData(ESLTextDataType TextDataType)
 {
 	CheckValidOfLevelSubsystem();
+	ESLChapterType CurrentChapter = LevelSubsystem->GetCurrentChapter();
 
-	if (DataChapter == LevelSubsystem->GetCurrentChapter() && 
+	if (TextPoolChapterMap.Contains(TextDataType) &&
+		TextPoolChapterMap[TextDataType] == CurrentChapter &&
 		TextPoolDataMap.Contains(TextDataType))
 	{
 		return;
 	}
 
 	CheckValidOfTextPoolSettings();
-	DataChapter = LevelSubsystem->GetCurrentChapter();
-	TextPoolDataMap.Add(TextDataType, TextPoolSettings->TextPoolDataMap[DataChapter].TextTypeMap[TextDataType]);
+	TextPoolChapterMap.Add(TextDataType, CurrentChapter);
+	TextPoolDataMap.Add(TextDataType, TextPoolSettings->TextPoolDataMap[CurrentChapter].TextTypeMap[TextDataType]);
 }
 
 void USLTextPoolSubsystem::CheckValidOfTextPoolSettings()
