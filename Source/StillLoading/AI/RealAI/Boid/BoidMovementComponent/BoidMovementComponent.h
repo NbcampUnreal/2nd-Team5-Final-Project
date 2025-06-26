@@ -28,7 +28,7 @@ public:
 	
 	// 공격 후 얼마나 멀어질지 거리 설정
 	UPROPERTY(EditAnywhere, Category = "Boid Combat")
-	float RetreatDistance = 200.0f;
+	float RetreatDistance = 100.0f;
 	
 	// 후퇴 속도
 	UPROPERTY(EditAnywhere, Category = "Boid Combat", meta = (ClampMin = "0.0"))

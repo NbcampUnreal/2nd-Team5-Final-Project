@@ -106,8 +106,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer MonsterModeTags;
 
+	// 투척 각
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	float SpearInaccuracy = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	float MaxHealth = 10.0f;;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
@@ -136,6 +140,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Landed(const FHitResult& Hit) override;
@@ -194,9 +199,7 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<AActor> LastAttacker;
-
-	UPROPERTY()
-	float MaxHealth;
+	
 	UPROPERTY()
 	float CurrentHealth;
 
