@@ -63,6 +63,18 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 			break;
 		}
 
+	case ECharacterMovementAction::CMA_EndRotate:
+		{
+			if (AActor* OwnerActor = MeshComp->GetOwner())
+			{
+				if (ASwarmAgent* Agent = Cast<ASwarmAgent>(OwnerActor))
+				{
+					Agent->StopSpinning();
+				}
+			}
+		}
+		break;
+
 	default:
 		break;
 	}

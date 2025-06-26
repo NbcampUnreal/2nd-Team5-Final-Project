@@ -151,13 +151,9 @@ void UAnimationMontageComponent::Play2DAttackMontage(FName Section)
 		PlayMontage(MontageData->Attack2DMontage, Section);
 }
 
-bool UAnimationMontageComponent::IsAttackMontagePlaying() const
-{
-    return IsMontagePlayingHelper(MontageData ? MontageData->AttackMontage : nullptr);
-}
-
 void UAnimationMontageComponent::PlayAIAttackMontage(FName Section)
 {
+	AnimInstance->Montage_Stop(0.25f);
 	if (MontageData)
 		PlayMontage(MontageData->AIAttackMontage, Section);
 }
@@ -165,13 +161,13 @@ void UAnimationMontageComponent::PlayAIAttackMontage(FName Section)
 void UAnimationMontageComponent::PlayAIHitMontage(FName Section)
 {
 	AnimInstance->Montage_Stop(0.25f);
-	
 	if (MontageData)
 		PlayMontage(MontageData->AIHitMontage, Section);
 }
 
 void UAnimationMontageComponent::PlayAIETCMontage(FName Section)
 {
+	AnimInstance->Montage_Stop(0.25f);
 	if (MontageData)
 		PlayMontage(MontageData->AIETCMontage, Section);
 }

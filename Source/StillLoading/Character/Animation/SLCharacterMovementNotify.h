@@ -17,6 +17,7 @@ enum class ECharacterMovementAction : uint8
 	CMA_RotateFaceToTarget	UMETA(DisplayName = "Face To Target"),
 	CMA_AISpear				UMETA(DisplayName = "Spear"),
 	CMA_AIWeaponVisible		UMETA(DisplayName = "Weapon Visible"),
+	CMA_EndRotate			UMETA(DisplayName = "End Rotate"),
 };
 
 UCLASS()

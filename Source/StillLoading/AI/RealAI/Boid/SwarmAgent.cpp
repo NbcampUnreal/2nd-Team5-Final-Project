@@ -3,18 +3,18 @@
 #include "AIController.h"
 #include "BrainComponent.h"
 #include "SwarmManager.h"
-#include "AI/RealAI/Blackboardkeys.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BoidMovementComponent/BoidMovementComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/RadarComponent/CollisionRadarComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 ASwarmAgent::ASwarmAgent()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	CachedBoidMovementComp = CreateDefaultSubobject<UBoidMovementComponent>("BoidMovement");
 }
@@ -32,6 +32,17 @@ FGenericTeamId ASwarmAgent::GetGenericTeamId() const
 	return FGenericTeamId::NoTeam;
 }
 
+void ASwarmAgent::StartSpinning(float Degrees)
+{
+	DegreesPerSecond = Degrees;
+	bIsSpinning = true;
+}
+
+void ASwarmAgent::StopSpinning()
+{
+	bIsSpinning = false;
+}
+
 void ASwarmAgent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -44,6 +55,28 @@ void ASwarmAgent::BeginPlay()
 		CachedRadarComponent->ToggleRadarComponent(true, MySwarmManager->DetectionRadius);
 		CachedRadarComponent->OnActorDetectedEnhanced.
 		                      AddDynamic(this, &ASwarmAgent::OnRadarDetectedActor);
+
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+	}
+}
+
+void ASwarmAgent::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (bIsSpinning)
+	{
+		if (const AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
+		{
+			if (Monster->HasBattleState(TAG_AI_Dead))
+			{
+				bIsSpinning = false;
+				return;
+			}
+		}
+		
+		const FRotator DeltaRotation = FRotator(0.f, DegreesPerSecond * DeltaSeconds, 0.f);
+		AddActorLocalRotation(DeltaRotation);
 	}
 }
 
@@ -259,6 +292,41 @@ void ASwarmAgent::PlayETCAnim()
 		else if (RandNum == 4)
 		{
 			AnimComp->PlayAIETCMontage("WonderE");
+		}
+	}
+}
+
+void ASwarmAgent::PlayETCWaitAnim()
+{
+	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
+	{
+		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)) return;
+		
+		Monster->SetStrategyState(TAG_AI_IsPlayingMontage);
+	}
+
+	if (UAnimationMontageComponent* AnimComp = FindComponentByClass<UAnimationMontageComponent>())
+	{
+		int8 RandNum = FMath::RandRange(0, 3);
+		if (RandNum == 0)
+		{
+			StartSpinning(90);
+			AnimComp->PlayAIETCMontage("WaitA");
+		}
+		else if (RandNum == 1)
+		{
+			StartSpinning(180);
+			AnimComp->PlayAIETCMontage("WaitB");
+		}
+		else if (RandNum == 2)
+		{
+			StartSpinning(-90);
+			AnimComp->PlayAIETCMontage("WaitC");
+		}
+		else
+		{
+			StartSpinning(-180);
+			AnimComp->PlayAIETCMontage("WaitD");
 		}
 	}
 }
