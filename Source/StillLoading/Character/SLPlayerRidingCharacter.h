@@ -39,7 +39,9 @@ protected:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UDynamicIMCComponent> DynamicIMCComponent;
-
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")	
+	TObjectPtr<USoundBase>  HitSound = nullptr;
 private:
 	UPROPERTY(EditAnywhere, Category = "CameraShake")
 	TSubclassOf<UCameraShakeBase> CameraShakeClass;

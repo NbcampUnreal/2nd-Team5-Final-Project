@@ -18,8 +18,6 @@ public:
 
 	ASLDungeonTrapFloor();
 
-	virtual void Tick(float DeltaTime) override;
-
 	virtual void Activate() override;
 
 	virtual void DeActivate() override;

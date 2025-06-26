@@ -3,6 +3,8 @@
 
 #include "Minigame/Object/SLDungeonDoor.h"
 
+#include "Kismet/GameplayStatics.h"
+
 
 ASLDungeonDoor::ASLDungeonDoor()
 {
@@ -50,8 +52,9 @@ void ASLDungeonDoor::Activate()
 	Super::Activate();
 	bIsTrigger = true;
 	bIsOpen = true;
+	UGameplayStatics::PlaySound2D(this, DoorSound, 1.0f);
 	SetActorTickEnabled(true);
-
+	
 }
 
 void ASLDungeonDoor::DeActivate()
@@ -60,6 +63,7 @@ void ASLDungeonDoor::DeActivate()
 
 	bIsTrigger = true;
 	bIsOpen = false;
+	UGameplayStatics::PlaySound2D(this, DoorSound, 1.0f);
 	SetActorTickEnabled(true);
 
 }
