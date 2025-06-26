@@ -16,9 +16,8 @@
 
 AMonsterAICharacter::AMonsterAICharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
-	MaxHealth = 10.0f;
 	CurrentHealth = MaxHealth;
 
 	bUseControllerRotationYaw = false;
@@ -90,6 +89,12 @@ void AMonsterAICharacter::BeginPlay()
 		SpawnTimeline->AddInterpFloat(SpawnMovementCurve, InterpFunction);
 		SpawnTimeline->SetTimelineFinishedFunc(TimelineFinishedFunction);
 	}
+}
+
+void AMonsterAICharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
 }
 
 void AMonsterAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -545,8 +550,8 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 
 void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
-	OnDeath();
 	SetBattleState(TAG_AI_Dead);
+	OnDeath();
 	AgentDied();
 
 	if (DeathMaterial && bIsChangeMaterial)

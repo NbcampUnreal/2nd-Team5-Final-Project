@@ -172,7 +172,7 @@ private:
 
 	TArray<FVector> CurrentPathPoints;
 
-	ESquadState CurrentSquadState = ESquadState::Patrolling_Wait;
+	ESquadState CurrentSquadState = ESquadState::Patrolling_Move;
 	int32 NextAgentID = 0;
 	int32 CurrentPathIndex;
 };
