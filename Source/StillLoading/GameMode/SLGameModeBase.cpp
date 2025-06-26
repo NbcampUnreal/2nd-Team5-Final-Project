@@ -16,7 +16,7 @@ void ASLGameModeBase::AddInProgressObjective(USLObjectiveBase* Objective)
 {
 	TArray<TObjectPtr<USLObjectiveBase>>& InProgressedObjectives = SLGameState->GetInProgressedObjectives();
 	
-	if (SLGameState)
+	if (!SLGameState)
 	{
 		return;
 	}
@@ -34,7 +34,7 @@ void ASLGameModeBase::AddInProgressObjective(USLObjectiveBase* Objective)
 void ASLGameModeBase::RemoveInProgressObjective(USLObjectiveBase* Objective)
 {
 	TArray<TObjectPtr<USLObjectiveBase>>& InProgressedObjectives = SLGameState->GetInProgressedObjectives();
-	if (SLGameState)
+	if (!SLGameState)
 	{
 		return;
 	}
