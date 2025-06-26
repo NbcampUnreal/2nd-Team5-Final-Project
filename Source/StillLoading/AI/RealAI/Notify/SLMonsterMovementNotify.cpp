@@ -39,6 +39,10 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 		Character->SpawnSpear();
 		break;
 
+	case ECharacterMovementAction::CMA_AISpawnArrow:
+		Character->SpawnArrow();
+		break;
+
 	case ECharacterMovementAction::CMA_AIWeaponVisible:
 		Character->ToggleWeaponState(bIsVisible);
 		break;
