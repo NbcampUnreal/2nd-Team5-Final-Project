@@ -6,7 +6,6 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Kismet/GameplayStatics.h"
-#include "NavFilters/NavigationQueryFilter.h"
 
 ASwarmManager::ASwarmManager()
 {
@@ -70,11 +69,11 @@ void ASwarmManager::ReportTargetSighting(AActor* SelfTarget, AActor* SightedTarg
 			if (CurrentSquadTarget == nullptr)
 			{
 				SetSquadState(ESquadState::Engaging);
-			}
 
-			CurrentSquadTarget = SightedTarget;
-			LastTimeTargetSeen = GetWorld()->GetTimeSeconds();
-			BroadcastNewTarget(SightedTarget);
+				CurrentSquadTarget = SightedTarget;
+				LastTimeTargetSeen = GetWorld()->GetTimeSeconds();
+				BroadcastNewTarget(SightedTarget);
+			}
 		}
 	}
 }

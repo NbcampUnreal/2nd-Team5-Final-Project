@@ -4,6 +4,7 @@
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/DataAsset/AttackDataAsset.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
+#include "Character/Item/ArrowProjectile.h"
 #include "Character/Item/SpearProjectile.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -16,9 +17,8 @@
 
 AMonsterAICharacter::AMonsterAICharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
-	MaxHealth = 10.0f;
 	CurrentHealth = MaxHealth;
 
 	bUseControllerRotationYaw = false;
@@ -90,6 +90,12 @@ void AMonsterAICharacter::BeginPlay()
 		SpawnTimeline->AddInterpFloat(SpawnMovementCurve, InterpFunction);
 		SpawnTimeline->SetTimelineFinishedFunc(TimelineFinishedFunction);
 	}
+}
+
+void AMonsterAICharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
 }
 
 void AMonsterAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -171,8 +177,8 @@ void AMonsterAICharacter::SpawnSpear()
 		return;
 	}
 
-	FVector SpawnLocation = GetMesh()->GetSocketLocation(TEXT("hand_rSocket"));
-	FRotator SpawnRotation = GetControlRotation();
+	const FVector SpawnLocation = GetMesh()->GetSocketLocation(TEXT("hand_rSocket"));
+	const FRotator SpawnRotation = GetActorRotation();
 
 	const float RandomYaw = FMath::RandRange(-SpearInaccuracy, SpearInaccuracy);
 	const float RandomPitch = FMath::RandRange(-SpearInaccuracy, SpearInaccuracy);
@@ -187,6 +193,27 @@ void AMonsterAICharacter::SpawnSpear()
 	ToggleWeaponState(false);
 	
 	if (ASpearProjectile* SpawnedSpear = GetWorld()->SpawnActor<ASpearProjectile>(ThrowableClass, SpawnLocation, FinalRotation, SpawnParams))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Spear Spawned!"));
+	}
+}
+
+void AMonsterAICharacter::SpawnArrow()
+{
+	if (!ThrowableClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpearClass is not set in Character Blueprint!"));
+		return;
+	}
+
+	const FVector SpawnLocation = GetMesh()->GetSocketLocation(TEXT("hand_rSocket")) + FVector(0, 50, 0);
+	const FRotator SpawnRotation = GetActorRotation();
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+	
+	if (AArrowProjectile* SpawnedArrow = GetWorld()->SpawnActor<AArrowProjectile>(ThrowableClass, SpawnLocation, SpawnRotation, SpawnParams))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Spear Spawned!"));
 	}
@@ -545,8 +572,8 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 
 void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
-	OnDeath();
 	SetBattleState(TAG_AI_Dead);
+	OnDeath();
 	AgentDied();
 
 	if (DeathMaterial && bIsChangeMaterial)
