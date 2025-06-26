@@ -31,6 +31,12 @@ public:
 	void StopBgmSound();
 
 	UFUNCTION(BlueprintCallable)
+	void SwapBgm(USoundBase* SoundSource);
+
+	UFUNCTION(BlueprintCallable)
+	void RestartLevelBgm();
+
+	UFUNCTION(BlueprintCallable)
 	void PlayBattleSound(EBattleSoundType SoundType, const FVector& Location);
 
 	void SetBgmVolume(float VolumeValue);
@@ -59,6 +65,9 @@ private:
 
 	UPROPERTY()
 	ESLChapterType PossessChapter = ESLChapterType::EC_None;
+
+	UPROPERTY()
+	ESLBgmSoundType CurrentBgmType = ESLBgmSoundType::EBS_Intro;
 
 	UPROPERTY()
 	float BgmVolume = 0.0f;

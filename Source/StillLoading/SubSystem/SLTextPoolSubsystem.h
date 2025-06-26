@@ -60,7 +60,8 @@ private:
 	TObjectPtr<UDataTable> UITextPool = nullptr;
 
 	UPROPERTY()
-	ESLChapterType DataChapter = ESLChapterType::EC_None;
+	TMap<ESLTextDataType, ESLChapterType> TextPoolChapterMap;
+	//ESLChapterType DataChapter = ESLChapterType::EC_None;
 
 	UPROPERTY()
 	ESLLanguageType CurrentLanguage = ESLLanguageType::EL_Kor;
