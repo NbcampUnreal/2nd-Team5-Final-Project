@@ -44,8 +44,14 @@ void ASwarmManager::DestroyAllAgents()
 	for (ASwarmAgent* Agent : AllAgents)
 	{
 		if (IsValid(Agent))
-		{
-			Agent->Destroy();
+		{	
+			AMonsterAICharacter* AICharacter = Cast<AMonsterAICharacter>(Agent);
+
+			if (IsValid(AICharacter))
+			{
+				AICharacter->ToggleWeaponState(false);
+				AICharacter->Destroy();
+			}
 		}
 	}
 }
