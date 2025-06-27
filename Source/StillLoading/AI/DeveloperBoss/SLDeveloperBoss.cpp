@@ -1,5 +1,6 @@
 #include "SLDeveloperBoss.h"
 
+#include "LevelSequencePlayer.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "Engine/World.h"
@@ -791,11 +792,6 @@ void ASLDeveloperBoss::OnWallCooldownFinishedInternal()
     OnWallCooldownFinished.Broadcast();
 }
 
-void ASLDeveloperBoss::OnPhase1SpawnDelayFinished()
-{
-    SpawnNextPhase1Boss();
-}
-
 void ASLDeveloperBoss::HandlePhase3MouseActorDestroyed(ASLMouseActor* DestroyedMouseActor)
 {
     if (DestroyedMouseActor == Phase3MouseActor)
@@ -1365,7 +1361,9 @@ void ASLDeveloperBoss::StartPhase1BossRush()
     bIsPhase1Active = true;
     Phase1CurrentBossIndex = 0;
     Phase1TotalBossCount = AvailableBossClasses.Num();
-    SpawnNextPhase1Boss();
+    
+    // 시작 시네마틱 재생
+    PlayPhase1StartCinematic();
 }
 
 void ASLDeveloperBoss::SpawnNextPhase1Boss()
@@ -1393,18 +1391,6 @@ void ASLDeveloperBoss::SpawnNextPhase1Boss()
     else
     {
         Phase1CurrentBossIndex++;
-        
-        if (Phase1CurrentBossIndex < AvailableBossClasses.Num())
-        {
-            FTimerHandle SpawnTimer;
-            GetWorldTimerManager().SetTimer(
-                SpawnTimer,
-                this,
-                &ASLDeveloperBoss::OnPhase1SpawnDelayFinished,
-                Phase1BossSpawnDelay,
-                false
-            );
-        }
     }
 }
 
@@ -1416,15 +1402,9 @@ void ASLDeveloperBoss::HandlePhase1BossDeath(ASLAIBaseCharacter* DeadBoss)
     }
     
     if (Phase1CurrentBossIndex < AvailableBossClasses.Num())
-    {   
-        FTimerHandle SpawnTimer;
-        GetWorldTimerManager().SetTimer(
-            SpawnTimer,
-            this,
-            &ASLDeveloperBoss::OnPhase1SpawnDelayFinished,
-            Phase1BossSpawnDelay,
-            false
-        );
+    {
+        // 다음 보스 시네마틱 재생
+        PlayPhase1BossCinematic(Phase1CurrentBossIndex);
     }
     else
     {
@@ -1872,4 +1852,44 @@ bool ASLDeveloperBoss::IsPlayerAlive() const
     }
 
     return true;
+}
+
+void ASLDeveloperBoss::PlayPhase1StartCinematic()
+{
+    if (Phase1Cinematics.IsValidIndex(0) && IsValid(Phase1Cinematics[0]))
+    {
+        FMovieSceneSequencePlaybackSettings PlaybackSettings;
+        ALevelSequenceActor* SequenceActor = nullptr;
+        ULevelSequencePlayer::CreateLevelSequencePlayer(
+            GetWorld(),
+            Phase1Cinematics[0],
+            PlaybackSettings,
+            SequenceActor
+        )->Play();
+    }
+    else
+    {
+        SpawnNextPhase1Boss();
+    }
+}
+
+void ASLDeveloperBoss::PlayPhase1BossCinematic(int32 BossIndex)
+{
+    int32 CinematicIndex = BossIndex + 1;
+    
+    if (Phase1Cinematics.IsValidIndex(CinematicIndex) && IsValid(Phase1Cinematics[CinematicIndex]))
+    {
+        FMovieSceneSequencePlaybackSettings PlaybackSettings;
+        ALevelSequenceActor* SequenceActor = nullptr;
+        ULevelSequencePlayer::CreateLevelSequencePlayer(
+            GetWorld(),
+            Phase1Cinematics[CinematicIndex],
+            PlaybackSettings,
+            SequenceActor
+        )->Play();
+    }
+    else
+    {
+        SpawnNextPhase1Boss();
+    }
 }
