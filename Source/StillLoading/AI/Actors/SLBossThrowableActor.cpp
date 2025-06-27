@@ -20,10 +20,9 @@ ASLBossThrowableActor::ASLBossThrowableActor()
     
     CollisionComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
     CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Block);
-    CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECollisionResponse::ECR_Block);
-    CollisionComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECollisionResponse::ECR_Block);
     CollisionComponent->SetNotifyRigidBodyCollision(true);
-
+    CollisionComponent->SetCollisionResponseToChannel(ECC_Camera, ECollisionResponse::ECR_Ignore);
+    
     MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
     MeshComponent->SetupAttachment(CollisionComponent);
     MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -36,7 +35,7 @@ ASLBossThrowableActor::ASLBossThrowableActor()
     ProjectileMovementComponent->InitialSpeed = 0.0f;
     ProjectileMovementComponent->MaxSpeed = 3000.0f;
     ProjectileMovementComponent->bAutoActivate = false;
-
+    
     DamageAmount = 50.0f;
     AttackType = EAttackAnimType::AAT_Attack_01;
     bDestroyOnHit = true;
