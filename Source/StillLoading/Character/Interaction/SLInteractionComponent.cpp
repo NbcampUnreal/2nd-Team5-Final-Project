@@ -14,9 +14,9 @@ USLInteractionComponent::USLInteractionComponent()
 	
 	SetGenerateOverlapEvents(true);
 	Super::SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	Super::SetCollisionObjectType(ECC_GameTraceChannel2);
+	Super::SetCollisionObjectType(ECC_GameTraceChannel5);
 	Super::SetCollisionResponseToAllChannels(ECR_Ignore);
-	Super::SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+	Super::SetCollisionResponseToChannel(ECC_GameTraceChannel5, ECR_Overlap);
 }
 
 ASLInteractableObjectBase* USLInteractionComponent::GetInteractableObject() const
@@ -34,7 +34,7 @@ ASLInteractableObjectBase* USLInteractionComponent::GetInteractableObject() cons
         StartLocation,
         EndLocation,
         FQuat::Identity,
-        ECC_GameTraceChannel2,
+        ECC_GameTraceChannel6,
         FCollisionShape::MakeSphere(InteractionRadius),
         QueryParams
     );

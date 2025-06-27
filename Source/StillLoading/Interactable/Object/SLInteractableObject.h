@@ -6,6 +6,7 @@
 #include "Interactable/SLInteractableObjectBase.h"
 #include "SLInteractableObject.generated.h"
 
+class UBoxComponent;
 class USLBaseTextPrintWidget;
 class USLUISubsystem;
 class USLTalkHandlerBase;
@@ -41,6 +42,9 @@ protected:
 	
 	UPROPERTY(VisibleInstanceOnly, Category = "InteractableObject", DisplayName = "현재 대화 핸들러")
 	TWeakObjectPtr<USLTalkHandlerBase> CurrentTalkHandler;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject")
+	TObjectPtr<UBoxComponent> InteractionCollision;
 	
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;
