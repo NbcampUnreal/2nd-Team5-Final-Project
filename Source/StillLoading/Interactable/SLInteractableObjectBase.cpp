@@ -9,7 +9,7 @@
 ASLInteractableObjectBase::ASLInteractableObjectBase()
 {
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	StaticMeshComp->SetCollisionProfileName("RadarDetectable");
+	StaticMeshComp->SetCollisionProfileName("Interactable");
 	SetRootComponent(StaticMeshComp);
 }
 

@@ -10,7 +10,10 @@ UCLASS()
 class STILLLOADING_API USLOptionSubBase : public USLBaseWidget
 {
 	GENERATED_BODY()
-	
+
+public:
+	virtual void OnUpdatedSettingValue() {};
+
 protected:
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 

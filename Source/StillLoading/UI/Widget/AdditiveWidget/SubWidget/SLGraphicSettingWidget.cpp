@@ -39,21 +39,29 @@ void USLGraphicSettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	SecondResolutionButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
 	ThirdResolutionButton->OnHovered.AddDynamic(this, &ThisClass::PlayHoverSound);
 
-	CheckValidOfUserDataSubsystem();
-
-	TPair<float, float> CurrentReolution = UserDataSubsystem->GetCurrentScreenSize();
-
-	CurrentResolutionText->SetText(FText::FromString(FString::Printf(TEXT("%.0f * %.0f"),
-		CurrentReolution.Key, CurrentReolution.Value)));
-
-	BrightnessSlider->SetValue(UserDataSubsystem->GetCurrentBrightness());
+	OnUpdatedSettingValue();
 }
 
 void USLGraphicSettingWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
 {
 	Super::ActivateWidget(WidgetActivateBuffer);
 
+	OnUpdatedSettingValue();
+}
+
+void USLGraphicSettingWidget::OnUpdatedSettingValue()
+{
+	Super::OnUpdatedSettingValue();
+
 	UpdateScreenModeButton();
+
+	CheckValidOfUserDataSubsystem();
+	TPair<float, float> CurrentReolution = UserDataSubsystem->GetCurrentScreenSize();
+
+	CurrentResolutionText->SetText(FText::FromString(FString::Printf(TEXT("%.0f * %.0f"),
+		CurrentReolution.Key, CurrentReolution.Value)));
+
+	BrightnessSlider->SetValue(UserDataSubsystem->GetCurrentBrightness());
 }
 
 void USLGraphicSettingWidget::ApplyTextData()

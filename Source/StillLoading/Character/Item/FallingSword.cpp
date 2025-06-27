@@ -21,7 +21,7 @@ AFallingSword::AFallingSword()
 	SwordMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
-	ProjectileMovement->InitialSpeed = 500.f;
+	ProjectileMovement->InitialSpeed = 0.f;
 	ProjectileMovement->MaxSpeed = 10000.f;
 	ProjectileMovement->bRotationFollowsVelocity = false;
 	ProjectileMovement->ProjectileGravityScale = 5.0f;
@@ -83,6 +83,12 @@ void AFallingSword::Tick(float DeltaSeconds)
 
 void AFallingSword::TriggerImpact()
 {
+	if (ProjectileMovement)
+	{
+		ProjectileMovement->StopMovementImmediately();
+		ProjectileMovement->Deactivate();
+	}
+	
 	GetWorld()->GetTimerManager().ClearTimer(DamageTimerHandle);
 
 	ApplySweepDamage();
@@ -97,13 +103,13 @@ void AFallingSword::TriggerImpact()
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, GetActorLocation());
 	}
-
-	ProjectileMovement->StopMovementImmediately();
 	
-	SwordMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	SwordMesh->SetSimulatePhysics(false);
+	//SwordMesh->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+	//SwordMesh->SetSimulatePhysics(true);
 
-	SetLifeSpan(2.0f);
+	SwordMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+
+	SetLifeSpan(5.0f);
 }
 
 void AFallingSword::ApplySweepDamage()

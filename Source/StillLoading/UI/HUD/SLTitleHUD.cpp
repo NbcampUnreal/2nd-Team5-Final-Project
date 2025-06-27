@@ -13,7 +13,7 @@ void ASLTitleHUD::MoveToStartMap()
 
 	if (IsValid(TitleWidget))
 	{
-		TitleWidget->OnClickedStartButton();
+		TitleWidget->OnClickedContinueButton();
 	}
 }
 

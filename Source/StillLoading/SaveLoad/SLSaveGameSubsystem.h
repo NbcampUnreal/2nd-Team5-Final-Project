@@ -28,6 +28,8 @@ public:
     UFUNCTION(BlueprintCallable)
     void ResetGameData();
 
+    bool GetIsExistSaveData() const;
+
 private:
     void LoadObjectiveDefaultData();
     
@@ -35,12 +37,16 @@ private:
     void SaveChapterData();
     void SaveObjectiveData();
     
-    void SendWidgetData(bool bIsFirstGame);
+    void SendWidgetData();
     void SendChapterData();
     void SendObjectiveData();
 
     UPROPERTY()
     TObjectPtr<USLSaveGame> CurrentSaveData;
+
     UPROPERTY()
     FString SlotName = "SaveData";
+
+    UPROPERTY()
+    bool bIsExistSaveData = false;
 };

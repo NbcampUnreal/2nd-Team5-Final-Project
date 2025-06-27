@@ -26,9 +26,9 @@ void USLNotifyWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 	
 	UpdateNotifyText(WidgetActivateBuffer.TargetMap, WidgetActivateBuffer.TargetNotify);
 
-	if (IsPlayingAnimation())
+	if (IsAnimationPlaying(CloseAnim))
 	{
-		StopAllAnimations();
+		StopAnimation(CloseAnim);
 	}
 
 	PlayAnimation(OpenAnim);
@@ -61,9 +61,9 @@ void USLNotifyWidget::OnEndedOpenAnim()
 {
 	Super::OnEndedOpenAnim();
 
-	if (IsPlayingAnimation())
+	if (IsAnimationPlaying(OpenAnim))
 	{
-		StopAllAnimations();
+		return;
 	}
 
 	PlayAnimation(CloseAnim);
@@ -73,7 +73,10 @@ void USLNotifyWidget::OnEndedCloseAnim()
 {
 	Super::OnEndedCloseAnim();
 
-	CloseWidget();
+	if (!IsAnimationPlaying(OpenAnim))
+	{
+		CloseWidget();
+	}
 }
 
 bool USLNotifyWidget::ApplyBorderImage(FSlateBrush& SlateBrush)

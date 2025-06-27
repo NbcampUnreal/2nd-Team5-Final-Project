@@ -47,15 +47,16 @@ void USLSaveGameSubsystem::LoadGameData()
     {
         USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(SlotName, 0);
         CurrentSaveData = Cast<USLSaveGame>(Loaded);
-        SendWidgetData(false);
+        bIsExistSaveData = true;
+
+        SendWidgetData();
         SendChapterData();
         SendObjectiveData();
     }
     else
     {
         ResetGameData();
-        SendChapterData();
-        SendWidgetData(true);
+        SendWidgetData();
     }
 }
 
@@ -63,7 +64,13 @@ void USLSaveGameSubsystem::ResetGameData()
 {
     CurrentSaveData = NewObject<USLSaveGame>();
     LoadObjectiveDefaultData();
+    SendChapterData();
     UGameplayStatics::SaveGameToSlot(CurrentSaveData, SlotName, 0);
+}
+
+bool USLSaveGameSubsystem::GetIsExistSaveData() const
+{
+    return bIsExistSaveData;
 }
 
 void USLSaveGameSubsystem::LoadObjectiveDefaultData()
@@ -121,24 +128,21 @@ void USLSaveGameSubsystem::SaveUserData()
 
     CurrentSaveData->UserSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
     CurrentSaveData->UserSaveData.KeySet = UserDataSubSystem->GetKeySet();
-    
-    UE_LOG(LogTemp, Warning, TEXT("Save Widget Data"));
 }
 
-void USLSaveGameSubsystem::SendWidgetData(bool bIsFirstGame)
+void USLSaveGameSubsystem::SendWidgetData()
 {
     USLUserDataSubsystem* UserDataSubsystem = GetGameInstance()->GetSubsystem<USLUserDataSubsystem>();
     checkf(IsValid(UserDataSubsystem), TEXT("User Data Subsystem is invalid"));
 
-    checkf(IsValid(CurrentSaveData), TEXT("Current Save Game is invalid"));
-
-    if (bIsFirstGame)
+    if (bIsExistSaveData)
     {
-        UserDataSubsystem->ApplyDefaultUserData();
+        checkf(IsValid(CurrentSaveData), TEXT("Current Save Game is invalid"));
+        UserDataSubsystem->ApplyLoadedUserData(CurrentSaveData->UserSaveData);
     }
     else
     {
-        UserDataSubsystem->ApplyLoadedUserData(CurrentSaveData->UserSaveData);
+        UserDataSubsystem->ApplyDefaultUserData();
     }
 }
 
