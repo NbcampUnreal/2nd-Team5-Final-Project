@@ -68,11 +68,16 @@ enum class EBattleSoundType : uint8
 	BST_MonsterDie UMETA(DisplayName = "Monster Die"),
 
 	// AI
-	BST_AIBossAttack UMETA(DisplayName = "AI Boss Attack"),
-	BST_AIBossJumpAttack UMETA(DisplayName = "AI Boss Jump Attack"),
+	BST_AIBossAttack1 UMETA(DisplayName = "AI Boss Attack1"),
+	BST_AIBossAttack2 UMETA(DisplayName = "AI Boss Attack2"),
+	BST_AIBossAttack3 UMETA(DisplayName = "AI Boss Attack3"),
+	BST_AIBossJumpAttackStart UMETA(DisplayName = "AI Boss Jump Attack Start"),
+	BST_AIBossJumpAttackEnd UMETA(DisplayName = "AI Boss Jump Attack End"),
 	BST_AIBossGroundSlamAttack UMETA(DisplayName = "AI Boss GroundSlam Attack"),
 	BST_AIBossSlashAttack UMETA(DisplayName = "AI Boss Slash Attack"),
+	BST_AIBossSpinningAttack UMETA(DisplayName = "AI Boss Spinning Attack"),
 	BST_AIBossHit UMETA(DisplayName = "AI Boss Hit"),
+	BST_AIBossFootstep UMETA(DisplayName = "AI Boss Foot step"),
 	
 	BST_AICompanionAttack01 UMETA(DisplayName = "AI Companion Attack01"),
 	BST_AICompanionAttack02 UMETA(DisplayName = "AI Companion Attack02"),

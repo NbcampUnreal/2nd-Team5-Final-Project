@@ -2,6 +2,7 @@
 
 #include "Controller/SLBaseAIController.h"
 
+#include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacter.h"
@@ -309,6 +310,11 @@ bool ASLBaseAIController::IsActorAlive(AActor* Actor) const
 	if (!IsValid(Actor))
 	{
 		return false;
+	}
+
+	if (AMonsterAICharacter* MonsterCharacter = Cast<AMonsterAICharacter>(Actor))
+	{
+		return !MonsterCharacter->HasBattleState(TAG_AI_Dead);
 	}
 	
 	// AI 캐릭터인 경우
