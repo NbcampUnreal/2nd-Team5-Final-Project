@@ -7,6 +7,8 @@
 #include "AI/RealAI/Boid/SwarmAgent.h"
 #include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Character/SLPlayerCharacter.h"
+#include "Character/SLPlayerCharacterBase.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
@@ -101,7 +103,7 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 	if (!BlackboardComp) return;
 
 	//const AActor* CurrentTarget = Agent->CurrentDetectedActor;
-	const AActor* CurrentTarget = SwarmManager->CurrentSquadTarget;
+	AActor* CurrentTarget = SwarmManager->CurrentSquadTarget;
 	if (!CurrentTarget)
 	{
 		//SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
@@ -133,13 +135,21 @@ void UBoidMovementComponent::HandleCombatState(float DeltaTime, ASwarmAgent* Age
 	else // 공격 분기
 	{
 		TotalTime = GetWorld()->GetTimeSeconds() - Agent->LastAttackFinishTime;
-		if (TotalTime > CurrentCoolDown)
+		CurrentState = EBoidMonsterState::FS_UnAbleToAttack;
+		
+		if (const AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(CurrentTarget))
 		{
-			CurrentState = EBoidMonsterState::FS_AbleToAttack;
+			if (!Monster->HasBattleState(TAG_AI_Dead) && TotalTime > CurrentCoolDown)
+			{
+				CurrentState = EBoidMonsterState::FS_AbleToAttack;
+			}
 		}
-		else
+		else if (const ASLPlayerCharacter* Player = Cast<ASLPlayerCharacter>(CurrentTarget))
 		{
-			CurrentState = EBoidMonsterState::FS_UnAbleToAttack;
+			if (!Player->IsInPrimaryState(TAG_Character_Dead) && TotalTime > CurrentCoolDown)
+			{
+				CurrentState = EBoidMonsterState::FS_AbleToAttack;
+			}
 		}
 
 		const float DistanceToTarget = FVector::Dist(OwnerCharacter->GetActorLocation(),

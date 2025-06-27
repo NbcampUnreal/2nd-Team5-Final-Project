@@ -1140,6 +1140,12 @@ void UMovementHandlerComponent::DisableLock()
 
 void UMovementHandlerComponent::BeginBuff()
 {
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_BuffBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("USL25DMovementHandlerComponent: Buff Blocked"));
+		return;
+	}
+	
 	ToggleCameraZoom(false);
 	const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
 
