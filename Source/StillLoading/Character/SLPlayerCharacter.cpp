@@ -8,6 +8,7 @@
 #include "GamePlayTag/GamePlayTag.h"
 #include "Item/SLDefaultSword.h"
 #include "Item/SLItem.h"
+#include "Item/SpearProjectile.h"
 #include "MontageComponent/AnimationMontageComponent.h"
 #include "MovementHandlerComponent/SL25DMovementHandlerComponent.h"
 #include "MovementHandlerComponent/SLMovementHandlerComponent.h"
@@ -197,6 +198,38 @@ void ASLPlayerCharacter::ChangeVisibilityWeapons(bool bIsVisible)
 	if (Shield)
 	{
 		Shield->SetActorHiddenInGame(bShouldBeHidden);
+	}
+}
+
+void ASLPlayerCharacter::SpawnObject(bool bUseRandom)
+{
+	if (!ThrowableClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpearClass is not set in Character Blueprint!"));
+		return;
+	}
+
+	FVector SpawnLocation = GetMesh()->GetSocketLocation(TEXT("pelvis"));
+	FRotator SpawnRotation = GetActorRotation();
+
+	FRotator RandomOffset = FRotator::ZeroRotator;
+	
+	if (bUseRandom)
+	{
+		const float RandomYaw = FMath::RandRange(-5, 5);
+		const float RandomPitch = FMath::RandRange(-5, 5);
+		RandomOffset = FRotator(RandomPitch, RandomYaw, 0.0f);
+	}
+
+	const FRotator FinalRotation = SpawnRotation + RandomOffset;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+	
+	if (ASpearProjectile* SpawnedSpear = GetWorld()->SpawnActor<ASpearProjectile>(ThrowableClass, SpawnLocation, FinalRotation, SpawnParams))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Throwable Spawned!"));
 	}
 }
 

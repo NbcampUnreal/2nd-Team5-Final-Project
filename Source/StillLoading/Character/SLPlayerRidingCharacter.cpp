@@ -92,6 +92,10 @@ float ASLPlayerRidingCharacter::TakeDamage(float DamageAmount, const FDamageEven
     if (IsValid(SLPlayerState))
     {
         SLPlayerState->DecreaseHealth(DamageAmount);
+        if (HitSound)
+        {
+            UGameplayStatics::PlaySound2D(this, HitSound, 1.0f);
+        }
     }
 
     //CurrentHealth = FMath::Max(0.0f, CurrentHealth - DamageAmount);

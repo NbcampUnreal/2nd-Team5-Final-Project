@@ -75,6 +75,10 @@ void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 		}
 		break;
 
+	case ECharacterMovementAction::CMA_SpawnDagger:
+		Character->SpawnObject(false);
+		break;
+
 	default: break;
 	}
 }

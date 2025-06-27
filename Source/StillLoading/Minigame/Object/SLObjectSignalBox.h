@@ -35,14 +35,26 @@ protected:
 	void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
-	void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
+	void DeactivateTrapFloor();
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundBase> BeginOverlapSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundBase> EndOverlapSound;
 private:
 	UPROPERTY(EditAnywhere)
 	FName EnterFunctionName = "Activate";
 
 	UPROPERTY(EditAnywhere)
 	FName ExitFunctionName = "DeActivate";
+	
+	UPROPERTY(EditAnywhere, Category = "ActivateSetting")
+	float VisibleTime = 5.0f;
 
+	UPROPERTY()
+	FTimerHandle DeactivateHandler;
 
+	UPROPERTY()
+	bool bIsActive = false;
 };
