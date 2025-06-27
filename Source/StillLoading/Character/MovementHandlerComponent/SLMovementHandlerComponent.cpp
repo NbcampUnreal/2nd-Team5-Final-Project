@@ -1140,6 +1140,12 @@ void UMovementHandlerComponent::DisableLock()
 
 void UMovementHandlerComponent::BeginBuff()
 {
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_BuffBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("USL25DMovementHandlerComponent: Buff Blocked"));
+		return;
+	}
+	
 	ToggleCameraZoom(false);
 	const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
 
@@ -1267,22 +1273,25 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterBeginDefence,
 		                                            OwnerCharacter->GetActorLocation());
 
-		if (EmpoweredShieldEffect)
+		if (CachedCombatComponent->IsEmpowered())
 		{
-			if (ActiveShieldEffectComponent)
+			if (EmpoweredShieldEffect)
 			{
-				ActiveShieldEffectComponent->DestroyComponent();
-			}
+				if (ActiveShieldEffectComponent)
+				{
+					ActiveShieldEffectComponent->DestroyComponent();
+				}
 
-			ActiveShieldEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-				EmpoweredShieldEffect,
-				OwnerCharacter->GetRootComponent(),
-				NAME_None,
-				FVector::ZeroVector,
-				FRotator::ZeroRotator,
-				EAttachLocation::KeepRelativeOffset,
-				true
-			);
+				ActiveShieldEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+					EmpoweredShieldEffect,
+					OwnerCharacter->GetRootComponent(),
+					NAME_None,
+					FVector::ZeroVector,
+					FRotator::ZeroRotator,
+					EAttachLocation::KeepRelativeOffset,
+					true
+				);
+			}
 		}
 	}
 	else

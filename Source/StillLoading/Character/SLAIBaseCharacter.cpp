@@ -39,25 +39,28 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
     LeftHandCollisionBox->SetupAttachment(GetMesh());
     LeftHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     LeftHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-    LeftHandCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
+    LeftHandCollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
     RightHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("RightHandCollisionBox");
     RightHandCollisionBox->SetupAttachment(GetMesh());
     RightHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RightHandCollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
     RightHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-    RightHandCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
+    RightHandCollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
     LeftFootCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftFootCollisionBox");
     LeftFootCollisionBox->SetupAttachment(GetMesh());
     LeftFootCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeftFootCollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
     LeftFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-    LeftFootCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
+    LeftFootCollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
     RightFootCollisionBox = CreateDefaultSubobject<UBoxComponent>("RightFootCollisionBox");
     RightFootCollisionBox->SetupAttachment(GetMesh());
     RightFootCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RightFootCollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
     RightFootCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-    RightFootCollisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
+    RightFootCollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
     
     MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
     BattleComponent = CreateDefaultSubobject<UBattleComponent>("BattleComponent");

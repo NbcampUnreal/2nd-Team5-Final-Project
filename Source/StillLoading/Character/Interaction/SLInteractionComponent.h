@@ -19,6 +19,7 @@ class STILLLOADING_API USLInteractionComponent : public USphereComponent
 public:
 	USLInteractionComponent();
 	ASLInteractableObjectBase* GetInteractableObject() const;
+	void SetDebugLineVisibility(const bool bFlag) { bIsShowDebugLine = bFlag;}
 	
 protected:
 	virtual void BeginPlay() override;

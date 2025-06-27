@@ -43,11 +43,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Movement", meta = (ClampMin = "0.0"))
 	float AcceptanceRadius = 5.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	int AttackStateCount = 0;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	int AttackStateCountLimit = 50;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	float ComboResetTime = 2.0f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -87,6 +84,8 @@ protected:
 	UFUNCTION()
 	void ApplyAttackState(const FName& SectionName, bool bIsFalling);
 	UFUNCTION()
+	void ResetCombo();
+	UFUNCTION()
 	void Move(float AxisValue, EInputActionType ActionType);
 	UFUNCTION()
 	void FaceMouseCursorInstantly() const;
@@ -122,6 +121,7 @@ private:
 	void MoveToTarget(float DeltaTime);
 
 	FTimerHandle FacingMouseTimerHandle;
+	FTimerHandle ComboResetTimerHandle;
 
 	FVector TargetMoveLocation;
 	bool bIsMovingToTarget = false;
