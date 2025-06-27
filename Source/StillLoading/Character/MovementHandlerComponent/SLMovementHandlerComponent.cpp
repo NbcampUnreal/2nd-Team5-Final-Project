@@ -1267,22 +1267,25 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterBeginDefence,
 		                                            OwnerCharacter->GetActorLocation());
 
-		if (EmpoweredShieldEffect)
+		if (CachedCombatComponent->IsEmpowered())
 		{
-			if (ActiveShieldEffectComponent)
+			if (EmpoweredShieldEffect)
 			{
-				ActiveShieldEffectComponent->DestroyComponent();
-			}
+				if (ActiveShieldEffectComponent)
+				{
+					ActiveShieldEffectComponent->DestroyComponent();
+				}
 
-			ActiveShieldEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-				EmpoweredShieldEffect,
-				OwnerCharacter->GetRootComponent(),
-				NAME_None,
-				FVector::ZeroVector,
-				FRotator::ZeroRotator,
-				EAttachLocation::KeepRelativeOffset,
-				true
-			);
+				ActiveShieldEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+					EmpoweredShieldEffect,
+					OwnerCharacter->GetRootComponent(),
+					NAME_None,
+					FVector::ZeroVector,
+					FRotator::ZeroRotator,
+					EAttachLocation::KeepRelativeOffset,
+					true
+				);
+			}
 		}
 	}
 	else
