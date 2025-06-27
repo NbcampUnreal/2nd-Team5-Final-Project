@@ -61,6 +61,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ResetSpawendMonster();
 
+	UFUNCTION(BlueprintCallable)
+	void DestroyAllMonster();
+
 	UPROPERTY(BlueprintAssignable, Category = "Monster Spawner | Events")
 	FOnSpawnedMonstersCountUpdated OnMonstersUpdated;
 

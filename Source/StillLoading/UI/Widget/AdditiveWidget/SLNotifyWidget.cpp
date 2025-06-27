@@ -25,6 +25,12 @@ void USLNotifyWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 	Super::ActivateWidget(WidgetActivateBuffer);
 	
 	UpdateNotifyText(WidgetActivateBuffer.TargetMap, WidgetActivateBuffer.TargetNotify);
+
+	if (IsPlayingAnimation())
+	{
+		StopAllAnimations();
+	}
+
 	PlayAnimation(OpenAnim);
 	PlayUISound(ESLUISoundType::EUS_Notify);
 }
@@ -54,6 +60,11 @@ void USLNotifyWidget::UpdateNotifyText(ESLGameMapType MapType, const FName& Noti
 void USLNotifyWidget::OnEndedOpenAnim()
 {
 	Super::OnEndedOpenAnim();
+
+	if (IsPlayingAnimation())
+	{
+		StopAllAnimations();
+	}
 
 	PlayAnimation(CloseAnim);
 }

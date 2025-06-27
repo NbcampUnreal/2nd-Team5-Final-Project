@@ -156,11 +156,16 @@ int32 ASwarmSpawner::GetSpawnCount() const
 // TODO::무기 없애기
 void ASwarmSpawner::ResetSpawendMonster()
 {
+	DestroyAllMonster();
+	BeginSpawn();
+}
+
+void ASwarmSpawner::DestroyAllMonster()
+{
 	if (IsValid(SpawnedManager))
 	{
 		SpawnedManager->DestroyAllAgents();
 		SpawnedManager->Destroy();
-		BeginSpawn();
 	}
 }
 
