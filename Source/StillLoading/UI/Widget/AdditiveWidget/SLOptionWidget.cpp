@@ -19,14 +19,19 @@
 #include "UI/Widget/SLWidgetPrivateDataAsset.h"
 #include "NiagaraSystem.h"
 #include "SubSystem/SLUserDataSubsystem.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
+#include "SaveLoad/SLSaveGameSubsystem.h"
+#include "GameMode/SLGameModeBase.h"
 
 const FName USLOptionWidget::TitleTextIndex = "TitleText";
 const FName USLOptionWidget::KeySettingButtonIndex = "KeySettingButton";
 const FName USLOptionWidget::LanguageSettingIndex = "LanguageSetting";
 const FName USLOptionWidget::GraphicSettingIndex = "GraphicSetting";
 const FName USLOptionWidget::SoundSettingIndex = "SoundSetting";
-const FName USLOptionWidget::QuitGameButtonIndex = "QuitGameButton";
+const FName USLOptionWidget::RestartButtonIndex = "RestartButton";
+const FName USLOptionWidget::MoveToTitleButtonIndex = "MoveToTitleButton";
 const FName USLOptionWidget::CloseButtonIndex = "CloseButton";
+const FName USLOptionWidget::SettingResetButtonIndex = "SettingResetButton";
 
 void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -42,15 +47,21 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	GraphicSetBt->InitButton();
 	SoundSetBt->InitButton();
 	KeySettingButton->InitButton();
-	QuitGameButton->InitButton();
+
+	RestartButton->InitButton();
+	MoveToTitleButton->InitButton();
 	CloseButton->InitButton();
+	SettingResetButton->InitButton();
 
 	LanguageSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedLanguageSetting);
 	GraphicSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedGraphicSetting);
 	SoundSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedSoundSetting);
 	KeySettingButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedKeySetting);
-	QuitGameButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuit);
+
+	RestartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedRestart);
+	MoveToTitleButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedMoveToTitle);
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
+	SettingResetButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedSettingReset);
 
 	LanguageSettingWidget->InitWidget(NewUISubsystem);
 	GraphicSettingWidget->InitWidget(NewUISubsystem);
@@ -81,6 +92,17 @@ void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 	KeySettingWidget->ActivateWidget(WidgetActivateBuffer);
 
 	PlayUISound(ESLUISoundType::EUS_Open);
+
+	CheckValidOfLevelTransferSubsystem();
+
+	if (LevelTransferSubsystem->GetCurrentLevelType() == ESLLevelNameType::ELN_Title)
+	{
+		MoveToTitleButton->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	else
+	{
+		MoveToTitleButton->SetVisibility(ESlateVisibility::Visible);
+	}
 }
 
 void USLOptionWidget::DeactivateWidget()
@@ -131,8 +153,11 @@ void USLOptionWidget::ApplyTextData()
 	GraphicSetBt->SetButtonText(OptionTextMap[GraphicSettingIndex]);
 	SoundSetBt->SetButtonText(OptionTextMap[SoundSettingIndex]);
 	KeySettingButton->SetButtonText(OptionTextMap[KeySettingButtonIndex]);
-	QuitGameButton->SetButtonText(OptionTextMap[QuitGameButtonIndex]);
+
+	RestartButton->SetButtonText(OptionTextMap[RestartButtonIndex]);
+	MoveToTitleButton->SetButtonText(OptionTextMap[MoveToTitleButtonIndex]);
 	CloseButton->SetButtonText(OptionTextMap[CloseButtonIndex]);
+	SettingResetButton->SetButtonText(OptionTextMap[SettingResetButtonIndex]);
 }
 
 bool USLOptionWidget::ApplyOtherImage()
@@ -187,10 +212,48 @@ void USLOptionWidget::OnClickedKeySetting()
 	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
-void USLOptionWidget::OnClickedQuit()
+void USLOptionWidget::OnClickedMoveToTitle()
 {
 	PlayUISound(ESLUISoundType::EUS_Click);
-	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
+
+	USLSaveGameSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
+	checkf(IsValid(SaveGameSubsystem), TEXT("SaveGameSubsystem is invalid"));
+
+	SaveGameSubsystem->LoadGameData();
+
+	CheckValidOfLevelTransferSubsystem();
+	LevelTransferSubsystem->OpenLevelByNameType(ESLLevelNameType::ELN_Title);
+}
+
+void USLOptionWidget::OnClickedRestart()
+{
+	PlayUISound(ESLUISoundType::EUS_Click);
+
+	ASLGameModeBase* GM = Cast<ASLGameModeBase>(GetWorld()->GetAuthGameMode());
+
+	if (IsValid(GM))
+	{
+		GM->ResetModifiedObjectives();
+	}
+
+	CheckValidOfLevelTransferSubsystem();
+	ESLLevelNameType CurrentLevelType = LevelTransferSubsystem->GetCurrentLevelType();
+	LevelTransferSubsystem->OpenLevelByNameType(CurrentLevelType);
+}
+
+void USLOptionWidget::OnClickedSettingReset()
+{
+	USLUserDataSubsystem* UserDataSubsystem = GetGameInstance()->GetSubsystem<USLUserDataSubsystem>();
+
+	if (IsValid(UserDataSubsystem))
+	{
+		UserDataSubsystem->ApplyDefaultUserData();
+
+		LanguageSettingWidget->OnUpdatedSettingValue();
+		GraphicSettingWidget->OnUpdatedSettingValue();
+		SoundSettingWidget->OnUpdatedSettingValue();
+		KeySettingWidget->OnUpdatedSettingValue();
+	}
 }
 
 FReply USLOptionWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
@@ -224,4 +287,15 @@ void USLOptionWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActiva
 		PrivateImageMap.Empty();
 		PrivateImageMap = PrivateData->GetBrushDataMap();
 	}
+}
+
+void USLOptionWidget::CheckValidOfLevelTransferSubsystem()
+{
+	if (IsValid(LevelTransferSubsystem))
+	{
+		return;
+	}
+
+	LevelTransferSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelTransferSubsystem), TEXT("LevelTransferSubsystem is invalid"));
 }

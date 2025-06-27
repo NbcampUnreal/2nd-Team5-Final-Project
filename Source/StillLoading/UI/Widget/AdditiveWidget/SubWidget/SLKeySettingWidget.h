@@ -21,6 +21,7 @@ class STILLLOADING_API USLKeySettingWidget : public USLOptionSubBase
 	
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void OnUpdatedSettingValue() override;
 
 protected:
 	virtual void ApplyFontData() override;

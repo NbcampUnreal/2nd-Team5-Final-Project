@@ -18,6 +18,24 @@ void USLKeySettingWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	Super::InitWidget(NewUISubsystem);
 }
 
+void USLKeySettingWidget::OnUpdatedSettingValue()
+{
+	Super::OnUpdatedSettingValue();
+
+	CheckValidOfUserDateSubsystem();
+	const TMap<EInputActionType, FEnhancedActionKeyMapping> ActionKeyMap = UserDataSubsystem->GetActionKeyMap();
+
+	for (USLKeyMappingWidget* MappingWidget : MappingWidgets)
+	{
+		EInputActionType InputActionType = MappingWidget->GetActionType();
+
+		if (ActionKeyMap.Contains(InputActionType))
+		{
+			MappingWidget->UpdateKeyText(ActionKeyMap[InputActionType].Key.GetFName());
+		}
+	}
+}
+
 void USLKeySettingWidget::ApplyFontData()
 {
 	Super::ApplyFontData();

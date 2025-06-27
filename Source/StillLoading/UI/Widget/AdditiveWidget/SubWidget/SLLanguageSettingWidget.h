@@ -19,6 +19,7 @@ class STILLLOADING_API USLLanguageSettingWidget : public USLOptionSubBase
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
+	virtual void OnUpdatedSettingValue() override;
 
 protected:
 	virtual void ApplyTextData() override;
@@ -34,8 +35,6 @@ private:
 	void OnClickedLanguageRightButton();
 
 	void UpdateLanguage(bool bIsLeft);
-	void UpdateLanguageText();
-
 	void CheckValidOfUserDataSubsystem();
 
 public:
