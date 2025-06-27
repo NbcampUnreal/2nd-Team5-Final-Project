@@ -58,7 +58,9 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(OwningAgent);
 	if (!Monster) return;
 
-	if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage) || Monster->HasBattleState(TAG_AI_Dead)) return;
+	if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)
+		|| Monster->HasBattleState(TAG_AI_Dead)
+		|| Monster->HasBattleState(TAG_AI_Hit)) return;
 
 	CheckAndHandleStuckTeleport(DeltaTime);
 

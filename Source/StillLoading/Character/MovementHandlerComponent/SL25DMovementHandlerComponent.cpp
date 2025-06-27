@@ -89,15 +89,6 @@ void USL25DMovementHandlerComponent::OnActionTriggered_Implementation(EInputActi
 		return;
 	}
 
-	if (ActionType != EInputActionType::EIAT_Attack)
-	{
-		AttackStateCount++;
-		if (AttackStateCount >= AttackStateCountLimit)
-		{
-			CachedCombatComponent->ResetCombo();
-		}
-	}
-
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_Look:
@@ -126,15 +117,6 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Input Blocked"));
 		return;
-	}
-
-	if (ActionType != EInputActionType::EIAT_Attack)
-	{
-		AttackStateCount++;
-		if (AttackStateCount >= AttackStateCountLimit)
-		{
-			CachedCombatComponent->ResetCombo();
-		}
 	}
 
 	switch (ActionType)
@@ -604,6 +586,26 @@ void USL25DMovementHandlerComponent::ApplyAttackState(const FName& SectionName, 
 			OwnerCharacter->AddSecondaryState(TAG_Character_Attack_Basic1);
 		}
 	}
+
+	// 콤보 초기화 로직
+	GetWorld()->GetTimerManager().ClearTimer(ComboResetTimerHandle);
+	GetWorld()->GetTimerManager().SetTimer(
+		ComboResetTimerHandle,
+		this,
+		&USL25DMovementHandlerComponent::ResetCombo,
+		ComboResetTime,
+		false
+	);
+}
+
+void USL25DMovementHandlerComponent::ResetCombo()
+{
+	if (CachedCombatComponent)
+	{
+		CachedCombatComponent->ResetCombo();
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(ComboResetTimerHandle);
 }
 
 void USL25DMovementHandlerComponent::Move(const float AxisValue, const EInputActionType ActionType)

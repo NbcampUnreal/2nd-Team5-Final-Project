@@ -210,6 +210,11 @@ void ASwarmAgent::AgentDied()
 void ASwarmAgent::RotateToFaceTarget()
 {
 	if (!MySwarmManager) return;
+
+	if (const AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
+	{
+		if (Monster->HasBattleState(TAG_AI_Dead)) return;
+	}
 	
 	const AActor* TargetActor = MySwarmManager->CurrentSquadTarget;
 
@@ -300,7 +305,7 @@ void ASwarmAgent::PlayETCWaitAnim()
 {
 	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
 	{
-		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)) return;
+		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage) || Monster->HasBattleState(TAG_AI_Dead)) return;
 		
 		Monster->SetStrategyState(TAG_AI_IsPlayingMontage);
 	}

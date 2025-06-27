@@ -423,13 +423,12 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 						GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
 					}
 				}
-				SetStrategyState(TAG_AI_IsPlayingMontage);
+				SetBattleState(TAG_AI_Dead);
 				AnimationComponent->PlayAIHitMontage("Dead");
 			}
 			else
 			{
 				SetBattleState(TAG_AI_Hit);
-				SetStrategyState(TAG_AI_IsPlayingMontage);
 				PlayHitMontageAndSetupRecovery(2);
 
 				FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
@@ -453,7 +452,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		if (CurrentHealth < 0.f)
 		{
 			//Dead(Causer, true);
-			SetStrategyState(TAG_AI_IsPlayingMontage);
+			SetBattleState(TAG_AI_Dead);
 			AnimationComponent->PlayAIHitMontage("Dead");
 		}
 		else
@@ -467,7 +466,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		if (CurrentHealth < 0.f)
 		{
 			//Dead(Causer, true);
-			SetStrategyState(TAG_AI_IsPlayingMontage);
+			SetBattleState(TAG_AI_Dead);
 			AnimationComponent->PlayAIHitMontage("Dead");
 		}
 		else
@@ -482,7 +481,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		if (CurrentHealth < 0.f)
 		{
 			//Dead(Causer, true);
-			SetStrategyState(TAG_AI_IsPlayingMontage);
+			SetBattleState(TAG_AI_Dead);
 			AnimationComponent->PlayAIHitMontage("Dead");
 		}
 		else
@@ -558,12 +557,14 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	case EAttackAnimType::AAT_Dead:
 		GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterDie, GetActorLocation());
 		Dead(LastAttacker, true);
-		break;
+		return;
 	case EAttackAnimType::AAT_ParryAttack:
 		break;
 	default: break;
 	}
 
+	if (HasBattleState(TAG_AI_Dead)) return;
+	
 	SetPrimaryState(TAG_AI_Idle);
 	SetStrategyState(TAG_AI_Idle);
 	SetBattleState(TAG_AI_Idle);
@@ -667,6 +668,8 @@ USLSoundSubsystem* AMonsterAICharacter::GetBattleSoundSubSystem() const
 
 void AMonsterAICharacter::RecoverFromHitState()
 {
+	if (HasBattleState(TAG_AI_Dead)) return;
+	
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 	SetBattleState(TAG_AI_Idle);
 	SetStrategyState(TAG_AI_Idle);
