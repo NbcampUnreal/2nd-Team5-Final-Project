@@ -23,7 +23,7 @@ ASLCompanionNormalAIController::ASLCompanionNormalAIController()
     AISenseConfig_Sight->PeripheralVisionAngleDegrees = 180.f;
     
     // 다른 AI에게 적대적이지 않음
-    bIsHostileToOtherAI = false;
+    bIsHostileToOtherAI = true;
 }
 
 void ASLCompanionNormalAIController::BeginPlay()

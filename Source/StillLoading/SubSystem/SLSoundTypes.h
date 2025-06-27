@@ -69,8 +69,11 @@ enum class EBattleSoundType : uint8
 
 	// AI
 	BST_AIBossAttack UMETA(DisplayName = "AI Boss Attack"),
+	BST_AIBossJumpAttack UMETA(DisplayName = "AI Boss Jump Attack"),
+	BST_AIBossGroundSlamAttack UMETA(DisplayName = "AI Boss GroundSlam Attack"),
+	BST_AIBossSlashAttack UMETA(DisplayName = "AI Boss Slash Attack"),
 	BST_AIBossHit UMETA(DisplayName = "AI Boss Hit"),
-
+	
 	BST_AICompanionAttack01 UMETA(DisplayName = "AI Companion Attack01"),
 	BST_AICompanionAttack02 UMETA(DisplayName = "AI Companion Attack02"),
 	BST_AICompanionHit UMETA(DisplayName = "AI Companion Hit"),
