@@ -75,6 +75,14 @@ void USLBaseTextPrintWidget::OnClickedNextButton()
 	{
 		CurrentTextIndex = -1;
 		ParentTalkText->SetText(TalkArray[TargetTextIndex]);
+
+		FName TargetName = NameArray[TargetTextIndex];
+
+		if (TargetName == "Choice")
+		{
+			SetChoiceVisibility(true);
+		}
+
 		return;
 	}
 
@@ -208,11 +216,6 @@ void USLBaseTextPrintWidget::ChangeTargetText()
 	if (TargetName == "None" || TargetName == "Choice")
 	{
 		ParentNamePanel->SetVisibility(ESlateVisibility::Collapsed);
-
-		if (TargetName == "Choice")
-		{
-			SetChoiceVisibility(true);
-		}
 	}
 	else
 	{
