@@ -68,6 +68,8 @@ public:
 	// Skill
 	UFUNCTION()
 	void SwordFromSky();
+	UFUNCTION()
+	void SpawnObject(bool bUseRandom);
 
 	UFUNCTION()
 	void CharacterDragged(bool bIsDragged);
@@ -83,24 +85,27 @@ public:
 	TSubclassOf<ASLItem> SwordClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<ASLItem> ShieldClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<AActor> ThrowableClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<ASLItem> Sword;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<ASLItem> Shield;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<AActor> Throwable;
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Landed(const FHitResult& Hit) override;
-
-	UPROPERTY()
-	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
-
+	
 	UFUNCTION(BlueprintCallable, Category = "State")
 	bool IsBlocking() const;
 
+	UPROPERTY()
+	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
 	UPROPERTY(BlueprintReadOnly, Category = "Character|Movement")
 	float LastLandTime = 0.0f;
 

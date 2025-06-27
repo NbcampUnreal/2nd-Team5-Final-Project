@@ -7,6 +7,7 @@
 #include "Character/SLPlayerCharacterBase.h"
 #include "Engine/Engine.h"
 #include "TimerManager.h"
+#include "Kismet/BlueprintTypeConversions.h"
 
 ASLDeveloperRoomCable::ASLDeveloperRoomCable()
 {
@@ -176,6 +177,7 @@ void ASLDeveloperRoomCable::HideAndDisable()
 
 void ASLDeveloperRoomCable::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
+
 	if (!CanBeDestroyed())
 	{
 		return;
@@ -195,11 +197,19 @@ void ASLDeveloperRoomCable::OnInteracted(const ASLPlayerCharacterBase* InCharact
 		if (CurrentHp <= 0)
 		{
 			DestroyLine();
+			if (DestroySound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, DestroySound, GetActorLocation());
+			}
 		}
 		else
 		{
 			// 데미지를 받았을 때 머티리얼 플래시
 			FlashDamagedMaterial();
+			if (InteractionSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, InteractionSound, GetActorLocation());
+			}
 		}
 	}
 }

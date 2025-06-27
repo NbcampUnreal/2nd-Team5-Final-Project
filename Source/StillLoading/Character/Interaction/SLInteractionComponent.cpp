@@ -39,13 +39,11 @@ ASLInteractableObjectBase* USLInteractionComponent::GetInteractableObject() cons
         QueryParams
     );
 
-    #if WITH_EDITOR
     if (bIsShowDebugLine)
     {
         DrawDebugLine(GetWorld(), GetComponentLocation(), StartLocation, FColor::Green, false, 2.0f);
         DrawDebugSphere(GetWorld(), StartLocation, InteractionRadius, 12, FColor::Blue, false, 2.0f);
     }
-    #endif
 
     float ClosestDistance = MAX_FLT;
     ASLInteractableObjectBase* ClosestObject = nullptr;

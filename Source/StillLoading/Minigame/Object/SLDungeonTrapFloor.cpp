@@ -5,20 +5,8 @@
 
 ASLDungeonTrapFloor::ASLDungeonTrapFloor()
 {
+	PrimaryActorTick.bCanEverTick = false;
 	CurrnetVisibleTime = 0.0f;
-}
-
-void ASLDungeonTrapFloor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	CurrnetVisibleTime += DeltaTime;
-
-	if (CurrnetVisibleTime >= VisibleTime)
-	{
-		DeActivate();
-	}
-
 }
 
 void ASLDungeonTrapFloor::Activate()
