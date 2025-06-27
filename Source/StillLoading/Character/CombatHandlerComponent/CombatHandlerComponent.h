@@ -32,6 +32,9 @@ class STILLLOADING_API UCombatHandlerComponent : public UActorComponent
 public:
     UCombatHandlerComponent();
 
+    /** 콤보 리셋 */
+    void ResetCombatMode();
+
     /** 충전 시작 */
     UFUNCTION(BlueprintCallable, Category = "Charging")
     void StartCharging();
@@ -102,9 +105,6 @@ private:
     /** 현재 활성 콤보 데이터 조회 */
     UFUNCTION()
     void GetActiveComboDataAsset(UAttackComboDataAsset*& DataAsset);
-
-    /** 콤보 리셋 */
-    void ResetCombatMode();
 
     /** -------------------- 콤보 -------------------- */
 
