@@ -1,13 +1,12 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
+#include "Objective/SLObjectiveBase.h"
 #include "SLGameModeBase.generated.h"
 
-
-class USLObjectiveBase;
 class ASLGameStateBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInProgressObjectiveAdded, USLObjectiveBase*, Objective);
@@ -22,11 +21,15 @@ class STILLLOADING_API ASLGameModeBase : public AGameMode
 public:
 	ASLGameModeBase();
 	UFUNCTION(BlueprintCallable)
+	void OnUpdatedObjectiveState(USLObjectiveBase* Objective, const ESLObjectiveState InState);
+	UFUNCTION(BlueprintCallable)
 	void AddInProgressObjective(USLObjectiveBase* Objective);
 	UFUNCTION(BlueprintCallable)
 	void RemoveInProgressObjective(USLObjectiveBase* Objective);
 	UFUNCTION(BlueprintCallable)
 	USLObjectiveBase* GetPrimaryInProgressObjective();
+	UFUNCTION(BlueprintCallable)
+	void ResetModifiedObjectives();
 	
 	UPROPERTY(BlueprintAssignable)
 	FOnInProgressObjectiveAdded OnInProgressObjectiveAdded;
