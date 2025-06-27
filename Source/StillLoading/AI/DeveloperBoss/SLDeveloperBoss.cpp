@@ -76,10 +76,6 @@ void ASLDeveloperBoss::BeginPlay()
 {
     Super::BeginPlay();
     SetupPhaseLines();
-    if (MouseActorClass)
-    {
-        SpawnMouseActor();
-    }
 
     if (IsValid(Phase4FallingFloor))
     {
@@ -1229,8 +1225,8 @@ void ASLDeveloperBoss::RegisterBossEvents(ASLAIBaseCharacter* Boss)
         return;
     }
     
-    Boss->OnCharacterDeath.AddUObject(this, &ASLDeveloperBoss::HandleBossDeath);
-    Boss->OnPatternFinished.AddUObject(this, &ASLDeveloperBoss::HandlePatternFinished);
+    Boss->OnCharacterDeath.AddDynamic(this, &ASLDeveloperBoss::HandleBossDeath);
+    Boss->OnPatternFinished.AddDynamic(this, &ASLDeveloperBoss::HandlePatternFinished);
 }
 
 void ASLDeveloperBoss::UnregisterBossEvents(ASLAIBaseCharacter* Boss)

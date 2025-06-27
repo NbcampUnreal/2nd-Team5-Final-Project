@@ -89,7 +89,7 @@ void ASLDeveloperRoomCable::ActivateLine()
 {
 	SetLineState(EBossLineState::Active);
 	CurrentHp = MaxHp;
-
+	ActivateHighlight();
 }
 
 void ASLDeveloperRoomCable::DeactivateLine()
@@ -98,10 +98,9 @@ void ASLDeveloperRoomCable::DeactivateLine()
 	{
 		return;
 	}
-
+	DeactivateHighlight();
 	SetLineState(EBossLineState::Inactive);
 	CurrentHp = 0;
-
 }
 
 void ASLDeveloperRoomCable::DestroyLine()
@@ -111,6 +110,7 @@ void ASLDeveloperRoomCable::DestroyLine()
 		return;
 	}
 
+	DeactivateHighlight();
 	SetLineState(EBossLineState::Destroyed);
 	CurrentHp = 0;
 
