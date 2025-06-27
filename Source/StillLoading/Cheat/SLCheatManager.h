@@ -22,4 +22,7 @@ public:
 
 	UFUNCTION(exec)
 	void AddCurrentObjectiveProgress();
+
+	UFUNCTION(exec)
+	void ShowCharacterDebugLine(bool bFlag);
 };
