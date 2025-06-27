@@ -44,7 +44,7 @@ public:
 	float DamageInterval = 0.1f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill Data")
-	float DamageRadius = 500.0f;
+	float DamageRadius = 700.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill Data")
 	float MaxLifetime = 10.0f;
