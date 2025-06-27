@@ -3,6 +3,9 @@
 
 #include "SLCheatManager.h"
 
+#include "Character/BattleComponent/BattleComponent.h"
+#include "Character/Interaction/SLInteractionComponent.h"
+#include "GameFramework/Character.h"
 #include "GameMode/SLGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Objective/SLObjectiveBase.h"
@@ -26,6 +29,21 @@ void USLCheatManager::AddCurrentObjectiveProgress()
 		if (USLObjectiveBase* Objective = GameMode->GetPrimaryInProgressObjective())
 		{
 			Objective->AddObjectiveProgress();
+		}
+	}
+}
+
+void USLCheatManager::ShowCharacterDebugLine(const bool bFlag)
+{
+	if (const ACharacter* Character = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0))
+	{
+		if (USLInteractionComponent* InteractionComponent = Character->GetComponentByClass<USLInteractionComponent>()){
+			InteractionComponent->SetDebugLineVisibility(bFlag);
+		}
+
+		if (UBattleComponent *BattleComponent = Character->GetComponentByClass<UBattleComponent>())
+		{
+			BattleComponent->bShowDebugLine = bFlag;
 		}
 	}
 }
