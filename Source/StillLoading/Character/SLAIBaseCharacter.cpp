@@ -38,7 +38,6 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
     LeftHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftHandCollisionBox");
     LeftHandCollisionBox->SetupAttachment(GetMesh());
     LeftHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	LeftHandCollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
     LeftHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
     LeftHandCollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
