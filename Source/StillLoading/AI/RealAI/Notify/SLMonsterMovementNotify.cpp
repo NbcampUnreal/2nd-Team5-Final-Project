@@ -39,6 +39,10 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 		Character->SpawnSpear();
 		break;
 
+	case ECharacterMovementAction::CMA_AISpawnArrow:
+		Character->SpawnArrow();
+		break;
+
 	case ECharacterMovementAction::CMA_AIWeaponVisible:
 		Character->ToggleWeaponState(bIsVisible);
 		break;
@@ -62,6 +66,18 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 			Agent->SetActorRotation(TargetRotation);
 			break;
 		}
+
+	case ECharacterMovementAction::CMA_EndRotate:
+		{
+			if (AActor* OwnerActor = MeshComp->GetOwner())
+			{
+				if (ASwarmAgent* Agent = Cast<ASwarmAgent>(OwnerActor))
+				{
+					Agent->StopSpinning();
+				}
+			}
+		}
+		break;
 
 	default:
 		break;

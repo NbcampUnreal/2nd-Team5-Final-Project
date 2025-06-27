@@ -2,6 +2,8 @@
 
 
 #include "Minigame/Object/SLObjectSignalBox.h"
+
+#include "Kismet/GameplayStatics.h"
 #include "Misc/OutputDeviceNull.h"
 
 // Sets default values
@@ -18,7 +20,6 @@ ASLObjectSignalBox::ASLObjectSignalBox()
 
 
 	TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &ASLObjectSignalBox::BeginOverlap);
-	TriggerBox->OnComponentEndOverlap.AddDynamic(this, &ASLObjectSignalBox::EndOverlap);
 
 	bEndOverlapDeActivate = true;
 
@@ -36,10 +37,20 @@ void ASLObjectSignalBox::BeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 	UE_LOG(LogTemp, Warning, TEXT("Overlap"));
 	if (!TargetActors.IsEmpty())
 	{
+		GetWorldTimerManager().SetTimer(DeactivateHandler, this, &ASLObjectSignalBox::DeactivateTrapFloor, VisibleTime, false);
+		if (!bIsActive)
+		{
+			FVector MyLocation = GetActorLocation();
+			MyLocation.Z -= 12;
+			SetActorLocation(MyLocation);
+			bIsActive = true;
+			UGameplayStatics::PlaySound2D(this, BeginOverlapSound, 1.0f);
+		}
 		for (AActor* TargetActor : TargetActors)
 		{
 			if (TargetActor && EnterFunctionName != NAME_None)
 			{
+				
 				FOutputDeviceNull Ar;
 				TargetActor->CallFunctionByNameWithArguments(*EnterFunctionName.ToString(), Ar, nullptr, true);
 				UE_LOG(LogTemp, Warning, TEXT("call FUNC"));
@@ -51,15 +62,15 @@ void ASLObjectSignalBox::BeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 
 }
 
-void ASLObjectSignalBox::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void ASLObjectSignalBox::DeactivateTrapFloor()
 {
-	if (!bEndOverlapDeActivate)
-	{
-		return;
-	}
-
 	if (!TargetActors.IsEmpty())
 	{
+		UGameplayStatics::PlaySound2D(this, EndOverlapSound, 1.0f);
+		FVector MyLocation = GetActorLocation();
+		MyLocation.Z += 12;
+		SetActorLocation(MyLocation);
+		bIsActive = false;
 		for (AActor* TargetActor : TargetActors)
 		{
 			if (TargetActor && EnterFunctionName != NAME_None)
@@ -67,10 +78,8 @@ void ASLObjectSignalBox::EndOverlap(UPrimitiveComponent* OverlappedComponent, AA
 				FOutputDeviceNull Ar;
 				TargetActor->CallFunctionByNameWithArguments(*ExitFunctionName.ToString(), Ar, nullptr, true);
 			}
-
 		}
 	}
 }
-
 
 

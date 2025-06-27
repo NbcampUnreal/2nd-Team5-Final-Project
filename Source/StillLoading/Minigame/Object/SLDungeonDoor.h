@@ -36,6 +36,9 @@ protected:
 
 	virtual void BeginPlay() override;
 
+protected:
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	TObjectPtr<USoundBase> DoorSound;
 private:
 	UPROPERTY()
 	FVector ClosedPosition;

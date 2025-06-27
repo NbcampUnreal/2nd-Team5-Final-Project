@@ -24,10 +24,10 @@ ASpearProjectile::ASpearProjectile()
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileComp"));
 	ProjectileMovement->UpdatedComponent = RootComponent;
-	ProjectileMovement->InitialSpeed = 3500.f;
-	ProjectileMovement->MaxSpeed = 4000.f;
+	ProjectileMovement->InitialSpeed = 1500.f;
+	ProjectileMovement->MaxSpeed = 2000.f;
 	ProjectileMovement->bRotationFollowsVelocity = true;
-	ProjectileMovement->ProjectileGravityScale = 1.5f;
+	ProjectileMovement->ProjectileGravityScale = 1.0f;
 
 	InitialLifeSpan = 15.0f;
 }
@@ -37,6 +37,12 @@ void ASpearProjectile::BeginPlay()
 	Super::BeginPlay();
 
 	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &ASpearProjectile::OnBeginOverlap);
+}
+
+void ASpearProjectile::SetSpeed(const float Speed) const
+{
+	ProjectileMovement->InitialSpeed = Speed;
+	ProjectileMovement->MaxSpeed = Speed;
 }
 
 void ASpearProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

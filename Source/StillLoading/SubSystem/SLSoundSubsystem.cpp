@@ -43,6 +43,7 @@ void USLSoundSubsystem::StopUISound()
 
 void USLSoundSubsystem::PlayBgmSound(ESLBgmSoundType SoundType)
 {
+	CurrentBgmType = SoundType;
 	SetBgmVolume(BgmVolume);
 	SetEffectVolume(EffectVolume);
 
@@ -74,6 +75,30 @@ void USLSoundSubsystem::StopBgmSound()
 	{
 		BgmAudioComp->Stop();
 	}
+}
+
+void USLSoundSubsystem::SwapBgm(USoundBase* SoundSource)
+{
+	if (IsValid(SoundSource))
+	{
+		StopBgmSound();
+
+		if (IsValid(BgmAudioComp))
+		{
+			BgmAudioComp->SetSound(SoundSource);
+			BgmAudioComp->Play();
+		}
+		else
+		{
+			BgmAudioComp = UGameplayStatics::CreateSound2D(GetGameInstance(), SoundSource, 1.0f, 1.0f, 0.0f, nullptr, true, false);
+			BgmAudioComp->Play();
+		}
+	}
+}
+
+void USLSoundSubsystem::RestartLevelBgm()
+{
+	PlayBgmSound(CurrentBgmType);
 }
 
 void USLSoundSubsystem::PlayBattleSound(EBattleSoundType SoundType, const FVector& Location)

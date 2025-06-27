@@ -30,6 +30,7 @@ public:
     float GetGridHeight() const;
     float GetGridWidth() const;
     UCameraComponent* GetCameraComponent() const { return CameraComponent; }
+    void SetDebugLineVisibility(const bool bVisible){ bShowGridDebugLine = bVisible;};
     
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GridNode")
     TObjectPtr<USLGridNode> UpGridNode;
