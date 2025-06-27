@@ -20,6 +20,7 @@ enum class ECharacterMovementAction : uint8
 	CMA_AIWeaponVisible		UMETA(DisplayName = "Weapon Visible"),
 	CMA_EndRotate			UMETA(DisplayName = "End Rotate"),
 	CMA_SpawnDagger			UMETA(DisplayName = "Spawn Dagger"),
+	CMA_SpawnSword			UMETA(DisplayName = "Spawn Sword"),
 };
 
 UCLASS()
