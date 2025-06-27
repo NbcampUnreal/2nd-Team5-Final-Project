@@ -76,9 +76,7 @@ void USLBaseTextPrintWidget::OnClickedNextButton()
 		CurrentTextIndex = -1;
 		ParentTalkText->SetText(TalkArray[TargetTextIndex]);
 
-		FName TargetName = NameArray[TargetTextIndex];
-
-		if (TargetName == "Choice")
+		if (NameArray[TargetTextIndex] == "Choice")
 		{
 			SetChoiceVisibility(true);
 		}
@@ -106,7 +104,9 @@ void USLBaseTextPrintWidget::OnClickedSkipButton()
 	if (NameArray.Last() == "Choice")
 	{
 		TargetTextIndex = NameArray.Num() - 1;
-		ChangeTargetText();
+		CurrentTextIndex = -1;
+		ParentTalkText->SetText(TalkArray[TargetTextIndex]);
+		SetChoiceVisibility(true);
 	}
 	else
 	{
@@ -186,6 +186,11 @@ void USLBaseTextPrintWidget::PrintTalkText()
 {
 	if (CurrentTextIndex < 0)
 	{
+		if (NameArray[TargetTextIndex] == "Choice")
+		{
+			SetChoiceVisibility(true);
+		}
+
 		return;
 	}
 
