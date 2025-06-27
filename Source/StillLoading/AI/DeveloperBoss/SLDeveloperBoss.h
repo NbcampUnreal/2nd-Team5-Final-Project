@@ -193,6 +193,16 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase5")
     void TriggerPhase4FloorCollapse();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")
+    void SpawnNextPhase1Boss();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")
+    void PlayPhase1StartCinematic();
+
+    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")  
+    void PlayPhase1BossCinematic(int32 BossIndex);
+    
     // Public Variables (Delegates)
     UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
     FOnBossCharacterDeath OnBossCharacterDeath;
@@ -260,9 +270,6 @@ protected:
     void OnWallCooldownFinishedInternal();
 
     UFUNCTION()
-    void OnPhase1SpawnDelayFinished();
-
-    UFUNCTION()
     void HandlePhase3MouseActorDestroyed(ASLMouseActor* DestroyedMouseActor);
 
     UFUNCTION()
@@ -300,7 +307,6 @@ protected:
     void CheckPhaseCompletion(int32 PhaseIndex);
     void LaunchSpecificWall(ASLLaunchableWall* Wall);
     void StartPhase1BossRush();
-    void SpawnNextPhase1Boss();
     void HandlePhase1BossDeath(ASLAIBaseCharacter* DeadBoss);
     void CompletePhase1BossRush();
     void WeakenBossForPhase1(ASLAIBaseCharacter* Boss);
@@ -403,6 +409,9 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase4")
     float Phase4InitialWallAttackDelay;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase1")
+    TArray<TObjectPtr<class ULevelSequence>> Phase1Cinematics;
 private:
     // Private Variables (Runtime Data)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Developer Boss", meta = (AllowPrivateAccess = "true"))
