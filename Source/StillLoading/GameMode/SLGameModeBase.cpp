@@ -12,6 +12,25 @@ ASLGameModeBase::ASLGameModeBase()
 	GameStateClass = ASLGameStateBase::StaticClass();
 }
 
+void ASLGameModeBase::OnUpdatedObjectiveState(USLObjectiveBase* Objective, const ESLObjectiveState InState)
+{
+	TArray<TObjectPtr<USLObjectiveBase>>& ModifiedObjectives = SLGameState->GetModifedObjectives();
+	ModifiedObjectives.AddUnique(Objective);
+
+	switch (InState)
+	{
+	default:
+		break;
+	case ESLObjectiveState::InProgress:
+		AddInProgressObjective(Objective);
+		break;
+	case ESLObjectiveState::Complete:
+	case ESLObjectiveState::Fail:
+		RemoveInProgressObjective(Objective);
+		break;
+	}
+}
+
 void ASLGameModeBase::AddInProgressObjective(USLObjectiveBase* Objective)
 {
 	TArray<TObjectPtr<USLObjectiveBase>>& InProgressedObjectives = SLGameState->GetInProgressedObjectives();
@@ -55,6 +74,17 @@ void ASLGameModeBase::RemoveInProgressObjective(USLObjectiveBase* Objective)
 USLObjectiveBase* ASLGameModeBase::GetPrimaryInProgressObjective()
 {
 	return SLGameState->GetInProgressedObjectives().Top();
+}
+
+void ASLGameModeBase::ResetModifiedObjectives()
+{
+	for (USLObjectiveBase* ModifiedObjective : SLGameState->GetInProgressedObjectives())
+	{
+		if (IsValid(ModifiedObjective))
+		{
+			ModifiedObjective->ResetObjective();
+		}
+	}
 }
 
 void ASLGameModeBase::BeginPlay()

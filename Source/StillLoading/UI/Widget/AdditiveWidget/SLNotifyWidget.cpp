@@ -25,6 +25,12 @@ void USLNotifyWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 	Super::ActivateWidget(WidgetActivateBuffer);
 	
 	UpdateNotifyText(WidgetActivateBuffer.TargetMap, WidgetActivateBuffer.TargetNotify);
+
+	if (IsAnimationPlaying(CloseAnim))
+	{
+		StopAnimation(CloseAnim);
+	}
+
 	PlayAnimation(OpenAnim);
 	PlayUISound(ESLUISoundType::EUS_Notify);
 }
@@ -55,6 +61,11 @@ void USLNotifyWidget::OnEndedOpenAnim()
 {
 	Super::OnEndedOpenAnim();
 
+	if (IsAnimationPlaying(OpenAnim))
+	{
+		return;
+	}
+
 	PlayAnimation(CloseAnim);
 }
 
@@ -62,7 +73,10 @@ void USLNotifyWidget::OnEndedCloseAnim()
 {
 	Super::OnEndedCloseAnim();
 
-	CloseWidget();
+	if (!IsAnimationPlaying(OpenAnim))
+	{
+		CloseWidget();
+	}
 }
 
 bool USLNotifyWidget::ApplyBorderImage(FSlateBrush& SlateBrush)

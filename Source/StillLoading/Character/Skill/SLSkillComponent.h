@@ -5,6 +5,7 @@
 #include "AI/RealAI/Spawner/MonsterSpawner.h"
 #include "SLSkillComponent.generated.h"
 
+class ASLPlayerCharacter;
 class AFallingSword;
 class AMonsterSpawner;
 
@@ -23,6 +24,9 @@ public:
 	USLSkillComponent();
 
 	UFUNCTION()
+	void ActiveSpawnSkill(ASLPlayerCharacter* Character);
+
+	UFUNCTION()
 	void ActivateSkill(EActiveSkillType SkillType);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawn Actor")
@@ -36,11 +40,4 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<AMonsterSpawner> SpawnerInstance;
-
-private:
-	UFUNCTION()
-	void ActiveSpawnSkill();
-
-	UFUNCTION()
-	void ActiveSpawnSkillTemp();
 };

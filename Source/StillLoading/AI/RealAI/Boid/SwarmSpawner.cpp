@@ -17,7 +17,7 @@ ASwarmSpawner::ASwarmSpawner()
 
 	SpawnBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawnBox"));
 	RootComponent = SpawnBox;
-	
+
 	SpawnBox->SetCollisionProfileName(TEXT("NoCollision"));
 	SpawnBox->SetCanEverAffectNavigation(false);
 }
@@ -40,10 +40,10 @@ void ASwarmSpawner::BeginSpawn()
 				GetWorld(),
 				SpawnEffectTemplate,
 				SpawnLocation,
-				EffectSpawnRotation 
+				EffectSpawnRotation
 			);
 		}
-		
+
 		SpawnedManager = World->SpawnActor<ASwarmManager>(SwarmManagerClass, GetActorLocation(), GetActorRotation());
 		if (SpawnedManager)
 		{
@@ -58,7 +58,7 @@ void ASwarmSpawner::BeginSpawn()
 			SpawnedManager->CombatAlignment = CombatAlignmentWeight;
 			SpawnedManager->CombatCohesion = CombatCohesionWeight;
 			SpawnedManager->CombatGoalSeeking = CombatGoalSeekingWeight;
-			
+
 			SpawnedManager->CurrentFormationType = FormationType;
 			SpawnedManager->DetectionRadius = DetectionRadius;
 			SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
@@ -80,7 +80,8 @@ void ASwarmSpawner::BeginSpawn()
 
 			TotalSpawnCount = 0;
 
-			for (const auto& [AgentClass, ControllerClass, SpawnCount, AvoidanceWeight, bIsLeader, TeamIDToAssign] : SwarmCompositions)
+			for (const auto& [AgentClass, ControllerClass, SpawnCount, AvoidanceWeight, bIsLeader, TeamIDToAssign] :
+			     SwarmCompositions)
 			{
 				if (AgentClass)
 				{
@@ -89,14 +90,16 @@ void ASwarmSpawner::BeginSpawn()
 					for (int32 i = 0; i < SpawnCount; ++i)
 					{
 						const FBox SpawnableArea = FBox(GetActorLocation() - SpawnBox->GetScaledBoxExtent(),
-												GetActorLocation() + SpawnBox->GetScaledBoxExtent());
+						                                GetActorLocation() + SpawnBox->GetScaledBoxExtent());
 						const FVector SpawnLocation = FMath::RandPointInBox(SpawnableArea);
 						const FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
-						
-						constexpr ESpawnActorCollisionHandlingMethod CollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+						constexpr ESpawnActorCollisionHandlingMethod CollisionHandlingOverride =
+							ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 						// 지연 스폰
-						if (ASwarmAgent* DeferredAgent = World->SpawnActorDeferred<ASwarmAgent>(AgentClass, SpawnTransform, this, nullptr, CollisionHandlingOverride))
+						if (ASwarmAgent* DeferredAgent = World->SpawnActorDeferred<ASwarmAgent>(
+							AgentClass, SpawnTransform, this, nullptr, CollisionHandlingOverride))
 						{
 							DeferredAgent->AIControllerClass = ControllerClass;
 							DeferredAgent->MySwarmManager = SpawnedManager;
@@ -121,7 +124,7 @@ void ASwarmSpawner::BeginSpawn()
 								{
 									DeferredAgent->RequestBerserkMode();
 								}
-								
+
 								DeferredAgent->SetLeader(true, LeaderBehaviorTree, LeaderBlackBoard);
 								SpawnedManager->SetLeader(DeferredAgent);
 							}
@@ -132,14 +135,15 @@ void ASwarmSpawner::BeginSpawn()
 							{
 								AIController->SetGenericTeamId(TeamIDToAssign);
 							}
-							
+
 							SpawnedManager->RegisterAgent(DeferredAgent); // 에이전트 등록
 						}
 						else
 						{
-							UE_LOG(LogTemp, Error, TEXT("ASwarmSpawner::BeginSpawn - Failed to spawn agent of class %s at location %s"), 
-								   *AgentClass->GetName(), 
-								   *SpawnLocation.ToString());
+							UE_LOG(LogTemp, Error,
+							       TEXT("ASwarmSpawner::BeginSpawn - Failed to spawn agent of class %s at location %s"),
+							       *AgentClass->GetName(),
+							       *SpawnLocation.ToString());
 						}
 					}
 				}
@@ -156,11 +160,16 @@ int32 ASwarmSpawner::GetSpawnCount() const
 // TODO::무기 없애기
 void ASwarmSpawner::ResetSpawendMonster()
 {
+	DestroyAllMonster();
+	BeginSpawn();
+}
+
+void ASwarmSpawner::DestroyAllMonster()
+{
 	if (IsValid(SpawnedManager))
 	{
 		SpawnedManager->DestroyAllAgents();
 		SpawnedManager->Destroy();
-		BeginSpawn();
 	}
 }
 

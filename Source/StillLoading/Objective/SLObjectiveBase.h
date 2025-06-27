@@ -33,6 +33,9 @@ public:
 	void ObjectiveFail();
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
+	void ResetObjective();
+
+	UFUNCTION(BlueprintCallable, Category = "Objective")
 	FName GetObjectiveName() const { return ObjectiveName; }
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	void SetName(const FName& InName) { ObjectiveName = InName; }

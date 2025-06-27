@@ -11,14 +11,16 @@
 #include "UI/Widget/SLButtonWidget.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
+#include "SaveLoad/SLSaveGameSubsystem.h"
 #include "UI/Widget/SLWidgetPrivateDataAsset.h"
 #include "NiagaraSystem.h"
-#include "Components/CanvasPanelSlot.h"
 
 const FName USLTitleWidget::TitleTextIndex = "TitleText";
 const FName USLTitleWidget::StartButtonIndex = "StartButton";
+const FName USLTitleWidget::ContinueButtonIndex = "ContinueButton";
 const FName USLTitleWidget::OptionButtonIndex = "OptionButton";
 const FName USLTitleWidget::QuitButtonIndex = "QuitButton";
+const FName USLTitleWidget::QuestionTextIndex = "QuestionText";
 
 void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -28,14 +30,33 @@ void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	Super::InitWidget(NewUISubsystem);
 
 	StartButton->InitButton();
+	ContinueButton->InitButton();
 	OptionButton->InitButton();
 	QuitButton->InitButton();
+	AgreeButton->InitButton();
+	CancleButton->InitButton();
 
-	StartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedStartButton);
+	StartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedNewGameButton);
+	ContinueButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedContinueButton);
 	OptionButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedOptionButton);
 	QuitButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuitButton);
+	AgreeButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedStartButton);
+	CancleButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedCancleButton);
 
-	//UNiagaraComponent* NiagaraComponent = BackgroundEffect->GetNiagaraComponent();
+	CheckValidOfSaveGameSubsystem();
+	
+	if (SaveGameSubsystem->GetIsExistSaveData())
+	{
+		ContinueButton->SetIsEnabled(true);
+	}
+	else
+	{
+		ContinueButton->SetIsEnabled(false);
+	}
+
+	QuestionPanel->SetVisibility(ESlateVisibility::Collapsed);
+	AgreeButton->SetButtonText(FText::FromString(FString::Printf(TEXT("Yes"))));
+	CancleButton->SetButtonText(FText::FromString(FString::Printf(TEXT("No"))));
 }
 
 void USLTitleWidget::DeactivateWidget()
@@ -68,21 +89,35 @@ void USLTitleWidget::ApplyTextData()
 	TArray<FSLUITextPoolDataRow*> TempArray;
 	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
 
-	TMap<FName, FText> OptionTextMap;
+	TMap<FName, FText> TitleTextMap;
 
 	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
 	{
 		if (UITextPool->TargetWidget == ESLTargetWidgetType::ETW_Title)
 		{
-			OptionTextMap = UITextPool->TextMap;
+			TitleTextMap = UITextPool->TextMap;
 			break;
 		}
 	}
 
-	TitleText->SetText(OptionTextMap[TitleTextIndex]);
-	StartButton->SetButtonText(OptionTextMap[StartButtonIndex]);
-	OptionButton->SetButtonText(OptionTextMap[OptionButtonIndex]);
-	QuitButton->SetButtonText(OptionTextMap[QuitButtonIndex]);
+	TitleText->SetText(TitleTextMap[TitleTextIndex]);
+	StartButton->SetButtonText(TitleTextMap[StartButtonIndex]);
+	ContinueButton->SetButtonText(TitleTextMap[ContinueButtonIndex]);
+	OptionButton->SetButtonText(TitleTextMap[OptionButtonIndex]);
+	QuitButton->SetButtonText(TitleTextMap[QuitButtonIndex]);
+	QuestionText->SetText(TitleTextMap[QuestionTextIndex]);
+}
+
+bool USLTitleWidget::ApplyBorderImage(FSlateBrush& SlateBrush)
+{
+	if (!Super::ApplyBorderImage(SlateBrush))
+	{
+		return false;
+	}
+
+	QuestionBack->SetBrush(SlateBrush);
+
+	return true;
 }
 
 bool USLTitleWidget::ApplyOtherImage()
@@ -111,6 +146,15 @@ bool USLTitleWidget::ApplyOtherImage()
 
 void USLTitleWidget::OnClickedStartButton()
 {
+	CheckValidOfSaveGameSubsystem();
+	SaveGameSubsystem->ResetGameData();
+
+	PlayUISound(ESLUISoundType::EUS_Click);
+	MoveToLevelByType(ESLLevelNameType::ELN_Intro);
+}
+
+void USLTitleWidget::OnClickedContinueButton()
+{
 	PlayUISound(ESLUISoundType::EUS_Click);
 	MoveToLevelByType(NextLevelType);
 }
@@ -126,4 +170,27 @@ void USLTitleWidget::OnClickedQuitButton()
 {
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
 	PlayUISound(ESLUISoundType::EUS_Click);
+}
+
+void USLTitleWidget::OnClickedNewGameButton()
+{
+	QuestionPanel->SetVisibility(ESlateVisibility::Visible);
+	PlayUISound(ESLUISoundType::EUS_Click);
+}
+
+void USLTitleWidget::OnClickedCancleButton()
+{
+	QuestionPanel->SetVisibility(ESlateVisibility::Collapsed);
+	PlayUISound(ESLUISoundType::EUS_Click);
+}
+
+void USLTitleWidget::CheckValidOfSaveGameSubsystem()
+{
+	if (IsValid(SaveGameSubsystem))
+	{
+		return;
+	}
+
+	SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
+	checkf(IsValid(SaveGameSubsystem), TEXT("SaveGameSubsystem is invalid"));
 }

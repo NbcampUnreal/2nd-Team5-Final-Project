@@ -332,7 +332,8 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Defense_Parry)
 		|| OwnerCharacter->IsInPrimaryState(TAG_Character_OnBuff)
-		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast))
+		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast)
+		|| OwnerCharacter->IsInPrimaryState(TAG_Character_Attack_SpawnSword))
 		return;
 
 	OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
@@ -1140,6 +1141,12 @@ void UMovementHandlerComponent::DisableLock()
 
 void UMovementHandlerComponent::BeginBuff()
 {
+	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_BuffBlock))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("USL25DMovementHandlerComponent: Buff Blocked"));
+		return;
+	}
+	
 	ToggleCameraZoom(false);
 	const bool bIsFalling = OwnerCharacter->GetCharacterMovement()->IsFalling();
 
@@ -1210,6 +1217,7 @@ void UMovementHandlerComponent::SpawnSword()
 	ToggleCameraZoom(false, 1000.f);
 	CachedMontageComponent->PlaySkillMontage("SwordFromSky");
 	OwnerCharacter->SetPrimaryState(TAG_Character_Attack_SpawnSword);
+	CachedCombatComponent->ResetCombatMode();
 
 	USlowMotionHelper::ApplyActorSlowMotion(OwnerCharacter, 0.2f, 1.0f);
 }
@@ -1267,22 +1275,25 @@ void UMovementHandlerComponent::Block(const bool bIsBlocking)
 		CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterBeginDefence,
 		                                            OwnerCharacter->GetActorLocation());
 
-		if (EmpoweredShieldEffect)
+		if (CachedCombatComponent->IsEmpowered())
 		{
-			if (ActiveShieldEffectComponent)
+			if (EmpoweredShieldEffect)
 			{
-				ActiveShieldEffectComponent->DestroyComponent();
-			}
+				if (ActiveShieldEffectComponent)
+				{
+					ActiveShieldEffectComponent->DestroyComponent();
+				}
 
-			ActiveShieldEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-				EmpoweredShieldEffect,
-				OwnerCharacter->GetRootComponent(),
-				NAME_None,
-				FVector::ZeroVector,
-				FRotator::ZeroRotator,
-				EAttachLocation::KeepRelativeOffset,
-				true
-			);
+				ActiveShieldEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+					EmpoweredShieldEffect,
+					OwnerCharacter->GetRootComponent(),
+					NAME_None,
+					FVector::ZeroVector,
+					FRotator::ZeroRotator,
+					EAttachLocation::KeepRelativeOffset,
+					true
+				);
+			}
 		}
 	}
 	else
@@ -1402,7 +1413,7 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		break;
 	case ECharacterMontageState::ECS_Buff:
 	case ECharacterMontageState::ECS_BuffAir:
-		CachedCombatComponent->SetEmpoweredCombatMode(10);
+		CachedCombatComponent->SetEmpoweredCombatMode(20);
 		OwnerCharacter->GetCharacterMovement()->GravityScale = 1.f;
 		break;
 	case ECharacterMontageState::ECS_Attack_BlastSword:
