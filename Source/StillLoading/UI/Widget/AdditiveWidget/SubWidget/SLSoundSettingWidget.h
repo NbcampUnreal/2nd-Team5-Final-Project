@@ -17,6 +17,7 @@ class STILLLOADING_API USLSoundSettingWidget : public USLOptionSubBase
 	
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
+	virtual void OnUpdatedSettingValue() override;
 
 protected:
 	virtual void ApplyTextData() override;

@@ -75,6 +75,12 @@ void USLBaseTextPrintWidget::OnClickedNextButton()
 	{
 		CurrentTextIndex = -1;
 		ParentTalkText->SetText(TalkArray[TargetTextIndex]);
+
+		if (NameArray[TargetTextIndex] == "Choice")
+		{
+			SetChoiceVisibility(true);
+		}
+
 		return;
 	}
 
@@ -98,7 +104,9 @@ void USLBaseTextPrintWidget::OnClickedSkipButton()
 	if (NameArray.Last() == "Choice")
 	{
 		TargetTextIndex = NameArray.Num() - 1;
-		ChangeTargetText();
+		CurrentTextIndex = -1;
+		ParentTalkText->SetText(TalkArray[TargetTextIndex]);
+		SetChoiceVisibility(true);
 	}
 	else
 	{
@@ -178,6 +186,11 @@ void USLBaseTextPrintWidget::PrintTalkText()
 {
 	if (CurrentTextIndex < 0)
 	{
+		if (NameArray[TargetTextIndex] == "Choice")
+		{
+			SetChoiceVisibility(true);
+		}
+
 		return;
 	}
 
@@ -208,11 +221,6 @@ void USLBaseTextPrintWidget::ChangeTargetText()
 	if (TargetName == "None" || TargetName == "Choice")
 	{
 		ParentNamePanel->SetVisibility(ESlateVisibility::Collapsed);
-
-		if (TargetName == "Choice")
-		{
-			SetChoiceVisibility(true);
-		}
 	}
 	else
 	{

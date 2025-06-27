@@ -26,7 +26,21 @@ void USLLanguageSettingWidget::ActivateWidget(const FSLWidgetActivateBuffer& Wid
 {
 	Super::ActivateWidget(WidgetActivateBuffer);
 
-	UpdateLanguageText();
+	OnUpdatedSettingValue();
+}
+
+void USLLanguageSettingWidget::OnUpdatedSettingValue()
+{
+	Super::OnUpdatedSettingValue();
+
+	CheckValidOfUserDataSubsystem();
+
+	ESLLanguageType CurrentLanguage = UserDataSubsystem->GetCurrentLanguage();
+
+	if (LanguageTextMap.Contains(CurrentLanguage))
+	{
+		LanguageText->SetText(LanguageTextMap[CurrentLanguage]);
+	}
 }
 
 void USLLanguageSettingWidget::ApplyTextData()
@@ -94,18 +108,6 @@ void USLLanguageSettingWidget::UpdateLanguage(bool bIsLeft)
 	if (LanguageTextMap.Contains(CurrentLanguage))
 	{
 		UserDataSubsystem->SetLanguage(CurrentLanguage);
-		LanguageText->SetText(LanguageTextMap[CurrentLanguage]);
-	}
-}
-
-void USLLanguageSettingWidget::UpdateLanguageText()
-{
-	CheckValidOfUserDataSubsystem();
-
-	ESLLanguageType CurrentLanguage = UserDataSubsystem->GetCurrentLanguage();
-
-	if (LanguageTextMap.Contains(CurrentLanguage))
-	{
 		LanguageText->SetText(LanguageTextMap[CurrentLanguage]);
 	}
 }

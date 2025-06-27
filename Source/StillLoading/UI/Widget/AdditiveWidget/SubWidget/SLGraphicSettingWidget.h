@@ -20,6 +20,7 @@ class STILLLOADING_API USLGraphicSettingWidget : public USLOptionSubBase
 public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
+	virtual void OnUpdatedSettingValue() override;
 
 protected:
 	virtual void ApplyTextData() override;

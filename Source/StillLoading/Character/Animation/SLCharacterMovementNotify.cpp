@@ -1,6 +1,8 @@
 #include "SLCharacterMovementNotify.h"
 #include "Character/SLPlayerCharacter.h"
+#include "Character/Item/FallingSword.h"
 #include "Character/MovementHandlerComponent/SLMovementHandlerComponent.h"
+#include "Character/Skill/SLSkillComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -77,6 +79,13 @@ void USLCharacterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 
 	case ECharacterMovementAction::CMA_SpawnDagger:
 		Character->SpawnObject(false);
+		break;
+
+	case ECharacterMovementAction::CMA_SpawnSword:
+		if (USLSkillComponent* SkillComp = Character->FindComponentByClass<USLSkillComponent>())
+		{
+			SkillComp->ActiveSpawnSkill(Character);
+		}
 		break;
 
 	default: break;

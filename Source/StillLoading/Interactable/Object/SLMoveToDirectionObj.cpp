@@ -41,6 +41,6 @@ void ASLMoveToDirectionObj::Tick(float DeltaTime)
 	}
 	else
 	{
-		SetActorLocation(GetActorLocation() + (MoveDirection * DeltaTime * MoveSpeed), true);
+		SetActorLocation(GetActorLocation() + (MoveDirection * DeltaTime * MoveSpeed), false);
 	}
 }
