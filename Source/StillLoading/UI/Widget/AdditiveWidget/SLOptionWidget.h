@@ -14,6 +14,7 @@ class USLLanguageSettingWidget;
 class USLGraphicSettingWidget;
 class USLSoundSettingWidget;
 class USLKeySettingWidget;
+class USLLevelTransferSubsystem;
 
 UCLASS()
 class STILLLOADING_API USLOptionWidget : public USLAdditiveWidget
@@ -49,7 +50,15 @@ private:
 	//
 
 	UFUNCTION()
-	void OnClickedQuit();
+	void OnClickedMoveToTitle();
+
+	UFUNCTION()
+	void OnClickedRestart();
+
+	UFUNCTION()
+	void OnClickedSettingReset();
+
+	void CheckValidOfLevelTransferSubsystem();
 
 private:
 	UPROPERTY(Meta = (BindWidget))
@@ -94,19 +103,30 @@ private:
 
 	// Widget Handle
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLButtonWidget> QuitGameButton = nullptr;
+	TObjectPtr<USLButtonWidget> RestartButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> MoveToTitleButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLButtonWidget> CloseButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> SettingResetButton = nullptr;
 	//
 
 	UPROPERTY()
 	TMap<ESLOptionPrivateImageType, TObjectPtr<UObject>> PrivateImageMap;
 
+	UPROPERTY()
+	TObjectPtr<USLLevelTransferSubsystem> LevelTransferSubsystem = nullptr;
+
 	static const FName TitleTextIndex;
 	static const FName KeySettingButtonIndex;
-	static const FName QuitGameButtonIndex;
+	static const FName RestartButtonIndex;
+	static const FName MoveToTitleButtonIndex;
 	static const FName CloseButtonIndex;
+	static const FName SettingResetButtonIndex;
 	static const FName LanguageSettingIndex;
 	static const FName GraphicSettingIndex;
 	static const FName SoundSettingIndex;

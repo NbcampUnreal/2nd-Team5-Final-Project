@@ -3,6 +3,7 @@
 
 #include "SLInteractableObject.h"
 
+#include "Components/BoxComponent.h"
 #include "Interactable/SLTalkHandlerBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/SLUISubsystem.h"
@@ -18,6 +19,13 @@ ASLInteractableObject::ASLInteractableObject()
 	TriggerType = ESLReactiveTriggerType::ERT_InteractKey;
 	TargetName = "Object";
 	CurrentTalkHandler = DefaultTalkHandler;
+
+	StaticMeshComp->SetCollisionProfileName("BlockAllDynamic");
+	
+	InteractionCollision = CreateDefaultSubobject<UBoxComponent>("InteractionCollision");
+	InteractionCollision->SetupAttachment(StaticMeshComp);
+	InteractionCollision->SetCollisionProfileName("Interactable");
+	InteractionCollision->SetBoxExtent({100,100,100});
 }
 
 void ASLInteractableObject::SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandler)

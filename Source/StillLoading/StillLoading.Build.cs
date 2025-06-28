@@ -27,10 +27,14 @@ public class StillLoading : ModuleRules
 			"NiagaraUIRenderer",
             "GameplayAbilities",
             "Chaos",
-            "ChaosSolverEngine"
+            "ChaosSolverEngine",
+            "LevelSequence",
+            "MovieScene",
+            "MovieSceneTracks"
+
         });
 
-        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore"});
 
         PrivateIncludePaths.Add("StillLoading");
 	}

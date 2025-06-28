@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -18,6 +18,7 @@ public:
 	ASLGameStateBase();
 
 	TArray<TObjectPtr<USLObjectiveBase>>& GetInProgressedObjectives();
+	TArray<TObjectPtr<USLObjectiveBase>>& GetModifedObjectives();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -25,4 +26,7 @@ protected:
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<USLObjectiveBase>> InProgressedObjectives;
+
+	UPROPERTY()
+	TArray<TObjectPtr<USLObjectiveBase>> ModifiedObjectives;
 };

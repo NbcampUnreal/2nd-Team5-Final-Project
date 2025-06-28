@@ -10,9 +10,11 @@
 class UButton;
 class UTextBlock;
 class UImage;
+class UCanvasPanel;
 class UNiagaraSystemWidget;
 class URetainerBox;
 class USLButtonWidget;
+class USLSaveGameSubsystem;
 
 UCLASS()
 class STILLLOADING_API USLTitleWidget : public USLLevelWidget
@@ -23,12 +25,16 @@ public:
 	UFUNCTION()
 	void OnClickedStartButton();
 
+	UFUNCTION()
+	void OnClickedContinueButton();
+
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void DeactivateWidget() override;
 
 protected:
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void ApplyTextData() override;
+	virtual bool ApplyBorderImage(FSlateBrush& SlateBrush) override;
 	virtual bool ApplyOtherImage() override;
 
 private:
@@ -37,6 +43,15 @@ private:
 
 	UFUNCTION()
 	void OnClickedQuitButton();
+
+	UFUNCTION()
+	void OnClickedNewGameButton();
+
+	UFUNCTION()
+	void OnClickedCancleButton();
+
+
+	void CheckValidOfSaveGameSubsystem();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Option")
@@ -48,6 +63,9 @@ public:
 private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLButtonWidget> StartButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> ContinueButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLButtonWidget> OptionButton = nullptr;
@@ -67,14 +85,36 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UNiagaraSystemWidget> BackgroundEffect = nullptr;
 
+	//
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UCanvasPanel> QuestionPanel = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> QuestionBack = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> QuestionText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> AgreeButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> CancleButton = nullptr;
+	//
+
 	UPROPERTY()
 	TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>> PrivateImageMap;
 
 	UPROPERTY()
 	ESLLevelNameType NextLevelType = ESLLevelNameType::ELN_None;
 
+	UPROPERTY()
+	TObjectPtr<USLSaveGameSubsystem> SaveGameSubsystem = nullptr;
+
 	static const FName TitleTextIndex;
 	static const FName StartButtonIndex;
+	static const FName ContinueButtonIndex;
 	static const FName OptionButtonIndex;
 	static const FName QuitButtonIndex;
+	static const FName QuestionTextIndex;
 };
