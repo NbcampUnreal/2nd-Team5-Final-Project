@@ -431,7 +431,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 			else
 			{
 				SetBattleState(TAG_AI_Hit);
-				PlayHitMontageAndSetupRecovery(2);
+				PlayHitMontageAndSetupRecovery(0.8);
 
 				FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
 				KnockbackDir.Z = 0;
