@@ -8,7 +8,6 @@
 #include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLPlayerCharacter.h"
-#include "Character/SLPlayerCharacterBase.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"

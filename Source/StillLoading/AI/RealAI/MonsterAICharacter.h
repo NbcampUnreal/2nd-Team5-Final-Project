@@ -87,6 +87,8 @@ public:
 	
 	UFUNCTION()
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
+	UFUNCTION()
+	void HandleHitNotify();
 
 	UFUNCTION()
 	void Dead(const AActor* Attacker, bool bIsChangeMaterial);
@@ -212,6 +214,8 @@ private:
 	FTimerHandle MaterialResetTimerHandle;
 	UPROPERTY()
 	FTimerHandle CollisionResetTimerHandle;
+	UPROPERTY()
+	FTimerHandle StateFixTimerHandle;
 
 	void RecoverFromHitState();
 	void PlayHitMontageAndSetupRecovery(float Length);
