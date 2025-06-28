@@ -235,8 +235,6 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast))
 		return;
 
-	OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
-
 	bool bIsFromBack = false;
 	FRotator TargetRotation;
 	RotateToHitCauser(Causer, TargetRotation, bIsFromBack);
