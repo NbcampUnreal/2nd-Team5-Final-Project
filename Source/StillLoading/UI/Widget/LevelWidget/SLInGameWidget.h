@@ -23,6 +23,7 @@ public:
 
 	void SetIsTimerActivate(bool bIsActived);
 	void SetIsPlayerStateActivate(bool bIsActived, bool bIsVisibleSpecial);
+	void SetVisibilityPlayerStatePanel(bool bIsVisible);
 	void SetIsObjectiveActivate();
 	void SetInvisibleObjective();
 	void SetIsHitEffectActivate(bool bIsActived);

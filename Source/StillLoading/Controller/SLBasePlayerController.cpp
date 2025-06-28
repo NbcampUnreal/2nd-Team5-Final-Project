@@ -4,6 +4,7 @@
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/SLTargetableInterface.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "UI/HUD/SLInGameHUD.h"
 
 ASLBasePlayerController::ASLBasePlayerController()
 {
@@ -40,6 +41,22 @@ void ASLBasePlayerController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 
 	BindIMC(InPawn);
+
+	GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::ShowInGameUI);
+}
+
+void ASLBasePlayerController::SetIgnoreMoveInput(bool bNewMoveInput)
+{
+	Super::SetIgnoreMoveInput(bNewMoveInput);
+
+	if (bNewMoveInput)
+	{
+		HideInGameUI();
+	}
+	else
+	{
+		ShowInGameUI();
+	}
 }
 
 FGenericTeamId ASLBasePlayerController::GetGenericTeamId() const
@@ -63,6 +80,28 @@ void ASLBasePlayerController::BindIMC(APawn* InPawn)
 	{
 		UDynamicIMCComponent* DynamicImcComponent = PlayerCharacter->FindComponentByClass<UDynamicIMCComponent>();
 		DynamicImcComponent->BindDefaultSetting();
+	}
+}
+
+void ASLBasePlayerController::ShowInGameUI()
+{
+	ASLInGameHUD* HUD = Cast<ASLInGameHUD>(GetHUD());
+
+	if (IsValid(HUD))
+	{
+		HUD->ApplyObjective();
+		HUD->SetVisibilityPlayerState(true);
+	}
+}
+
+void ASLBasePlayerController::HideInGameUI()
+{
+	ASLInGameHUD* HUD = Cast<ASLInGameHUD>(GetHUD());
+
+	if (IsValid(HUD))
+	{
+		HUD->SetInvisibleObjectivve();
+		HUD->SetVisibilityPlayerState(false);
 	}
 }
 

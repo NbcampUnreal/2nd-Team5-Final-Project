@@ -33,7 +33,7 @@ void ASLInGameHUD::OnAddObjective(USLObjectiveBase* TargetObjective)
 	{
 		FName ObjectiveName = TargetObjective->GetObjectiveName();
 		int32 CompleteCount = TargetObjective->GetObjectiveCompleteCount();
-		UE_LOG(LogTemp, Warning, TEXT("Changed Top Objective : %s"), *ObjectiveName.ToString());
+
 		CurrentObjectiveName = ObjectiveName;
 
 		if (CompleteCount == 1)
@@ -81,9 +81,6 @@ void ASLInGameHUD::ApplyPlayerHp(FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 	{
 		PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
 	}
-
-	SetPlayerStateVisibility(true, false);
-	SetPlayerHpValue(100, 100);
 }
 
 void ASLInGameHUD::ApplyPlayerSpecial(FSLSpecialValueDelegateBuffer& SpecialValueDelegate)
@@ -92,9 +89,6 @@ void ASLInGameHUD::ApplyPlayerSpecial(FSLSpecialValueDelegateBuffer& SpecialValu
 	{
 		SpecialValueDelegate.OnSpecialValueChanged.AddDynamic(this, &ThisClass::SetPlayerSpecialValue);
 	}
-	
-	SetPlayerStateVisibility(true, true);
-	SetPlayerSpecialValue(100, 0);
 }
 
 void ASLInGameHUD::ApplyBossHp(FSLBossHpDelegateBuffer& BossHpDelegate)
@@ -140,6 +134,14 @@ void ASLInGameHUD::SetTimerVisibility(bool bIsVisible)
 void ASLInGameHUD::SetPlayerStateVisibility(bool bIsVisible, bool bIsSpecial)
 {
 	InGameWidget->SetIsPlayerStateActivate(bIsVisible, bIsSpecial);
+}
+
+void ASLInGameHUD::SetVisibilityPlayerState(bool bIsVisible)
+{
+	InGameWidget->SetVisibilityPlayerStatePanel(bIsVisible);
+	SetPlayerStateVisibility(GetIsActivated(ESLInGameActivateType::EIGA_PlayerHpBar), GetIsActivated(ESLInGameActivateType::EIGA_PlayerSpecialBar));
+	SetPlayerHpValue(100, 100);
+	SetPlayerSpecialValue(100, 0);
 }
 
 void ASLInGameHUD::SetObjectiveVisibility()

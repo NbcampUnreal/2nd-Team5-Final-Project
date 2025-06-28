@@ -58,10 +58,10 @@ void USLLevelTransferSubsystem::SetCurrentChapter(ESLChapterType ChapterType)
 	CheckValidOfUISubsystem();
 	UISubsystem->SetChapterToUI(ChapterType);
 
-	if (USLSaveGameSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>())
-	{
-		SaveGameSubsystem->SaveGameData();
-	}
+	//if (USLSaveGameSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>())
+	//{
+	//	SaveGameSubsystem->SaveGameData();
+	//}
 	
 	ChapterDelegate.Broadcast(ChapterType);
 }
