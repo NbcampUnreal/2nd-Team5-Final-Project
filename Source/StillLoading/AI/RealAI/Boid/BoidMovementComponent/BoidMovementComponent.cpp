@@ -551,6 +551,13 @@ FVector UBoidMovementComponent::CalculateGoalSeekingForce()
 		const FVector ToSlot = MyFormationSlot - OwnerCharacter->GetActorLocation();
 		const float DistanceToSlot = ToSlot.Size();
 
+		const float AcceptanceRadius = 15.0f; 
+		if (DistanceToSlot < AcceptanceRadius)
+		{
+			OwnerCharacter->GetCharacterMovement()->Velocity = FVector::ZeroVector; 
+			return FVector::ZeroVector;
+		}
+
 		const float MaxSpeed = OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed;
 		FVector DesiredVelocity = ToSlot.GetSafeNormal() * MaxSpeed;
 

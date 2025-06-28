@@ -129,38 +129,30 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 	case EInputActionType::EIAT_Attack:
 		// 패링 진입
 		{
-			if (CachedCombatComponent->IsEmpowered())
+			const float CurrentTime = GetWorld()->GetTimeSeconds();
+			if (CurrentTime - LastBlockTime <= ParryDuration)
 			{
-				CachedMontageComponent->PlaySkillMontage("SwordFromSky");
-				OwnerCharacter->SetPrimaryState(TAG_Character_Attack_SpawnSword);
-			}
-			else
-			{
-				const float CurrentTime = GetWorld()->GetTimeSeconds();
-				if (CurrentTime - LastBlockTime <= ParryDuration)
+				UE_LOG(LogTemp, Warning, TEXT("Parring!!!"));
+
+				if (!CachedCombatComponent->IsEmpowered())
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Parring!!!"));
+					OwnerCharacter->ClearAllStateTags();
 
-					if (!CachedCombatComponent->IsEmpowered())
-					{
-						OwnerCharacter->ClearAllStateTags();
+					if (RightDot > 0.0f)
+						CachedMontageComponent->PlayBlockMontage(FName("ParryR"));
+					else
+						CachedMontageComponent->PlayBlockMontage(FName("ParryL"));
 
-						if (RightDot > 0.0f)
-							CachedMontageComponent->PlayBlockMontage(FName("ParryR"));
-						else
-							CachedMontageComponent->PlayBlockMontage(FName("ParryL"));
-
-						OwnerCharacter->AddSecondaryState(TAG_Character_Defense_Parry);
-						BlockCount = 0;
-					}
-
-					BeginBuff();
-					USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
-
-					return;
+					OwnerCharacter->AddSecondaryState(TAG_Character_Defense_Parry);
+					BlockCount = 0;
 				}
+
+				//BeginBuff();
+				CachedCombatComponent->SetEmpoweredCombatMode(20);
+				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
+
+				return;
 			}
-			
 			Attack();
 			break;
 		}
@@ -297,8 +289,10 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	                                                InvulnerableDuration, false);
 
 	// 피격
-	OwnerCharacter->ClearStateTags({TAG_Character_OnBuff}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
-		                               TAG_Character_Empowered });
+	OwnerCharacter->ClearStateTags({TAG_Character_OnBuff}, {
+		                               TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
+		                               TAG_Character_Empowered
+	                               });
 	CachedMontageComponent->StopAllMontages(0.2f);
 	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
 
@@ -430,7 +424,7 @@ void USL25DMovementHandlerComponent::BeginBuff()
 		//UE_LOG(LogTemp, Warning, TEXT("USL25DMovementHandlerComponent: Buff Blocked"));
 		return;
 	}
-	
+
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_OnBuff);
 	CachedMontageComponent->StopAllMontages(0.2f);
@@ -698,7 +692,7 @@ void USL25DMovementHandlerComponent::OnCharacterHit(UPrimitiveComponent* HitComp
 	if (OwnerCharacter->GetVelocity().Length() < 100)
 	{
 		OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
-		return;	
+		return;
 	}
 
 	const FVector HitNormal = Hit.ImpactNormal;
