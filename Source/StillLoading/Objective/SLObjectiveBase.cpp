@@ -25,6 +25,7 @@ void USLObjectiveBase::ObjectiveFail()
 
 void USLObjectiveBase::ResetObjective()
 {
+	ObjectiveProgressCount = 0;
 	ObjectiveState = ESLObjectiveState::None;
 }
 
