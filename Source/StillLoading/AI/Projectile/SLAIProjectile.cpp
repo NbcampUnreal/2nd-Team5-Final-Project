@@ -119,6 +119,12 @@ void ASLAIProjectile::BeginPlay()
 		{
 			CollisionComp->IgnoreComponentWhenMoving(Component, true);
 		}
+
+		CollisionComp->MoveIgnoreActors.Add(GetInstigator());
+		if (UPrimitiveComponent* InstigatorRoot = Cast<UPrimitiveComponent>(GetInstigator()->GetRootComponent()))
+		{
+			InstigatorRoot->MoveIgnoreActors.Add(this);
+		}
 	}
 }
 
