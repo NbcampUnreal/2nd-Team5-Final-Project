@@ -4,9 +4,7 @@
 #include "SwarmAgent.h"
 #include "SwarmManager.h"
 #include "AnimInstances/SLCompanionAnimInstance.h"
-#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/BoxComponent.h"
-#include "Components/SphereComponent.h"
 #include "Engine/TargetPoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -25,6 +23,17 @@ ASwarmSpawner::ASwarmSpawner()
 void ASwarmSpawner::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
+
+	const FGenericTeamId InvalidTeamID = FGenericTeamId::NoTeam;
+	const FGenericTeamId DefaultTeamID = FGenericTeamId(2);
+
+	for (FSwarmComposition& Composition : SwarmCompositions)
+	{
+		if (Composition.TeamIDToAssign == InvalidTeamID)
+		{
+			Composition.TeamIDToAssign = DefaultTeamID;
+		}
+	}
 }
 
 void ASwarmSpawner::BeginSpawn()
