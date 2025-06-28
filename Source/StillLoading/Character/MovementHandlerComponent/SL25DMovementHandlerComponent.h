@@ -74,8 +74,6 @@ protected:
 	UFUNCTION()
 	void DodgeLoco();
 	UFUNCTION()
-	void ToggleMenu();
-	UFUNCTION()
 	void Block(bool bIsBlocking);
 	UFUNCTION()
 	void Attack();
