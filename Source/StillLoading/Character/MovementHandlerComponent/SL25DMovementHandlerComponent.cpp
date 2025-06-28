@@ -124,7 +124,7 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 	case EInputActionType::EIAT_Jump:
 		break;
 	case EInputActionType::EIAT_Interaction:
-		Interact();
+		BeginBuff();
 		break;
 	case EInputActionType::EIAT_Attack:
 		// 패링 진입
@@ -294,8 +294,6 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	CachedMontageComponent->StopAllMontages(0.2f);
 	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
 
-	float RemoveDelay = 1.0f;
-
 	switch (AnimType)
 	{
 	case EHitAnimType::HAT_FallBack:
@@ -334,30 +332,12 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 		}
 		return;
 	case EHitAnimType::HAT_HardHit:
-		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
-		RemoveDelay = 1.0f;
-		break;
 	case EHitAnimType::HAT_WeakHit:
-		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
-		RemoveDelay = 1.0f;
 		break;
 	default: break;
 	}
 
 	HitDirection(Causer);
-
-	GetWorld()->GetTimerManager().SetTimer(
-		ReactionResetTimerHandle,
-		FTimerDelegate::CreateWeakLambda(this, [this]()
-		{
-			if (OwnerCharacter)
-			{
-				OwnerCharacter->RemovePrimaryState(TAG_Character_HitReaction_Medium);
-				OwnerCharacter->RemovePrimaryState(TAG_Character_HitReaction_Weak);
-			}
-		}),
-		RemoveDelay, false
-	);
 }
 
 void USL25DMovementHandlerComponent::OnDelayedAction()

@@ -153,7 +153,7 @@ void UAnimationMontageComponent::Play2DAttackMontage(FName Section)
 
 void UAnimationMontageComponent::PlayAIAttackMontage(FName Section)
 {
-	AnimInstance->Montage_Stop(0.25f);
+	//AnimInstance->Montage_Stop(0.25f);
 	if (MontageData)
 		PlayMontage(MontageData->AIAttackMontage, Section);
 }
@@ -167,7 +167,7 @@ void UAnimationMontageComponent::PlayAIHitMontage(FName Section)
 
 void UAnimationMontageComponent::PlayAIETCMontage(FName Section)
 {
-	AnimInstance->Montage_Stop(0.25f);
+	//AnimInstance->Montage_Stop(0.25f);
 	if (MontageData)
 		PlayMontage(MontageData->AIETCMontage, Section);
 }
