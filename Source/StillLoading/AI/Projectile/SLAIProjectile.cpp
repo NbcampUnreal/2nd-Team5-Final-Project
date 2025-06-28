@@ -22,13 +22,16 @@ ASLAIProjectile::ASLAIProjectile()
 	CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	CollisionComp->InitSphereRadius(15.0f);
 	CollisionComp->SetCollisionProfileName("Projectile");
-	CollisionComp->OnComponentHit.AddDynamic(this, &ASLAIProjectile::OnHit);
+	
+	//CollisionComp->OnComponentHit.AddDynamic(this, &ASLAIProjectile::OnHit);
+	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &ASLAIProjectile::OnComponentBeginOverlap);
+	
 	CollisionComp->SetCollisionObjectType(ECC_WorldDynamic);
 	CollisionComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	CollisionComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);           // 캐릭터와 충돌
+	CollisionComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);           // 캐릭터와 충돌
 	CollisionComp->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);    // 월드와 충돌
 	CollisionComp->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);   // 동적 오브젝트와 충돌
-	CollisionComp->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
+	CollisionComp->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
 	RootComponent = CollisionComp;
 
 	
@@ -55,6 +58,9 @@ ASLAIProjectile::ASLAIProjectile()
 
 	// 5초 후 자동 소멸
 	InitialLifeSpan = 5.0f;
+
+	TeamId = FGenericTeamId::NoTeam;
+	bHasHitTarget = false;
 }
 
 
@@ -75,7 +81,23 @@ void ASLAIProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
 		// 다른 프로젝타일과 충돌한 경우 아무 작업도 수행하지 않고 반환
 		return;
 	}
-    
+
+	if (OtherActor && TeamId != FGenericTeamId::NoTeam)
+	{
+		if (APawn* HitPawn = Cast<APawn>(OtherActor))
+		{
+			if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(HitPawn->GetController()))
+			{
+				if (TeamAgent->GetGenericTeamId() == TeamId)
+				{
+					// 같은 팀이면 충돌 무시하고 관통
+					CollisionComp->IgnoreActorWhenMoving(OtherActor, true);
+					return;
+				}
+			}
+		}
+	}
+	
 	if (OtherActor && OtherActor != this && OtherActor != GetInstigator() && OtherComp)
 	{
 		// 충돌 이펙트 재생
@@ -125,6 +147,8 @@ void ASLAIProjectile::BeginPlay()
 		{
 			InstigatorRoot->MoveIgnoreActors.Add(this);
 		}
+
+		IgnoreSameTeamActors();
 	}
 }
 
@@ -175,4 +199,120 @@ void ASLAIProjectile::DestroyProjectileWithDelay(float DelayTime)
 	{
 		Destroy();
 	}, DelayTime, false);
+}
+
+void ASLAIProjectile::SetTeamId(const FGenericTeamId& NewTeamId)
+{
+	TeamId = NewTeamId;
+}
+
+FGenericTeamId ASLAIProjectile::GetTeamId() const
+{
+	return TeamId;
+}
+
+void ASLAIProjectile::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, 
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!OtherActor || OtherActor == this || OtherActor == GetInstigator())
+	{
+		return;
+	}
+    
+	// 이미 히트 처리가 완료된 경우
+	if (bHasHitTarget)
+	{
+		return;
+	}
+    
+	// 이미 히트한 액터인지 확인
+	if (AlreadyHitActors.Contains(OtherActor))
+	{
+		return;
+	}
+    
+	// 다른 프로젝타일과 충돌했는지 확인
+	if (Cast<ASLAIProjectile>(OtherActor))
+	{
+		return;
+	}
+    
+	// 팀 체크 - 같은 팀이면 무시
+	if (TeamId != FGenericTeamId::NoTeam)
+	{
+		if (APawn* HitPawn = Cast<APawn>(OtherActor))
+		{
+			if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(HitPawn->GetController()))
+			{
+				if (TeamAgent->GetGenericTeamId() == TeamId)
+				{
+					// 같은 팀이면 무시
+					return;
+				}
+			}
+		}
+	}
+    
+	// 히트한 액터 추가
+	AlreadyHitActors.Add(OtherActor);
+    
+	// 충돌 처리
+	FHitResult HitResult;
+	if (bFromSweep)
+	{
+		HitResult = SweepResult;
+	}
+	else
+	{
+		HitResult.Location = GetActorLocation();
+		HitResult.ImpactPoint = GetActorLocation();
+		HitResult.ImpactNormal = (GetActorLocation() - OtherActor->GetActorLocation()).GetSafeNormal();
+	}
+    
+	// 충돌 이펙트 재생
+	PlayHitEffects(HitResult);
+    
+	// 데미지 처리
+	ProcessDamage(OtherActor, HitResult);
+    
+	// 히트 처리 완료 표시
+	bHasHitTarget = true;
+    
+	// 즉시 충돌 비활성화
+	CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    
+	// 트레일 이펙트 중지
+	if (NiagaraComponent)
+	{
+		NiagaraComponent->Deactivate();
+	}
+    
+	// 딜레이 후 발사체 제거
+	DestroyProjectileWithDelay(0.1f);
+}
+
+void ASLAIProjectile::IgnoreSameTeamActors()
+{
+	if (TeamId == FGenericTeamId::NoTeam)
+	{
+		return;
+	}
+    
+	// 월드의 모든 Pawn 검색
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APawn::StaticClass(), FoundActors);
+    
+	for (AActor* Actor : FoundActors)
+	{
+		if (APawn* Pawn = Cast<APawn>(Actor))
+		{
+			if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(Pawn->GetController()))
+			{
+				if (TeamAgent->GetGenericTeamId() == TeamId)
+				{
+					CollisionComp->IgnoreActorWhenMoving(Actor, true);
+				}
+			}
+		}
+	}
 }

@@ -590,7 +590,6 @@ EChapter ASLAIBaseCharacter::GetChapter() const
 ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass,
     FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType, bool bHorizontalOnly)
 {
-    UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation called. ProjectileSpeed parameter: %f"), ProjectileSpeed);
     if (!ProjectileClass)
     {
         UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No projectile class specified"));
@@ -608,8 +607,6 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
     if (TargetLocation.IsZero() || TargetLocation.IsNearlyZero())
     {
         TargetLocation = SpawnLocation + GetActorForwardVector() * 1000.0f;
-        
-        UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No target location, using socket forward direction"));
     }
     
     FRotator SpawnRotation;
@@ -652,6 +649,14 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
         // 프로젝타일 설정
         SpawnedProjectile->SetupSpawnedProjectile(AnimType, ProjectileSpeed);
 
+    	if (AController* MyController = GetController())
+    	{
+    		if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(MyController))
+    		{
+    			SpawnedProjectile->SetTeamId(TeamAgent->GetGenericTeamId());
+    		}
+    	}
+    	
         PreparedProjectile = SpawnedProjectile;
         // 프로젝타일 속도 설정
         if (SpawnedProjectile->GetProjectileMovement())
@@ -659,10 +664,6 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
             // 계산된 발사 방향으로 발사
             SpawnedProjectile->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
         }
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
     }
 
     return SpawnedProjectile;
