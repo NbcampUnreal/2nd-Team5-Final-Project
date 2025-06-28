@@ -655,7 +655,6 @@ void AMonsterAICharacter::ReportEnemy(AActor* Causer)
 		ASwarmManager* SwarmManager = GetMySwarmManager();
 		if (!SwarmManager) return;
 		SwarmManager->ReportTargetSighting(this, CurrentDetectedActor);
-		SwarmManager->SetSquadState(ESquadState::Engaging);
 	}
 }
 
