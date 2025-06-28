@@ -131,15 +131,19 @@ void USLAICharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeco
 	
 	FallSpeed = CurrentVelocity.Z;
     
-	float DistanceToGround = GetDistanceToGround();
-    
-	if (DistanceToGround <= 200.0f && FallSpeed <= 0.0f)
+	if (OwningMovementComponent->IsMovingOnGround())
 	{
 		bIsFalling = false;
 	}
+	else if (OwningMovementComponent->IsFalling())
+	{
+		float DistanceToGround = GetDistanceToGround();
+	
+		bIsFalling = (FallSpeed < -100.0f) || (DistanceToGround > 200.0f);
+	}
 	else
 	{
-		bIsFalling = (FallSpeed < -100.0f) || (DistanceToGround > 200.0f);
+		bIsFalling = false;
 	}
     
 	Angle = UKismetMathLibrary::FindLookAtRotation(OwningCharacter->GetActorForwardVector(), CurrentVelocity).Yaw;
