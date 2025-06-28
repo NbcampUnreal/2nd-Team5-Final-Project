@@ -5,6 +5,7 @@
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "AnimInstances/SLBossAnimInstance.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/BoxComponent.h"
 #include "Controller/SLBaseAIController.h"
 #include "Engine/TargetPoint.h"
 #include "Kismet/GameplayStatics.h"
@@ -222,4 +223,21 @@ void ASLBossCharacter::UpdateAllMeshesFade()
 	{
 		GetWorld()->GetTimerManager().ClearTimer(AllMeshesFadeTimerHandle);
 	}
+}
+
+void ASLBossCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OverlappedComponent == BoxCollisionComponent)
+	{
+		if (GetBossAttackPattern() != EBossAttackPattern::EBAP_DashAttack)
+		{
+			return; 
+		}
+		else
+		{
+			CurrentAttackType = EAttackAnimType::AAT_DashAttack;
+		}
+	}
+    
+	Super::OnBodyCollisionBoxBeginOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 }

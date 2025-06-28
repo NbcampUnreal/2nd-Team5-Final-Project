@@ -232,22 +232,7 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 		UE_LOG(LogTemp, Warning, TEXT("공격자(%s)에 BattleComponent가 없습니다"), *GetName());
 		return;
 	}
-
-	if (OverlappedComponent == BoxCollisionComponent)
-	{
-		if (ASLBossCharacter* BossCharacter = Cast<ASLBossCharacter>(this))
-		{
-			
-			if (BossCharacter->GetBossAttackPattern() != EBossAttackPattern::EBAP_DashAttack)
-			{
-				return; 
-			}
-			else
-			{
-				CurrentAttackType = EAttackAnimType::AAT_DashAttack;
-			}
-		}
-	}
+	
 	
 	if (bIsDebugMode)
 	{
