@@ -86,7 +86,7 @@ void AMonsterAICharacter::BeginPlay()
 
 		FOnTimelineEvent TimelineFinishedFunction;
 		TimelineFinishedFunction.BindUFunction(this, FName("OnSpawnMovementFinished"));
-        
+
 		SpawnTimeline->AddInterpFloat(SpawnMovementCurve, InterpFunction);
 		SpawnTimeline->SetTimelineFinishedFunc(TimelineFinishedFunction);
 	}
@@ -95,7 +95,6 @@ void AMonsterAICharacter::BeginPlay()
 void AMonsterAICharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	
 }
 
 void AMonsterAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -128,7 +127,7 @@ void AMonsterAICharacter::BeginSpawning(const FVector& FinalLocation, const floa
 	}
 
 	//SetActorEnableCollision(false);
-    
+
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->SetMovementMode(MOVE_None);
@@ -191,8 +190,9 @@ void AMonsterAICharacter::SpawnSpear()
 	SpawnParams.Instigator = this;
 
 	ToggleWeaponState(false);
-	
-	if (ASpearProjectile* SpawnedSpear = GetWorld()->SpawnActor<ASpearProjectile>(ThrowableClass, SpawnLocation, FinalRotation, SpawnParams))
+
+	if (ASpearProjectile* SpawnedSpear = GetWorld()->SpawnActor<ASpearProjectile>(
+		ThrowableClass, SpawnLocation, FinalRotation, SpawnParams))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Spear Spawned!"));
 	}
@@ -212,8 +212,9 @@ void AMonsterAICharacter::SpawnArrow()
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
 	SpawnParams.Instigator = this;
-	
-	if (AArrowProjectile* SpawnedArrow = GetWorld()->SpawnActor<AArrowProjectile>(ThrowableClass, SpawnLocation, SpawnRotation, SpawnParams))
+
+	if (AArrowProjectile* SpawnedArrow = GetWorld()->SpawnActor<AArrowProjectile>(
+		ThrowableClass, SpawnLocation, SpawnRotation, SpawnParams))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Spear Spawned!"));
 	}
@@ -377,7 +378,8 @@ void AMonsterAICharacter::RemoveStrategyState()
 	StrategyStateTags.Reset();
 }
 
-void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType)
+void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
+                                        EHitAnimType AnimType)
 {
 	AnimationComponent->StopAllMontages(0.2f);
 	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
@@ -393,11 +395,11 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 			const FVector CauserLocation = Causer->GetActorLocation();
 			const FVector DirectionToCauser = (CauserLocation - GetActorLocation()).GetSafeNormal();
 			const FRotator NewRotation = FRotationMatrix::MakeFromX(DirectionToCauser).Rotator();
-            
+
 			AIController->SetControlRotation(FRotator(0.f, NewRotation.Yaw, 0.f));
 		}
 	}
-	
+
 	HitDirection(Causer);
 	RotateToHitCauser(Causer);
 	//ChangeMeshTemporarily();
@@ -434,7 +436,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 				FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
 				KnockbackDir.Z = 0;
 				KnockbackDir.Normalize();
-			
+
 				const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
 				if (GetCharacterMovement()->IsFalling() && GroundDistance > 20.0f)
 				{
@@ -445,7 +447,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 					LaunchCharacter(KnockbackDir * 1200, true, false);
 				}
 			}
-			
+
 			break;
 		}
 	case EHitAnimType::HAT_AirBorne:
@@ -457,9 +459,8 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		}
 		else
 		{
-			SetBattleState(TAG_AI_Hit);
+			SetBattleState(TAG_AI_Hit_Air);
 			AnimationComponent->PlayAIHitMontage("Airborne");
-			
 		}
 		break;
 	case EHitAnimType::HAT_AirUp:
@@ -471,13 +472,13 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		}
 		else
 		{
-			SetBattleState(TAG_AI_Hit);
+			SetBattleState(TAG_AI_Hit_Air);
 			AnimationComponent->PlayAIHitMontage("AirUp");
 		}
 		break;
 	case EHitAnimType::HAT_FallBack:
 		RotateToHitCauser(Causer);
-		
+
 		if (CurrentHealth < 0.f)
 		{
 			//Dead(Causer, true);
@@ -558,17 +559,24 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 		GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterDie, GetActorLocation());
 		Dead(LastAttacker, true);
 		return;
-	case EAttackAnimType::AAT_ParryAttack:
-		break;
-	default: break;
 	}
 
-	if (HasBattleState(TAG_AI_Dead)) return;
-	
+	if (HasBattleState(TAG_AI_Dead)
+		|| HasBattleState(TAG_AI_Hit)
+		|| HasBattleState(TAG_AI_Hit_FallBack)
+		|| HasBattleState(TAG_AI_Hit_Air)) return;
+
 	SetPrimaryState(TAG_AI_Idle);
 	SetStrategyState(TAG_AI_Idle);
 	SetBattleState(TAG_AI_Idle);
 	StopFlyingState();
+}
+
+void AMonsterAICharacter::HandleHitNotify()
+{
+	SetPrimaryState(TAG_AI_Idle);
+	SetStrategyState(TAG_AI_Idle);
+	SetBattleState(TAG_AI_Idle);
 }
 
 void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
@@ -641,7 +649,8 @@ void AMonsterAICharacter::StartFlyingState()
 {
 	if (GetCapsuleComponent())
 	{
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn,
+		                                                     ECollisionResponse::ECR_Ignore);
 	}
 }
 
@@ -649,7 +658,8 @@ void AMonsterAICharacter::StopFlyingState()
 {
 	if (GetCapsuleComponent())
 	{
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+		GetCapsuleComponent()->
+			SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
 	}
 }
 
@@ -669,7 +679,7 @@ USLSoundSubsystem* AMonsterAICharacter::GetBattleSoundSubSystem() const
 void AMonsterAICharacter::RecoverFromHitState()
 {
 	if (HasBattleState(TAG_AI_Dead)) return;
-	
+
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 	SetBattleState(TAG_AI_Idle);
 	SetStrategyState(TAG_AI_Idle);
@@ -688,7 +698,8 @@ void AMonsterAICharacter::PlayHitMontageAndSetupRecovery(const float Length)
 
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 		GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
-		GetWorld()->GetTimerManager().SetTimer(CollisionResetTimerHandle, this, &AMonsterAICharacter::RecoverFromHitState, Length, false);
+		GetWorld()->GetTimerManager().SetTimer(CollisionResetTimerHandle, this,
+		                                       &AMonsterAICharacter::RecoverFromHitState, Length, false);
 	}
 	else
 	{

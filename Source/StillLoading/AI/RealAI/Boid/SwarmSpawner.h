@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GenericTeamAgentInterface.h"
+#include "SwarmManager.h"
 #include "GameFramework/Actor.h"
 #include "SwarmSpawner.generated.h"
 
@@ -74,7 +75,7 @@ public:
 	bool bEnableAutoSpawn = true;
 
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
-	EFollowerFormationType FormationType;
+	EFollowerFormationType FormationType = EFollowerFormationType::CenteredSquare;
 
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
 	float FollowerMovementSpeed = 300.0f;

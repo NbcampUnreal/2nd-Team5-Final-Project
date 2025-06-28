@@ -8,7 +8,6 @@
 #include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLPlayerCharacter.h"
-#include "Character/SLPlayerCharacterBase.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
@@ -62,7 +61,8 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)
 		|| Monster->HasBattleState(TAG_AI_Dead)
-		|| Monster->HasBattleState(TAG_AI_Hit)) return;
+		|| Monster->HasBattleState(TAG_AI_Hit)
+		|| Monster->HasBattleState(TAG_AI_Hit_FallBack)) return;
 
 	CheckAndHandleStuckTeleport(DeltaTime);
 
