@@ -1,5 +1,6 @@
 #include "MonsterAICharacter.h"
 
+#include "Boid/SwarmManager.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/DataAsset/AttackDataAsset.h"
@@ -90,6 +91,10 @@ void AMonsterAICharacter::BeginPlay()
 		SpawnTimeline->AddInterpFloat(SpawnMovementCurve, InterpFunction);
 		SpawnTimeline->SetTimelineFinishedFunc(TimelineFinishedFunction);
 	}
+
+	SetPrimaryState(TAG_AI_Idle);
+	SetStrategyState(TAG_AI_Idle);
+	SetBattleState(TAG_AI_Idle);
 }
 
 void AMonsterAICharacter::Tick(float DeltaSeconds)
@@ -223,8 +228,8 @@ void AMonsterAICharacter::SpawnArrow()
 void AMonsterAICharacter::OnHitByCharacter(UPrimitiveComponent* HitComp, AActor* OtherActor,
                                            UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherActor && OtherActor->IsA(AMonsterAICharacter::StaticClass()) || OtherActor->IsA(
-		ASLPlayerCharacter::StaticClass()))
+	if (OtherActor && OtherActor->IsA(AMonsterAICharacter::StaticClass())
+		|| OtherActor->IsA(ASLPlayerCharacter::StaticClass()))
 	{
 		if (!bRecentlyPushed)
 		{
@@ -237,6 +242,8 @@ void AMonsterAICharacter::OnHitByCharacter(UPrimitiveComponent* HitComp, AActor*
 
 			GetWorld()->GetTimerManager().SetTimer(PushResetHandle, this, &AMonsterAICharacter::ResetPushFlag, 0.5f,
 			                                       false);
+
+			ReportEnemy(OtherActor);
 		}
 	}
 }
@@ -385,7 +392,8 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	{
 		return;
 	}
-	
+
+	ReportEnemy(Causer);
 	AnimationComponent->StopAllMontages(0.2f);
 	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
 	
@@ -636,6 +644,17 @@ void AMonsterAICharacter::StopFlyingState()
 	{
 		GetCapsuleComponent()->
 			SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+	}
+}
+
+void AMonsterAICharacter::ReportEnemy(AActor* Causer)
+{
+	if (APawn* DetectedActor = Cast<APawn>(Causer))
+	{
+		CurrentDetectedActor = DetectedActor;
+		ASwarmManager* SwarmManager = GetMySwarmManager();
+		if (!SwarmManager) return;
+		SwarmManager->ReportTargetSighting(this, CurrentDetectedActor);
 	}
 }
 

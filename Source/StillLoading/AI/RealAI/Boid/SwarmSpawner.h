@@ -38,7 +38,7 @@ struct FSwarmComposition
 	bool bIsLeader = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swarm AI")
-	FGenericTeamId TeamIDToAssign;
+	FGenericTeamId TeamIDToAssign = FGenericTeamId(2);
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpawnedMonstersCountUpdated, int32, DecreaseCount);
@@ -106,10 +106,10 @@ public:
 
 	// 평상시 가중치
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Boids | Patrol Weights", meta = (ToolTip = "평상시 AI들이 서로의 개인 공간을 얼마나 존중할지 결정합니다. 값이 높을수록 서로를 강하게 밀어내어 넓은 대형을 유지합니다."))
-	float SeparationWeight = 2.0f;
+	float SeparationWeight = 0.3f;
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Boids | Patrol Weights", meta = (ToolTip = "평상시 AI들이 주변 동료들과 얼마나 방향을 맞춰 움직일지 결정합니다. 값이 높을수록 질서정연한 움직임을 보입니다."))
-	float AlignmentWeight = 1.5f;
+	float AlignmentWeight = 0.4f;
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Boids | Patrol Weights", meta = (ToolTip = "평상시 AI들이 무리의 중심을 향해 얼마나 강하게 뭉치려 하는지 결정합니다. 군집의 '접착제' 역할을 하며, 높을수록 빽빽한 무리를 형성합니다."))
 	float CohesionWeight = 0.5f;
@@ -119,16 +119,16 @@ public:
 
 	// 전투 시 가중치
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Boids | Combat Weights", meta = (ToolTip = "전투 시 AI들이 서로의 공간을 얼마나 확보할지 결정합니다. 값을 낮추면 적에게 더 빽빽하게 달려듭니다."))
-	float CombatSeparationWeight = 2.0f;
+	float CombatSeparationWeight = 1.0f;
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Boids | Combat Weights", meta = (ToolTip = "전투 시 AI들이 대열을 얼마나 맞춰 움직일지 결정합니다. 값을 낮추면 개별적으로, 더 혼란스럽게 움직이며 적을 압박합니다."))
-	float CombatAlignmentWeight = 1.5f;
+	float CombatAlignmentWeight = 0.5f;
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Boids | Combat Weights", meta = (ToolTip = "전투 시 AI들이 뭉치려는 힘을 결정합니다. 이 값을 높이면 분대원들이 흩어지지 않고 함께 싸우려는 경향이 강해집니다."))
 	float CombatCohesionWeight = 0.5f;
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Boids | Combat Weights", meta = (ToolTip = "전투 시 AI들이 목표(플레이어)를 향해 얼마나 저돌적으로 돌진할지 결정합니다. 이 값이 높을수록 다른 모든 것을 무시하고 목표를 향해 달려듭니다."))
-	float CombatGoalSeekingWeight = 1.0f;
+	float CombatGoalSeekingWeight = 0.3f;
 
 protected:
 	virtual void BeginPlay() override;
