@@ -1738,7 +1738,7 @@ void ASLDeveloperBoss::StartPhase4FloorCollapse()
         return;
     }
     
-    UE_LOG(LogTemp, Display, TEXT("🏗️ Phase 4: Starting floor collapse"));
+    UE_LOG(LogTemp, Display, TEXT("Phase 4: Starting floor collapse"));
     Phase4FallingFloor->StartFloorCollapse();
 }
 
@@ -1757,7 +1757,7 @@ void ASLDeveloperBoss::HandlePhase4FloorCollapseCompleted()
         return;
     }
     
-    UE_LOG(LogTemp, Display, TEXT("🏗️ Phase 4: Floor collapse completed - Starting auto wall attacks"));
+    UE_LOG(LogTemp, Display, TEXT("Phase 4: Floor collapse completed - Starting auto wall attacks"));
     
     OnPhase4PlatformerCompleted.Broadcast();
     
