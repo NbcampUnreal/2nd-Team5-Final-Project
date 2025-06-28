@@ -218,7 +218,7 @@ void USLOptionWidget::OnClickedMoveToTitle()
 
 	USLSaveGameSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
 	checkf(IsValid(SaveGameSubsystem), TEXT("SaveGameSubsystem is invalid"));
-
+	SaveGameSubsystem->SaveUserData();
 	SaveGameSubsystem->LoadGameData();
 
 	CheckValidOfLevelTransferSubsystem();
