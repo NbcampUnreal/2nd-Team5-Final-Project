@@ -146,16 +146,24 @@ bool USLTitleWidget::ApplyOtherImage()
 
 void USLTitleWidget::OnClickedStartButton()
 {
+	PlayUISound(ESLUISoundType::EUS_Click);
+
 	CheckValidOfSaveGameSubsystem();
 	SaveGameSubsystem->ResetGameData();
-
-	PlayUISound(ESLUISoundType::EUS_Click);
 	MoveToLevelByType(ESLLevelNameType::ELN_Intro);
 }
 
 void USLTitleWidget::OnClickedContinueButton()
 {
 	PlayUISound(ESLUISoundType::EUS_Click);
+
+	CheckValidOfSaveGameSubsystem();
+	
+	if (!SaveGameSubsystem->GetIsExistSaveData())
+	{
+		SaveGameSubsystem->OnSelectedNewGame();
+	}
+
 	MoveToLevelByType(NextLevelType);
 }
 
@@ -174,8 +182,18 @@ void USLTitleWidget::OnClickedQuitButton()
 
 void USLTitleWidget::OnClickedNewGameButton()
 {
-	QuestionPanel->SetVisibility(ESlateVisibility::Visible);
 	PlayUISound(ESLUISoundType::EUS_Click);
+
+	CheckValidOfSaveGameSubsystem();
+
+	if (SaveGameSubsystem->GetIsExistSaveData())
+	{
+		QuestionPanel->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		OnClickedContinueButton();
+	}
 }
 
 void USLTitleWidget::OnClickedCancleButton()

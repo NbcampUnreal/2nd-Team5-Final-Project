@@ -15,11 +15,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void MoveToStartMap();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void NotifyTalkEnded();
 
-	UFUNCTION()
-	void NotifyChoiceEnded(bool bIsAccept);
+	UFUNCTION(BlueprintCallable)
+	void ActivateTitleTalk();
 
 protected:
 	virtual void OnStartedHUD() override;

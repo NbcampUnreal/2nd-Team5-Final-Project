@@ -28,12 +28,13 @@ public:
     UFUNCTION(BlueprintCallable)
     void ResetGameData();
 
+    void SaveUserData();
+    void OnSelectedNewGame();
     bool GetIsExistSaveData() const;
 
 private:
     void LoadObjectiveDefaultData();
     
-    void SaveUserData();
     void SaveChapterData();
     void SaveObjectiveData();
     

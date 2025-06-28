@@ -8,7 +8,6 @@
 #include "AI/RealAI/Boid/SwarmManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SLPlayerCharacter.h"
-#include "Character/SLPlayerCharacterBase.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
@@ -226,7 +225,7 @@ void UBoidMovementComponent::HandleMovementState(float DeltaTime, ASwarmAgent* A
 	{
 		if (SeparationSq > 600) // 뒤에있어서 멀어지려는 힘이 약하고
 		{
-			OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰 or Anim
+			//OwnerCharacter->GetCharacterMovement()->StopMovementImmediately(); // 멈춰 or Anim
 			AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(Agent);
 			if (!Monster) return;
 			if (AbleToPlayWonderMontage)
@@ -550,6 +549,13 @@ FVector UBoidMovementComponent::CalculateGoalSeekingForce()
 
 		const FVector ToSlot = MyFormationSlot - OwnerCharacter->GetActorLocation();
 		const float DistanceToSlot = ToSlot.Size();
+
+		const float AcceptanceRadius = 15.0f; 
+		if (DistanceToSlot < AcceptanceRadius)
+		{
+			OwnerCharacter->GetCharacterMovement()->Velocity = FVector::ZeroVector; 
+			return FVector::ZeroVector;
+		}
 
 		const float MaxSpeed = OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed;
 		FVector DesiredVelocity = ToSlot.GetSafeNormal() * MaxSpeed;

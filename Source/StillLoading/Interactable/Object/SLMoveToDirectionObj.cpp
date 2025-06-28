@@ -3,44 +3,47 @@
 
 #include "Interactable/Object/SLMoveToDirectionObj.h"
 #include "Character/SLPlayerCharacterBase.h"
+#include "Character/BattleComponent/BattleComponent.h"
 
 ASLMoveToDirectionObj::ASLMoveToDirectionObj() : Super()
 {
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.bStartWithTickEnabled = false;
+	BattleComponent = CreateDefaultSubobject<UBattleComponent>(TEXT("BattleComponent"));
+	StaticMeshComp->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECollisionResponse::ECR_Overlap);
+	TriggerType = ESLReactiveTriggerType::ERT_Both;
+}
+
+void ASLMoveToDirectionObj::BeginPlay()
+{
+	Super::BeginPlay();
+	BattleComponent->OnCharacterHited.AddUniqueDynamic(this, &ThisClass::OnHited);
 }
 
 void ASLMoveToDirectionObj::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	Super::OnInteracted(InCharacter, InTriggerType);
 
-	if (bIsActivated)
-	{
-		return;
-	}
-
 	FVector CharacterPos = InCharacter->GetActorLocation();
-	StartLocation = GetActorLocation();
+	FVector StartLocation = GetActorLocation();
 
-	MoveDirection = (StartLocation - CharacterPos);
+	FVector MoveDirection = (StartLocation - CharacterPos);
 	MoveDirection.Z = 0;
 	MoveDirection = MoveDirection.GetSafeNormal();
 
-	bIsActivated = true;
-	SetActorTickEnabled(true);
+	if (InTriggerType == ESLReactiveTriggerType::ERT_InteractKey)
+	{
+		StaticMeshComp->AddImpulse(MoveDirection * MoveForce);
+	}
+
+	if (InTriggerType == ESLReactiveTriggerType::ERT_Hit)
+	{
+		StaticMeshComp->AddImpulse(MoveDirection * MoveForce * 1.5f);
+	}
 }
 
-void ASLMoveToDirectionObj::Tick(float DeltaTime)
+void ASLMoveToDirectionObj::OnHited(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType)
 {
-	Super::Tick(DeltaTime);
-
-	if (FVector::Dist(GetActorLocation(), StartLocation) >= MoveDistance)
+	if (ASLPlayerCharacterBase* Character = Cast<ASLPlayerCharacterBase>(DamageCauser))
 	{
-		SetActorTickEnabled(false);
-		bIsActivated = false;
-	}
-	else
-	{
-		SetActorLocation(GetActorLocation() + (MoveDirection * DeltaTime * MoveSpeed), false);
+		TriggerReact(Character, ESLReactiveTriggerType::ERT_Hit);
 	}
 }

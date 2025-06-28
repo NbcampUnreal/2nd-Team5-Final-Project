@@ -99,18 +99,17 @@ void USLBaseTextPrintWidget::OnClickedNextButton()
 
 void USLBaseTextPrintWidget::OnClickedSkipButton()
 {
+	CurrentTextIndex = -1;
 	GetWorld()->GetTimerManager().ClearTimer(TextPrintTimer);
 
 	if (NameArray.Last() == "Choice")
 	{
 		TargetTextIndex = NameArray.Num() - 1;
-		CurrentTextIndex = -1;
 		ParentTalkText->SetText(TalkArray[TargetTextIndex]);
 		SetChoiceVisibility(true);
 	}
 	else
 	{
-		CurrentTextIndex = -1;
 		CloseTalk();
 		OnChoiceEnded.Broadcast(false);
 	}
@@ -186,7 +185,8 @@ void USLBaseTextPrintWidget::PrintTalkText()
 {
 	if (CurrentTextIndex < 0)
 	{
-		if (NameArray[TargetTextIndex] == "Choice")
+		if (TargetTextIndex < NameArray.Num() &&
+			NameArray[TargetTextIndex] == "Choice")
 		{
 			SetChoiceVisibility(true);
 		}

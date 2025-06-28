@@ -152,7 +152,8 @@ void ASwarmAgent::SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree, UB
 
 void ASwarmAgent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
 {
-	if (CurrentDetectedActor == DetectedActor) return;
+	if (CurrentDetectedActor == DetectedActor
+		|| MySwarmManager->CurrentSquadTarget) return;
 	
 	if (APawn* CastedActor = Cast<APawn>(DetectedActor))
 	{
@@ -240,7 +241,8 @@ void ASwarmAgent::PlayAttackAnim()
 	
 	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
 	{
-		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)) return;
+		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)
+			|| Monster->HasBattleState(TAG_AI_Dead)) return;
 
 		Monster->SetPrimaryState(TAG_AI_IsAttacking);
 		Monster->SetStrategyState(TAG_AI_IsPlayingMontage);
@@ -270,7 +272,8 @@ void ASwarmAgent::PlayETCAnim()
 	
 	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
 	{
-		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)) return;
+		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)
+			|| Monster->HasBattleState(TAG_AI_Dead)) return;
 
 		Monster->SetStrategyState(TAG_AI_IsPlayingMontage);
 	}
@@ -305,7 +308,8 @@ void ASwarmAgent::PlayETCWaitAnim()
 {
 	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
 	{
-		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage) || Monster->HasBattleState(TAG_AI_Dead)) return;
+		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)
+			|| Monster->HasBattleState(TAG_AI_Dead)) return;
 		
 		Monster->SetStrategyState(TAG_AI_IsPlayingMontage);
 	}
