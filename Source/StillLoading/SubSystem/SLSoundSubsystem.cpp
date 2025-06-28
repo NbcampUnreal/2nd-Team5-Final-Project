@@ -74,6 +74,7 @@ void USLSoundSubsystem::StopBgmSound()
 	if (IsValid(BgmAudioComp))
 	{
 		BgmAudioComp->Stop();
+		BgmAudioComp->SetSound(nullptr);
 	}
 }
 
