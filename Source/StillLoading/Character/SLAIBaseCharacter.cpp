@@ -709,7 +709,7 @@ void ASLAIBaseCharacter::LaunchSpawnedProjectile(ASLAIProjectile* ProjectileToLa
 
 TArray<ASLAIProjectile*> ASLAIBaseCharacter::SpawnProjectileFanAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass,FVector TargetLocation, FName SocketName, int32 ProjectileCount, float FanHalfAngle, float ProjectileSpeed,EAttackAnimType AnimType)
 {
-	TArray<ASLAIProjectile*> SpawnedProjectiles;
+    TArray<ASLAIProjectile*> SpawnedProjectiles;
 
     if (!ProjectileClass || ProjectileCount <= 0)
     {
@@ -729,14 +729,17 @@ TArray<ASLAIProjectile*> ASLAIBaseCharacter::SpawnProjectileFanAtLocation(TSubcl
         SpawnLocation.Z += 80.0f;
     }
 
-    // 타겟 방향 계산
-    FVector BaseDirection = (TargetLocation - SpawnLocation).GetSafeNormal();
+    // 스폰 높이를 타겟 높이로 조정
+    SpawnLocation.Z = TargetLocation.Z;
+
+    // 캐릭터의 전방 방향을 기본 방향으로 사용
+    FVector BaseDirection = GetActorForwardVector();
 
     // 수평 부채꼴 방향들 생성
     TArray<FVector> FanDirections = GenerateHorizontalFanDirections(BaseDirection, ProjectileCount, FanHalfAngle);
 
-    UE_LOG(LogTemp, Display, TEXT("Spawning fan at location: %s with %d projectiles, angle: %f degrees"), 
-           *TargetLocation.ToString(), ProjectileCount, FanHalfAngle * 2.0f);
+    UE_LOG(LogTemp, Display, TEXT("Spawning fan in forward direction at target height: %f with %d projectiles, angle: %f degrees"), 
+           TargetLocation.Z, ProjectileCount, FanHalfAngle * 2.0f);
 
     // 각 방향으로 프로젝타일 스폰
     for (int32 i = 0; i < FanDirections.Num(); i++)
