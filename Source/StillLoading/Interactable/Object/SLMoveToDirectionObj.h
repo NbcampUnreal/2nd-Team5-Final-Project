@@ -6,6 +6,9 @@
 #include "Interactable/SLInteractableObjectBase.h"
 #include "SLMoveToDirectionObj.generated.h"
 
+enum class EHitAnimType : uint8;
+class UBattleComponent;
+
 UCLASS()
 class STILLLOADING_API ASLMoveToDirectionObj : public ASLInteractableObjectBase
 {
@@ -15,18 +18,16 @@ public:
 	ASLMoveToDirectionObj();
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType) override;
-	virtual void Tick(float DeltaTime) override;
-
-protected:
-	UPROPERTY(EditAnywhere, Category = "Reactive")
-	float MoveSpeed = 20.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Reactive")
-	float MoveDistance = 100.0f;
-
-	FVector StartLocation = FVector::ZeroVector;
-	FVector MoveDirection = FVector::ZeroVector;
-
-	bool bIsActivated = false;
+	
+	UFUNCTION()
+	virtual void OnHited(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType);
+	
+	UPROPERTY(EditAnywhere, Category = "Movable Object")
+	TObjectPtr<UBattleComponent> BattleComponent;
+	
+	UPROPERTY(EditAnywhere, Category = "Movable Object")
+	float MoveForce = 1000.f;
+	
 };
