@@ -124,7 +124,7 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 	case EInputActionType::EIAT_Jump:
 		break;
 	case EInputActionType::EIAT_Interaction:
-		Interact();
+		BeginBuff();
 		break;
 	case EInputActionType::EIAT_Attack:
 		// 패링 진입
@@ -147,7 +147,8 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 					BlockCount = 0;
 				}
 
-				CachedCombatComponent->SetEmpoweredCombatMode(10);
+				//BeginBuff();
+				CachedCombatComponent->SetEmpoweredCombatMode(20);
 				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
 
 				return;
@@ -176,7 +177,6 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 		DodgeLoco();
 		break;
 	case EInputActionType::EIAT_Menu:
-		ToggleMenu();
 	case EInputActionType::EIAT_LockObject:
 		break;
 
@@ -235,8 +235,6 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 		|| OwnerCharacter->HasSecondaryState(TAG_Character_Attack_Blast))
 		return;
 
-	OwnerCharacter->GetCharacterMovement()->GravityScale = 1.0f;
-
 	bool bIsFromBack = false;
 	FRotator TargetRotation;
 	RotateToHitCauser(Causer, TargetRotation, bIsFromBack);
@@ -289,12 +287,12 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 	                                                InvulnerableDuration, false);
 
 	// 피격
-	OwnerCharacter->ClearStateTags({TAG_Character_OnBuff}, {TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
-		                               TAG_Character_Empowered });
+	OwnerCharacter->ClearStateTags({TAG_Character_OnBuff}, {
+		                               TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
+		                               TAG_Character_Empowered
+	                               });
 	CachedMontageComponent->StopAllMontages(0.2f);
 	CachedBattleSoundSubsystem->PlayBattleSound(EBattleSoundType::BST_CharacterHit, OwnerCharacter->GetActorLocation());
-
-	float RemoveDelay = 1.0f;
 
 	switch (AnimType)
 	{
@@ -334,30 +332,12 @@ void USL25DMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer
 		}
 		return;
 	case EHitAnimType::HAT_HardHit:
-		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Medium);
-		RemoveDelay = 1.0f;
-		break;
 	case EHitAnimType::HAT_WeakHit:
-		OwnerCharacter->SetPrimaryState(TAG_Character_HitReaction_Weak);
-		RemoveDelay = 1.0f;
 		break;
 	default: break;
 	}
 
 	HitDirection(Causer);
-
-	GetWorld()->GetTimerManager().SetTimer(
-		ReactionResetTimerHandle,
-		FTimerDelegate::CreateWeakLambda(this, [this]()
-		{
-			if (OwnerCharacter)
-			{
-				OwnerCharacter->RemovePrimaryState(TAG_Character_HitReaction_Medium);
-				OwnerCharacter->RemovePrimaryState(TAG_Character_HitReaction_Weak);
-			}
-		}),
-		RemoveDelay, false
-	);
 }
 
 void USL25DMovementHandlerComponent::OnDelayedAction()
@@ -422,7 +402,7 @@ void USL25DMovementHandlerComponent::BeginBuff()
 		//UE_LOG(LogTemp, Warning, TEXT("USL25DMovementHandlerComponent: Buff Blocked"));
 		return;
 	}
-	
+
 	OwnerCharacter->ClearStateTags({}, {TAG_Character_PrepareLockOn, TAG_Character_LockOn, TAG_Character_Empowered});
 	OwnerCharacter->SetPrimaryState(TAG_Character_OnBuff);
 	CachedMontageComponent->StopAllMontages(0.2f);
@@ -440,14 +420,6 @@ void USL25DMovementHandlerComponent::DodgeLoco()
 	FaceMouseCursorInstantly();
 	CachedMontageComponent->PlayDodgeMontage("Forward");
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
-}
-
-void USL25DMovementHandlerComponent::ToggleMenu()
-{
-	UE_LOG(LogTemp, Log, TEXT("Menu opened or closed"));
-	// TODO: UI 호출 / Input 모드 변경 등 처리
-
-	// HUD에 OnPose
 }
 
 void USL25DMovementHandlerComponent::Block(const bool bIsBlocking)
@@ -698,7 +670,7 @@ void USL25DMovementHandlerComponent::OnCharacterHit(UPrimitiveComponent* HitComp
 	if (OwnerCharacter->GetVelocity().Length() < 100)
 	{
 		OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
-		return;	
+		return;
 	}
 
 	const FVector HitNormal = Hit.ImpactNormal;

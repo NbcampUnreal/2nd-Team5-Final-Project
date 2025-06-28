@@ -28,7 +28,6 @@ void USLSaveGameSubsystem::Deinitialize()
     Super::Deinitialize();
 
     SaveUserData();
-    UGameplayStatics::SaveGameToSlot(CurrentSaveData, SlotName, 0);
 }
 
 void USLSaveGameSubsystem::SaveGameData()
@@ -66,6 +65,11 @@ void USLSaveGameSubsystem::ResetGameData()
     LoadObjectiveDefaultData();
     SendChapterData();
     UGameplayStatics::SaveGameToSlot(CurrentSaveData, SlotName, 0);
+}
+
+void USLSaveGameSubsystem::OnSelectedNewGame()
+{
+    bIsExistSaveData = true;
 }
 
 bool USLSaveGameSubsystem::GetIsExistSaveData() const
@@ -128,6 +132,8 @@ void USLSaveGameSubsystem::SaveUserData()
 
     CurrentSaveData->UserSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
     CurrentSaveData->UserSaveData.KeySet = UserDataSubSystem->GetKeySet();
+
+    UGameplayStatics::SaveGameToSlot(CurrentSaveData, SlotName, 0);
 }
 
 void USLSaveGameSubsystem::SendWidgetData()

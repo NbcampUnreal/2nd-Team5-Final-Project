@@ -32,6 +32,8 @@ class STILLLOADING_API ASLBossCharacter : public ASLAIBaseCharacter
 public:
 	ASLBossCharacter();
 
+	virtual void OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
+	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetBossAttackPattern(EBossAttackPattern NewPattern);
 
@@ -51,6 +53,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Set All Meshes Alpha"))
 	void SetAllMeshesAlpha(float AlphaValue);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	FORCEINLINE EBossAttackPattern GetBossAttackPattern() const { return BossAttackPattern; }
 protected:
 	virtual void BeginPlay() override;
 

@@ -87,6 +87,8 @@ public:
 	
 	UFUNCTION()
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
+	UFUNCTION()
+	void HandleHitNotify();
 
 	UFUNCTION()
 	void Dead(const AActor* Attacker, bool bIsChangeMaterial);
@@ -196,6 +198,8 @@ private:
 	void StartFlyingState();
 	UFUNCTION(BlueprintCallable)
 	void StopFlyingState();
+	UFUNCTION()
+	void ReportEnemy(AActor* Causer);
 
 	UFUNCTION()
 	USLSoundSubsystem* GetBattleSoundSubSystem() const;
@@ -212,6 +216,8 @@ private:
 	FTimerHandle MaterialResetTimerHandle;
 	UPROPERTY()
 	FTimerHandle CollisionResetTimerHandle;
+	UPROPERTY()
+	FTimerHandle StateFixTimerHandle;
 
 	void RecoverFromHitState();
 	void PlayHitMontageAndSetupRecovery(float Length);

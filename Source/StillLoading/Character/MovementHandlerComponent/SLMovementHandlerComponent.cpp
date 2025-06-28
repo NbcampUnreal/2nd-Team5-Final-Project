@@ -1426,10 +1426,6 @@ void UMovementHandlerComponent::OnAttackStageFinished(ECharacterMontageState Att
 		OwnerCharacter->ChangeVisibilityWeapons(true);
 		break;
 	case ECharacterMontageState::ECS_Attack_SpawnSword:
-		if (USLSkillComponent* SkillComp = OwnerCharacter->FindComponentByClass<USLSkillComponent>())
-		{
-			SkillComp->ActivateSkill(EActiveSkillType::AST_Spawn);
-		}
 		CachedMontageComponent->PlaySkillMontage("Dodge");
 		break;
 	case ECharacterMontageState::ECS_Attack_SpawnSwordDodge:

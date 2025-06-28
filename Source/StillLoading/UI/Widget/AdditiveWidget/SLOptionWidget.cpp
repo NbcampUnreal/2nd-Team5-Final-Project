@@ -98,10 +98,12 @@ void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 	if (LevelTransferSubsystem->GetCurrentLevelType() == ESLLevelNameType::ELN_Title)
 	{
 		MoveToTitleButton->SetVisibility(ESlateVisibility::Collapsed);
+		RestartButton->SetVisibility(ESlateVisibility::Collapsed);
 	}
 	else
 	{
 		MoveToTitleButton->SetVisibility(ESlateVisibility::Visible);
+		RestartButton->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
@@ -218,7 +220,7 @@ void USLOptionWidget::OnClickedMoveToTitle()
 
 	USLSaveGameSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
 	checkf(IsValid(SaveGameSubsystem), TEXT("SaveGameSubsystem is invalid"));
-
+	SaveGameSubsystem->SaveUserData();
 	SaveGameSubsystem->LoadGameData();
 
 	CheckValidOfLevelTransferSubsystem();

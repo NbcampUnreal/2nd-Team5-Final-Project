@@ -48,6 +48,9 @@ public:
 	void SetPlayerStateVisibility(bool bIsVisible, bool bIsSpecial);
 
 	UFUNCTION(BlueprintCallable)
+	void SetVisibilityPlayerState(bool bIsVisible);
+
+	UFUNCTION(BlueprintCallable)
 	void SetObjectiveVisibility();
 
 	UFUNCTION(BlueprintCallable)
