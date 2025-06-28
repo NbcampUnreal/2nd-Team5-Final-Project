@@ -48,6 +48,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Objective", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<ASLInGameHUD> HUD = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective", meta = (AllowPrivateAccess = "true"))
+	bool bIsInGameMode = false;
+
 	UPROPERTY()
 	TObjectPtr<ASLBattlePlayerState> PlayerState = nullptr;
 };

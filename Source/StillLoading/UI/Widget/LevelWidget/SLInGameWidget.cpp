@@ -63,6 +63,11 @@ void USLInGameWidget::SetIsPlayerStateActivate(bool bIsActived, bool bIsVisibleS
 	}
 }
 
+void USLInGameWidget::SetVisibilityPlayerStatePanel(bool bIsVisible)
+{
+	SetIsSubWidgetActivate(bIsVisible, ActivePlayerStateAnim, DeactivePlayerStateAnim);
+}
+
 void USLInGameWidget::SetIsObjectiveActivate()
 {
 	if (bIsObjectiveVisible)
@@ -121,7 +126,6 @@ void USLInGameWidget::SetTimerText(int32 TimeSeconds)
 	{
 		SetIsTimerActivate(false);
 	}
-	//FWidgetTransform TimerTransfrom = TimerHands->GetRenderTransform();
 }
 
 void USLInGameWidget::SetHpValue(float MaxHp, float CurrentHp)

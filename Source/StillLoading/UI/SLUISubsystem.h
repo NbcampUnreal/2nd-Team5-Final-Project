@@ -73,6 +73,9 @@ private:
 	ESLChapterType CurrentDataChapter = ESLChapterType::EC_None;
 
 	UPROPERTY()
+	ESLChapterType CurrentOptionDataChapter = ESLChapterType::EC_None;
+
+	UPROPERTY()
 	ESLInputModeType CurrentLevelInputMode = ESLInputModeType::EIM_UIOnly;
 
 	UPROPERTY()

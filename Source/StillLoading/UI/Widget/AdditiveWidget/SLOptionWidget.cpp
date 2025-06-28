@@ -98,10 +98,12 @@ void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 	if (LevelTransferSubsystem->GetCurrentLevelType() == ESLLevelNameType::ELN_Title)
 	{
 		MoveToTitleButton->SetVisibility(ESlateVisibility::Collapsed);
+		RestartButton->SetVisibility(ESlateVisibility::Collapsed);
 	}
 	else
 	{
 		MoveToTitleButton->SetVisibility(ESlateVisibility::Visible);
+		RestartButton->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
