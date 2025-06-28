@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "Character/DataAsset/AttackDataAsset.h"
 #include "GameFramework/Actor.h"
 #include "SLAIProjectile.generated.h"
@@ -31,8 +32,20 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	void SetupSpawnedProjectile(EAttackAnimType AnimType, float Speed);
+
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	void SetTeamId(const FGenericTeamId& NewTeamId);
+    
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	FGenericTeamId GetTeamId() const;
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> AlreadyHitActors;
 	
 	// --- Components ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -60,9 +73,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug", meta = (AllowPrivateAccess = "true"))
 	bool bDebugHit;
 
+	UPROPERTY()
+	bool bHasHitTarget;
 private:
 	// 내부 함수들
 	void PlayHitEffects(const FHitResult& Hit);
 	void ProcessDamage(AActor* HitActor, const FHitResult& Hit);
 	void DestroyProjectileWithDelay(float DelayTime = 0.1f);
+	void IgnoreSameTeamActors();
+	
+	FGenericTeamId TeamId;
 };
