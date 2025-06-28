@@ -381,8 +381,26 @@ void AMonsterAICharacter::RemoveStrategyState()
 void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                         EHitAnimType AnimType)
 {
+	if (HasBattleState(TAG_AI_Dead))
+	{
+		return;
+	}
+	
 	AnimationComponent->StopAllMontages(0.2f);
 	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
+	
+	LastAttacker = Causer;
+	CurrentHealth -= Damage;
+
+	UE_LOG(LogTemp, Warning, TEXT("Monster Current Health[%f]"), CurrentHealth);
+
+	if (CurrentHealth <= 0.f)
+	{
+		SetBattleState(TAG_AI_Dead);
+		AnimationComponent->PlayAIHitMontage("Dead");
+		Dead(Causer, true);
+		return;
+	}
 
 	if (Causer != nullptr && Causer != this)
 	{
@@ -405,72 +423,37 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 	//ChangeMeshTemporarily();
 	StartFlyingState();
 
-	LastAttacker = Causer;
-	CurrentHealth -= Damage;
-
-	UE_LOG(LogTemp, Warning, TEXT("Monster Current Health[%f]"), CurrentHealth);
-
 	switch (AnimType)
 	{
 	case EHitAnimType::HAT_WeakHit:
 	case EHitAnimType::HAT_HardHit:
 		{
-			if (CurrentHealth < 0.f)
+			SetBattleState(TAG_AI_Hit);
+			PlayHitMontageAndSetupRecovery(0.8);
+
+			FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
+			KnockbackDir.Z = 0;
+			KnockbackDir.Normalize();
+
+			const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
+			if (GetCharacterMovement()->IsFalling() && GroundDistance > 20.0f)
 			{
-				if (DeathMaterial)
-				{
-					if (GetWorld()->GetTimerManager().IsTimerActive(MaterialResetTimerHandle))
-					{
-						GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
-						GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
-					}
-				}
-				SetBattleState(TAG_AI_Dead);
-				AnimationComponent->PlayAIHitMontage("Dead");
+				LaunchCharacter(KnockbackDir * 1200, true, false);
 			}
 			else
 			{
-				SetBattleState(TAG_AI_Hit);
-				PlayHitMontageAndSetupRecovery(0.8);
-
-				FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
-				KnockbackDir.Z = 0;
-				KnockbackDir.Normalize();
-
-				const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
-				if (GetCharacterMovement()->IsFalling() && GroundDistance > 20.0f)
-				{
-					LaunchCharacter(KnockbackDir * 1200, true, false);
-				}
-				else
-				{
-					LaunchCharacter(KnockbackDir * 1200, true, false);
-				}
+				LaunchCharacter(KnockbackDir * 1200, true, false);
 			}
 
 			break;
 		}
 	case EHitAnimType::HAT_AirBorne:
-		if (CurrentHealth < 0.f)
-		{
-			//Dead(Causer, true);
-			SetBattleState(TAG_AI_Dead);
-			AnimationComponent->PlayAIHitMontage("Dead");
-		}
-		else
 		{
 			SetStrategyState(TAG_AI_IsPlayingMontage);
 			AnimationComponent->PlayAIHitMontage("Airborne");
 		}
 		break;
 	case EHitAnimType::HAT_AirUp:
-		if (CurrentHealth < 0.f)
-		{
-			//Dead(Causer, true);
-			SetBattleState(TAG_AI_Dead);
-			AnimationComponent->PlayAIHitMontage("Dead");
-		}
-		else
 		{
 			SetStrategyState(TAG_AI_IsPlayingMontage);
 			AnimationComponent->PlayAIHitMontage("AirUp");
@@ -478,14 +461,6 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		break;
 	case EHitAnimType::HAT_FallBack:
 		RotateToHitCauser(Causer);
-
-		if (CurrentHealth < 0.f)
-		{
-			//Dead(Causer, true);
-			SetBattleState(TAG_AI_Dead);
-			AnimationComponent->PlayAIHitMontage("Dead");
-		}
-		else
 		{
 			SetStrategyState(TAG_AI_IsPlayingMontage);
 			AnimationComponent->PlayAIHitMontage("GroundHit");
@@ -557,7 +532,7 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 	case EAttackAnimType::AAT_FinalAttackC:
 	case EAttackAnimType::AAT_Dead:
 		GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterDie, GetActorLocation());
-		Dead(LastAttacker, true);
+		//Dead(LastAttacker, true);
 		return;
 	}
 
@@ -572,6 +547,9 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 
 void AMonsterAICharacter::HandleHitNotify()
 {
+	if (HasBattleState(TAG_AI_Dead))
+		return;
+
 	SetPrimaryState(TAG_AI_Idle);
 	SetStrategyState(TAG_AI_Idle);
 	SetBattleState(TAG_AI_Idle);
@@ -580,7 +558,6 @@ void AMonsterAICharacter::HandleHitNotify()
 
 void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
-	SetBattleState(TAG_AI_Dead);
 	OnDeath();
 	AgentDied();
 
@@ -617,10 +594,10 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	FixCharacterVelocity();
+	//FixCharacterVelocity();
 
 	// 나중에 Destroy 또는 사라짐 처리
-	//SetLifeSpan(1.f);
+	SetLifeSpan(2.f);
 
 	// BattleComponent에 전달
 	if (Attacker)
@@ -693,7 +670,7 @@ void AMonsterAICharacter::PlayHitMontageAndSetupRecovery(const float Length)
 		}
 
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-		GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
+		//GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
 		GetWorld()->GetTimerManager().SetTimer(CollisionResetTimerHandle, this,
 		                                       &AMonsterAICharacter::RecoverFromHitState, Length, false);
 	}
