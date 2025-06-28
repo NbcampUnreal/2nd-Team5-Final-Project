@@ -51,6 +51,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Material", meta = (DisplayName = "Set All Meshes Alpha"))
 	void SetAllMeshesAlpha(float AlphaValue);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	FORCEINLINE EBossAttackPattern GetBossAttackPattern() const { return BossAttackPattern; }
 protected:
 	virtual void BeginPlay() override;
 

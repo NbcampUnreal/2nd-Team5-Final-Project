@@ -3,6 +3,7 @@
 #include "BrainComponent.h"
 #include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
+#include "SLBossCharacter.h"
 #include "AI/Projectile/SLAIProjectile.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "BattleComponent/BattleComponent.h"
@@ -34,10 +35,14 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 
 	BoxCollisionComponent = CreateDefaultSubobject<UBoxComponent>("BoxCollisionComponent");
 	BoxCollisionComponent->SetupAttachment(RootComponent);
-    
+	BoxCollisionComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	BoxCollisionComponent->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+	BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	
     LeftHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftHandCollisionBox");
     LeftHandCollisionBox->SetupAttachment(GetMesh());
     LeftHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeftHandCollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
     LeftHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
     LeftHandCollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
@@ -228,6 +233,22 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 		return;
 	}
 
+	if (OverlappedComponent == BoxCollisionComponent)
+	{
+		if (ASLBossCharacter* BossCharacter = Cast<ASLBossCharacter>(this))
+		{
+			
+			if (BossCharacter->GetBossAttackPattern() != EBossAttackPattern::EBAP_DashAttack)
+			{
+				return; 
+			}
+			else
+			{
+				CurrentAttackType = EAttackAnimType::AAT_DashAttack;
+			}
+		}
+	}
+	
 	if (bIsDebugMode)
 	{
 		// 오버랩된 컴포넌트의 크기에 맞는 디버그 박스 그리기
