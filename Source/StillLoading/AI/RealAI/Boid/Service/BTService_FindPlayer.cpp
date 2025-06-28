@@ -74,7 +74,7 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 			{
 				BlackboardComp->ClearValue(TargetActorKey.SelectedKeyName);
 				SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
-				UE_LOG(LogTemp, Warning, TEXT("Target LOST. Clearing TargetActor."));
+				//UE_LOG(LogTemp, Warning, TEXT("Target LOST. Clearing TargetActor."));
 			}
 		}
 	}

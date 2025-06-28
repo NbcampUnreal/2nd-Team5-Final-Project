@@ -129,29 +129,38 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 	case EInputActionType::EIAT_Attack:
 		// 패링 진입
 		{
-			const float CurrentTime = GetWorld()->GetTimeSeconds();
-			if (CurrentTime - LastBlockTime <= ParryDuration)
+			if (CachedCombatComponent->IsEmpowered())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Parring!!!"));
-
-				if (!CachedCombatComponent->IsEmpowered())
-				{
-					OwnerCharacter->ClearAllStateTags();
-
-					if (RightDot > 0.0f)
-						CachedMontageComponent->PlayBlockMontage(FName("ParryR"));
-					else
-						CachedMontageComponent->PlayBlockMontage(FName("ParryL"));
-
-					OwnerCharacter->AddSecondaryState(TAG_Character_Defense_Parry);
-					BlockCount = 0;
-				}
-
-				CachedCombatComponent->SetEmpoweredCombatMode(10);
-				USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
-
-				return;
+				CachedMontageComponent->PlaySkillMontage("SwordFromSky");
+				OwnerCharacter->SetPrimaryState(TAG_Character_Attack_SpawnSword);
 			}
+			else
+			{
+				const float CurrentTime = GetWorld()->GetTimeSeconds();
+				if (CurrentTime - LastBlockTime <= ParryDuration)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Parring!!!"));
+
+					if (!CachedCombatComponent->IsEmpowered())
+					{
+						OwnerCharacter->ClearAllStateTags();
+
+						if (RightDot > 0.0f)
+							CachedMontageComponent->PlayBlockMontage(FName("ParryR"));
+						else
+							CachedMontageComponent->PlayBlockMontage(FName("ParryL"));
+
+						OwnerCharacter->AddSecondaryState(TAG_Character_Defense_Parry);
+						BlockCount = 0;
+					}
+
+					BeginBuff();
+					USlowMotionHelper::ApplyGlobalSlowMotion(OwnerCharacter, 0.2f, 0.3f);
+
+					return;
+				}
+			}
+			
 			Attack();
 			break;
 		}
@@ -176,7 +185,6 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 		DodgeLoco();
 		break;
 	case EInputActionType::EIAT_Menu:
-		ToggleMenu();
 	case EInputActionType::EIAT_LockObject:
 		break;
 
@@ -440,14 +448,6 @@ void USL25DMovementHandlerComponent::DodgeLoco()
 	FaceMouseCursorInstantly();
 	CachedMontageComponent->PlayDodgeMontage("Forward");
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);
-}
-
-void USL25DMovementHandlerComponent::ToggleMenu()
-{
-	UE_LOG(LogTemp, Log, TEXT("Menu opened or closed"));
-	// TODO: UI 호출 / Input 모드 변경 등 처리
-
-	// HUD에 OnPose
 }
 
 void USL25DMovementHandlerComponent::Block(const bool bIsBlocking)
