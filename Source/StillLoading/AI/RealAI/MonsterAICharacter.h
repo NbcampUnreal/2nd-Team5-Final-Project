@@ -198,6 +198,8 @@ private:
 	void StartFlyingState();
 	UFUNCTION(BlueprintCallable)
 	void StopFlyingState();
+	UFUNCTION()
+	void ReportEnemy(AActor* Causer);
 
 	UFUNCTION()
 	USLSoundSubsystem* GetBattleSoundSubSystem() const;
