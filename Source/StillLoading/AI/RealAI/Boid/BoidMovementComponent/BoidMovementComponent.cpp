@@ -61,8 +61,7 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)
 		|| Monster->HasBattleState(TAG_AI_Dead)
-		|| Monster->HasBattleState(TAG_AI_Hit)
-		|| Monster->HasBattleState(TAG_AI_Hit_FallBack)) return;
+		|| Monster->HasBattleState(TAG_AI_Hit)) return;
 
 	CheckAndHandleStuckTeleport(DeltaTime);
 

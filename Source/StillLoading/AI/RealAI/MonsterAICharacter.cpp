@@ -459,7 +459,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		}
 		else
 		{
-			SetBattleState(TAG_AI_Hit_Air);
+			SetStrategyState(TAG_AI_IsPlayingMontage);
 			AnimationComponent->PlayAIHitMontage("Airborne");
 		}
 		break;
@@ -472,7 +472,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		}
 		else
 		{
-			SetBattleState(TAG_AI_Hit_Air);
+			SetStrategyState(TAG_AI_IsPlayingMontage);
 			AnimationComponent->PlayAIHitMontage("AirUp");
 		}
 		break;
@@ -487,7 +487,7 @@ void AMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHit
 		}
 		else
 		{
-			SetBattleState(TAG_AI_Hit_FallBack);
+			SetStrategyState(TAG_AI_IsPlayingMontage);
 			AnimationComponent->PlayAIHitMontage("GroundHit");
 		}
 		break;
@@ -561,10 +561,8 @@ void AMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage)
 		return;
 	}
 
-	if (HasBattleState(TAG_AI_Dead)
-		|| HasBattleState(TAG_AI_Hit)
-		|| HasBattleState(TAG_AI_Hit_FallBack)
-		|| HasBattleState(TAG_AI_Hit_Air)) return;
+	if (HasBattleState(TAG_AI_Dead))
+		return;
 
 	SetPrimaryState(TAG_AI_Idle);
 	SetStrategyState(TAG_AI_Idle);
@@ -577,6 +575,7 @@ void AMonsterAICharacter::HandleHitNotify()
 	SetPrimaryState(TAG_AI_Idle);
 	SetStrategyState(TAG_AI_Idle);
 	SetBattleState(TAG_AI_Idle);
+	StopFlyingState();
 }
 
 void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
@@ -678,11 +677,8 @@ USLSoundSubsystem* AMonsterAICharacter::GetBattleSoundSubSystem() const
 
 void AMonsterAICharacter::RecoverFromHitState()
 {
-	if (HasBattleState(TAG_AI_Dead)) return;
-
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 	SetBattleState(TAG_AI_Idle);
-	SetStrategyState(TAG_AI_Idle);
 }
 
 void AMonsterAICharacter::PlayHitMontageAndSetupRecovery(const float Length)
