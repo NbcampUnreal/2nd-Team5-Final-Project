@@ -305,7 +305,8 @@ void ASwarmAgent::PlayETCWaitAnim()
 {
 	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
 	{
-		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage) || Monster->HasBattleState(TAG_AI_Dead)) return;
+		if (Monster->HasStrategyState(TAG_AI_IsPlayingMontage)
+			|| Monster->HasBattleState(TAG_AI_Dead)) return;
 		
 		Monster->SetStrategyState(TAG_AI_IsPlayingMontage);
 	}
