@@ -22,18 +22,11 @@ void ASLTitleHUD::NotifyTalkEnded()
 	LevelWidgetObj->AddToViewport();
 }
 
-void ASLTitleHUD::NotifyChoiceEnded(bool bIsAccept)
+void ASLTitleHUD::ActivateTitleTalk()
 {
-	if (bIsAccept)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Plyaer Choice Aceept"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Plyaer Choice Reject"));
-	}
-
-	LevelWidgetObj->AddToViewport();
+	CheckValidOfUISubsystem();
+	UISubsystem->GetTalkWidget()->OnTalkEnded.AddDynamic(this, &ThisClass::NotifyTalkEnded);
+	UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Heroine, "Serena", "TitleTalk");
 }
 
 void ASLTitleHUD::OnStartedHUD()
@@ -45,6 +38,4 @@ void ASLTitleHUD::OnStartedHUD()
 	CheckValidOfUISubsystem();
 
 	UISubsystem->ActivateFade(true);
-	UISubsystem->GetTalkWidget()->OnChoiceEnded.AddDynamic(this, &ThisClass::NotifyChoiceEnded);
-	UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Heroine, "Serena", "TitleTalk");
 }
