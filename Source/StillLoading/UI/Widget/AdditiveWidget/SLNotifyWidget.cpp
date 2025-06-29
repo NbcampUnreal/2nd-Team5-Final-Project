@@ -11,7 +11,7 @@
 void USLNotifyWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	WidgetType = ESLAdditiveWidgetType::EAW_NotifyWidget;
-	WidgetInputMode = ESLInputModeType::EIM_GameAndUI;
+	WidgetInputMode = ESLInputModeType::EIM_GameOnly;
 	bIsVisibleCursor = false;
 
 	OpenAnim = VisibleNotifyAnim;

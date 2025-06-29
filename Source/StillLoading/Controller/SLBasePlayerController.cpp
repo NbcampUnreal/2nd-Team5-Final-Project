@@ -45,6 +45,12 @@ void ASLBasePlayerController::OnPossess(APawn* InPawn)
 	GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::ShowInGameUI);
 }
 
+void ASLBasePlayerController::OnUnPossess()
+{
+	Super::OnUnPossess();
+	HideInGameUI();
+}
+
 void ASLBasePlayerController::SetIgnoreMoveInput(bool bNewMoveInput)
 {
 	Super::SetIgnoreMoveInput(bNewMoveInput);
