@@ -22,6 +22,19 @@ void ASwarmManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void ASwarmManager::BeginDestroy()
+{
+	for (ASwarmAgent* Agent: AllAgents)
+	{
+		if (IsValid(Agent) && Agent->FOnMonsterDied.IsBound())
+		{
+			Agent->FOnMonsterDied.RemoveDynamic(this, &ASwarmManager::AgentDead);
+		}
+	}
+	
+	Super::BeginDestroy();
+}
+
 void ASwarmManager::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);

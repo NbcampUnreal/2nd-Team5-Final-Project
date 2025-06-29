@@ -70,6 +70,13 @@ void ASwarmAgent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void ASwarmAgent::BeginDestroy()
+{
+	FOnMonsterDied.Clear();
+	
+	Super::BeginDestroy();
+}
+
 void ASwarmAgent::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);

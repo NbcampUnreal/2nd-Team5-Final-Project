@@ -177,11 +177,7 @@ int32 ASwarmSpawner::GetSpawnCount() const
 void ASwarmSpawner::ResetSpawendMonster()
 {
 	DestroyAllMonster();
-	
-	if (!IsValid(SpawnedManager))
-	{
-		GetWorld()->GetTimerManager().SetTimer(OneSecondTimerHandle, this, &ASwarmSpawner::TimerCallbackFunction, 5.0f, false);
-	}
+	BeginSpawn();
 }
 
 void ASwarmSpawner::DestroyAllMonster()
@@ -190,6 +186,7 @@ void ASwarmSpawner::DestroyAllMonster()
 	{
 		SpawnedManager->DestroyAllAgents();
 		SpawnedManager->Destroy();
+		SpawnedManager = nullptr;
 	}
 }
 
@@ -207,9 +204,4 @@ void ASwarmSpawner::OnMonstersUpdated_Handler(const int32 DecreaseCount)
 {
 	OnMonstersUpdated.Broadcast(DecreaseCount);
 	UE_LOG(LogTemp, Warning, TEXT("DecreaseCount MonsterCount[%d]"), DecreaseCount);
-}
-
-void ASwarmSpawner::TimerCallbackFunction()
-{
-	BeginSpawn();
 }
