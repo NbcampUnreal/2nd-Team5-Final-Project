@@ -386,7 +386,7 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Phase5")
     float Phase5WallResetDelay;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Developer Boss|Mouse Actor")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Mouse Actor")
     TObjectPtr<ASLMouseActor> MouseActor;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Developer Boss|Mouse Actor")

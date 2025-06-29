@@ -76,10 +76,6 @@ void ASLDeveloperBoss::BeginPlay()
 {
     Super::BeginPlay();
     SetupPhaseLines();
-    if (MouseActorClass)
-    {
-        SpawnMouseActor();
-    }
 
     if (IsValid(Phase4FallingFloor))
     {
@@ -1229,8 +1225,8 @@ void ASLDeveloperBoss::RegisterBossEvents(ASLAIBaseCharacter* Boss)
         return;
     }
     
-    Boss->OnCharacterDeath.AddUObject(this, &ASLDeveloperBoss::HandleBossDeath);
-    Boss->OnPatternFinished.AddUObject(this, &ASLDeveloperBoss::HandlePatternFinished);
+    Boss->OnCharacterDeath.AddDynamic(this, &ASLDeveloperBoss::HandleBossDeath);
+    Boss->OnPatternFinished.AddDynamic(this, &ASLDeveloperBoss::HandlePatternFinished);
 }
 
 void ASLDeveloperBoss::UnregisterBossEvents(ASLAIBaseCharacter* Boss)
@@ -1742,7 +1738,7 @@ void ASLDeveloperBoss::StartPhase4FloorCollapse()
         return;
     }
     
-    UE_LOG(LogTemp, Display, TEXT("🏗️ Phase 4: Starting floor collapse"));
+    UE_LOG(LogTemp, Display, TEXT("Phase 4: Starting floor collapse"));
     Phase4FallingFloor->StartFloorCollapse();
 }
 
@@ -1761,7 +1757,7 @@ void ASLDeveloperBoss::HandlePhase4FloorCollapseCompleted()
         return;
     }
     
-    UE_LOG(LogTemp, Display, TEXT("🏗️ Phase 4: Floor collapse completed - Starting auto wall attacks"));
+    UE_LOG(LogTemp, Display, TEXT("Phase 4: Floor collapse completed - Starting auto wall attacks"));
     
     OnPhase4PlatformerCompleted.Broadcast();
     

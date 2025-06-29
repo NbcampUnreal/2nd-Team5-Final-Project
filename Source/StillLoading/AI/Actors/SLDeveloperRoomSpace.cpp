@@ -198,9 +198,8 @@ void ASLDeveloperRoomSpace::SpawnNPCsFromInfo(const FPhase2NPCSpawnInfo& SpawnIn
 
         if (SpawnedNPC)
         {
-            SpawnedNPC->OnCharacterDeath.AddUObject(this, &ASLDeveloperRoomSpace::OnNPCDeath);
+            SpawnedNPC->OnCharacterDeath.AddDynamic(this, &ASLDeveloperRoomSpace::OnNPCDeath);
             SpawnedNPCs.Add(SpawnedNPC);
-            
         }
     }
 }
