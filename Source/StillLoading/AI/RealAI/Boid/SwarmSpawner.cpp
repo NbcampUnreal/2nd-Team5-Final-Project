@@ -53,7 +53,11 @@ void ASwarmSpawner::BeginSpawn()
 			);
 		}
 
-		SpawnedManager = World->SpawnActor<ASwarmManager>(SwarmManagerClass, GetActorLocation(), GetActorRotation());
+		if (!SpawnedManager)
+		{
+			SpawnedManager = World->SpawnActor<ASwarmManager>(SwarmManagerClass, GetActorLocation(), GetActorRotation());
+		}
+		
 		if (SpawnedManager)
 		{
 			// 군체 알고리즘 가중치 셋팅

@@ -25,4 +25,10 @@ public:
 
 	UFUNCTION(exec)
 	void ShowCharacterDebugLine(bool bFlag);
+
+	UFUNCTION(exec)
+	void SetCurrentChapter(int32 InChapter);
+
+	UFUNCTION(exec)
+	void ShowTitleHUD(bool bFlag);
 };
