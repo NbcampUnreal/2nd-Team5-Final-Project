@@ -74,7 +74,10 @@ void ASwarmSpawner::BeginSpawn()
 
 			SpawnedManager->CurrentFormationType = FormationType;
 			SpawnedManager->DetectionRadius = DetectionRadius;
-			SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
+			if (!SpawnedManager->OnMonstersUpdated.IsBound())
+			{
+				SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
+			}
 
 			// 순찰 포인트 정렬
 			TArray<FVector> InitialPathPoints;
@@ -174,7 +177,11 @@ int32 ASwarmSpawner::GetSpawnCount() const
 void ASwarmSpawner::ResetSpawendMonster()
 {
 	DestroyAllMonster();
-	BeginSpawn();
+	
+	if (!IsValid(SpawnedManager))
+	{
+		GetWorld()->GetTimerManager().SetTimer(OneSecondTimerHandle, this, &ASwarmSpawner::TimerCallbackFunction, 5.0f, false);
+	}
 }
 
 void ASwarmSpawner::DestroyAllMonster()
@@ -200,4 +207,9 @@ void ASwarmSpawner::OnMonstersUpdated_Handler(const int32 DecreaseCount)
 {
 	OnMonstersUpdated.Broadcast(DecreaseCount);
 	UE_LOG(LogTemp, Warning, TEXT("DecreaseCount MonsterCount[%d]"), DecreaseCount);
+}
+
+void ASwarmSpawner::TimerCallbackFunction()
+{
+	BeginSpawn();
 }

@@ -171,5 +171,9 @@ protected:
 	FRotator EffectSpawnRotation;
 
 private:
+	void TimerCallbackFunction();
+	
 	bool bLeaderSet = false;
+
+	FTimerHandle OneSecondTimerHandle;
 };

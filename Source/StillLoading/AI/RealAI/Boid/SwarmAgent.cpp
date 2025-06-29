@@ -51,13 +51,23 @@ void ASwarmAgent::BeginPlay()
 
 	if (MySwarmManager && CachedRadarComponent)
 	{
-		//if (!IsLeader()) return;
+		if (!IsLeader()) return;
 		CachedRadarComponent->ToggleRadarComponent(true, MySwarmManager->DetectionRadius);
-		CachedRadarComponent->OnActorDetectedEnhanced.
+		CachedRadarComponent->FOnActorDetected.
 		                      AddDynamic(this, &ASwarmAgent::OnRadarDetectedActor);
 
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 	}
+}
+
+void ASwarmAgent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (MySwarmManager && CachedRadarComponent)
+	{
+		CachedRadarComponent->FOnActorDetected.RemoveDynamic(this, &ASwarmAgent::OnRadarDetectedActor);
+	}
+	
+	Super::EndPlay(EndPlayReason);
 }
 
 void ASwarmAgent::Tick(float DeltaSeconds)
@@ -152,6 +162,8 @@ void ASwarmAgent::SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree, UB
 
 void ASwarmAgent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
 {
+	if (!IsValid(MySwarmManager)) return;
+	
 	if (CurrentDetectedActor == DetectedActor || MySwarmManager->CurrentSquadTarget) return;
 	
 	if (APawn* CastedActor = Cast<APawn>(DetectedActor))
