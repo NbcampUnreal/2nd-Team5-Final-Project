@@ -17,6 +17,24 @@ void ASwarmManager::BeginPlay()
 	Super::BeginPlay();
 }
 
+void ASwarmManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+}
+
+void ASwarmManager::BeginDestroy()
+{
+	for (ASwarmAgent* Agent: AllAgents)
+	{
+		if (IsValid(Agent) && Agent->FOnMonsterDied.IsBound())
+		{
+			Agent->FOnMonsterDied.RemoveDynamic(this, &ASwarmManager::AgentDead);
+		}
+	}
+	
+	Super::BeginDestroy();
+}
+
 void ASwarmManager::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -41,12 +59,15 @@ void ASwarmManager::Tick(float DeltaSeconds)
 
 void ASwarmManager::DestroyAllAgents()
 {
-	for (ASwarmAgent* Agent : AllAgents)
+	TArray<ASwarmAgent*> AgentsToDestroy = AllAgents;
+	
+	for (ASwarmAgent* Agent : AgentsToDestroy)
 	{
 		if (IsValid(Agent))
 		{	
 			AMonsterAICharacter* AICharacter = Cast<AMonsterAICharacter>(Agent);
-
+			UnregisterAgent(Agent);
+			
 			if (IsValid(AICharacter))
 			{
 				AICharacter->ToggleWeaponState(false);
@@ -54,6 +75,8 @@ void ASwarmManager::DestroyAllAgents()
 			}
 		}
 	}
+
+	AllAgents.Empty();
 }
 
 void ASwarmManager::SetNewPath(const TArray<FVector>& NewPathPoints)
@@ -105,7 +128,10 @@ void ASwarmManager::RegisterAgent(ASwarmAgent* Agent)
 	{
 		AllAgents.Add(Agent);
 		Agent->SetAgentID(NextAgentID++);
-		Agent->FOnMonsterDied.AddDynamic(this, &ASwarmManager::AgentDead);
+		if (!Agent->FOnMonsterDied.IsBound())
+		{
+			Agent->FOnMonsterDied.AddDynamic(this, &ASwarmManager::AgentDead);
+		}
 	}
 
 	if (Agent && Agent->GetAgentID() >= 0)
@@ -131,6 +157,11 @@ void ASwarmManager::UnregisterAgent(ASwarmAgent* Agent)
 	if (Agent && Agent->GetAgentID() >= 0)
 	{
 		AgentRandomOffsets.Remove(Agent->GetAgentID());
+	}
+
+	if (Agent->FOnMonsterDied.IsBound())
+	{
+		Agent->FOnMonsterDied.RemoveDynamic(this, &ASwarmManager::AgentDead);
 	}
 
 	if (OnMonstersUpdated.IsBound())

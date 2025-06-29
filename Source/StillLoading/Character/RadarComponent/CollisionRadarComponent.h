@@ -29,6 +29,7 @@ struct FDetectedActorList
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnActorDetectedEnhanced, AActor*, DetectedActor, float, Distance);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnActorDetected, AActor*, DetectedActor, float, Distance);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class STILLLOADING_API UCollisionRadarComponent : public UActorComponent
@@ -47,6 +48,9 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Radar|Events")
     FOnActorDetectedEnhanced OnActorDetectedEnhanced;
+
+    UPROPERTY(BlueprintAssignable, Category = "Radar|Events")
+    FOnActorDetected FOnActorDetected;
 
     UPROPERTY(EditAnywhere, Category = "Radar|Debug")
     bool bShowDetectionRadius = false;

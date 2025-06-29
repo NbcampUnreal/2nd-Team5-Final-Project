@@ -74,7 +74,10 @@ void ASwarmSpawner::BeginSpawn()
 
 			SpawnedManager->CurrentFormationType = FormationType;
 			SpawnedManager->DetectionRadius = DetectionRadius;
-			SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
+			if (!SpawnedManager->OnMonstersUpdated.IsBound())
+			{
+				SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
+			}
 
 			// 순찰 포인트 정렬
 			TArray<FVector> InitialPathPoints;
@@ -183,6 +186,7 @@ void ASwarmSpawner::DestroyAllMonster()
 	{
 		SpawnedManager->DestroyAllAgents();
 		SpawnedManager->Destroy();
+		SpawnedManager = nullptr;
 	}
 }
 
