@@ -43,7 +43,7 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	UpdateTimer += DeltaTime;
+	/*UpdateTimer += DeltaTime;
 	if (UpdateTimer < UpdateInterval)
 	{
 		if (!SmoothedSteeringForce.IsNearlyZero())
@@ -52,7 +52,7 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		}
 		return;
 	}
-	UpdateTimer = FMath::Fmod(UpdateTimer, UpdateInterval);
+	UpdateTimer = FMath::Fmod(UpdateTimer, UpdateInterval);*/
 
 	ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(GetOwner());
 	if (OwningAgent && OwningAgent->IsLeader())
