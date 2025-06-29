@@ -152,8 +152,7 @@ void ASwarmAgent::SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree, UB
 
 void ASwarmAgent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
 {
-	if (CurrentDetectedActor == DetectedActor
-		|| MySwarmManager->CurrentSquadTarget) return;
+	if (CurrentDetectedActor == DetectedActor || MySwarmManager->CurrentSquadTarget) return;
 	
 	if (APawn* CastedActor = Cast<APawn>(DetectedActor))
 	{
