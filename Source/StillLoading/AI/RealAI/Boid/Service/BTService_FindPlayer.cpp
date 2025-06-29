@@ -40,7 +40,6 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 	}
 
 	const float DistanceToTarget = OwningAgent->GetDistanceTo(OwningAgent->CurrentDetectedActor);
-
 	if (DistanceToTarget <= SwarmManager->DetectionRadius)
 	{
 		IGenericTeamAgentInterface* OwningTeamAgent = Cast<IGenericTeamAgentInterface>(OwningAgent);
@@ -56,6 +55,7 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 				BlackboardComp->SetValueAsObject(TargetActorKey.SelectedKeyName, OwningAgent->CurrentDetectedActor);
 				BlackboardComp->SetValueAsFloat(TEXT("LastSeenTime"), GetWorld()->GetTimeSeconds());
 				SwarmManager->SetSquadState(ESquadState::Engaging);
+				UE_LOG(LogTemp, Warning, TEXT("Target FOUND. [%s]"), *OwningAgent->CurrentDetectedActor->GetName());
 			}
 			else
 			{
@@ -76,7 +76,7 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 				BlackboardComp->ClearValue(TargetActorKey.SelectedKeyName);
 				SwarmManager->SetSquadState(ESquadState::Patrolling_Move);
 				OwningAgent->CurrentDetectedActor = nullptr;
-				//UE_LOG(LogTemp, Warning, TEXT("Target LOST. Clearing TargetActor."));
+				UE_LOG(LogTemp, Warning, TEXT("Target LOST. Clearing TargetActor."));
 			}
 		}
 	}

@@ -34,6 +34,7 @@ EBTNodeResult::Type UBTTask_IncrementPatrolIndex::ExecuteTask(UBehaviorTreeCompo
 	const int32 NumPatrolPoints = SwarmManager->SwarmPatrolPoints.Num();
 	const int32 NextIndex = (CurrentIndex + 1) % NumPatrolPoints;
 
+	UE_LOG(LogTemp, Warning, TEXT("NextIndex[%d]"), NextIndex);
 	BlackboardComp->SetValueAsInt(PatrolIndexKey.SelectedKeyName, NextIndex);
     
 	return EBTNodeResult::Succeeded;

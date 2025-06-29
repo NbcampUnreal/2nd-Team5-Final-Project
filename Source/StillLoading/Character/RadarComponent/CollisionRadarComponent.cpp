@@ -83,6 +83,7 @@ void UCollisionRadarComponent::DetectClosestActorInFOV()
         if (IsInFieldOfView(Actor))
         {
             float Distance = FVector::Dist(MyLocation, Actor->GetActorLocation());
+            FOnActorDetectedAll.Broadcast(Actor, Distance);
             //UE_LOG(LogCollisionRadarComponent, Warning, TEXT("Detected Actor in FOV: %s, Distance: %.2f"), *Actor->GetName(), Distance);
             
             if (Distance < MinDistance)

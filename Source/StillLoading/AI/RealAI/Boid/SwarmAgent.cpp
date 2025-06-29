@@ -82,6 +82,20 @@ void ASwarmAgent::ActivateAgent(const FTransform& SpawnTransform)
 	{
 		CachedBoidMovementComp->InitializeBoid();
 	}
+
+	if (!IsLeader()) return;
+	
+	CachedRadarComponent = FindComponentByClass<UCollisionRadarComponent>();
+
+	if (MySwarmManager && CachedRadarComponent)
+	{
+		CachedRadarComponent->ToggleRadarComponent(true, MySwarmManager->DetectionRadius);
+		CachedRadarComponent->FOnActorDetectedAll.
+							  AddDynamic(this, &ASwarmAgent::OnRadarDetectedActor);
+
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		CachedRadarComponent->bIsUseRadar = true;
+	}
 }
 
 void ASwarmAgent::DeactivateAgent()
@@ -100,23 +114,16 @@ void ASwarmAgent::DeactivateAgent()
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
 	SetActorTickEnabled(false);
+
+	if (IsLeader() && CachedRadarComponent)
+	{
+		CachedRadarComponent->bIsUseRadar = false;
+	}
 }
 
 void ASwarmAgent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	CachedRadarComponent = FindComponentByClass<UCollisionRadarComponent>();
-
-	if (MySwarmManager && CachedRadarComponent)
-	{
-		//if (!IsLeader()) return;
-		CachedRadarComponent->ToggleRadarComponent(true, MySwarmManager->DetectionRadius);
-		CachedRadarComponent->OnActorDetectedEnhanced.
-		                      AddDynamic(this, &ASwarmAgent::OnRadarDetectedActor);
-
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-	}
 }
 
 void ASwarmAgent::Tick(float DeltaSeconds)
@@ -206,6 +213,11 @@ void ASwarmAgent::SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree, UB
 	if (AAIController* AIController = Cast<AAIController>(GetController()))
 	{
 		ApplyLeaderState(AIController);
+	}
+
+	if (CachedRadarComponent)
+	{
+		CachedRadarComponent->bIsUseRadar = true;
 	}
 }
 
