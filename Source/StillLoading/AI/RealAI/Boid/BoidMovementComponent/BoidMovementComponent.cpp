@@ -43,6 +43,17 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	UpdateTimer += DeltaTime;
+	if (UpdateTimer < UpdateInterval)
+	{
+		if (!SmoothedSteeringForce.IsNearlyZero())
+		{
+			OwnerCharacter->GetCharacterMovement()->AddInputVector(SmoothedSteeringForce);
+		}
+		return;
+	}
+	UpdateTimer = FMath::Fmod(UpdateTimer, UpdateInterval);
+
 	ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(GetOwner());
 	if (OwningAgent && OwningAgent->IsLeader())
 	{
@@ -63,7 +74,12 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		|| Monster->HasBattleState(TAG_AI_Dead)
 		|| Monster->HasBattleState(TAG_AI_Hit)) return;
 
-	CheckAndHandleStuckTeleport(DeltaTime);
+	StuckCheckCounter++;
+	if (StuckCheckCounter > 20)
+	{
+		CheckAndHandleStuckTeleport(DeltaTime);
+		StuckCheckCounter = 0;
+	}
 
 	const ESquadState SquadState = SwarmManager->GetCurrentSquadState();
 

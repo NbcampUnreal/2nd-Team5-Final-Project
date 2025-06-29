@@ -125,4 +125,9 @@ private:
 	bool AbleToPlayWonderMontage = true;
 
 	EBoidMonsterState CurrentState = EBoidMonsterState::FS_None;
+
+	// 최적화
+	float UpdateTimer = 0.f;
+	float UpdateInterval = 0.1f;
+	int32 StuckCheckCounter = 0;
 };

@@ -10,6 +10,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Objective/SLObjectiveBase.h"
 #include "Render/SLGridVolume.h"
+#include "SaveLoad/SLSaveGameSubsystem.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
+#include "UI/HUD/SLTitleHUD.h"
 
 void USLCheatManager::ShowGridVolumeDebugLine(const bool bFlag)
 {
@@ -45,5 +48,43 @@ void USLCheatManager::ShowCharacterDebugLine(const bool bFlag)
 		{
 			BattleComponent->bShowDebugLine = bFlag;
 		}
+	}
+}
+
+void USLCheatManager::SetCurrentChapter(const int32 InChapter)
+{
+	switch (InChapter)
+	{
+		default:
+			break;
+		case 0:
+			GetWorld()->GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>()->SetCurrentChapter(ESLChapterType::EC_Chapter0);
+			break;
+		case 1:
+			GetWorld()->GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>()->SetCurrentChapter(ESLChapterType::EC_Chapter1);
+			break;
+		case 2:
+			GetWorld()->GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>()->SetCurrentChapter(ESLChapterType::EC_Chapter2);
+			break;
+		case 3:
+			GetWorld()->GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>()->SetCurrentChapter(ESLChapterType::EC_Chapter3);
+			break;
+		case 4:
+			GetWorld()->GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>()->SetCurrentChapter(ESLChapterType::EC_Chapter4);
+			break;
+	}
+	GetWorld()->GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>()->SaveGameData();
+}
+
+void USLCheatManager::ShowTitleHUD(bool bFlag)
+{
+	ASLTitleHUD* HUD = Cast<ASLTitleHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	if (HUD && !bFlag)
+	{
+		HUD->HideTitleWidget();
+	}
+	else if(HUD && bFlag)
+	{
+		HUD->NotifyTalkEnded();
 	}
 }
