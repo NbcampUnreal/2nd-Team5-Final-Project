@@ -183,7 +183,7 @@ void USLKeySettingWidget::InitElementWidget()
 		MappingWidgets.Add(NewMappingWidget);
 		//ActionWidgetMap.Add(ActionType, NewMappingWidget);
 
-		KeySettingGrid->AddChildToGrid(NewMappingWidget, GridIndex / 2, GridIndex % 2);
+		KeySettingGrid->AddChildToGrid(NewMappingWidget, GridIndex, 0);
 		++GridIndex;
 	}
 }
