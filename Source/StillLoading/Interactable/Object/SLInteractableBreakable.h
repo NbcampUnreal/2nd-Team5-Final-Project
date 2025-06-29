@@ -50,4 +50,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Info", meta = (ClampMin = "0"))
 	int32 CurrentHp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Info")
+	bool bIsNotHidden = false;
 };
