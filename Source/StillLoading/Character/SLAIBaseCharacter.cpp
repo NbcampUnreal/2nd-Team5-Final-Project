@@ -233,6 +233,10 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 		return;
 	}
 	
+	if (OverlappedComponent == BoxCollisionComponent && !Cast<ASLBossCharacter>(this))
+	{
+		return;
+	}
 	
 	if (bIsDebugMode)
 	{

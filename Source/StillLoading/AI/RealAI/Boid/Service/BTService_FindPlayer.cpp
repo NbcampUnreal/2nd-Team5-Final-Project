@@ -43,25 +43,23 @@ void UBTService_FindPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 
 	if (DistanceToTarget <= SwarmManager->DetectionRadius)
 	{
-		if (OwningAgent->CurrentDetectedActor != nullptr)
+		IGenericTeamAgentInterface* OwningTeamAgent = Cast<IGenericTeamAgentInterface>(OwningAgent);
+		IGenericTeamAgentInterface* TargetTeamAgent = Cast<IGenericTeamAgentInterface>(
+			OwningAgent->CurrentDetectedActor);
+
+		if (OwningTeamAgent && TargetTeamAgent)
 		{
-			IGenericTeamAgentInterface* OwningTeamAgent = Cast<IGenericTeamAgentInterface>(OwningAgent);
-			IGenericTeamAgentInterface* TargetTeamAgent = Cast<IGenericTeamAgentInterface>(OwningAgent->CurrentDetectedActor);
-
-			if (OwningTeamAgent && TargetTeamAgent)
+			if (OwningTeamAgent->GetGenericTeamId() != TargetTeamAgent->GetGenericTeamId())
 			{
-				if (OwningTeamAgent->GetGenericTeamId() != TargetTeamAgent->GetGenericTeamId())
-				{
-					SwarmManager->ReportTargetSighting(OwningAgent, OwningAgent->CurrentDetectedActor);
+				SwarmManager->ReportTargetSighting(OwningAgent, OwningAgent->CurrentDetectedActor);
 
-					BlackboardComp->SetValueAsObject(TargetActorKey.SelectedKeyName, OwningAgent->CurrentDetectedActor);
-					BlackboardComp->SetValueAsFloat(TEXT("LastSeenTime"), GetWorld()->GetTimeSeconds());
-					SwarmManager->SetSquadState(ESquadState::Engaging);
-				}
-				else
-				{
-					OwningAgent->CurrentDetectedActor = nullptr;
-				}
+				BlackboardComp->SetValueAsObject(TargetActorKey.SelectedKeyName, OwningAgent->CurrentDetectedActor);
+				BlackboardComp->SetValueAsFloat(TEXT("LastSeenTime"), GetWorld()->GetTimeSeconds());
+				SwarmManager->SetSquadState(ESquadState::Engaging);
+			}
+			else
+			{
+				OwningAgent->CurrentDetectedActor = nullptr;
 			}
 		}
 	}
