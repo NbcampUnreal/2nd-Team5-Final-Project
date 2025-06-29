@@ -3,6 +3,7 @@
 #include "BrainComponent.h"
 #include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
+#include "SLBossCharacter.h"
 #include "AI/Projectile/SLAIProjectile.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "BattleComponent/BattleComponent.h"
@@ -34,10 +35,14 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 
 	BoxCollisionComponent = CreateDefaultSubobject<UBoxComponent>("BoxCollisionComponent");
 	BoxCollisionComponent->SetupAttachment(RootComponent);
-    
+	BoxCollisionComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	BoxCollisionComponent->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
+	BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	
     LeftHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftHandCollisionBox");
     LeftHandCollisionBox->SetupAttachment(GetMesh());
     LeftHandCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeftHandCollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
     LeftHandCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
     LeftHandCollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
@@ -227,7 +232,8 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 		UE_LOG(LogTemp, Warning, TEXT("공격자(%s)에 BattleComponent가 없습니다"), *GetName());
 		return;
 	}
-
+	
+	
 	if (bIsDebugMode)
 	{
 		// 오버랩된 컴포넌트의 크기에 맞는 디버그 박스 그리기
@@ -569,7 +575,6 @@ EChapter ASLAIBaseCharacter::GetChapter() const
 ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAIProjectile> ProjectileClass,
     FVector TargetLocation, FName SocketName, float ProjectileSpeed, EAttackAnimType AnimType, bool bHorizontalOnly)
 {
-    UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation called. ProjectileSpeed parameter: %f"), ProjectileSpeed);
     if (!ProjectileClass)
     {
         UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No projectile class specified"));
@@ -587,8 +592,6 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
     if (TargetLocation.IsZero() || TargetLocation.IsNearlyZero())
     {
         TargetLocation = SpawnLocation + GetActorForwardVector() * 1000.0f;
-        
-        UE_LOG(LogTemp, Warning, TEXT("SpawnProjectileAtLocation: No target location, using socket forward direction"));
     }
     
     FRotator SpawnRotation;
@@ -631,6 +634,14 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
         // 프로젝타일 설정
         SpawnedProjectile->SetupSpawnedProjectile(AnimType, ProjectileSpeed);
 
+    	if (AController* MyController = GetController())
+    	{
+    		if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(MyController))
+    		{
+    			SpawnedProjectile->SetTeamId(TeamAgent->GetGenericTeamId());
+    		}
+    	}
+    	
         PreparedProjectile = SpawnedProjectile;
         // 프로젝타일 속도 설정
         if (SpawnedProjectile->GetProjectileMovement())
@@ -638,10 +649,6 @@ ASLAIProjectile* ASLAIBaseCharacter::SpawnProjectileAtLocation(TSubclassOf<ASLAI
             // 계산된 발사 방향으로 발사
             SpawnedProjectile->GetProjectileMovement()->Velocity = LaunchDirection * ProjectileSpeed;
         }
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
     }
 
     return SpawnedProjectile;
