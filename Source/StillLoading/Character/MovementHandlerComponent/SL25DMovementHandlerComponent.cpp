@@ -124,7 +124,7 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 	case EInputActionType::EIAT_Jump:
 		break;
 	case EInputActionType::EIAT_Interaction:
-		BeginBuff();
+		//BeginBuff();
 		break;
 	case EInputActionType::EIAT_Attack:
 		// 패링 진입
