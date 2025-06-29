@@ -675,10 +675,8 @@ void ASLCompanionCharacter::BeginDestroy()
 
 void ASLCompanionCharacter::ProcessDeath()
 {
-    // 부모 클래스의 공통 죽음 처리 호출
     Super::ProcessDeath();
     
-    // Companion 특유의 추가 처리
     if (FlyingComponent && FlyingComponent->IsFlying())
     {
         FlyingComponent->StopFlying();
