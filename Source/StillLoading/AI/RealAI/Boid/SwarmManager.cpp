@@ -61,6 +61,29 @@ void ASwarmManager::SetNewPath(const TArray<FVector>& NewPathPoints)
 	CurrentPath = NewPathPoints;
 }
 
+const TArray<ASwarmAgent*>& ASwarmManager::GetAllActiveAgents() const
+{
+	return AllAgents;
+}
+
+void ASwarmManager::ClearAllAgentRefs()
+{
+	AllAgents.Empty();
+	AgentRandomOffsets.Empty();
+	LeaderAgent = nullptr;
+	NextAgentID = 0;
+	TotalSpawnCount = 0;
+}
+
+void ASwarmManager::ResetManager()
+{
+	ClearAllAgentRefs();
+	CurrentSquadState = ESquadState::Patrolling_Move;
+	CurrentSquadTarget = nullptr;
+	LastTimeTargetSeen = 0.f;
+	CurrentPath.Empty();
+}
+
 void ASwarmManager::ReportTargetSighting(AActor* SelfTarget, AActor* SightedTarget)
 {
 	if (!SightedTarget) return;

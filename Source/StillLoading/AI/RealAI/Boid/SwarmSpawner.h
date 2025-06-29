@@ -171,5 +171,12 @@ protected:
 	FRotator EffectSpawnRotation;
 
 private:
+	TMap<TSubclassOf<ASwarmAgent>, TArray<ASwarmAgent*>> AgentPool;
+
+	void InitializePool();
+	ASwarmAgent* GetAgentFromPool(TSubclassOf<ASwarmAgent> AgentClass);
+	void ReturnAgentToPool(ASwarmAgent* Agent);
+	void ReturnAllAgentsToPool();
+	
 	bool bLeaderSet = false;
 };

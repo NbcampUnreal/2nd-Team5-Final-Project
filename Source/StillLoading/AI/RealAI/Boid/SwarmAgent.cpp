@@ -43,6 +43,50 @@ void ASwarmAgent::StopSpinning()
 	bIsSpinning = false;
 }
 
+void ASwarmAgent::ActivateAgent(const FTransform& SpawnTransform)
+{
+	// 위치와 회전 설정
+	SetActorTransform(SpawnTransform, false, nullptr, ETeleportType::ResetPhysics);
+
+	// 다시 보이도록 설정
+	SetActorHiddenInGame(false);
+
+	// 충돌 및 틱 활성화
+	SetActorEnableCollision(true);
+	SetActorTickEnabled(true);
+    
+	// AI 로직 재시작 (AIController가 있다면)
+	/*
+	if (AAIController* AICont = Cast<AAIController>(GetController()))
+	{
+		AICont->RestartLogic();
+	}
+	*/
+
+	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
+	{
+		Monster->MaxHealth = 10;
+	}
+}
+
+void ASwarmAgent::DeactivateAgent()
+{
+	if (AAIController* AICont = Cast<AAIController>(GetController()))
+	{
+		AICont->StopLogic("Returned to pool");
+	}
+
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->StopMovementImmediately();
+		MoveComp->Velocity = FVector::ZeroVector;
+	}
+
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+	SetActorTickEnabled(false);
+}
+
 void ASwarmAgent::BeginPlay()
 {
 	Super::BeginPlay();

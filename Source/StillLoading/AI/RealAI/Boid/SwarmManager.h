@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "SwarmManager.generated.h"
 
+class ASwarmSpawner;
 class ATargetPoint;
 class ASwarmAgent;
 
@@ -51,6 +52,14 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	int32 LastMonsterCount = 0;
+
+	UPROPERTY()
+	TObjectPtr<ASwarmSpawner> MySpawner;
+
+	// 오브젝트 풀링
+	const TArray<ASwarmAgent*>& GetAllActiveAgents() const;
+	void ClearAllAgentRefs();
+	void ResetManager();
 
 	// 팔로워 인지 관련
 	UFUNCTION()

@@ -30,6 +30,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AI|Movement")
 	void StopSpinning();
 
+	UFUNCTION(BlueprintCallable, Category = "AI|ObjectPooling")
+	void ActivateAgent(const FTransform& SpawnTransform);
+	UFUNCTION(BlueprintCallable, Category = "AI|ObjectPooling")
+	void DeactivateAgent();
+
 	UFUNCTION()
 	void SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree = nullptr, UBlackboardData* LeaderBlackBoard = nullptr);
 	UFUNCTION()

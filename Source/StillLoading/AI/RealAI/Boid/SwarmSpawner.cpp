@@ -20,6 +20,93 @@ ASwarmSpawner::ASwarmSpawner()
 	SpawnBox->SetCanEverAffectNavigation(false);
 }
 
+void ASwarmSpawner::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitializePool();
+
+	if (bEnableAutoSpawn)
+	{
+		BeginSpawn();
+	}
+}
+
+void ASwarmSpawner::InitializePool()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	for (const auto& Composition : SwarmCompositions)
+	{
+		if (Composition.AgentClass)
+		{
+			if (!AgentPool.Contains(Composition.AgentClass))
+			{
+				AgentPool.Add(Composition.AgentClass, TArray<ASwarmAgent*>());
+			}
+
+			for (int32 i = 0; i < Composition.SpawnCount; ++i)
+			{
+				if (ASwarmAgent* NewAgent = World->SpawnActor<ASwarmAgent>(
+					Composition.AgentClass, FVector::ZeroVector, FRotator::ZeroRotator))
+				{
+					NewAgent->DeactivateAgent();
+					AgentPool[Composition.AgentClass].Add(NewAgent);
+				}
+			}
+		}
+	}
+}
+
+ASwarmAgent* ASwarmSpawner::GetAgentFromPool(TSubclassOf<ASwarmAgent> AgentClass)
+{
+	if (AgentPool.Contains(AgentClass) && AgentPool[AgentClass].Num() > 0)
+	{
+		return AgentPool[AgentClass].Pop();
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		ASwarmAgent* NewAgent = World->SpawnActor<ASwarmAgent>(AgentClass, FVector::ZeroVector, FRotator::ZeroRotator);
+		return NewAgent;
+	}
+
+	return nullptr;
+}
+
+void ASwarmSpawner::ReturnAgentToPool(ASwarmAgent* Agent)
+{
+	if (!Agent) return;
+
+	Agent->DeactivateAgent();
+
+	TSubclassOf<ASwarmAgent> AgentClass = Agent->GetClass();
+	if (AgentPool.Contains(AgentClass))
+	{
+		AgentPool[AgentClass].Add(Agent);
+	}
+	else
+	{
+		AgentPool.Add(AgentClass, TArray<ASwarmAgent*>());
+		AgentPool[AgentClass].Add(Agent);
+	}
+}
+
+void ASwarmSpawner::ReturnAllAgentsToPool()
+{
+	if (IsValid(SpawnedManager))
+	{
+		// 매니저가 관리하는 활성화된 모든 에이전트를 가져와서 풀에 반납
+		TArray<ASwarmAgent*> ActiveAgents = SpawnedManager->GetAllActiveAgents(); // SwarmManager에 이 함수가 필요
+		for (ASwarmAgent* Agent : ActiveAgents)
+		{
+			ReturnAgentToPool(Agent);
+		}
+		SpawnedManager->ClearAllAgentRefs(); // SwarmManager에서 에이전트 참조를 모두 제거하는 함수가 필요
+	}
+}
+
 void ASwarmSpawner::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
@@ -55,9 +142,10 @@ void ASwarmSpawner::BeginSpawn()
 
 		if (!SpawnedManager)
 		{
-			SpawnedManager = World->SpawnActor<ASwarmManager>(SwarmManagerClass, GetActorLocation(), GetActorRotation());
+			SpawnedManager = World->SpawnActor<
+				ASwarmManager>(SwarmManagerClass, GetActorLocation(), GetActorRotation());
 		}
-		
+
 		if (SpawnedManager)
 		{
 			// 군체 알고리즘 가중치 셋팅
@@ -93,9 +181,9 @@ void ASwarmSpawner::BeginSpawn()
 
 			TotalSpawnCount = 0;
 
-			for (const auto& [AgentClass, ControllerClass, SpawnCount, AvoidanceWeight, bIsLeader, TeamIDToAssign] :
-			     SwarmCompositions)
+			for (const auto& Composition : SwarmCompositions)
 			{
+				/*
 				if (AgentClass)
 				{
 					TotalSpawnCount += SpawnCount;
@@ -160,6 +248,51 @@ void ASwarmSpawner::BeginSpawn()
 						}
 					}
 				}
+				*/
+
+				if (Composition.AgentClass)
+				{
+					for (int32 i = 0; i < Composition.SpawnCount; ++i)
+					{
+						const FBox SpawnableArea = FBox(GetActorLocation() - SpawnBox->GetScaledBoxExtent(),
+						                                GetActorLocation() + SpawnBox->GetScaledBoxExtent());
+						const FVector SpawnLocation = FMath::RandPointInBox(SpawnableArea);
+						const FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
+
+						if (ASwarmAgent* PooledAgent = GetAgentFromPool(Composition.AgentClass))
+						{
+							PooledAgent->AIControllerClass = Composition.ControllerClass;
+							PooledAgent->MySwarmManager = SpawnedManager;
+
+							if (UCharacterMovementComponent* MoveComp = PooledAgent->GetCharacterMovement())
+							{
+								MoveComp->AvoidanceWeight = Composition.AvoidanceWeight;
+								MoveComp->MaxWalkSpeed = Composition.bIsLeader
+									                         ? LeaderMovementSpeed
+									                         : FollowerMovementSpeed;
+							}
+
+							if (Composition.bIsLeader)
+							{
+								if (bBeginBurserkMode)
+								{
+									PooledAgent->RequestBerserkMode();
+								}
+								PooledAgent->SetLeader(true, LeaderBehaviorTree, LeaderBlackBoard);
+								SpawnedManager->SetLeader(PooledAgent);
+							}
+
+							PooledAgent->ActivateAgent(SpawnTransform);
+
+							if (AAIController* AIController = Cast<AAIController>(PooledAgent->GetController()))
+							{
+								AIController->SetGenericTeamId(Composition.TeamIDToAssign);
+							}
+
+							SpawnedManager->RegisterAgent(PooledAgent);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -170,29 +303,36 @@ int32 ASwarmSpawner::GetSpawnCount() const
 	return TotalSpawnCount;
 }
 
-// TODO::무기 없애기
 void ASwarmSpawner::ResetSpawendMonster()
 {
-	DestroyAllMonster();
+	ReturnAllAgentsToPool();
+	if(IsValid(SpawnedManager))
+	{
+		SpawnedManager->ResetManager(); // SwarmManager에 모든 상태를 초기화하는 함수가 필요
+	}
 	BeginSpawn();
 }
 
 void ASwarmSpawner::DestroyAllMonster()
 {
+	ReturnAllAgentsToPool();
+
+	for (auto& Elem : AgentPool)
+	{
+		for (ASwarmAgent* Agent : Elem.Value)
+		{
+			if(IsValid(Agent))
+			{
+				Agent->Destroy();
+			}
+		}
+	}
+	AgentPool.Empty();
+
 	if (IsValid(SpawnedManager))
 	{
-		SpawnedManager->DestroyAllAgents();
 		SpawnedManager->Destroy();
-	}
-}
-
-void ASwarmSpawner::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (bEnableAutoSpawn)
-	{
-		BeginSpawn();
+		SpawnedManager = nullptr;
 	}
 }
 
