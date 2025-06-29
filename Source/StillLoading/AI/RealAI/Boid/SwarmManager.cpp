@@ -59,7 +59,9 @@ void ASwarmManager::Tick(float DeltaSeconds)
 
 void ASwarmManager::DestroyAllAgents()
 {
-	for (ASwarmAgent* Agent : AllAgents)
+	TArray<ASwarmAgent*> AgentsToDestroy = AllAgents;
+	
+	for (ASwarmAgent* Agent : AgentsToDestroy)
 	{
 		if (IsValid(Agent))
 		{	
@@ -73,6 +75,8 @@ void ASwarmManager::DestroyAllAgents()
 			}
 		}
 	}
+
+	AllAgents.Empty();
 }
 
 void ASwarmManager::SetNewPath(const TArray<FVector>& NewPathPoints)
