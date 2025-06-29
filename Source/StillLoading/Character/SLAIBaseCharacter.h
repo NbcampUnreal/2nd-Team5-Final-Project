@@ -99,8 +99,8 @@ public:
 	virtual void Landed(const FHitResult& Hit) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCharacterDeath, ASLAIBaseCharacter*);
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPatternFinished, ASLAIBaseCharacter*);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterDeath, ASLAIBaseCharacter*, DeadCharacter);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPatternFinished, ASLAIBaseCharacter*, Character);
 	
 	// --- Getters (Collision) ---
 	// 손 콜리전 컴포넌트 접근자
@@ -319,8 +319,11 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Delegate")
 	FSLBossHpDelegateBuffer& GetBossHpChangedDelegate() { return OnBossHpChanged; }
-	
+
+	UPROPERTY(BlueprintAssignable, Category = "Delegate")
 	FOnCharacterDeath OnCharacterDeath;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Delegate")
 	FOnPatternFinished OnPatternFinished;
 
 protected:

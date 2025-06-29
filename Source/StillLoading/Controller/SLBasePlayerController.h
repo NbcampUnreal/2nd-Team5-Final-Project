@@ -16,6 +16,8 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnUnPossess() override;
+	virtual void SetIgnoreMoveInput(bool bNewMoveInput) override;
 	virtual FGenericTeamId GetGenericTeamId() const override;
 
 	UFUNCTION(BlueprintCallable)
@@ -34,6 +36,12 @@ protected:
 	TSubclassOf<UUserWidget> EnemyCursorWidgetClass;
 	
 private:
+	UFUNCTION()
+	void ShowInGameUI();
+
+	UFUNCTION()
+	void HideInGameUI();
+
 	void CheckActorUnderCursor();
 
 	UPROPERTY()

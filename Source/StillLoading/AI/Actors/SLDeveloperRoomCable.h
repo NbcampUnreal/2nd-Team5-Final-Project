@@ -68,7 +68,10 @@ protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
     virtual void OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType) override;
-
+    UFUNCTION(BlueprintImplementableEvent, Category = "Boss Line")
+    void ActivateHighlight();
+    UFUNCTION(BlueprintImplementableEvent, Category = "Boss Line")
+    void DeactivateHighlight();
     UFUNCTION()
     void OnLineHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
 

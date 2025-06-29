@@ -19,23 +19,32 @@ void ASLTitleHUD::MoveToStartMap()
 
 void ASLTitleHUD::NotifyTalkEnded()
 {
-	LevelWidgetObj->AddToViewport();
+	if (!LevelWidgetObj->IsInViewport())
+	{
+		LevelWidgetObj->AddToViewport();
+	}
 }
 
 void ASLTitleHUD::ActivateTitleTalk()
 {
+	HideTitleWidget();
 	CheckValidOfUISubsystem();
 	UISubsystem->GetTalkWidget()->OnTalkEnded.AddDynamic(this, &ThisClass::NotifyTalkEnded);
 	UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Heroine, "Serena", "TitleTalk");
+}
+
+void ASLTitleHUD::HideTitleWidget()
+{
+	if (LevelWidgetObj->IsInViewport())
+	{
+		LevelWidgetObj->RemoveFromViewport();
+	}
 }
 
 void ASLTitleHUD::OnStartedHUD()
 {
 	Super::OnStartedHUD();
 
-	LevelWidgetObj->RemoveFromViewport();
-
 	CheckValidOfUISubsystem();
-
 	UISubsystem->ActivateFade(true);
 }

@@ -235,9 +235,18 @@ void USLUISubsystem::CheckValidOfWidgetDataAsset()
 
 void USLUISubsystem::CheckValidOfOptiondDataAsset()
 {
-	CheckValidOfWidgetDataAsset();
+	//CheckValidOfWidgetDataAsset();
 
-	checkf(UISettings->OptionWidgetPrivateDataMap.Contains(CurrentDataChapter), TEXT("Option Private Data Map is not contains"));
-	WidgetActivateBuffer.WidgetPrivateData = UISettings->OptionWidgetPrivateDataMap[CurrentDataChapter].LoadSynchronous();
+	if (IsValid(WidgetActivateBuffer.WidgetPrivateData) &&
+		WidgetActivateBuffer.CurrentChapter == CurrentOptionDataChapter)
+	{
+		return;
+	}
+
+	CurrentOptionDataChapter = WidgetActivateBuffer.CurrentChapter;
+	CheckValidOfUISettings();
+
+	checkf(UISettings->OptionWidgetPrivateDataMap.Contains(CurrentOptionDataChapter), TEXT("Option Private Data Map is not contains"));
+	WidgetActivateBuffer.WidgetPrivateData = UISettings->OptionWidgetPrivateDataMap[CurrentOptionDataChapter].LoadSynchronous();
 	checkf(IsValid(WidgetActivateBuffer.WidgetPrivateData), TEXT("Option ImageData is invalid"));
 }

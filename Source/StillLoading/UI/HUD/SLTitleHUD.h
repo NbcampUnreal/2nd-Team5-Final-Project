@@ -21,6 +21,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ActivateTitleTalk();
 
+	UFUNCTION(BlueprintCallable)
+	void HideTitleWidget();
+
 protected:
 	virtual void OnStartedHUD() override;
 };
