@@ -1176,8 +1176,11 @@ void ASLAIBaseCharacter::ProcessDeath()
 			BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
 		}
 	}
-    
-	OnCharacterDeath.Broadcast(this);
+    if (OnCharacterDeath.IsBound())
+    {
+    	OnCharacterDeath.Broadcast(this);
+    }
+	
 	OnDeath();
 }
 
