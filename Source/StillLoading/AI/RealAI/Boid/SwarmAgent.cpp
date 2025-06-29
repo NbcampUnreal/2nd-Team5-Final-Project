@@ -4,11 +4,13 @@
 #include "BrainComponent.h"
 #include "SwarmManager.h"
 #include "AI/RealAI/MonsterAICharacter.h"
+#include "AI/RealAI/Controller/MonsterAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BoidMovementComponent/BoidMovementComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/RadarComponent/CollisionRadarComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -45,7 +47,6 @@ void ASwarmAgent::StopSpinning()
 
 void ASwarmAgent::ActivateAgent(const FTransform& SpawnTransform)
 {
-	// 위치와 회전 설정
 	SetActorTransform(SpawnTransform, false, nullptr, ETeleportType::ResetPhysics);
 
 	// 다시 보이도록 설정
@@ -54,24 +55,38 @@ void ASwarmAgent::ActivateAgent(const FTransform& SpawnTransform)
 	// 충돌 및 틱 활성화
 	SetActorEnableCollision(true);
 	SetActorTickEnabled(true);
-    
-	// AI 로직 재시작 (AIController가 있다면)
-	/*
-	if (AAIController* AICont = Cast<AAIController>(GetController()))
-	{
-		AICont->RestartLogic();
-	}
-	*/
 
 	if (AMonsterAICharacter* Monster = Cast<AMonsterAICharacter>(this))
 	{
-		Monster->MaxHealth = 10;
+		Monster->CurrentHealth = Monster->MaxHealth;
+		Monster->SetPrimaryState(TAG_AI_Idle);
+		Monster->SetStrategyState(TAG_AI_Idle);
+		Monster->SetBattleState(TAG_AI_Idle);
+
+		Monster->ResetMaterial();
+
+		if (Monster->Sword)
+		{
+			Monster->Sword->SetActorHiddenInGame(false);
+		}
+		if (Monster->Shield)
+		{
+			Monster->Shield->SetActorHiddenInGame(false);
+		}
+
+		Monster->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		Monster->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+
+	if (CachedBoidMovementComp)
+	{
+		CachedBoidMovementComp->InitializeBoid();
 	}
 }
 
 void ASwarmAgent::DeactivateAgent()
 {
-	if (AAIController* AICont = Cast<AAIController>(GetController()))
+	if (AMonsterAIController* AICont = Cast<AMonsterAIController>(GetController()))
 	{
 		AICont->StopLogic("Returned to pool");
 	}
@@ -250,6 +265,7 @@ void ASwarmAgent::ApplyLeaderState(AAIController* AIController)
 void ASwarmAgent::AgentDied()
 {
 	FOnMonsterDied.Broadcast(this);
+	MySwarmManager->AgentDead(this);
 }
 
 void ASwarmAgent::RotateToFaceTarget()

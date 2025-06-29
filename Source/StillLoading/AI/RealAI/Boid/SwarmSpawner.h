@@ -65,6 +65,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DestroyAllMonster();
 
+	UFUNCTION()
+	void ReturnAgentToPool(ASwarmAgent* Agent);
+
+	UFUNCTION()
+	void RespawnSingleAgent(TSubclassOf<ASwarmAgent> AgentClassToRespawn);
+
 	UPROPERTY(BlueprintAssignable, Category = "Monster Spawner | Events")
 	FOnSpawnedMonstersCountUpdated OnMonstersUpdated;
 
@@ -73,6 +79,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
 	bool bEnableAutoSpawn = true;
+
+	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
+	bool bAutoRespond = false;
 
 	UPROPERTY(EditAnywhere, Category = "AI | Spawner Setting")
 	EFollowerFormationType FormationType = EFollowerFormationType::CenteredSquare;
@@ -175,7 +184,7 @@ private:
 
 	void InitializePool();
 	ASwarmAgent* GetAgentFromPool(TSubclassOf<ASwarmAgent> AgentClass);
-	void ReturnAgentToPool(ASwarmAgent* Agent);
+	
 	void ReturnAllAgentsToPool();
 	
 	bool bLeaderSet = false;

@@ -7,7 +7,6 @@
 #include "Components/BoxComponent.h"
 #include "Engine/TargetPoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
 
 ASwarmSpawner::ASwarmSpawner()
 {
@@ -93,17 +92,71 @@ void ASwarmSpawner::ReturnAgentToPool(ASwarmAgent* Agent)
 	}
 }
 
+void ASwarmSpawner::RespawnSingleAgent(TSubclassOf<ASwarmAgent> AgentClassToRespawn)
+{
+	 if (!SpawnedManager || !AgentClassToRespawn)
+    {
+        return;
+    }
+    
+    if (ASwarmAgent* PooledAgent = GetAgentFromPool(AgentClassToRespawn))
+    {
+        const FBox SpawnableArea = FBox(GetActorLocation() - SpawnBox->GetScaledBoxExtent(),
+                                        GetActorLocation() + SpawnBox->GetScaledBoxExtent());
+        const FVector SpawnLocation = FMath::RandPointInBox(SpawnableArea);
+        const FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
+
+        const FSwarmComposition* FoundComposition = SwarmCompositions.FindByPredicate(
+            [&](const FSwarmComposition& Comp)
+            {
+                return Comp.AgentClass == AgentClassToRespawn;
+            });
+
+        if (!FoundComposition)
+        {
+            ReturnAgentToPool(PooledAgent);
+            UE_LOG(LogTemp, Warning, TEXT("Could not find composition for respawning agent of class %s"), *AgentClassToRespawn->GetName());
+            return;
+        }
+
+        if(FoundComposition->bIsLeader)
+        {
+             ReturnAgentToPool(PooledAgent);
+             return;
+        }
+
+        PooledAgent->AIControllerClass = FoundComposition->ControllerClass;
+        PooledAgent->MySwarmManager = SpawnedManager;
+
+        if (UCharacterMovementComponent* MoveComp = PooledAgent->GetCharacterMovement())
+        {
+            MoveComp->AvoidanceWeight = FoundComposition->AvoidanceWeight;
+            MoveComp->MaxWalkSpeed = FollowerMovementSpeed;
+        }
+
+        PooledAgent->ActivateAgent(SpawnTransform);
+
+        if (AAIController* AIController = Cast<AAIController>(PooledAgent->GetController()))
+        {
+            AIController->SetGenericTeamId(FoundComposition->TeamIDToAssign);
+        }
+
+        SpawnedManager->RegisterAgent(PooledAgent);
+
+        UE_LOG(LogTemp, Log, TEXT("An agent of class %s has been respawned."), *AgentClassToRespawn->GetName());
+    }
+}
+
 void ASwarmSpawner::ReturnAllAgentsToPool()
 {
 	if (IsValid(SpawnedManager))
 	{
-		// 매니저가 관리하는 활성화된 모든 에이전트를 가져와서 풀에 반납
-		TArray<ASwarmAgent*> ActiveAgents = SpawnedManager->GetAllActiveAgents(); // SwarmManager에 이 함수가 필요
+		TArray<ASwarmAgent*> ActiveAgents = SpawnedManager->GetAllActiveAgents();
 		for (ASwarmAgent* Agent : ActiveAgents)
 		{
 			ReturnAgentToPool(Agent);
 		}
-		SpawnedManager->ClearAllAgentRefs(); // SwarmManager에서 에이전트 참조를 모두 제거하는 함수가 필요
+		SpawnedManager->ClearAllAgentRefs();
 	}
 }
 
@@ -148,6 +201,8 @@ void ASwarmSpawner::BeginSpawn()
 
 		if (SpawnedManager)
 		{
+			SpawnedManager->MySpawner = this;
+
 			// 군체 알고리즘 가중치 셋팅
 			SpawnedManager->SwarmPatrolPoints = PatrolPoints;
 			SpawnedManager->PatrolSeparation = SeparationWeight;
@@ -163,6 +218,9 @@ void ASwarmSpawner::BeginSpawn()
 			SpawnedManager->CurrentFormationType = FormationType;
 			SpawnedManager->DetectionRadius = DetectionRadius;
 			SpawnedManager->OnMonstersUpdated.AddDynamic(this, &ASwarmSpawner::OnMonstersUpdated_Handler);
+
+			SpawnedManager->CachedLeaderBT = LeaderBehaviorTree;
+			SpawnedManager->CachedLeaderBB = LeaderBlackBoard;
 
 			// 순찰 포인트 정렬
 			TArray<FVector> InitialPathPoints;
@@ -183,73 +241,6 @@ void ASwarmSpawner::BeginSpawn()
 
 			for (const auto& Composition : SwarmCompositions)
 			{
-				/*
-				if (AgentClass)
-				{
-					TotalSpawnCount += SpawnCount;
-
-					for (int32 i = 0; i < SpawnCount; ++i)
-					{
-						const FBox SpawnableArea = FBox(GetActorLocation() - SpawnBox->GetScaledBoxExtent(),
-						                                GetActorLocation() + SpawnBox->GetScaledBoxExtent());
-						const FVector SpawnLocation = FMath::RandPointInBox(SpawnableArea);
-						const FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
-
-						constexpr ESpawnActorCollisionHandlingMethod CollisionHandlingOverride =
-							ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-						// 지연 스폰
-						if (ASwarmAgent* DeferredAgent = World->SpawnActorDeferred<ASwarmAgent>(
-							AgentClass, SpawnTransform, this, nullptr, CollisionHandlingOverride))
-						{
-							DeferredAgent->AIControllerClass = ControllerClass;
-							DeferredAgent->MySwarmManager = SpawnedManager;
-
-							if (UCharacterMovementComponent* MoveComp = DeferredAgent->GetCharacterMovement())
-							{
-								MoveComp->AvoidanceWeight = AvoidanceWeight; // AVO 셋팅
-
-								if (bIsLeader)
-								{
-									MoveComp->MaxWalkSpeed = LeaderMovementSpeed;
-								}
-								else
-								{
-									MoveComp->MaxWalkSpeed = FollowerMovementSpeed;
-								}
-							}
-
-							if (bIsLeader)
-							{
-								if (bBeginBurserkMode)
-								{
-									DeferredAgent->RequestBerserkMode();
-								}
-
-								DeferredAgent->SetLeader(true, LeaderBehaviorTree, LeaderBlackBoard);
-								SpawnedManager->SetLeader(DeferredAgent);
-							}
-
-							UGameplayStatics::FinishSpawningActor(DeferredAgent, SpawnTransform);
-
-							if (AAIController* AIController = Cast<AAIController>(DeferredAgent->GetController()))
-							{
-								AIController->SetGenericTeamId(TeamIDToAssign);
-							}
-
-							SpawnedManager->RegisterAgent(DeferredAgent); // 에이전트 등록
-						}
-						else
-						{
-							UE_LOG(LogTemp, Error,
-							       TEXT("ASwarmSpawner::BeginSpawn - Failed to spawn agent of class %s at location %s"),
-							       *AgentClass->GetName(),
-							       *SpawnLocation.ToString());
-						}
-					}
-				}
-				*/
-
 				if (Composition.AgentClass)
 				{
 					for (int32 i = 0; i < Composition.SpawnCount; ++i)
@@ -306,9 +297,9 @@ int32 ASwarmSpawner::GetSpawnCount() const
 void ASwarmSpawner::ResetSpawendMonster()
 {
 	ReturnAllAgentsToPool();
-	if(IsValid(SpawnedManager))
+	if (IsValid(SpawnedManager))
 	{
-		SpawnedManager->ResetManager(); // SwarmManager에 모든 상태를 초기화하는 함수가 필요
+		SpawnedManager->ResetManager();
 	}
 	BeginSpawn();
 }
@@ -321,7 +312,7 @@ void ASwarmSpawner::DestroyAllMonster()
 	{
 		for (ASwarmAgent* Agent : Elem.Value)
 		{
-			if(IsValid(Agent))
+			if (IsValid(Agent))
 			{
 				Agent->Destroy();
 			}

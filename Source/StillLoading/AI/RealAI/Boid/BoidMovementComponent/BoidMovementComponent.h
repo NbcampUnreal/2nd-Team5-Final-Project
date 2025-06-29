@@ -25,6 +25,7 @@ class STILLLOADING_API UBoidMovementComponent : public UActorComponent
 
 public:
 	UBoidMovementComponent();
+	void InitializeBoid();
 	
 	// 공격 후 얼마나 멀어질지 거리 설정
 	UPROPERTY(EditAnywhere, Category = "Boid Combat")

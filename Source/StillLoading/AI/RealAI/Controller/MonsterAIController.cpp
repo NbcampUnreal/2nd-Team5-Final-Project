@@ -1,7 +1,9 @@
 #include "MonsterAIController.h"
 
+#include "BrainComponent.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Components/WidgetComponent.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 
 struct FStateTreeInstanceData;
@@ -77,6 +79,19 @@ void AMonsterAIController::ToggleLockOnWidget(bool bIsLockOnWidget)
 {
 	LockOnWidgetFront->SetVisibility(bIsLockOnWidget);
 	LockOnWidgetBack->SetVisibility(bIsLockOnWidget);
+}
+
+void AMonsterAIController::StopLogic(const FString& Reason)
+{
+	if (BrainComponent)
+	{
+		BrainComponent->StopLogic(Reason);
+	}
+
+	if (UAIPerceptionComponent* PerceptionComp = GetAIPerceptionComponent())
+	{
+		PerceptionComp->SetActive(false);
+	}
 }
 
 ETeamAttitude::Type AMonsterAIController::GetTeamAttitudeTowards(const AActor& Other) const

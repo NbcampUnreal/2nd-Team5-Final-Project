@@ -2,6 +2,7 @@
 
 #include "NavigationSystem.h"
 #include "SwarmAgent.h"
+#include "SwarmSpawner.h"
 #include "AI/RealAI/MonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
@@ -281,7 +282,18 @@ void ASwarmManager::AgentDead(ASwarmAgent* Agent)
 	if (!Agent) return;
 
 	const bool bWasLeader = (Agent == LeaderAgent);
+	const TSubclassOf<ASwarmAgent> AgentClass = Agent->GetClass();
+    
+	if (MySpawner)
+	{
+		MySpawner->ReturnAgentToPool(Agent);
+	}
 	UnregisterAgent(Agent);
+
+	if (MySpawner && MySpawner->bAutoRespond && !bWasLeader)
+	{
+		MySpawner->RespawnSingleAgent(AgentClass);
+	}
 
 	if (bWasLeader)
 	{
@@ -297,7 +309,7 @@ void ASwarmManager::TryToAppointNewLeader()
 	{
 		if (ASwarmAgent* NewLeader = AllAgents[0])
 		{
-			NewLeader->SetLeader(true);
+			NewLeader->SetLeader(true, CachedLeaderBT, CachedLeaderBB);
 
 			if (AAIController* NewLeaderController = Cast<AAIController>(NewLeader->GetController()))
 			{

@@ -22,6 +22,9 @@ public:
 	UFUNCTION()
 	void ToggleLockOnWidget(bool bIsLockOnWidget);
 
+	UFUNCTION()
+	void StopLogic(const FString& Reason);
+
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> LockOnWidgetClass;
 	

@@ -20,10 +20,10 @@ UBoidMovementComponent::UBoidMovementComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UBoidMovementComponent::BeginPlay()
+void UBoidMovementComponent::InitializeBoid()
 {
-	Super::BeginPlay();
-
+	SetComponentTickEnabled(true);
+	
 	OwnerCharacter = Cast<ASwarmAgent>(GetOwner());
 	if (!OwnerCharacter)
 	{
@@ -35,7 +35,15 @@ void UBoidMovementComponent::BeginPlay()
 	if (!SwarmManager)
 	{
 		SetComponentTickEnabled(false);
+		return;
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("%s: BoidMovementComponent Initialized and Tick Enabled."), *GetOwner()->GetName());
+}
+
+void UBoidMovementComponent::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -43,6 +51,7 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	/*
 	UpdateTimer += DeltaTime;
 	if (UpdateTimer < UpdateInterval)
 	{
@@ -53,6 +62,7 @@ void UBoidMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		return;
 	}
 	UpdateTimer = FMath::Fmod(UpdateTimer, UpdateInterval);
+	*/
 
 	ASwarmAgent* OwningAgent = Cast<ASwarmAgent>(GetOwner());
 	if (OwningAgent && OwningAgent->IsLeader())

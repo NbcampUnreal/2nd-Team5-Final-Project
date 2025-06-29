@@ -62,6 +62,9 @@ public:
 	UFUNCTION()
 	void SetChasing(bool bEnable);
 
+	UFUNCTION()
+	void ResetMaterial();
+
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void SetPrimaryState(const FGameplayTag NewState);
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
@@ -92,6 +95,8 @@ public:
 
 	UFUNCTION()
 	void Dead(const AActor* Attacker, bool bIsChangeMaterial);
+	UFUNCTION()
+	void OnDeathSequenceFinished();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "On Death")
 	void OnDeath();
@@ -116,7 +121,9 @@ public:
 	float SpearInaccuracy = 5.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	float MaxHealth = 10.0f;;
+	float MaxHealth = 10.0f;
+	UPROPERTY()
+	float CurrentHealth;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> SwordClass;
@@ -187,8 +194,6 @@ private:
 	UFUNCTION()
 	void ChangeMeshTemporarily(float Rate = 0.3f);
 	UFUNCTION()
-	void ResetMaterial();
-	UFUNCTION()
 	void HitDirection(AActor* Causer);
 	UFUNCTION()
 	void RotateToHitCauser(const AActor* Causer);
@@ -206,9 +211,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<AActor> LastAttacker;
-	
-	UPROPERTY()
-	float CurrentHealth;
 
 	UPROPERTY()
 	FTimerHandle PushResetHandle;

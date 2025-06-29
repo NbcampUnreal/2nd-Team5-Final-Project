@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "SwarmManager.generated.h"
 
+class UBlackboardData;
+class UBehaviorTree;
 class ASwarmSpawner;
 class ATargetPoint;
 class ASwarmAgent;
@@ -161,6 +163,11 @@ public:
 
 	UFUNCTION()
 	void AgentDead(ASwarmAgent* Agent);
+
+	UPROPERTY()
+	TObjectPtr<UBehaviorTree> CachedLeaderBT;
+	UPROPERTY()
+	TObjectPtr<UBlackboardData> CachedLeaderBB;
 
 protected:
 	UFUNCTION()

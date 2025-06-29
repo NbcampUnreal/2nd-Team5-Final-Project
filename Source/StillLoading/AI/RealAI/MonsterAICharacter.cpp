@@ -566,6 +566,60 @@ void AMonsterAICharacter::HandleHitNotify()
 
 void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
+	SetBattleState(TAG_AI_Dead);
+	OnDeath();
+	AgentDied();
+
+	if (DeathMaterial && bIsChangeMaterial)
+	{
+		if (GetWorld()->GetTimerManager().IsTimerActive(MaterialResetTimerHandle))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
+		}
+		GetMesh()->SetMaterial(0, DeathMaterial);
+	}
+
+	if (AMonsterAIController* AICon = Cast<AMonsterAIController>(GetController()))
+	{
+		AICon->StopLogic("Character Died"); // StopLogic으로 변경
+		AICon->UnPossess();
+		AICon->ToggleLockOnWidget(false);
+	}
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	if (Sword)
+	{
+		Sword->SetActorHiddenInGame(true);
+	}
+	if (Shield)
+	{
+		Shield->SetActorHiddenInGame(true);
+	}
+    
+	FTimerHandle DeathTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(DeathTimerHandle, this, &AMonsterAICharacter::OnDeathSequenceFinished, 2.0f, false);
+
+	if (Attacker)
+	{
+		if (UBattleComponent* AttackerBattleComp = Attacker->FindComponentByClass<UBattleComponent>())
+		{
+			IEnemyDeathReceiver::Execute_OnEnemyDeath(AttackerBattleComp, this);
+		}
+	}
+}
+
+void AMonsterAICharacter::OnDeathSequenceFinished()
+{
+	if (OnMonsterDied.IsBound())
+	{
+		OnMonsterDied.Broadcast(this);
+	}
+}
+
+/*
+void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
+{
 	OnDeath();
 	AgentDied();
 
@@ -621,6 +675,7 @@ void AMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMater
 		}
 	}
 }
+*/
 
 void AMonsterAICharacter::FixCharacterVelocity()
 {
