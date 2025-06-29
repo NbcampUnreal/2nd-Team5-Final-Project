@@ -74,6 +74,7 @@ void USLCheatManager::SetCurrentChapter(const int32 InChapter)
 			break;
 	}
 	GetWorld()->GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>()->SaveGameData();
+	GetWorld()->GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>()->LoadGameData();
 }
 
 void USLCheatManager::ShowTitleHUD(bool bFlag)
