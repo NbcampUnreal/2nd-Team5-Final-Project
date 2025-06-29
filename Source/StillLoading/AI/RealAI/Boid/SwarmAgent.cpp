@@ -148,6 +148,11 @@ void ASwarmAgent::SetLeader(bool IsLeader, UBehaviorTree* LeaderBehaviorTree, UB
 	{
 		ApplyLeaderState(AIController);
 	}
+
+	if (CachedRadarComponent)
+	{
+		CachedRadarComponent->bIsUseRadar = true;
+	}
 }
 
 void ASwarmAgent::OnRadarDetectedActor(AActor* DetectedActor, float Distance)
