@@ -33,6 +33,8 @@ public:
 	ASwarmManager();
 
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void BeginDestroy() override;
 	virtual void Tick(float DeltaSeconds) override;
 
 	void SetLeader(ASwarmAgent* InLeader) { LeaderAgent = InLeader; }

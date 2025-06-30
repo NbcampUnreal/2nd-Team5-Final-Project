@@ -12,7 +12,6 @@
 ASLBossAIController::ASLBossAIController()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	AAIController::SetGenericTeamId(FGenericTeamId(2));
 
 	AISenseConfig_Sight->SightRadius = 4000.f; // 최대 감지 거리
 	AISenseConfig_Sight->LoseSightRadius = 4200.f; // 감지 상실 거리
@@ -40,6 +39,18 @@ ETeamAttitude::Type ASLBossAIController::GetTeamAttitudeTowards(const AActor& Ot
 	{
 		return ETeamAttitude::Hostile;
 	}
+}
+
+void ASLBossAIController::BeginPlay()
+{
+	Super::BeginPlay();
+	
+}
+
+void ASLBossAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	AAIController::SetGenericTeamId(FGenericTeamId(2));
 }
 
 void ASLBossAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)

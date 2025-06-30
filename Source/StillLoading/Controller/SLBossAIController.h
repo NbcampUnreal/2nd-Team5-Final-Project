@@ -19,6 +19,7 @@ public:
 	//End of ~IGenericTeamAgentInterface inteface
 
 protected:
-
+	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 };

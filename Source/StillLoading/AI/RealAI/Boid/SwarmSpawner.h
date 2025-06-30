@@ -172,4 +172,6 @@ protected:
 
 private:
 	bool bLeaderSet = false;
+
+	FTimerHandle OneSecondTimerHandle;
 };
