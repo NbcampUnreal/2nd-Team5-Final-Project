@@ -25,7 +25,7 @@ void USLUISubsystem::SetInputModeAndCursor(bool bIsRemove)
 		bIsVisibleTargetCursor = ActiveAdditiveWidgets[ActiveCount]->GetWidgetCursorMode();
 	}
 
-	APlayerController* CurrentPC = GetWorld()->GetPlayerControllerIterator()->Get();
+	APlayerController* CurrentPC = GetWorld()->GetFirstPlayerController();
 	checkf(IsValid(CurrentPC), TEXT("Player Controller is invalid"));
 
 	switch (TargetInputMode)
