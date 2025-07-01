@@ -4,7 +4,9 @@
 #include "UI/Widget/AdditiveWidget/SLCreditWidget.h"
 #include "Animation/WidgetAnimation.h"
 #include "UI/Widget/AdditiveWidget/SubWidget/SLCreditTextWidget.h"
+#include "SaveLoad/SLSaveGameSubsystem.h"
 #include "Components/Button.h"
+#include "UI/Widget/SLButtonWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/ScrollBox.h"
@@ -19,7 +21,9 @@ void USLCreditWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	
 	Super::InitWidget(NewUISubsystem);
 
-	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
+	CloseButton->InitButton();
+	CloseButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedCloseButton);
+	CloseButton->SetButtonText(FText::FromString(FString::Printf(TEXT("확인"))));
 }
 
 void USLCreditWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
@@ -74,4 +78,13 @@ bool USLCreditWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
 	BackgroundImg->SetBrush(SlateBrush);
 
 	return true;
+}
+
+void USLCreditWidget::OnClickedCloseButton()
+{
+	PlayUISound(ESLUISoundType::EUS_Click);
+
+	USLSaveGameSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
+	SaveGameSubsystem->ResetGameData();
+	MoveToLevelByType(ESLLevelNameType::ELN_Intro);
 }
