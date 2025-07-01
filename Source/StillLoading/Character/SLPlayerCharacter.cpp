@@ -117,7 +117,7 @@ void ASLPlayerCharacter::EnterCinematic(const float Yaw)
 		CachedMontageComponent->StopAllMontages(0.2);
 	}
 
-	if (USL25DMovementHandlerComponent* CombatHandler = FindComponentByClass<USL25DMovementHandlerComponent>())
+	if (USLMovementComponentBase* CombatHandler = FindComponentByClass<USLMovementComponentBase>())
 	{
 		CombatHandler->CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, Yaw, 0.0f));
 		CombatHandler->SetComponentTickEnabled(false);
@@ -128,7 +128,7 @@ void ASLPlayerCharacter::EnterCinematic(const float Yaw)
 
 void ASLPlayerCharacter::EndCinematic()
 {
-	if (USL25DMovementHandlerComponent* CombatHandler = FindComponentByClass<USL25DMovementHandlerComponent>())
+	if (USLMovementComponentBase* CombatHandler = FindComponentByClass<USLMovementComponentBase>())
 	{
 		CombatHandler->SetComponentTickEnabled(true);
 	}
