@@ -233,6 +233,10 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 		return;
 	}
 	
+	if (OverlappedComponent == BoxCollisionComponent && !Cast<ASLBossCharacter>(this))
+	{
+		return;
+	}
 	
 	if (bIsDebugMode)
 	{
@@ -1172,8 +1176,11 @@ void ASLAIBaseCharacter::ProcessDeath()
 			BlackboardComponent->SetValueAsBool(FName("Isdead"), true);
 		}
 	}
-    
-	OnCharacterDeath.Broadcast(this);
+    if (OnCharacterDeath.IsBound())
+    {
+    	OnCharacterDeath.Broadcast(this);
+    }
+	
 	OnDeath();
 }
 

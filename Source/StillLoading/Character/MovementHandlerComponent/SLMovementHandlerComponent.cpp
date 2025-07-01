@@ -81,6 +81,7 @@ void UMovementHandlerComponent::TickComponent(float DeltaTime, enum ELevelTick T
 			//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Lock On Blocked"));
 			return;
 		}
+		
 		if (CameraFocusTarget)
 		{
 			float Distance = FVector::Dist(OwnerCharacter->GetActorLocation(), CameraFocusTarget->GetActorLocation());
