@@ -150,6 +150,7 @@ void USLMovementComponentBase::OnActionStarted_Implementation(EInputActionType A
 
 void USLMovementComponentBase::OnActionCompleted_Implementation(EInputActionType ActionType)
 {
+	
 }
 
 void USLMovementComponentBase::OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult,
