@@ -15,7 +15,7 @@
 - **[공식 트레일러 (Full ver)](https://youtu.be/i0PMi3yc9Z4)**
 - **[데모 버전 다운로드](https://github.com/NbcampUnreal/2nd-Team5-Final-Project/releases/tag/v0.1.0-demo)**
 
-> ### **저희 게임에 대해 기술이나 더 관심이 있으신 분들은 [브로셔](https://www.notion.so/teamsparta/2-5-STILL-LOADING-21c2dc3ef51480c48cbed4cc24e4184f) 를 방문해주세요!**
+> ### **저희 게임에 대해 기술이나 더 관심이 있으신 분들은 [브로셔](https://www.notion.so/2-5-STILL-LOADING-1-225f5baf54a780babc08c23d8054bef2) 를 방문해주세요!**
  
 ## 팀 구성
 
