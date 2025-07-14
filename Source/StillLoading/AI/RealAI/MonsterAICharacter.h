@@ -20,20 +20,6 @@ class AAIController;
 class UMonsterMeshDataAsset;
 class UFormationComponent;
 
-UENUM(BlueprintType)
-enum class EMonsterType : uint8
-{
-	MT_None 	UMETA(DisplayName = "None"),
-	MT_SkullA	UMETA(DisplayName = "Skull A"),
-	MT_SkullB	UMETA(DisplayName = "Skull B"),
-	MT_SkullC	UMETA(DisplayName = "Skull C"),
-	MT_SkullD	UMETA(DisplayName = "Skull D"),
-	MT_SkullE	UMETA(DisplayName = "Skull E"),
-	MT_SkullF	UMETA(DisplayName = "Skull F"),
-	MT_SkullG	UMETA(DisplayName = "Skull G"),
-	MT_SkullH	UMETA(DisplayName = "Skull H"),
-};
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAgentDied, AActor*, DiedMonster);
 
 UCLASS()
@@ -96,8 +82,6 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "On Death")
 	void OnDeath();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster")
-	EMonsterType CurrentMonsterType = EMonsterType::MT_None;
 	// 상태 단일
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StateTags;
@@ -236,12 +220,6 @@ private:
 	FVector SpawnEndLocation;
 
 public:
-	FORCEINLINE TObjectPtr<UAnimationMontageComponent> GetAnimMontageComp()
-	{
-		if (AnimationComponent) return nullptr;
-		return AnimationComponent;
-	}
-
 	UFUNCTION(BlueprintCallable, Category = "Stat")
 	FORCEINLINE void SetMonsterMaxHealth(const float Health) { MaxHealth = Health; }
 };

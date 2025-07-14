@@ -18,7 +18,6 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	//bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	
@@ -29,7 +28,6 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.f;
 	CameraBoom->bUsePawnControlRotation = true; // 자체 회전 제어
-	//CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 3.f;
 
 	// Spring Arm Collision
