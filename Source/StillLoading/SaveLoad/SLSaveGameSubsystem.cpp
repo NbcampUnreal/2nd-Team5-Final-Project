@@ -156,7 +156,7 @@ void USLSaveGameSubsystem::SaveChapterData()
 {
     USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
     checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
-    CurrentSaveData->CurrentChapter = LevelSubsystem->GetCurrentChapter();
+    CurrentSaveData->CurrentChapterSaveData = LevelSubsystem->GetCurrentChapter();
 }
 
 void USLSaveGameSubsystem::SaveObjectiveData()
@@ -205,7 +205,7 @@ void USLSaveGameSubsystem::SendChapterData()
     USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
     checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
     checkf(IsValid(CurrentSaveData), TEXT("Current Save Game is invalid"));
-    LevelSubsystem->SetCurrentChapter(CurrentSaveData->CurrentChapter);
+    LevelSubsystem->SetCurrentChapter(CurrentSaveData->CurrentChapterSaveData);
 }
 
 void USLSaveGameSubsystem::SendObjectiveData()
