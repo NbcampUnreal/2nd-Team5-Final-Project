@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
 #include "SLSaveDataStructs.h"
-#include "Objective/SLObjectiveDataAsset.h"
 #include "SubSystem/SLLevelTransferTypes.h"
 #include "SLSaveGame.generated.h"
 
@@ -22,13 +21,12 @@ public:
 
 	USLSaveGame();
 
-	//저장할 데이터 변수들 추가하세요
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) //테스트용 임시 변수
-	int CurrentMiniGameLevel;
+	UPROPERTY()
+	ESLChapterType CurrentChapterSaveData = ESLChapterType::EC_Chapter0;
 
 	UPROPERTY()
-	ESLChapterType CurrentChapter = ESLChapterType::EC_Chapter0;
-
+	ESLLevelNameType CurrentLevelSaveData = ESLLevelNameType::ELN_Title;
+	
 	UPROPERTY()
 	FUserSaveData UserSaveData;
 
@@ -37,5 +35,5 @@ public:
 
 	UPROPERTY()
 	FChapterObjectiveSaveData ObjectiveSaveData;
-	
+
 };
