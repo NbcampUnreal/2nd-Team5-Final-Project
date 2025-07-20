@@ -7,6 +7,14 @@
 
 class ASLDeveloperRoomSpace;
 class ASLMouseActor;
+class ULevelSequencePlayer;
+
+UENUM(BlueprintType)
+enum class EPhase2CinematicType : uint8
+{
+	Start       UMETA(DisplayName = "Start"),
+	Escape      UMETA(DisplayName = "Escape")
+};
 
 UCLASS(BlueprintType)
 class STILLLOADING_API ASLDeveloperBossPhase2 : public ASLDeveloperBossPhaseBase
@@ -22,7 +30,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Phase2")
 	void SetConfig(const FSLPhase2Config& InConfig);
-	
+    
 	UFUNCTION(BlueprintCallable, Category = "Phase2")
 	void SetRoomSpace(ASLDeveloperRoomSpace* InRoomSpace);
     
@@ -38,6 +46,12 @@ protected:
 	UFUNCTION()
 	void HandleRoomEscape(ASLDeveloperRoomSpace* Room);
 
+	UFUNCTION()
+	void OnCinematicFinished();
+
+	void PlayCinematic(EPhase2CinematicType CinematicType);
+	void StartPhaseAfterCinematic();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase2 Settings")
 	FSLPhase2Config Config;
 
@@ -48,5 +62,11 @@ private:
 	UPROPERTY()
 	TObjectPtr<ASLMouseActor> MouseActor;
     
+	UPROPERTY()
+	TObjectPtr<ULevelSequencePlayer> CurrentSequencePlayer;
+    
 	bool bIsCompleted;
+	bool bWaitingForCinematic;
+	EPhase2CinematicType CurrentCinematicType;
+	FTimerHandle CinematicTimeoutTimer;
 };

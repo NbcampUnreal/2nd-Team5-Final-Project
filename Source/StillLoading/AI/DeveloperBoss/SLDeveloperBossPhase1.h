@@ -5,6 +5,7 @@
 #include "SLDeveloperBossPhaseConfigs.h"
 #include "SLDeveloperBossPhase1.generated.h"
 
+class ULevelSequencePlayer;
 class ASLAIBaseCharacter;
 class ULevelSequence;
 class ALevelSequenceActor;
@@ -23,7 +24,9 @@ public:
     virtual void EndPhase() override;
     virtual bool IsPhaseCompleted() const override;
     virtual void HandleBossDeath(ASLAIBaseCharacter* DeadBoss) override;
-
+    
+    virtual void HandleLineDestroyed(int32 LineIndex) override;
+    
     UFUNCTION(BlueprintCallable, Category = "Phase1")
     void SetConfig(const FSLPhase1Config& InConfig);
     
@@ -51,6 +54,13 @@ protected:
     virtual void OnPhaseStarted() override;
     virtual void OnPhaseEnded() override;
 
+    UFUNCTION()
+    void OnCinematicFinished();
+    void ProcessNextBossAfterDeath();
+
+    void PlayCinematicForLineDestroy(int32 DestroyedLineCount);
+    void PlayCinematicForBossDeath(int32 DeadBossIndex);
+    
     void WeakenBoss(ASLAIBaseCharacter* Boss);
     void CompleteBossRush();
     void RegisterBossEvents(ASLAIBaseCharacter* Boss);
@@ -64,7 +74,13 @@ protected:
 private:
     UPROPERTY()
     TArray<TObjectPtr<ASLAIBaseCharacter>> SpawnedBosses;
+
+    UPROPERTY()
+    TObjectPtr<ULevelSequencePlayer> CurrentSequencePlayer;
+    FTimerHandle CinematicTimeoutTimer;
     
+    bool bWaitingForCinematic;
+    int32 PendingBossIndex;
     int32 CurrentBossIndex;
     int32 TotalBossCount;
 };

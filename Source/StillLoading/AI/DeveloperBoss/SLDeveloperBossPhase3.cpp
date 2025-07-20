@@ -1,4 +1,6 @@
 #include "SLDeveloperBossPhase3.h"
+
+#include "LevelSequencePlayer.h"
 #include "SLDeveloperBoss.h"
 #include "AI/Actors/SLMouseActor.h"
 #include "AI/Actors/SLLaunchableWall.h"
@@ -17,6 +19,8 @@ ASLDeveloperBossPhase3::ASLDeveloperBossPhase3()
     bIsAutoWallAttackActive = false;
     CurrentWallIndex = 0;
     bIsCompleted = false;
+    CurrentSequencePlayer = nullptr;
+    bWaitingForCinematic = false;
 }
 
 void ASLDeveloperBossPhase3::BeginPlay()
@@ -26,6 +30,17 @@ void ASLDeveloperBossPhase3::BeginPlay()
 
 void ASLDeveloperBossPhase3::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    if (IsValid(GetWorld()) && CinematicTimeoutTimer.IsValid())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(CinematicTimeoutTimer);
+    }
+    
+    if (CurrentSequencePlayer)
+    {
+        CurrentSequencePlayer->OnFinished.RemoveAll(this);
+        CurrentSequencePlayer = nullptr;
+    }
+    
     StopAutoWallAttack();
     DestroyPhase3MouseActor();
     
@@ -37,6 +52,7 @@ void ASLDeveloperBossPhase3::StartPhase()
     Super::StartPhase();
     
     bIsCompleted = false;
+    bWaitingForCinematic = false;
     ResetWallIndex();
     
     // 모든 벽을 표시 상태로 설정
@@ -50,19 +66,10 @@ void ASLDeveloperBossPhase3::StartPhase()
         }
     }
     
-    // 메인 마우스 액터 비활성화
-    if (IsValid(MainMouseActor))
-    {
-        MainMouseActor->StopOrbiting();
-        MainMouseActor->SetActorHiddenInGame(true);
-        MainMouseActor->SetActorEnableCollision(false);
-    }
+    UE_LOG(LogTemp, Warning, TEXT("🎬 Phase3: Starting with start cinematic"));
     
-    // Phase3 전용 마우스 액터 생성
-    SpawnPhase3MouseActor();
-    
-    // 자동 벽 공격 시작
-    StartAutoWallAttack();
+    // Phase3 시작 시네마틱 재생
+    PlayStartCinematic();
 }
 
 void ASLDeveloperBossPhase3::EndPhase()
@@ -344,4 +351,108 @@ void ASLDeveloperBossPhase3::LaunchWallWithLines(ASLLaunchableWall* Wall)
     
     // 즉시 라인 활성화
     OwnerBoss->ActivateConnectedLines(PhaseIndex, Wall);
+}
+
+void ASLDeveloperBossPhase3::PlayStartCinematic()
+{
+    UE_LOG(LogTemp, Warning, TEXT("🎭 Phase3: Playing start cinematic"));
+    
+    int32 CinematicIndex = 0; // 시작 시네마틱
+    
+    if (!Config.Cinematics.IsValidIndex(CinematicIndex))
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ Phase3: Invalid CinematicIndex: %d"), CinematicIndex);
+        StartPhaseAfterCinematic(); // 시네마틱 없으면 바로 게임플레이 시작
+        return;
+    }
+    
+    if (!IsValid(Config.Cinematics[CinematicIndex]))
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ Phase3: Cinematic is null at index: %d"), CinematicIndex);
+        StartPhaseAfterCinematic();
+        return;
+    }
+    
+    UE_LOG(LogTemp, Display, TEXT("✅ Phase3: Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
+    
+    bWaitingForCinematic = true;
+    
+    FMovieSceneSequencePlaybackSettings PlaybackSettings;
+    ALevelSequenceActor* SequenceActor = nullptr;
+    CurrentSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+        GetWorld(),
+        Config.Cinematics[CinematicIndex],
+        PlaybackSettings,
+        SequenceActor
+    );
+    
+    if (CurrentSequencePlayer)
+    {
+        UE_LOG(LogTemp, Display, TEXT("🎮 Phase3: SequencePlayer created successfully"));
+        CurrentSequencePlayer->OnFinished.AddDynamic(this, &ASLDeveloperBossPhase3::OnCinematicFinished);
+        CurrentSequencePlayer->Play();
+        UE_LOG(LogTemp, Display, TEXT("▶️ Phase3: Cinematic play started"));
+        
+        // 타임아웃 설정
+        if (IsValid(GetWorld()))
+        {
+            GetWorld()->GetTimerManager().SetTimer(
+                CinematicTimeoutTimer,
+                [this]()
+                {
+                    if (bWaitingForCinematic)
+                    {
+                        UE_LOG(LogTemp, Error, TEXT("⏰ Phase3: Cinematic timeout! Force finishing..."));
+                        OnCinematicFinished();
+                    }
+                },
+                10.0f,
+                false
+            );
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ Phase3: Failed to create SequencePlayer"));
+        StartPhaseAfterCinematic();
+    }
+}
+
+void ASLDeveloperBossPhase3::OnCinematicFinished()
+{
+    UE_LOG(LogTemp, Warning, TEXT("🎬 Phase3: OnCinematicFinished called"));
+    
+    bWaitingForCinematic = false;
+    
+    if (IsValid(GetWorld()) && CinematicTimeoutTimer.IsValid())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(CinematicTimeoutTimer);
+    }
+    
+    if (CurrentSequencePlayer)
+    {
+        CurrentSequencePlayer->OnFinished.RemoveAll(this);
+        CurrentSequencePlayer = nullptr;
+    }
+    
+    StartPhaseAfterCinematic();
+}
+
+void ASLDeveloperBossPhase3::StartPhaseAfterCinematic()
+{
+    UE_LOG(LogTemp, Warning, TEXT("🎮 Phase3: Starting gameplay after start cinematic"));
+    
+    // 메인 마우스 액터 비활성화
+    if (IsValid(MainMouseActor))
+    {
+        MainMouseActor->StopOrbiting();
+        MainMouseActor->SetActorHiddenInGame(true);
+        MainMouseActor->SetActorEnableCollision(false);
+    }
+    
+    // Phase3 전용 마우스 액터 생성
+    SpawnPhase3MouseActor();
+    
+    // 자동 벽 공격 시작
+    StartAutoWallAttack();
 }

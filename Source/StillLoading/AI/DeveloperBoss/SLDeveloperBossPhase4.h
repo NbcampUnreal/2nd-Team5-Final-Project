@@ -7,6 +7,7 @@
 
 class ASLPhase4FallingFloor;
 class ASLLaunchableWall;
+class ULevelSequencePlayer;
 
 UCLASS(BlueprintType)
 class STILLLOADING_API ASLDeveloperBossPhase4 : public ASLDeveloperBossPhaseBase
@@ -43,6 +44,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Phase4")
 	void StartFloorCollapse();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -55,8 +57,12 @@ protected:
 	UFUNCTION()
 	void OnAutoWallAttackTimer();
 
+	UFUNCTION()
+	void OnCinematicFinished();
 
 	void LaunchWallWithLines();
+	void PlayStartCinematic();
+	void StartPhaseAfterCinematic();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase4 Settings")
 	FSLPhase4Config Config;
@@ -67,8 +73,13 @@ private:
     
 	UPROPERTY()
 	TArray<TObjectPtr<ASLLaunchableWall>> AvailableWalls;
+
+	UPROPERTY()
+	TObjectPtr<ULevelSequencePlayer> CurrentSequencePlayer;
     
 	FTimerHandle AutoWallAttackTimer;
+	FTimerHandle CinematicTimeoutTimer;
 	bool bIsAutoWallAttackActive;
+	bool bWaitingForCinematic;
 	bool bIsCompleted;
 };

@@ -7,6 +7,7 @@
 
 class ASLMouseActor;
 class ASLLaunchableWall;
+class ULevelSequencePlayer;
 
 UCLASS(BlueprintType)
 class STILLLOADING_API ASLDeveloperBossPhase3 : public ASLDeveloperBossPhaseBase
@@ -51,11 +52,16 @@ protected:
     UFUNCTION()
     void HandlePhase3MouseActorDestroyed(ASLMouseActor* DestroyedMouseActor);
 
+    UFUNCTION()
+    void OnCinematicFinished();
+
     void SpawnPhase3MouseActor();
     void DestroyPhase3MouseActor();
     ASLLaunchableWall* GetNextWall();
     void ResetWallIndex();
     void LaunchWallWithLines(ASLLaunchableWall* Wall);
+    void PlayStartCinematic();
+    void StartPhaseAfterCinematic();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase3 Settings")
     FSLPhase3Config Config;
@@ -70,8 +76,13 @@ private:
     UPROPERTY()
     TArray<TObjectPtr<ASLLaunchableWall>> AvailableWalls;
     
+    UPROPERTY()
+    TObjectPtr<ULevelSequencePlayer> CurrentSequencePlayer;
+    
     FTimerHandle AutoWallAttackTimer;
+    FTimerHandle CinematicTimeoutTimer;
     bool bIsAutoWallAttackActive;
+    bool bWaitingForCinematic;
     int32 CurrentWallIndex;
     bool bIsCompleted;
 };

@@ -7,6 +7,8 @@
 #include "AI/Actors/SLDeveloperRoomCable.h"
 #include "AI/Actors/SLLaunchableWall.h"
 #include "AI/Actors/SLMouseActor.h"
+#include "AI/Actors/SLDeveloperRoomSpace.h"
+#include "AI/Actors/SLPhase4FallingFloor.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
@@ -72,6 +74,10 @@ ASLDeveloperBoss::ASLDeveloperBoss()
     bEnablePhasePreloading = true;
     bAutoCleanupInactivePhases = true;
 
+    // Level Actor References
+    Phase2RoomSpace = nullptr;
+    Phase4FallingFloor = nullptr;
+
     // Pending Line Activation
     PendingLineActivation.PhaseIndex = -1;
     PendingLineActivation.LaunchedWall = nullptr;
@@ -83,8 +89,6 @@ void ASLDeveloperBoss::BeginPlay()
     
     SetupPhaseLines();
     
-    // Lazy Loading: 초기화는 하지 않고 필요시에만 생성
-    UE_LOG(LogTemp, Display, TEXT("Developer Boss initialized with Lazy Loading"));
 }
 
 void ASLDeveloperBoss::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -252,7 +256,6 @@ ASLDeveloperBossPhase2* ASLDeveloperBoss::GetOrCreatePhase2()
         if (IsValid(Phase2Actor) && ConfigDataAsset)
         {
             SetupPhase2Actor(Phase2Actor, ConfigDataAsset->Phase2Config);
-            Phase2Actor->SetMouseActor(MouseActor);
         }
     }
     return Phase2Actor;
@@ -268,7 +271,6 @@ ASLDeveloperBossPhase3* ASLDeveloperBoss::GetOrCreatePhase3()
         if (IsValid(Phase3Actor) && ConfigDataAsset)
         {
             SetupPhase3Actor(Phase3Actor, ConfigDataAsset->Phase3Config);
-            Phase3Actor->SetMouseActor(MouseActor);
             SetupPhase3Walls(Phase3Actor);
         }
     }
@@ -285,7 +287,6 @@ ASLDeveloperBossPhase4* ASLDeveloperBoss::GetOrCreatePhase4()
         if (IsValid(Phase4Actor) && ConfigDataAsset)
         {
             SetupPhase4Actor(Phase4Actor, ConfigDataAsset->Phase4Config);
-            SetupPhase4Walls(Phase4Actor);
         }
     }
     return Phase4Actor;
@@ -301,8 +302,6 @@ ASLDeveloperBossPhase5* ASLDeveloperBoss::GetOrCreatePhase5()
         if (IsValid(Phase5Actor) && ConfigDataAsset)
         {
             SetupPhase5Actor(Phase5Actor, ConfigDataAsset->Phase5Config);
-            Phase5Actor->SetMouseActor(MouseActor);
-            SetupPhase5Walls(Phase5Actor);
         }
     }
     return Phase5Actor;
@@ -428,13 +427,20 @@ void ASLDeveloperBoss::PreloadNextPhase()
 
 void ASLDeveloperBoss::TriggerFirstWallDuringDialogue()
 {
+    UE_LOG(LogTemp, Warning, TEXT("🚀 TriggerFirstWallDuringDialogue called"));
+    
     if (bIsFightStarted)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Boss fight already started"));
+        UE_LOG(LogTemp, Warning, TEXT("⚠️ Fight already started"));
         return;
     }
 
     bIsFightStarted = true;
+    
+    // Phase 1 시작
+    UE_LOG(LogTemp, Warning, TEXT("🎯 Starting Phase 1"));
+    StartPhase(EDeveloperBossPhase::Phase1_BossRush);
+    
     ManualLaunchWallAttack();
 }
 
@@ -766,74 +772,6 @@ void ASLDeveloperBoss::DebugCurrentState() const
     UE_LOG(LogTemp, Warning, TEXT("===================================="));
 }
 
-void ASLDeveloperBoss::DebugPhaseMemoryUsage() const
-{
-    UE_LOG(LogTemp, Warning, TEXT("=== PHASE MEMORY USAGE DEBUG ==="));
-    
-    int32 LoadedPhases = 0;
-    
-    if (IsValid(Phase1Actor))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase1 Actor: LOADED %s"), 
-               Phase1Actor->IsPhaseActive() ? TEXT("(ACTIVE)") : TEXT("(INACTIVE)"));
-        LoadedPhases++;
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase1 Actor: NOT LOADED"));
-    }
-    
-    if (IsValid(Phase2Actor))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase2 Actor: LOADED %s"), 
-               Phase2Actor->IsPhaseActive() ? TEXT("(ACTIVE)") : TEXT("(INACTIVE)"));
-        LoadedPhases++;
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase2 Actor: NOT LOADED"));
-    }
-    
-    if (IsValid(Phase3Actor))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase3 Actor: LOADED %s"), 
-               Phase3Actor->IsPhaseActive() ? TEXT("(ACTIVE)") : TEXT("(INACTIVE)"));
-        LoadedPhases++;
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase3 Actor: NOT LOADED"));
-    }
-    
-    if (IsValid(Phase4Actor))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase4 Actor: LOADED %s"), 
-               Phase4Actor->IsPhaseActive() ? TEXT("(ACTIVE)") : TEXT("(INACTIVE)"));
-        LoadedPhases++;
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase4 Actor: NOT LOADED"));
-    }
-    
-    if (IsValid(Phase5Actor))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase5 Actor: LOADED %s"), 
-               Phase5Actor->IsPhaseActive() ? TEXT("(ACTIVE)") : TEXT("(INACTIVE)"));
-        LoadedPhases++;
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase5 Actor: NOT LOADED"));
-    }
-    
-    UE_LOG(LogTemp, Warning, TEXT("Total Loaded Phases: %d / 5"), LoadedPhases);
-    UE_LOG(LogTemp, Warning, TEXT("Current Phase: %d"), static_cast<int32>(CurrentPhase));
-    UE_LOG(LogTemp, Warning, TEXT("Max Cached Phases: %d"), MaxCachedPhases);
-    UE_LOG(LogTemp, Warning, TEXT("Phase Access Order: %d phases tracked"), PhaseAccessOrder.Num());
-    UE_LOG(LogTemp, Warning, TEXT("=============================="));
-}
-
 bool ASLDeveloperBoss::IsPhase1Active() const
 {
     return IsValid(Phase1Actor) && Phase1Actor->IsPhaseActive();
@@ -856,21 +794,21 @@ void ASLDeveloperBoss::SpawnNextPhase1Boss()
     }
 }
 
-void ASLDeveloperBoss::PlayPhase1StartCinematic()
+/*void ASLDeveloperBoss::PlayPhase1StartCinematic()
 {
     if (IsValid(Phase1Actor))
     {
         Phase1Actor->PlayStartCinematic();
     }
-}
+}*/
 
-void ASLDeveloperBoss::PlayPhase1BossCinematic(int32 BossIndex)
+/*void ASLDeveloperBoss::PlayPhase1BossCinematic(int32 BossIndex)
 {
     if (IsValid(Phase1Actor))
     {
         Phase1Actor->PlayBossCinematic(BossIndex);
     }
-}
+}*/
 
 void ASLDeveloperBoss::StartPhase3AutoWallAttack()
 {
@@ -1116,6 +1054,7 @@ bool ASLDeveloperBoss::IsPlayerAlive() const
     return true;
 }
 
+// ✅ 수정된 Setup 함수들
 void ASLDeveloperBoss::SetupPhase1Actor(ASLDeveloperBossPhase1* PhaseActor, const FSLPhase1Config& Config)
 {
     if (!IsValid(PhaseActor))
@@ -1144,6 +1083,20 @@ void ASLDeveloperBoss::SetupPhase2Actor(ASLDeveloperBossPhase2* PhaseActor, cons
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     PhaseActor->SetConfig(Config);
     
+    // 직접 설정된 Room Space 전달
+    if (IsValid(Phase2RoomSpace))
+    {
+        PhaseActor->SetRoomSpace(Phase2RoomSpace);
+        UE_LOG(LogTemp, Display, TEXT("Phase2: Room Space assigned - %s"), *Phase2RoomSpace->GetName());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase2: No Room Space assigned"));
+    }
+    
+    // Mouse Actor 설정
+    PhaseActor->SetMouseActor(MouseActor);
+    
     UE_LOG(LogTemp, Display, TEXT("Phase2 Actor setup completed"));
 }
 
@@ -1158,6 +1111,9 @@ void ASLDeveloperBoss::SetupPhase3Actor(ASLDeveloperBossPhase3* PhaseActor, cons
     PhaseActor->SetOwnerBoss(this);
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     PhaseActor->SetConfig(Config);
+    
+    // Mouse Actor 설정
+    PhaseActor->SetMouseActor(MouseActor);
     
     UE_LOG(LogTemp, Display, TEXT("Phase3 Actor setup completed"));
 }
@@ -1174,6 +1130,20 @@ void ASLDeveloperBoss::SetupPhase4Actor(ASLDeveloperBossPhase4* PhaseActor, cons
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     PhaseActor->SetConfig(Config);
     
+    // 직접 설정된 Falling Floor 전달
+    if (IsValid(Phase4FallingFloor))
+    {
+        PhaseActor->SetFallingFloor(Phase4FallingFloor);
+        UE_LOG(LogTemp, Display, TEXT("Phase4: Falling Floor assigned - %s"), *Phase4FallingFloor->GetName());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase4: No Falling Floor assigned"));
+    }
+    
+    // 벽 설정
+    SetupPhase4Walls(PhaseActor);
+    
     UE_LOG(LogTemp, Display, TEXT("Phase4 Actor setup completed"));
 }
 
@@ -1188,6 +1158,12 @@ void ASLDeveloperBoss::SetupPhase5Actor(ASLDeveloperBossPhase5* PhaseActor, cons
     PhaseActor->SetOwnerBoss(this);
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     PhaseActor->SetConfig(Config);
+    
+    // Mouse Actor 설정
+    PhaseActor->SetMouseActor(MouseActor);
+    
+    // 벽 설정
+    SetupPhase5Walls(PhaseActor);
     
     UE_LOG(LogTemp, Display, TEXT("Phase5 Actor setup completed"));
 }
@@ -1210,7 +1186,13 @@ void ASLDeveloperBoss::SetupPhase3Walls(ASLDeveloperBossPhase3* PhaseActor)
                 Phase3Walls.Add(Connection.Wall);
             }
         }
+        UE_LOG(LogTemp, Display, TEXT("Phase3: Found %d walls from PhaseLineDataMap"), Phase3Walls.Num());
     }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase3: No PhaseLineDataMap entry found for phase 3"));
+    }
+    
     PhaseActor->SetAvailableWalls(Phase3Walls);
 }
 
@@ -1232,7 +1214,13 @@ void ASLDeveloperBoss::SetupPhase4Walls(ASLDeveloperBossPhase4* PhaseActor)
                 Phase4Walls.Add(Connection.Wall);
             }
         }
+        UE_LOG(LogTemp, Display, TEXT("Phase4: Found %d walls from PhaseLineDataMap"), Phase4Walls.Num());
     }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Phase4: No PhaseLineDataMap entry found for phase 4"));
+    }
+    
     PhaseActor->SetAvailableWalls(Phase4Walls);
 }
 
@@ -1243,18 +1231,37 @@ void ASLDeveloperBoss::SetupPhase5Walls(ASLDeveloperBossPhase5* PhaseActor)
         return;
     }
     
-    TArray<ASLLaunchableWall*> AllWalls;
-    for (auto& PhaseData : PhaseLineDataMap)
+    TArray<ASLLaunchableWall*> WallsToUse;
+    
+    // 1순위: 직접 설정된 벽들
+    if (Phase5AvailableWalls.Num() > 0)
     {
-        for (const FWallLineConnection& Connection : PhaseData.Value.WallConnections)
+        for (ASLLaunchableWall* Wall : Phase5AvailableWalls)
         {
-            if (IsValid(Connection.Wall))
+            if (IsValid(Wall))
             {
-                AllWalls.AddUnique(Connection.Wall);
+                WallsToUse.Add(Wall);
             }
         }
+        UE_LOG(LogTemp, Display, TEXT("Phase5: Using %d directly assigned walls"), WallsToUse.Num());
     }
-    PhaseActor->SetAvailableWalls(AllWalls);
+    else
+    {
+        // 2순위: PhaseLineDataMap의 모든 벽 (기존 로직)
+        for (auto& PhaseData : PhaseLineDataMap)
+        {
+            for (const FWallLineConnection& Connection : PhaseData.Value.WallConnections)
+            {
+                if (IsValid(Connection.Wall))
+                {
+                    WallsToUse.AddUnique(Connection.Wall);
+                }
+            }
+        }
+        UE_LOG(LogTemp, Display, TEXT("Phase5: Using %d walls from all phases"), WallsToUse.Num());
+    }
+    
+    PhaseActor->SetAvailableWalls(WallsToUse);
 }
 
 bool ASLDeveloperBoss::IsValidPhaseType(EDeveloperBossPhase PhaseType) const

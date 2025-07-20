@@ -15,6 +15,8 @@ class ASLDeveloperBossPhase2;
 class ASLDeveloperBossPhase3;
 class ASLDeveloperBossPhase4;
 class ASLDeveloperBossPhase5;
+class ASLDeveloperRoomSpace;
+class ASLPhase4FallingFloor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossCharacterDeath, ASLAIBaseCharacter*, DeadCharacter);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossPatternFinished, ASLAIBaseCharacter*, Character);
@@ -158,14 +160,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Test")
     void TestCompleteCurrentPhase();
 
+    // Debug Functions
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Debug")
     void DebugPhaseData(int32 PhaseIndex);
 
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Debug")
     void DebugCurrentState() const;
-
-    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Debug")
-    void DebugPhaseMemoryUsage() const;
 
     // Phase Specific Functions (for backward compatibility)
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")
@@ -177,11 +177,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")
     void SpawnNextPhase1Boss();
 
-    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")
-    void PlayPhase1StartCinematic();
+    /*UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")
+    void PlayPhase1StartCinematic();*/
 
-    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")  
-    void PlayPhase1BossCinematic(int32 BossIndex);
+    /*UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")  
+    void PlayPhase1BossCinematic(int32 BossIndex);*/
 
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase3")
     void StartPhase3AutoWallAttack();
@@ -280,7 +280,7 @@ protected:
     bool ValidatePhaseActors() const;
     EDeveloperBossPhase GetNextPhase(EDeveloperBossPhase InCurrentPhase) const;
 
-    // Configuration Data Asset
+    // Configuration Data Asset (순수 설정값만)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration")
     TObjectPtr<USLDeveloperBossPhaseConfigDataAsset> ConfigDataAsset;
 
@@ -324,6 +324,16 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Actor")
     TSubclassOf<ASLMouseActor> MouseActorClass;
+
+    // ✅ 레벨 액터 참조 (한 곳에서만 설정)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Actors|Phase2")
+    TObjectPtr<ASLDeveloperRoomSpace> Phase2RoomSpace;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Actors|Phase4")
+    TObjectPtr<ASLPhase4FallingFloor> Phase4FallingFloor;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Actors|Phase5")
+    TArray<TObjectPtr<ASLLaunchableWall>> Phase5AvailableWalls;
 
 private:
     // Phase Management (Lazy Loading)
