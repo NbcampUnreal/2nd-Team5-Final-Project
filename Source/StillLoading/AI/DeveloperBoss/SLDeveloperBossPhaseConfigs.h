@@ -6,10 +6,7 @@
 
 class ASLAIBaseCharacter;
 class ULevelSequence;
-class ASLDeveloperRoomSpace;
 class ASLMouseActor;
-class ASLPhase4FallingFloor;
-class ASLLaunchableWall;
 
 USTRUCT(BlueprintType)
 struct STILLLOADING_API FSLPhase1Config
@@ -31,12 +28,7 @@ struct STILLLOADING_API FSLPhase1Config
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cinematics")
     TArray<TObjectPtr<ULevelSequence>> Cinematics;
 
-    FSLPhase1Config()
-    {
-        BossHealthMultiplier = 0.3f;
-        BossSpawnDelay = 2.0f;
-        BossSpawnOffset = FVector(300.0f, 0.0f, 0.0f);
-    }
+    FSLPhase1Config();
 };
 
 USTRUCT(BlueprintType)
@@ -45,12 +37,15 @@ struct STILLLOADING_API FSLPhase2Config
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room Settings")
-    TObjectPtr<ASLDeveloperRoomSpace> RoomSpace;
+    float RoomActivationDelay;
 
-    FSLPhase2Config()
-    {
-        RoomSpace = nullptr;
-    }
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room Settings")
+    bool bAutoTeleportPlayer;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cinematics")
+    TArray<TObjectPtr<ULevelSequence>> Cinematics;
+
+    FSLPhase2Config();
 };
 
 USTRUCT(BlueprintType)
@@ -69,23 +64,17 @@ struct STILLLOADING_API FSLPhase3Config
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Actor Settings")
     TSubclassOf<ASLMouseActor> MouseActorClass;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cinematics")
+    TArray<TObjectPtr<ULevelSequence>> Cinematics;
 
-    FSLPhase3Config()
-    {
-        AutoWallAttackInterval = 4.0f;
-        InitialWallAttackDelay = 2.0f;
-        bRandomWallSelection = false;
-        MouseActorClass = nullptr;
-    }
+    FSLPhase3Config();
 };
 
 USTRUCT(BlueprintType)
 struct STILLLOADING_API FSLPhase4Config
 {
     GENERATED_BODY()
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
-    TObjectPtr<ASLPhase4FallingFloor> FallingFloor;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
     float FloorCollapseDelay;
@@ -96,13 +85,10 @@ struct STILLLOADING_API FSLPhase4Config
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Attack Settings")
     float InitialWallAttackDelay;
 
-    FSLPhase4Config()
-    {
-        FallingFloor = nullptr;
-        FloorCollapseDelay = 1.0f;
-        AutoWallAttackInterval = 4.0f;
-        InitialWallAttackDelay = 2.0f;
-    }
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cinematics")
+    TArray<TObjectPtr<ULevelSequence>> Cinematics;
+
+    FSLPhase4Config();
 };
 
 USTRUCT(BlueprintType)
@@ -137,21 +123,10 @@ struct STILLLOADING_API FSLPhase5Config
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Attack Settings")
     bool bLimitActiveWalls;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Available Walls")
-    TArray<TObjectPtr<ASLLaunchableWall>> AvailableWalls;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cinematics")
+    TArray<TObjectPtr<ULevelSequence>> Cinematics;
 
-    FSLPhase5Config()
-    {
-        MaxSimultaneousWalls = 3;
-        MultiWallDelayMin = 0.2f;
-        MultiWallDelayMax = 1.0f;
-        bEnableMultiWallAttack = true;
-        WallAttackInterval = 2.0f;
-        WallAttackDelay = 1.0f;
-        WallResetDelay = 1.5f;
-        MaxActiveWalls = 2;
-        bLimitActiveWalls = true;
-    }
+    FSLPhase5Config();
 };
 
 UCLASS(BlueprintType)

@@ -2,6 +2,7 @@
 #include "SLDeveloperBoss.h"
 #include "AI/Actors/SLLaunchableWall.h"
 #include "AI/Actors/SLMouseActor.h"
+#include "LevelSequencePlayer.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
 
@@ -11,19 +12,29 @@ ASLDeveloperBossPhase5::ASLDeveloperBossPhase5()
     
     PhaseType = EDeveloperBossPhase::Phase5_Final;
     MouseActor = nullptr;
+    CurrentSequencePlayer = nullptr;
+    bWaitingForCinematic = false;
     bIsCompleted = false;
 }
 
 void ASLDeveloperBossPhase5::BeginPlay()
 {
     Super::BeginPlay();
-    
-    // Config에서 사용 가능한 벽들 설정
-    SetAvailableWalls(Config.AvailableWalls);
 }
 
 void ASLDeveloperBossPhase5::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    if (IsValid(GetWorld()) && CinematicTimeoutTimer.IsValid())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(CinematicTimeoutTimer);
+    }
+    
+    if (CurrentSequencePlayer)
+    {
+        CurrentSequencePlayer->OnFinished.RemoveAll(this);
+        CurrentSequencePlayer = nullptr;
+    }
+    
     if (IsValid(GetWorld()) && WallAttackTimer.IsValid())
     {
         GetWorld()->GetTimerManager().ClearTimer(WallAttackTimer);
@@ -51,6 +62,167 @@ void ASLDeveloperBossPhase5::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ASLDeveloperBossPhase5::StartPhase()
 {
     Super::StartPhase();
+
+    bIsCompleted = false;
+    bWaitingForCinematic = false;
+    ActiveWalls.Empty();
+    
+    UE_LOG(LogTemp, Warning, TEXT("🎬 Phase5: Starting with start cinematic"));
+    
+    // Phase5 시작 시네마틱 재생
+    PlayStartCinematic();
+}
+
+void ASLDeveloperBossPhase5::EndPhase()
+{
+    if (IsValid(GetWorld()) && CinematicTimeoutTimer.IsValid())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(CinematicTimeoutTimer);
+    }
+    
+    if (CurrentSequencePlayer)
+    {
+        CurrentSequencePlayer->OnFinished.RemoveAll(this);
+        CurrentSequencePlayer = nullptr;
+    }
+    
+    if (IsValid(GetWorld()) && WallAttackTimer.IsValid())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(WallAttackTimer);
+    }
+    
+    ActiveWalls.Empty();
+
+    // 모든 벽의 자동 리셋 비활성화
+    for (ASLLaunchableWall* Wall : AvailableWalls)
+    {
+        if (IsValid(Wall))
+        {
+            Wall->SetAutoResetEnabled(false);
+            Wall->OnAllWallPartsLaunched.RemoveAll(this);
+            Wall->OnWallHitMouseActor.RemoveAll(this);
+        }
+    }
+    
+    Super::EndPhase();
+}
+
+bool ASLDeveloperBossPhase5::IsPhaseCompleted() const
+{
+    return bIsCompleted;
+}
+
+void ASLDeveloperBossPhase5::SetConfig(const FSLPhase5Config& InConfig)
+{
+    Config = InConfig;
+    
+    UE_LOG(LogTemp, Warning, TEXT("📋 Phase5 Config Set:"));
+    UE_LOG(LogTemp, Warning, TEXT("  - MaxSimultaneousWalls: %d"), Config.MaxSimultaneousWalls);
+    UE_LOG(LogTemp, Warning, TEXT("  - bEnableMultiWallAttack: %s"), Config.bEnableMultiWallAttack ? TEXT("true") : TEXT("false"));
+    UE_LOG(LogTemp, Warning, TEXT("  - WallAttackInterval: %f"), Config.WallAttackInterval);
+    UE_LOG(LogTemp, Warning, TEXT("  - Cinematics: %d"), Config.Cinematics.Num());
+    
+    for (int32 i = 0; i < Config.Cinematics.Num(); i++)
+    {
+        if (IsValid(Config.Cinematics[i]))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("  - Cinematic[%d]: %s"), i, *Config.Cinematics[i]->GetName());
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("  - Cinematic[%d]: NULL"), i);
+        }
+    }
+}
+
+void ASLDeveloperBossPhase5::PlayStartCinematic()
+{
+    UE_LOG(LogTemp, Warning, TEXT("🎭 Phase5: Playing start cinematic"));
+    
+    int32 CinematicIndex = 0; // 시작 시네마틱
+    
+    if (!Config.Cinematics.IsValidIndex(CinematicIndex))
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ Phase5: Invalid CinematicIndex: %d"), CinematicIndex);
+        StartPhaseAfterCinematic(); // 시네마틱 없으면 바로 게임플레이 시작
+        return;
+    }
+    
+    if (!IsValid(Config.Cinematics[CinematicIndex]))
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ Phase5: Cinematic is null at index: %d"), CinematicIndex);
+        StartPhaseAfterCinematic();
+        return;
+    }
+    
+    UE_LOG(LogTemp, Display, TEXT("✅ Phase5: Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
+    
+    bWaitingForCinematic = true;
+    
+    FMovieSceneSequencePlaybackSettings PlaybackSettings;
+    ALevelSequenceActor* SequenceActor = nullptr;
+    CurrentSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+        GetWorld(),
+        Config.Cinematics[CinematicIndex],
+        PlaybackSettings,
+        SequenceActor
+    );
+    
+    if (CurrentSequencePlayer)
+    {
+        UE_LOG(LogTemp, Display, TEXT("🎮 Phase5: SequencePlayer created successfully"));
+        CurrentSequencePlayer->OnFinished.AddDynamic(this, &ASLDeveloperBossPhase5::OnCinematicFinished);
+        CurrentSequencePlayer->Play();
+        UE_LOG(LogTemp, Display, TEXT("▶️ Phase5: Cinematic play started"));
+        
+        // 타임아웃 설정
+        if (IsValid(GetWorld()))
+        {
+            GetWorld()->GetTimerManager().SetTimer(
+                CinematicTimeoutTimer,
+                [this]()
+                {
+                    if (bWaitingForCinematic)
+                    {
+                        UE_LOG(LogTemp, Error, TEXT("⏰ Phase5: Cinematic timeout! Force finishing..."));
+                        OnCinematicFinished();
+                    }
+                },
+                10.0f,
+                false
+            );
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ Phase5: Failed to create SequencePlayer"));
+        StartPhaseAfterCinematic();
+    }
+}
+
+void ASLDeveloperBossPhase5::OnCinematicFinished()
+{
+    UE_LOG(LogTemp, Warning, TEXT("🎬 Phase5: OnCinematicFinished called"));
+    
+    bWaitingForCinematic = false;
+    
+    if (IsValid(GetWorld()) && CinematicTimeoutTimer.IsValid())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(CinematicTimeoutTimer);
+    }
+    
+    if (CurrentSequencePlayer)
+    {
+        CurrentSequencePlayer->OnFinished.RemoveAll(this);
+        CurrentSequencePlayer = nullptr;
+    }
+    
+    StartPhaseAfterCinematic();
+}
+
+void ASLDeveloperBossPhase5::StartPhaseAfterCinematic()
+{
+    UE_LOG(LogTemp, Warning, TEXT("🎮 Phase5: Starting gameplay after start cinematic"));
     
     if (!IsValid(MouseActor))
     {
@@ -59,9 +231,6 @@ void ASLDeveloperBossPhase5::StartPhase()
         CheckPhaseCompletion();
         return;
     }
-
-    bIsCompleted = false;
-    ActiveWalls.Empty();
 
     InitializeWallAttack();
     
@@ -95,34 +264,6 @@ void ASLDeveloperBossPhase5::StartPhase()
             Config.WallAttackDelay     
         );
     }
-}
-
-void ASLDeveloperBossPhase5::EndPhase()
-{
-    if (IsValid(GetWorld()) && WallAttackTimer.IsValid())
-    {
-        GetWorld()->GetTimerManager().ClearTimer(WallAttackTimer);
-    }
-    
-    ActiveWalls.Empty();
-
-    // 모든 벽의 자동 리셋 비활성화
-    for (ASLLaunchableWall* Wall : AvailableWalls)
-    {
-        if (IsValid(Wall))
-        {
-            Wall->SetAutoResetEnabled(false);
-            Wall->OnAllWallPartsLaunched.RemoveAll(this);
-            Wall->OnWallHitMouseActor.RemoveAll(this);
-        }
-    }
-    
-    Super::EndPhase();
-}
-
-bool ASLDeveloperBossPhase5::IsPhaseCompleted() const
-{
-    return bIsCompleted;
 }
 
 void ASLDeveloperBossPhase5::LaunchNextWall()
@@ -264,8 +405,6 @@ void ASLDeveloperBossPhase5::SetAvailableWalls(const TArray<ASLLaunchableWall*>&
             AvailableWalls.Add(Wall);
         }
     }
-    
-    Config.AvailableWalls = AvailableWalls;
 }
 
 void ASLDeveloperBossPhase5::OnPhaseStarted()
@@ -276,15 +415,6 @@ void ASLDeveloperBossPhase5::OnPhaseStarted()
 void ASLDeveloperBossPhase5::OnPhaseEnded()
 {
     UE_LOG(LogTemp, Display, TEXT("Phase 5 Final Completed"));
-}
-
-void ASLDeveloperBossPhase5::SetConfig(const FSLPhase5Config& InConfig)
-{
-    Config = InConfig;
-    
-    // Config에서 사용 가능한 벽들 설정
-    SetAvailableWalls(Config.AvailableWalls);
-
 }
 
 void ASLDeveloperBossPhase5::OnWallCompleted(ASLLaunchableWall* CompletedWall)
@@ -420,20 +550,6 @@ void ASLDeveloperBossPhase5::CleanupInactiveWalls()
 
 void ASLDeveloperBossPhase5::InitializeWallAttack()
 {
-    AvailableWalls.Empty();
-
-    // Config에서 사용 가능한 벽들을 가져오거나, 필요시 모든 페이즈의 벽들을 수집
-    if (Config.AvailableWalls.Num() > 0)
-    {
-        for (ASLLaunchableWall* Wall : Config.AvailableWalls)
-        {
-            if (IsValid(Wall))
-            {
-                AvailableWalls.Add(Wall);
-            }
-        }
-    }
-    
     ResetAllWalls();
 }
 

@@ -7,6 +7,7 @@
 
 class ASLLaunchableWall;
 class ASLMouseActor;
+class ULevelSequencePlayer;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSLOnPhase5MouseActorHit, ASLMouseActor*, HitMouseActor, int32, WallPartIndex);
 
@@ -45,8 +46,6 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void OnPhaseStarted() override;
     virtual void OnPhaseEnded() override;
-
-    
     
     UFUNCTION()
     void OnWallCompleted(ASLLaunchableWall* CompletedWall);
@@ -57,11 +56,16 @@ protected:
     UFUNCTION()
     void HandleMouseActorDestroyed(ASLMouseActor* DestroyedMouseActor);
 
+    UFUNCTION()
+    void OnCinematicFinished();
+
     void LaunchSingleWall(ASLLaunchableWall* Wall);
     void LaunchReplacementWall();
     void CleanupInactiveWalls();
     void InitializeWallAttack();
     void ResetAllWalls();
+    void PlayStartCinematic();
+    void StartPhaseAfterCinematic();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase5 Settings")
     FSLPhase5Config Config;
@@ -75,7 +79,12 @@ private:
     
     UPROPERTY()
     TArray<TObjectPtr<ASLLaunchableWall>> ActiveWalls;
+
+    UPROPERTY()
+    TObjectPtr<ULevelSequencePlayer> CurrentSequencePlayer;
     
     FTimerHandle WallAttackTimer;
+    FTimerHandle CinematicTimeoutTimer;
+    bool bWaitingForCinematic;
     bool bIsCompleted;
 };
