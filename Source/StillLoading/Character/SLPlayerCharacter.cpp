@@ -18,7 +18,6 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	//bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	
@@ -29,7 +28,6 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.f;
 	CameraBoom->bUsePawnControlRotation = true; // 자체 회전 제어
-	//CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 3.f;
 
 	// Spring Arm Collision
@@ -117,7 +115,7 @@ void ASLPlayerCharacter::EnterCinematic(const float Yaw)
 		CachedMontageComponent->StopAllMontages(0.2);
 	}
 
-	if (USL25DMovementHandlerComponent* CombatHandler = FindComponentByClass<USL25DMovementHandlerComponent>())
+	if (USLMovementComponentBase* CombatHandler = FindComponentByClass<USLMovementComponentBase>())
 	{
 		CombatHandler->CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, Yaw, 0.0f));
 		CombatHandler->SetComponentTickEnabled(false);
@@ -128,7 +126,7 @@ void ASLPlayerCharacter::EnterCinematic(const float Yaw)
 
 void ASLPlayerCharacter::EndCinematic()
 {
-	if (USL25DMovementHandlerComponent* CombatHandler = FindComponentByClass<USL25DMovementHandlerComponent>())
+	if (USLMovementComponentBase* CombatHandler = FindComponentByClass<USLMovementComponentBase>())
 	{
 		CombatHandler->SetComponentTickEnabled(true);
 	}

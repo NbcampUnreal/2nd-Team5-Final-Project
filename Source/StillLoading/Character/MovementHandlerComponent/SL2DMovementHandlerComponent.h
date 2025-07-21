@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "SLMovementComponentBase.h"
-#include "Components/ActorComponent.h"
 #include "SL2DMovementHandlerComponent.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))

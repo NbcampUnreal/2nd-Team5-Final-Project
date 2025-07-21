@@ -11,6 +11,7 @@ class UTextBlock;
 class UScrollBox;
 class UImage;
 class USLCreditTextWidget;
+class USLButtonWidget;
 
 UCLASS()
 class STILLLOADING_API USLCreditWidget : public USLAdditiveWidget
@@ -28,13 +29,17 @@ protected:
 
 	virtual bool ApplyBackgroundImage(FSlateBrush& SlateBrush) override;
 
+private:
+	UFUNCTION()
+	void OnClickedCloseButton();
+
 public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<USLCreditTextWidget> CreditTextWidgetClass = nullptr;
 
 private:
 	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<UButton> CloseButton = nullptr;
+	TObjectPtr<USLButtonWidget> CloseButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UTextBlock> TitleText = nullptr;
