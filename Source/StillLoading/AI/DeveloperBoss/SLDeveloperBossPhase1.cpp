@@ -61,22 +61,19 @@ void ASLDeveloperBossPhase1::StartPhase()
 
 void ASLDeveloperBossPhase1::EndPhase()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🔚 Phase1 EndPhase called"));
+    UE_LOG(LogTemp, Warning, TEXT("Phase1 EndPhase called"));
     
-    // 1. 타이머 정리
     if (IsValid(GetWorld()))
     {
         GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
     }
     
-    // 2. 시네마틱 정리
     if (CurrentSequencePlayer)
     {
         CurrentSequencePlayer->OnFinished.RemoveAll(this);
         CurrentSequencePlayer = nullptr;
     }
     
-    // 3. 보스들 안전하게 정리
     CleanupDeadBosses();
     
     TArray<ASLAIBaseCharacter*> BossesToCleanup = SpawnedBosses;
@@ -103,10 +100,6 @@ void ASLDeveloperBossPhase1::SetConfig(const FSLPhase1Config& InConfig)
 {
     Config = InConfig;
     
-    UE_LOG(LogTemp, Warning, TEXT("📋 Phase1 Config Set:"));
-    UE_LOG(LogTemp, Warning, TEXT("  - BossClasses: %d"), Config.BossClasses.Num());
-    UE_LOG(LogTemp, Warning, TEXT("  - Cinematics: %d"), Config.Cinematics.Num());
-    
     for (int32 i = 0; i < Config.Cinematics.Num(); i++)
     {
         if (IsValid(Config.Cinematics[i]))
@@ -124,11 +117,11 @@ void ASLDeveloperBossPhase1::HandleBossDeath(ASLAIBaseCharacter* DeadBoss)
 {
     if (!bIsPhaseActive || !IsValid(DeadBoss) || bWaitingForCinematic)
     {
-        UE_LOG(LogTemp, Warning, TEXT("❌ HandleBossDeath: Invalid conditions"));
+        UE_LOG(LogTemp, Warning, TEXT("HandleBossDeath: Invalid conditions"));
         return;
     }
     
-    UE_LOG(LogTemp, Warning, TEXT("💀 Boss death detected: %s"), *DeadBoss->GetName());
+    UE_LOG(LogTemp, Warning, TEXT("Boss death detected: %s"), *DeadBoss->GetName());
     
     // 1. 먼저 이벤트 바인딩 해제 (안전한 상태에서)
     if (IsValid(DeadBoss))
@@ -302,11 +295,11 @@ void ASLDeveloperBossPhase1::RegisterBossEvents(ASLAIBaseCharacter* Boss)
 {
     if (!IsValid(Boss))
     {
-        UE_LOG(LogTemp, Warning, TEXT("❌ RegisterBossEvents: Boss is invalid"));
+        UE_LOG(LogTemp, Warning, TEXT("RegisterBossEvents: Boss is invalid"));
         return;
     }
     
-    UE_LOG(LogTemp, Warning, TEXT("🔗 Registering events for boss: %s"), *Boss->GetName());
+    UE_LOG(LogTemp, Warning, TEXT("Registering events for boss: %s"), *Boss->GetName());
     
     // 중복 바인딩 방지
     Boss->OnCharacterDeath.RemoveAll(this);
@@ -317,11 +310,11 @@ void ASLDeveloperBossPhase1::UnregisterBossEvents(ASLAIBaseCharacter* Boss)
 {
     if (!IsValid(Boss))
     {
-        UE_LOG(LogTemp, Warning, TEXT("❌ UnregisterBossEvents: Boss is invalid"));
+        UE_LOG(LogTemp, Warning, TEXT("UnregisterBossEvents: Boss is invalid"));
         return;
     }
     
-    UE_LOG(LogTemp, Warning, TEXT("🔗 Unregistering events for boss: %s"), *Boss->GetName());
+    UE_LOG(LogTemp, Warning, TEXT("Unregistering events for boss: %s"), *Boss->GetName());
     
     // 안전하게 이벤트 바인딩 해제
     if (Boss->OnCharacterDeath.IsBound())
@@ -370,11 +363,11 @@ ASLAIBaseCharacter* ASLDeveloperBossPhase1::SpawnBossCharacter(TSubclassOf<ASLAI
 {
     if (!BossClass || !GetWorld())
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ SpawnBossCharacter: Invalid class or world"));
+        UE_LOG(LogTemp, Error, TEXT("SpawnBossCharacter: Invalid class or world"));
         return nullptr;
     }
     
-    UE_LOG(LogTemp, Warning, TEXT("🐉 Spawning boss: %s"), *BossClass->GetName());
+    UE_LOG(LogTemp, Warning, TEXT("Spawning boss: %s"), *BossClass->GetName());
     
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
@@ -383,7 +376,7 @@ ASLAIBaseCharacter* ASLDeveloperBossPhase1::SpawnBossCharacter(TSubclassOf<ASLAI
     
     if (IsValid(SpawnedBoss))
     {
-        UE_LOG(LogTemp, Display, TEXT("✅ Boss spawned successfully: %s"), *SpawnedBoss->GetName());
+        UE_LOG(LogTemp, Display, TEXT("Boss spawned successfully: %s"), *SpawnedBoss->GetName());
         
         SpawnedBoss->SetIsSpecialPattern(true);
         SpawnedBosses.Add(SpawnedBoss);
@@ -391,7 +384,7 @@ ASLAIBaseCharacter* ASLDeveloperBossPhase1::SpawnBossCharacter(TSubclassOf<ASLAI
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Failed to spawn boss"));
+        UE_LOG(LogTemp, Error, TEXT("Failed to spawn boss"));
     }
     
     return SpawnedBoss;
@@ -399,19 +392,19 @@ ASLAIBaseCharacter* ASLDeveloperBossPhase1::SpawnBossCharacter(TSubclassOf<ASLAI
 
 void ASLDeveloperBossPhase1::HandleLineDestroyed(int32 LineIndex)
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎬 Phase1::HandleLineDestroyed - LineIndex: %d"), LineIndex);
+    UE_LOG(LogTemp, Warning, TEXT("Phase1::HandleLineDestroyed - LineIndex: %d"), LineIndex);
     
     Super::HandleLineDestroyed(LineIndex);
     
     if (!bIsPhaseActive)
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase1 is not active!"));
+        UE_LOG(LogTemp, Error, TEXT("Phase1 is not active!"));
         return;
     }
     
     if (bWaitingForCinematic)
     {
-        UE_LOG(LogTemp, Warning, TEXT("⏳ Already waiting for cinematic"));
+        UE_LOG(LogTemp, Warning, TEXT("Already waiting for cinematic"));
         return;
     }
     
@@ -419,11 +412,11 @@ void ASLDeveloperBossPhase1::HandleLineDestroyed(int32 LineIndex)
     if (IsValid(OwnerBoss))
     {
         DestroyedCount = OwnerBoss->GetCurrentPhaseDestroyedLinesCount();
-        UE_LOG(LogTemp, Warning, TEXT("📊 DestroyedCount: %d"), DestroyedCount);
+        UE_LOG(LogTemp, Warning, TEXT("DestroyedCount: %d"), DestroyedCount);
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ OwnerBoss is invalid!"));
+        UE_LOG(LogTemp, Error, TEXT("OwnerBoss is invalid!"));
         return;
     }
     
@@ -432,29 +425,29 @@ void ASLDeveloperBossPhase1::HandleLineDestroyed(int32 LineIndex)
 
 void ASLDeveloperBossPhase1::PlayCinematicForLineDestroy(int32 DestroyedLineCount)
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎭 PlayCinematicForLineDestroy - Count: %d"), DestroyedLineCount);
+    UE_LOG(LogTemp, Warning, TEXT("PlayCinematicForLineDestroy - Count: %d"), DestroyedLineCount);
     
     int32 CinematicIndex = 0;
     PendingBossIndex = DestroyedLineCount - 1;
     
-    UE_LOG(LogTemp, Warning, TEXT("🎯 CinematicIndex: %d, PendingBossIndex: %d"), CinematicIndex, PendingBossIndex);
-    UE_LOG(LogTemp, Warning, TEXT("📚 Config.Cinematics.Num(): %d"), Config.Cinematics.Num());
+    UE_LOG(LogTemp, Warning, TEXT("CinematicIndex: %d, PendingBossIndex: %d"), CinematicIndex, PendingBossIndex);
+    UE_LOG(LogTemp, Warning, TEXT("Config.Cinematics.Num(): %d"), Config.Cinematics.Num());
     
     if (!Config.Cinematics.IsValidIndex(CinematicIndex))
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Invalid CinematicIndex: %d"), CinematicIndex);
+        UE_LOG(LogTemp, Error, TEXT("Invalid CinematicIndex: %d"), CinematicIndex);
         OnCinematicFinished(); // 시네마틱 없으면 바로 보스 스폰
         return;
     }
     
     if (!IsValid(Config.Cinematics[CinematicIndex]))
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Cinematic is null at index: %d"), CinematicIndex);
+        UE_LOG(LogTemp, Error, TEXT("Cinematic is null at index: %d"), CinematicIndex);
         OnCinematicFinished();
         return;
     }
     
-    UE_LOG(LogTemp, Display, TEXT("✅ Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
+    UE_LOG(LogTemp, Display, TEXT("Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
     
     bWaitingForCinematic = true;
     
@@ -469,14 +462,14 @@ void ASLDeveloperBossPhase1::PlayCinematicForLineDestroy(int32 DestroyedLineCoun
     
     if (CurrentSequencePlayer)
     {
-        UE_LOG(LogTemp, Display, TEXT("🎮 SequencePlayer created successfully"));
+        UE_LOG(LogTemp, Display, TEXT(" SequencePlayer created successfully"));
         CurrentSequencePlayer->OnFinished.AddDynamic(this, &ASLDeveloperBossPhase1::OnCinematicFinished);
         CurrentSequencePlayer->Play();
-        UE_LOG(LogTemp, Display, TEXT("▶️ Cinematic play started"));
+        UE_LOG(LogTemp, Display, TEXT(" Cinematic play started"));
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Failed to create SequencePlayer"));
+        UE_LOG(LogTemp, Error, TEXT(" Failed to create SequencePlayer"));
         OnCinematicFinished();
     }
 }
@@ -547,7 +540,7 @@ void ASLDeveloperBossPhase1::ProcessNextBossAfterDeath()
         return;
     }
     
-    UE_LOG(LogTemp, Warning, TEXT("🎬 Processing next boss after death"));
+    UE_LOG(LogTemp, Warning, TEXT("Processing next boss after death"));
     
     // 보스 죽음에 대한 시네마틱 실행
     if (CurrentBossIndex < Config.BossClasses.Num())

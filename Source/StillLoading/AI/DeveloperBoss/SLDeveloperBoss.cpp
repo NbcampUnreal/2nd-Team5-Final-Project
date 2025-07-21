@@ -235,7 +235,7 @@ ASLDeveloperBossPhase1* ASLDeveloperBoss::GetOrCreatePhase1()
 {
     if (!IsValid(Phase1Actor))
     {
-        UE_LOG(LogTemp, Display, TEXT("🔄 Lazy Loading: Creating Phase1 Actor"));
+        UE_LOG(LogTemp, Display, TEXT(" Lazy Loading: Creating Phase1 Actor"));
         Phase1Actor = CreatePhaseActor<ASLDeveloperBossPhase1>(Phase1ActorClass);
         
         if (IsValid(Phase1Actor) && ConfigDataAsset)
@@ -250,7 +250,7 @@ ASLDeveloperBossPhase2* ASLDeveloperBoss::GetOrCreatePhase2()
 {
     if (!IsValid(Phase2Actor))
     {
-        UE_LOG(LogTemp, Display, TEXT("🔄 Lazy Loading: Creating Phase2 Actor"));
+        UE_LOG(LogTemp, Display, TEXT(" Lazy Loading: Creating Phase2 Actor"));
         Phase2Actor = CreatePhaseActor<ASLDeveloperBossPhase2>(Phase2ActorClass);
         
         if (IsValid(Phase2Actor) && ConfigDataAsset)
@@ -265,7 +265,7 @@ ASLDeveloperBossPhase3* ASLDeveloperBoss::GetOrCreatePhase3()
 {
     if (!IsValid(Phase3Actor))
     {
-        UE_LOG(LogTemp, Display, TEXT("🔄 Lazy Loading: Creating Phase3 Actor"));
+        UE_LOG(LogTemp, Display, TEXT(" Lazy Loading: Creating Phase3 Actor"));
         Phase3Actor = CreatePhaseActor<ASLDeveloperBossPhase3>(Phase3ActorClass);
         
         if (IsValid(Phase3Actor) && ConfigDataAsset)
@@ -281,7 +281,7 @@ ASLDeveloperBossPhase4* ASLDeveloperBoss::GetOrCreatePhase4()
 {
     if (!IsValid(Phase4Actor))
     {
-        UE_LOG(LogTemp, Display, TEXT("🔄 Lazy Loading: Creating Phase4 Actor"));
+        UE_LOG(LogTemp, Display, TEXT(" Lazy Loading: Creating Phase4 Actor"));
         Phase4Actor = CreatePhaseActor<ASLDeveloperBossPhase4>(Phase4ActorClass);
         
         if (IsValid(Phase4Actor) && ConfigDataAsset)
@@ -296,7 +296,7 @@ ASLDeveloperBossPhase5* ASLDeveloperBoss::GetOrCreatePhase5()
 {
     if (!IsValid(Phase5Actor))
     {
-        UE_LOG(LogTemp, Display, TEXT("🔄 Lazy Loading: Creating Phase5 Actor"));
+        UE_LOG(LogTemp, Display, TEXT(" Lazy Loading: Creating Phase5 Actor"));
         Phase5Actor = CreatePhaseActor<ASLDeveloperBossPhase5>(Phase5ActorClass);
         
         if (IsValid(Phase5Actor) && ConfigDataAsset)
@@ -325,12 +325,10 @@ T* ASLDeveloperBoss::CreatePhaseActor(TSubclassOf<T> PhaseClass)
     if (IsValid(NewPhaseActor))
     {
         NewPhaseActor->SetOwnerBoss(this);
-        NewPhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
-        UE_LOG(LogTemp, Display, TEXT("✅ Successfully created phase actor: %s"), *NewPhaseActor->GetClass()->GetName());
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Failed to create phase actor"));
+        UE_LOG(LogTemp, Error, TEXT("Failed to create phase actor"));
     }
     
     return NewPhaseActor;
@@ -358,7 +356,7 @@ void ASLDeveloperBoss::DestroyPhaseActor(EDeveloperBossPhase PhaseType)
         ActorToDestroy->EndPhase();
     }
     
-    UE_LOG(LogTemp, Display, TEXT("🗑️ Lazy Loading: Destroying Phase %d Actor"), static_cast<int32>(PhaseType));
+    UE_LOG(LogTemp, Display, TEXT(" Lazy Loading: Destroying Phase %d Actor"), static_cast<int32>(PhaseType));
     
     // 이벤트 바인딩 해제
     ActorToDestroy->OnPhaseCompleted.RemoveAll(this);
@@ -411,7 +409,7 @@ void ASLDeveloperBoss::DestroyAllInactivePhases()
         DestroyPhaseActor(PhaseType);
     }
     
-    UE_LOG(LogTemp, Display, TEXT("🧹 Cleaned up %d inactive phase actors"), PhasesToDestroy.Num());
+    UE_LOG(LogTemp, Display, TEXT(" Cleaned up %d inactive phase actors"), PhasesToDestroy.Num());
 }
 
 void ASLDeveloperBoss::PreloadNextPhase()
@@ -420,25 +418,25 @@ void ASLDeveloperBoss::PreloadNextPhase()
     
     if (NextPhase != EDeveloperBossPhase::Phase0_Start)
     {
-        UE_LOG(LogTemp, Display, TEXT("🔮 Preloading next phase: %d"), static_cast<int32>(NextPhase));
+        UE_LOG(LogTemp, Display, TEXT(" Preloading next phase: %d"), static_cast<int32>(NextPhase));
         GetPhaseActor(NextPhase); // 백그라운드에서 미리 생성
     }
 }
 
 void ASLDeveloperBoss::TriggerFirstWallDuringDialogue()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🚀 TriggerFirstWallDuringDialogue called"));
+    UE_LOG(LogTemp, Warning, TEXT(" TriggerFirstWallDuringDialogue called"));
     
     if (bIsFightStarted)
     {
-        UE_LOG(LogTemp, Warning, TEXT("⚠️ Fight already started"));
+        UE_LOG(LogTemp, Warning, TEXT("️ Fight already started"));
         return;
     }
 
     bIsFightStarted = true;
     
     // Phase 1 시작
-    UE_LOG(LogTemp, Warning, TEXT("🎯 Starting Phase 1"));
+    UE_LOG(LogTemp, Warning, TEXT(" Starting Phase 1"));
     StartPhase(EDeveloperBossPhase::Phase1_BossRush);
     
     ManualLaunchWallAttack();
@@ -546,7 +544,7 @@ void ASLDeveloperBoss::ActivateConnectedLines(int32 PhaseIndex, ASLLaunchableWal
         return;
     }
 
-    UE_LOG(LogTemp, Display, TEXT("🔍 ActivateConnectedLines: Phase %d, Wall %s"), 
+    UE_LOG(LogTemp, Display, TEXT(" ActivateConnectedLines: Phase %d, Wall %s"), 
            PhaseIndex, *LaunchedWall->GetName());
 
     bool bFoundConnection = false;
@@ -557,7 +555,7 @@ void ASLDeveloperBoss::ActivateConnectedLines(int32 PhaseIndex, ASLLaunchableWal
         if (Connection.Wall == LaunchedWall)
         {
             bFoundConnection = true;
-            UE_LOG(LogTemp, Display, TEXT("   ✅ Found matching connection! Activating %d lines"), 
+            UE_LOG(LogTemp, Display, TEXT("    Found matching connection! Activating %d lines"), 
                    Connection.ConnectedLineIndices.Num());
             
             for (int32 LineIndex : Connection.ConnectedLineIndices)
@@ -568,7 +566,7 @@ void ASLDeveloperBoss::ActivateConnectedLines(int32 PhaseIndex, ASLLaunchableWal
                     if (IsValid(LineToActivate))
                     {
                         LineToActivate->ActivateLine();
-                        UE_LOG(LogTemp, Display, TEXT("   📍 Activated line %d in phase %d"), LineIndex, PhaseIndex);
+                        UE_LOG(LogTemp, Display, TEXT("    Activated line %d in phase %d"), LineIndex, PhaseIndex);
                     }
                 }
             }
@@ -578,7 +576,7 @@ void ASLDeveloperBoss::ActivateConnectedLines(int32 PhaseIndex, ASLLaunchableWal
     
     if (!bFoundConnection)
     {
-        UE_LOG(LogTemp, Warning, TEXT("❌ No connection found for wall %s in phase %d"), 
+        UE_LOG(LogTemp, Warning, TEXT(" No connection found for wall %s in phase %d"), 
                *LaunchedWall->GetName(), PhaseIndex);
     }
 }
@@ -739,11 +737,11 @@ void ASLDeveloperBoss::DebugPhaseData(int32 PhaseIndex)
     FPhaseLineData* PhaseData = PhaseLineDataMap.Find(PhaseIndex);
     if (!PhaseData)
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase %d NOT FOUND in PhaseLineDataMap!"), PhaseIndex);
+        UE_LOG(LogTemp, Error, TEXT(" Phase %d NOT FOUND in PhaseLineDataMap!"), PhaseIndex);
         return;
     }
     
-    UE_LOG(LogTemp, Display, TEXT("✅ Phase %d found"), PhaseIndex);
+    UE_LOG(LogTemp, Display, TEXT(" Phase %d found"), PhaseIndex);
     UE_LOG(LogTemp, Display, TEXT("Lines count: %d"), PhaseData->Lines.Num());
     UE_LOG(LogTemp, Display, TEXT("Wall connections count: %d"), PhaseData->WallConnections.Num());
 }
@@ -793,22 +791,6 @@ void ASLDeveloperBoss::SpawnNextPhase1Boss()
         Phase1Actor->SpawnNextBoss();
     }
 }
-
-/*void ASLDeveloperBoss::PlayPhase1StartCinematic()
-{
-    if (IsValid(Phase1Actor))
-    {
-        Phase1Actor->PlayStartCinematic();
-    }
-}*/
-
-/*void ASLDeveloperBoss::PlayPhase1BossCinematic(int32 BossIndex)
-{
-    if (IsValid(Phase1Actor))
-    {
-        Phase1Actor->PlayBossCinematic(BossIndex);
-    }
-}*/
 
 void ASLDeveloperBoss::StartPhase3AutoWallAttack()
 {
@@ -941,7 +923,7 @@ void ASLDeveloperBoss::HandleLineDestroyed(int32 LineIndex)
 
 void ASLDeveloperBoss::HandleWallAttackFinished(ASLLaunchableWall* LaunchedWall)
 {
-    UE_LOG(LogTemp, Display, TEXT("🏁 HandleWallAttackFinished called"));
+    UE_LOG(LogTemp, Display, TEXT(" HandleWallAttackFinished called"));
     
     if (PendingLineActivation.LaunchedWall.IsValid())
     {
@@ -1054,7 +1036,7 @@ bool ASLDeveloperBoss::IsPlayerAlive() const
     return true;
 }
 
-// ✅ 수정된 Setup 함수들
+//  수정된 Setup 함수들
 void ASLDeveloperBoss::SetupPhase1Actor(ASLDeveloperBossPhase1* PhaseActor, const FSLPhase1Config& Config)
 {
     if (!IsValid(PhaseActor))
@@ -1064,8 +1046,13 @@ void ASLDeveloperBoss::SetupPhase1Actor(ASLDeveloperBossPhase1* PhaseActor, cons
     }
     
     PhaseActor->SetOwnerBoss(this);
+    
+    PhaseActor->OnPhaseCompleted.RemoveDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
+    
+    PhaseActor->OnBossSpawnCompleted.RemoveDynamic(this, &ASLDeveloperBoss::HandleBossDeath);
     PhaseActor->OnBossSpawnCompleted.AddDynamic(this, &ASLDeveloperBoss::HandleBossDeath);
+    
     PhaseActor->SetConfig(Config);
     
     UE_LOG(LogTemp, Display, TEXT("Phase1 Actor setup completed"));
@@ -1080,10 +1067,12 @@ void ASLDeveloperBoss::SetupPhase2Actor(ASLDeveloperBossPhase2* PhaseActor, cons
     }
     
     PhaseActor->SetOwnerBoss(this);
+    
+    PhaseActor->OnPhaseCompleted.RemoveDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
+    
     PhaseActor->SetConfig(Config);
     
-    // 직접 설정된 Room Space 전달
     if (IsValid(Phase2RoomSpace))
     {
         PhaseActor->SetRoomSpace(Phase2RoomSpace);
@@ -1094,7 +1083,6 @@ void ASLDeveloperBoss::SetupPhase2Actor(ASLDeveloperBossPhase2* PhaseActor, cons
         UE_LOG(LogTemp, Warning, TEXT("Phase2: No Room Space assigned"));
     }
     
-    // Mouse Actor 설정
     PhaseActor->SetMouseActor(MouseActor);
     
     UE_LOG(LogTemp, Display, TEXT("Phase2 Actor setup completed"));
@@ -1109,10 +1097,12 @@ void ASLDeveloperBoss::SetupPhase3Actor(ASLDeveloperBossPhase3* PhaseActor, cons
     }
     
     PhaseActor->SetOwnerBoss(this);
+    
+    PhaseActor->OnPhaseCompleted.RemoveDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
+    
     PhaseActor->SetConfig(Config);
     
-    // Mouse Actor 설정
     PhaseActor->SetMouseActor(MouseActor);
     
     UE_LOG(LogTemp, Display, TEXT("Phase3 Actor setup completed"));
@@ -1127,10 +1117,12 @@ void ASLDeveloperBoss::SetupPhase4Actor(ASLDeveloperBossPhase4* PhaseActor, cons
     }
     
     PhaseActor->SetOwnerBoss(this);
+    
+    PhaseActor->OnPhaseCompleted.RemoveDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
+    
     PhaseActor->SetConfig(Config);
     
-    // 직접 설정된 Falling Floor 전달
     if (IsValid(Phase4FallingFloor))
     {
         PhaseActor->SetFallingFloor(Phase4FallingFloor);
@@ -1141,7 +1133,6 @@ void ASLDeveloperBoss::SetupPhase4Actor(ASLDeveloperBossPhase4* PhaseActor, cons
         UE_LOG(LogTemp, Warning, TEXT("Phase4: No Falling Floor assigned"));
     }
     
-    // 벽 설정
     SetupPhase4Walls(PhaseActor);
     
     UE_LOG(LogTemp, Display, TEXT("Phase4 Actor setup completed"));
@@ -1156,10 +1147,12 @@ void ASLDeveloperBoss::SetupPhase5Actor(ASLDeveloperBossPhase5* PhaseActor, cons
     }
     
     PhaseActor->SetOwnerBoss(this);
+    
+    PhaseActor->OnPhaseCompleted.RemoveDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
+    
     PhaseActor->SetConfig(Config);
     
-    // Mouse Actor 설정
     PhaseActor->SetMouseActor(MouseActor);
     
     // 벽 설정

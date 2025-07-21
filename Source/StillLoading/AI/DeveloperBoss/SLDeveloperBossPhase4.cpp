@@ -54,7 +54,7 @@ void ASLDeveloperBossPhase4::StartPhase()
     bIsAutoWallAttackActive = false;
     bWaitingForCinematic = false;
     
-    UE_LOG(LogTemp, Warning, TEXT("🎬 Phase4: Starting with start cinematic"));
+    UE_LOG(LogTemp, Warning, TEXT("Phase4: Starting with start cinematic"));
     
     // Phase4 시작 시네마틱 재생
     PlayStartCinematic();
@@ -92,7 +92,7 @@ void ASLDeveloperBossPhase4::SetConfig(const FSLPhase4Config& InConfig)
 {
     Config = InConfig;
     
-    UE_LOG(LogTemp, Warning, TEXT("📋 Phase4 Config Set:"));
+    UE_LOG(LogTemp, Warning, TEXT("Phase4 Config Set:"));
     UE_LOG(LogTemp, Warning, TEXT("  - FloorCollapseDelay: %f"), Config.FloorCollapseDelay);
     UE_LOG(LogTemp, Warning, TEXT("  - AutoWallAttackInterval: %f"), Config.AutoWallAttackInterval);
     UE_LOG(LogTemp, Warning, TEXT("  - InitialWallAttackDelay: %f"), Config.InitialWallAttackDelay);
@@ -227,25 +227,25 @@ void ASLDeveloperBossPhase4::StartFloorCollapse()
 
 void ASLDeveloperBossPhase4::PlayStartCinematic()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎭 Phase4: Playing start cinematic"));
+    UE_LOG(LogTemp, Warning, TEXT("Phase4: Playing start cinematic"));
     
     int32 CinematicIndex = 0; // 시작 시네마틱
     
     if (!Config.Cinematics.IsValidIndex(CinematicIndex))
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase4: Invalid CinematicIndex: %d"), CinematicIndex);
+        UE_LOG(LogTemp, Error, TEXT(" Phase4: Invalid CinematicIndex: %d"), CinematicIndex);
         StartPhaseAfterCinematic(); // 시네마틱 없으면 바로 게임플레이 시작
         return;
     }
     
     if (!IsValid(Config.Cinematics[CinematicIndex]))
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase4: Cinematic is null at index: %d"), CinematicIndex);
+        UE_LOG(LogTemp, Error, TEXT(" Phase4: Cinematic is null at index: %d"), CinematicIndex);
         StartPhaseAfterCinematic();
         return;
     }
     
-    UE_LOG(LogTemp, Display, TEXT("✅ Phase4: Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
+    UE_LOG(LogTemp, Display, TEXT("Phase4: Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
     
     bWaitingForCinematic = true;
     
@@ -260,10 +260,10 @@ void ASLDeveloperBossPhase4::PlayStartCinematic()
     
     if (CurrentSequencePlayer)
     {
-        UE_LOG(LogTemp, Display, TEXT("🎮 Phase4: SequencePlayer created successfully"));
+        UE_LOG(LogTemp, Display, TEXT("Phase4: SequencePlayer created successfully"));
         CurrentSequencePlayer->OnFinished.AddDynamic(this, &ASLDeveloperBossPhase4::OnCinematicFinished);
         CurrentSequencePlayer->Play();
-        UE_LOG(LogTemp, Display, TEXT("▶️ Phase4: Cinematic play started"));
+        UE_LOG(LogTemp, Display, TEXT("Phase4: Cinematic play started"));
         
         // 타임아웃 설정
         if (IsValid(GetWorld()))
@@ -274,7 +274,7 @@ void ASLDeveloperBossPhase4::PlayStartCinematic()
                 {
                     if (bWaitingForCinematic)
                     {
-                        UE_LOG(LogTemp, Error, TEXT("⏰ Phase4: Cinematic timeout! Force finishing..."));
+                        UE_LOG(LogTemp, Error, TEXT("Phase4: Cinematic timeout! Force finishing..."));
                         OnCinematicFinished();
                     }
                 },
@@ -285,14 +285,14 @@ void ASLDeveloperBossPhase4::PlayStartCinematic()
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase4: Failed to create SequencePlayer"));
+        UE_LOG(LogTemp, Error, TEXT(" Phase4: Failed to create SequencePlayer"));
         StartPhaseAfterCinematic();
     }
 }
 
 void ASLDeveloperBossPhase4::OnCinematicFinished()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎬 Phase4: OnCinematicFinished called"));
+    UE_LOG(LogTemp, Warning, TEXT(" Phase4: OnCinematicFinished called"));
     
     bWaitingForCinematic = false;
     
@@ -312,8 +312,8 @@ void ASLDeveloperBossPhase4::OnCinematicFinished()
 
 void ASLDeveloperBossPhase4::StartPhaseAfterCinematic()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎮 Phase4: Starting gameplay after start cinematic"));
-    UE_LOG(LogTemp, Display, TEXT("🏗️ Phase 4 Platformer Started"));
+    UE_LOG(LogTemp, Warning, TEXT(" Phase4: Starting gameplay after start cinematic"));
+    UE_LOG(LogTemp, Display, TEXT("️ Phase 4 Platformer Started"));
     
     // 시네마틱 완료 후 바닥 붕괴 시작
     TriggerFloorCollapse();

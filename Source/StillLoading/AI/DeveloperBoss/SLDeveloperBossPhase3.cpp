@@ -361,19 +361,19 @@ void ASLDeveloperBossPhase3::PlayStartCinematic()
     
     if (!Config.Cinematics.IsValidIndex(CinematicIndex))
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase3: Invalid CinematicIndex: %d"), CinematicIndex);
+        UE_LOG(LogTemp, Error, TEXT("Phase3: Invalid CinematicIndex: %d"), CinematicIndex);
         StartPhaseAfterCinematic(); // 시네마틱 없으면 바로 게임플레이 시작
         return;
     }
     
     if (!IsValid(Config.Cinematics[CinematicIndex]))
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase3: Cinematic is null at index: %d"), CinematicIndex);
+        UE_LOG(LogTemp, Error, TEXT("Phase3: Cinematic is null at index: %d"), CinematicIndex);
         StartPhaseAfterCinematic();
         return;
     }
     
-    UE_LOG(LogTemp, Display, TEXT("✅ Phase3: Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
+    UE_LOG(LogTemp, Display, TEXT("Phase3: Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
     
     bWaitingForCinematic = true;
     
@@ -388,10 +388,10 @@ void ASLDeveloperBossPhase3::PlayStartCinematic()
     
     if (CurrentSequencePlayer)
     {
-        UE_LOG(LogTemp, Display, TEXT("🎮 Phase3: SequencePlayer created successfully"));
+        UE_LOG(LogTemp, Display, TEXT("Phase3: SequencePlayer created successfully"));
         CurrentSequencePlayer->OnFinished.AddDynamic(this, &ASLDeveloperBossPhase3::OnCinematicFinished);
         CurrentSequencePlayer->Play();
-        UE_LOG(LogTemp, Display, TEXT("▶️ Phase3: Cinematic play started"));
+        UE_LOG(LogTemp, Display, TEXT("Phase3: Cinematic play started"));
         
         // 타임아웃 설정
         if (IsValid(GetWorld()))
@@ -402,7 +402,7 @@ void ASLDeveloperBossPhase3::PlayStartCinematic()
                 {
                     if (bWaitingForCinematic)
                     {
-                        UE_LOG(LogTemp, Error, TEXT("⏰ Phase3: Cinematic timeout! Force finishing..."));
+                        UE_LOG(LogTemp, Error, TEXT(" Phase3: Cinematic timeout! Force finishing..."));
                         OnCinematicFinished();
                     }
                 },
@@ -413,14 +413,14 @@ void ASLDeveloperBossPhase3::PlayStartCinematic()
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase3: Failed to create SequencePlayer"));
+        UE_LOG(LogTemp, Error, TEXT("Phase3: Failed to create SequencePlayer"));
         StartPhaseAfterCinematic();
     }
 }
 
 void ASLDeveloperBossPhase3::OnCinematicFinished()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎬 Phase3: OnCinematicFinished called"));
+    UE_LOG(LogTemp, Warning, TEXT("Phase3: OnCinematicFinished called"));
     
     bWaitingForCinematic = false;
     
@@ -440,7 +440,7 @@ void ASLDeveloperBossPhase3::OnCinematicFinished()
 
 void ASLDeveloperBossPhase3::StartPhaseAfterCinematic()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎮 Phase3: Starting gameplay after start cinematic"));
+    UE_LOG(LogTemp, Warning, TEXT("Phase3: Starting gameplay after start cinematic"));
     
     // 메인 마우스 액터 비활성화
     if (IsValid(MainMouseActor))
