@@ -177,12 +177,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")
     void SpawnNextPhase1Boss();
 
-    /*UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")
-    void PlayPhase1StartCinematic();*/
-
-    /*UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")  
-    void PlayPhase1BossCinematic(int32 BossIndex);*/
-
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase3")
     void StartPhase3AutoWallAttack();
 
@@ -325,7 +319,7 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse Actor")
     TSubclassOf<ASLMouseActor> MouseActorClass;
 
-    // ✅ 레벨 액터 참조 (한 곳에서만 설정)
+    // 레벨 액터 참조 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Actors|Phase2")
     TObjectPtr<ASLDeveloperRoomSpace> Phase2RoomSpace;
     

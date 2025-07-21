@@ -116,7 +116,7 @@ void ASLDeveloperBossPhase5::SetConfig(const FSLPhase5Config& InConfig)
 {
     Config = InConfig;
     
-    UE_LOG(LogTemp, Warning, TEXT("📋 Phase5 Config Set:"));
+    UE_LOG(LogTemp, Warning, TEXT(" Phase5 Config Set:"));
     UE_LOG(LogTemp, Warning, TEXT("  - MaxSimultaneousWalls: %d"), Config.MaxSimultaneousWalls);
     UE_LOG(LogTemp, Warning, TEXT("  - bEnableMultiWallAttack: %s"), Config.bEnableMultiWallAttack ? TEXT("true") : TEXT("false"));
     UE_LOG(LogTemp, Warning, TEXT("  - WallAttackInterval: %f"), Config.WallAttackInterval);
@@ -137,25 +137,25 @@ void ASLDeveloperBossPhase5::SetConfig(const FSLPhase5Config& InConfig)
 
 void ASLDeveloperBossPhase5::PlayStartCinematic()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎭 Phase5: Playing start cinematic"));
+    UE_LOG(LogTemp, Warning, TEXT(" Phase5: Playing start cinematic"));
     
     int32 CinematicIndex = 0; // 시작 시네마틱
     
     if (!Config.Cinematics.IsValidIndex(CinematicIndex))
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase5: Invalid CinematicIndex: %d"), CinematicIndex);
+        UE_LOG(LogTemp, Error, TEXT(" Phase5: Invalid CinematicIndex: %d"), CinematicIndex);
         StartPhaseAfterCinematic(); // 시네마틱 없으면 바로 게임플레이 시작
         return;
     }
     
     if (!IsValid(Config.Cinematics[CinematicIndex]))
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase5: Cinematic is null at index: %d"), CinematicIndex);
+        UE_LOG(LogTemp, Error, TEXT(" Phase5: Cinematic is null at index: %d"), CinematicIndex);
         StartPhaseAfterCinematic();
         return;
     }
     
-    UE_LOG(LogTemp, Display, TEXT("✅ Phase5: Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
+    UE_LOG(LogTemp, Display, TEXT(" Phase5: Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
     
     bWaitingForCinematic = true;
     
@@ -170,10 +170,10 @@ void ASLDeveloperBossPhase5::PlayStartCinematic()
     
     if (CurrentSequencePlayer)
     {
-        UE_LOG(LogTemp, Display, TEXT("🎮 Phase5: SequencePlayer created successfully"));
+        UE_LOG(LogTemp, Display, TEXT(" Phase5: SequencePlayer created successfully"));
         CurrentSequencePlayer->OnFinished.AddDynamic(this, &ASLDeveloperBossPhase5::OnCinematicFinished);
         CurrentSequencePlayer->Play();
-        UE_LOG(LogTemp, Display, TEXT("▶️ Phase5: Cinematic play started"));
+        UE_LOG(LogTemp, Display, TEXT(" Phase5: Cinematic play started"));
         
         // 타임아웃 설정
         if (IsValid(GetWorld()))
@@ -184,7 +184,7 @@ void ASLDeveloperBossPhase5::PlayStartCinematic()
                 {
                     if (bWaitingForCinematic)
                     {
-                        UE_LOG(LogTemp, Error, TEXT("⏰ Phase5: Cinematic timeout! Force finishing..."));
+                        UE_LOG(LogTemp, Error, TEXT(" Phase5: Cinematic timeout! Force finishing..."));
                         OnCinematicFinished();
                     }
                 },
@@ -195,14 +195,14 @@ void ASLDeveloperBossPhase5::PlayStartCinematic()
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("❌ Phase5: Failed to create SequencePlayer"));
+        UE_LOG(LogTemp, Error, TEXT(" Phase5: Failed to create SequencePlayer"));
         StartPhaseAfterCinematic();
     }
 }
 
 void ASLDeveloperBossPhase5::OnCinematicFinished()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎬 Phase5: OnCinematicFinished called"));
+    UE_LOG(LogTemp, Warning, TEXT(" Phase5: OnCinematicFinished called"));
     
     bWaitingForCinematic = false;
     
@@ -222,7 +222,7 @@ void ASLDeveloperBossPhase5::OnCinematicFinished()
 
 void ASLDeveloperBossPhase5::StartPhaseAfterCinematic()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎮 Phase5: Starting gameplay after start cinematic"));
+    UE_LOG(LogTemp, Warning, TEXT(" Phase5: Starting gameplay after start cinematic"));
     
     if (!IsValid(MouseActor))
     {
