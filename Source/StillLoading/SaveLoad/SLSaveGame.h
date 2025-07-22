@@ -18,7 +18,6 @@ class STILLLOADING_API USLSaveGame : public USaveGame
 	GENERATED_BODY()
 	
 public:
-
 	USLSaveGame();
 
 	UPROPERTY()
@@ -26,14 +25,16 @@ public:
 
 	UPROPERTY()
 	ESLLevelNameType CurrentLevelSaveData = ESLLevelNameType::ELN_Title;
-	
+
+	// 설정 정보
 	UPROPERTY()
-	FUserSaveData UserSaveData;
+	FSettingSaveData UserSaveData;
 
-	// UPROPERTY()
-	// TMap<ESLChapterType, FSLObjectiveRuntimeData> ObjectiveSaveData;
-
+	// 실제 게임 진행상황(오브젝티브)
 	UPROPERTY()
 	FChapterObjectiveSaveData ObjectiveSaveData;
 
+	// 세이브 슬롯에 보여질 정보
+	UPROPERTY()
+	FSlotSaveData SlotSaveData;
 };
