@@ -20,16 +20,6 @@ class STILLLOADING_API USLSaveGame : public USaveGame
 public:
 	USLSaveGame();
 
-	UPROPERTY()
-	ESLChapterType CurrentChapterSaveData = ESLChapterType::EC_Chapter0;
-
-	UPROPERTY()
-	ESLLevelNameType CurrentLevelSaveData = ESLLevelNameType::ELN_Title;
-
-	// 설정 정보
-	UPROPERTY()
-	FSettingSaveData UserSaveData;
-
 	// 실제 게임 진행상황(오브젝티브)
 	UPROPERTY()
 	FChapterObjectiveSaveData ObjectiveSaveData;

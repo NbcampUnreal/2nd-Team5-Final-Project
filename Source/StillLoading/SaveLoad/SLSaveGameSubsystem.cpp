@@ -22,6 +22,7 @@ void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     LoadSettingData();
     
 #if WITH_EDITOR
+    CurrentGameSlotName = GameSaveSlotList[0];
     LoadGameData();
 #endif
 }
@@ -30,7 +31,7 @@ void USLSaveGameSubsystem::Deinitialize()
 {
     Super::Deinitialize();
 
-    SaveUserData();
+    SaveSettingData();
 }
 
 void USLSaveGameSubsystem::SaveGameData()
@@ -82,6 +83,23 @@ void USLSaveGameSubsystem::LoadSettingData()
     SendWidgetData();
 }
 
+void USLSaveGameSubsystem::SaveGameDataByIndex(const int Index)
+{
+    if (GameSaveSlotList.IsValidIndex(Index))
+    {
+        SaveChapterData();
+        SaveObjectiveData();
+        
+        UGameplayStatics::SaveGameToSlot(CurrentGameSaveData, GameSaveSlotList[Index], 0);
+    }
+}
+
+void USLSaveGameSubsystem::LoadGameDataByIndex(const int Index)
+{
+    StartSaveLoadTime = FPlatformTime::Seconds();
+
+}
+
 void USLSaveGameSubsystem::OnSelectedNewGame()
 {
     bIsExistSaveData = true;
@@ -124,7 +142,7 @@ void USLSaveGameSubsystem::LoadObjectiveDefaultData()
     }
 }
 
-void USLSaveGameSubsystem::SaveUserData()
+void USLSaveGameSubsystem::SaveSettingData()
 { 
     UGameInstance* GameInstance = GetGameInstance();
 
@@ -134,21 +152,21 @@ void USLSaveGameSubsystem::SaveUserData()
 
     check(UserDataSubSystem);
 
-    CurrentGameSaveData->UserSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
-    CurrentGameSaveData->UserSaveData.LanguageType = UserDataSubSystem->GetCurrentLanguage();
-    CurrentGameSaveData->UserSaveData.BgmVolume = UserDataSubSystem->GetCurrentBgmVolume();
-    CurrentGameSaveData->UserSaveData.EffectVolume = UserDataSubSystem->GetCurrentEffectVolume();
-    CurrentGameSaveData->UserSaveData.Brightness = UserDataSubSystem->GetCurrentBrightness();
+    SettingSaveData->SettingSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
+    SettingSaveData->SettingSaveData.LanguageType = UserDataSubSystem->GetCurrentLanguage();
+    SettingSaveData->SettingSaveData.BgmVolume = UserDataSubSystem->GetCurrentBgmVolume();
+    SettingSaveData->SettingSaveData.EffectVolume = UserDataSubSystem->GetCurrentEffectVolume();
+    SettingSaveData->SettingSaveData.Brightness = UserDataSubSystem->GetCurrentBrightness();
 
-    CurrentGameSaveData->UserSaveData.WindowMode = UserDataSubSystem->GetCurrentWindowMode();
+    SettingSaveData->SettingSaveData.WindowMode = UserDataSubSystem->GetCurrentWindowMode();
     TPair<float,float> ScreenSize = UserDataSubSystem->GetCurrentScreenSize();
-    CurrentGameSaveData->UserSaveData.ScreenWidth = ScreenSize.Key;
-    CurrentGameSaveData->UserSaveData.ScreenHeight = ScreenSize.Value;
+    SettingSaveData->SettingSaveData.ScreenWidth = ScreenSize.Key;
+    SettingSaveData->SettingSaveData.ScreenHeight = ScreenSize.Value;
 
-    CurrentGameSaveData->UserSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
-    CurrentGameSaveData->UserSaveData.KeySet = UserDataSubSystem->GetKeySet();
+    SettingSaveData->SettingSaveData.ActionKeyMap = UserDataSubSystem->GetActionKeyMap();
+    SettingSaveData->SettingSaveData.KeySet = UserDataSubSystem->GetKeySet();
 
-    UGameplayStatics::SaveGameToSlot(CurrentGameSaveData, CurrentGameSlotName, 0);
+    UGameplayStatics::SaveGameToSlot(SettingSaveData, SettingSlotName, 0);
 }
 
 void USLSaveGameSubsystem::SendWidgetData()
@@ -171,7 +189,20 @@ void USLSaveGameSubsystem::SaveChapterData()
 {
     USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
     checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
-    CurrentGameSaveData->CurrentChapterSaveData = LevelSubsystem->GetCurrentChapter();
+    CurrentGameSaveData->SlotSaveData.ChapterSaveData = LevelSubsystem->GetCurrentChapter();
+    CurrentGameSaveData->SlotSaveData.LevelSaveData = LevelSubsystem->GetCurrentLevelType();
+}
+
+void USLSaveGameSubsystem::SaveSlotData()
+{
+    USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+    checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
+    CurrentGameSaveData->SlotSaveData.ChapterSaveData = LevelSubsystem->GetCurrentChapter();
+    CurrentGameSaveData->SlotSaveData.LevelSaveData = LevelSubsystem->GetCurrentLevelType();
+    
+    const float DurationTime = FPlatformTime::Seconds() - StartSaveLoadTime;
+    CurrentGameSaveData->SlotSaveData.PlayTimeInSeconds = DurationTime;
+    CurrentGameSaveData->SlotSaveData.SaveTime = FDateTime::Now();
 }
 
 void USLSaveGameSubsystem::SaveObjectiveData()
@@ -220,7 +251,7 @@ void USLSaveGameSubsystem::SendChapterData()
     USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
     checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
     checkf(IsValid(CurrentGameSaveData), TEXT("Current Save Game is invalid"));
-    LevelSubsystem->SetCurrentChapter(CurrentGameSaveData->CurrentChapterSaveData);
+    LevelSubsystem->SetCurrentChapter(CurrentGameSaveData->SlotSaveData.ChapterSaveData);
 }
 
 void USLSaveGameSubsystem::SendObjectiveData()
