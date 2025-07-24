@@ -12,7 +12,6 @@ struct FSLObjectiveRuntimeData;
 enum class ESLChapterType : uint8;
 class USLSaveGame;
 
-// TODO: 세이브 슬롯별 로드 및 메서드 추가
 UCLASS()
 class STILLLOADING_API USLSaveGameSubsystem : public UGameInstanceSubsystem
 {
@@ -31,8 +30,13 @@ public:
     void ResetGameData();
     UFUNCTION(BlueprintCallable)
     void LoadSettingData();
+
+    UFUNCTION(BlueprintCallable)
+    void SaveGameDataByIndex(const int Index);
+    UFUNCTION(BlueprintCallable)
+    void LoadGameDataByIndex(const int Index);
     
-    void SaveUserData();
+    void SaveSettingData();
     void OnSelectedNewGame();
     bool GetIsExistSaveData() const;
 
@@ -40,6 +44,7 @@ private:
     void LoadObjectiveDefaultData();
     
     void SaveChapterData();
+    void SaveSlotData();
     void SaveObjectiveData();
     
     void SendWidgetData();
@@ -57,6 +62,6 @@ private:
     FString CurrentGameSlotName;
     FString SettingSlotName = "SettingSaveData";
     
-    UPROPERTY()
     bool bIsExistSaveData = false;
+    float StartSaveLoadTime = 0;
 };

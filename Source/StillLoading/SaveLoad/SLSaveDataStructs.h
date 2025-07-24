@@ -7,6 +7,7 @@
 #include "SubSystem/SLTextPoolTypes.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Objective/SLObjectiveBase.h"
+#include "SubSystem/SLLevelTransferTypes.h"
 #include "SLSaveDataStructs.generated.h"
 /**
  * 
@@ -74,6 +75,11 @@ struct FSlotSaveData
 	{
 		SaveTime = FDateTime::Now();
 	}
+	UPROPERTY(BlueprintReadWrite, SaveGame)
+	ESLChapterType ChapterSaveData = ESLChapterType::EC_Chapter0;
+
+	UPROPERTY(BlueprintReadWrite, SaveGame)
+	ESLLevelNameType LevelSaveData = ESLLevelNameType::ELN_Title;
 	
 	UPROPERTY(BlueprintReadWrite, SaveGame)
 	int32 SlotIndex = 0;
@@ -86,5 +92,4 @@ struct FSlotSaveData
 
 	UPROPERTY(BlueprintReadWrite, SaveGame)
 	float PlayTimeInSeconds = 0.0f;
-
 };
