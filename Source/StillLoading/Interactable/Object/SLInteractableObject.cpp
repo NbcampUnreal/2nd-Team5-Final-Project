@@ -26,6 +26,8 @@ ASLInteractableObject::ASLInteractableObject()
 	InteractionCollision->SetupAttachment(StaticMeshComp);
 	InteractionCollision->SetCollisionProfileName("Interactable");
 	InteractionCollision->SetBoxExtent({100,100,100});
+
+	TalkTargetType = ESLTalkTargetType::ETT_Object;
 }
 
 void ASLInteractableObject::SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandler)
@@ -57,7 +59,7 @@ void ASLInteractableObject::StartTalk()
 		{
 			TextWidget->OnTalkEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentTalkEnd);
 			TextWidget->OnChoiceEnded.AddUniqueDynamic(this, &ThisClass::OnCurrentChoiceEnd);
-			UISubsystem->ActivateTalk(ESLTalkTargetType::ETT_Object, TargetName, TalkHandler->GetTalkName());
+			UISubsystem->ActivateTalk(TalkTargetType, TargetName, TalkHandler->GetTalkName());
 		}
 	}
 }
