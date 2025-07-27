@@ -3,8 +3,8 @@
 #include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
-#include "AI/RealAI/MonsterAICharacter.h"
-#include "AI/RealAI/Controller/MonsterAIController.h"
+#include "AI/RealAI/SLMonsterAICharacter.h"
+#include "AI/RealAI/Controller/SLMonsterAIController.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
@@ -236,7 +236,7 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 {
 	if (!OwnerCharacter->HasSecondaryState(TAG_Character_PrepareLockOn)) return;
 
-	if (DetectedActor->IsA(AMonsterAICharacter::StaticClass())
+	if (DetectedActor->IsA(ASLMonsterAICharacter::StaticClass())
 		|| DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
 	{
 		if (const ASLAIBaseCharacter* DetectedActorTemp = Cast<ASLAIBaseCharacter>(DetectedActor))
@@ -260,7 +260,7 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 
 			if (const APawn* Pawn = Cast<APawn>(DetectedActor))
 			{
-				if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+				if (ASLMonsterAIController* AIController = Cast<ASLMonsterAIController>(Pawn->GetController()))
 				{
 					AIController->ToggleLockOnWidget(true);
 				}
@@ -1111,7 +1111,7 @@ void UMovementHandlerComponent::ToggleLockState()
 		OwnerCharacter->DisableLockOnMode();
 		if (const APawn* Pawn = Cast<APawn>(CameraFocusTarget))
 		{
-			if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+			if (ASLMonsterAIController* AIController = Cast<ASLMonsterAIController>(Pawn->GetController()))
 			{
 				AIController->ToggleLockOnWidget(false);
 			}
@@ -1129,7 +1129,7 @@ void UMovementHandlerComponent::DisableLock()
 {
 	if (const APawn* Pawn = Cast<APawn>(CameraFocusTarget))
 	{
-		if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+		if (ASLMonsterAIController* AIController = Cast<ASLMonsterAIController>(Pawn->GetController()))
 		{
 			AIController->ToggleLockOnWidget(false);
 		}

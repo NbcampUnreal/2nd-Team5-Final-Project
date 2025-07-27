@@ -1,6 +1,6 @@
 #include "SLItem.h"
 
-#include "AI/RealAI/MonsterAICharacter.h"
+#include "AI/RealAI/SLMonsterAICharacter.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/Animation/SLAnimNotify.h"
@@ -124,7 +124,7 @@ void ASLItem::BeginSweep()
 				AActor* HitActor = Hit.GetActor();
 				if (HitActor && !HitActors.Contains(HitActor))
 				{
-					if (HitActor->IsA(AMonsterAICharacter::StaticClass())
+					if (HitActor->IsA(ASLMonsterAICharacter::StaticClass())
 						|| HitActor->IsA(ASLAIBaseCharacter::StaticClass()))
 					{
 						//UE_LOG(LogTemp, Warning, TEXT("Hit Actor[%s]"), *HitActor->GetName());

@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "AI/RealAI/Spawner/MonsterSpawner.h"
 #include "SLSkillComponent.generated.h"
 
 class ASLPlayerCharacter;
@@ -28,16 +27,10 @@ public:
 
 	UFUNCTION()
 	void ActivateSkill(EActiveSkillType SkillType);
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawn Actor")
-	FMonsterSpawnInfo SpawnInfo;
 
 protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Skill|Spawn Actor")
 	TSubclassOf<AFallingSword> SwordClassToSpawn;
-
-	UPROPERTY()
-	TObjectPtr<AMonsterSpawner> SpawnerInstance;
 };

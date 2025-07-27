@@ -2,7 +2,7 @@
 
 #include "AIController.h"
 #include "NavigationSystem.h"
-#include "AI/RealAI/MonsterAICharacter.h"
+#include "AI/RealAI/SLMonsterAICharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 UBTTask_RetreatFromTarget::UBTTask_RetreatFromTarget()

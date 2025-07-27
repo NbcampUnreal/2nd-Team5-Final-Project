@@ -1,6 +1,6 @@
 #include "SLMonsterHitRecoveryNotify.h"
 
-#include "AI/RealAI/MonsterAICharacter.h"
+#include "AI/RealAI/SLMonsterAICharacter.h"
 
 void USLMonsterHitRecoveryNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                                          const FAnimNotifyEventReference& EventReference)
@@ -12,7 +12,7 @@ void USLMonsterHitRecoveryNotify::Notify(USkeletalMeshComponent* MeshComp, UAnim
 	AActor* Owner = MeshComp->GetOwner();
 	if (!Owner) return;
 
-	AMonsterAICharacter* MyCharacter = Cast<AMonsterAICharacter>(Owner);
+	ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(Owner);
 	if (!MyCharacter) return;
 
 	MyCharacter->HandleHitNotify();
