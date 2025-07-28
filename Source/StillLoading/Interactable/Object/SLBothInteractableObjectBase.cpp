@@ -31,7 +31,6 @@ void ASLBothInteractableObjectBase::OnInteracted(const ASLPlayerCharacterBase* I
 	switch (InTriggerType)
 	{
 	case ESLReactiveTriggerType::ERT_InteractKey:
-        UE_LOG(LogTemp, Warning, TEXT("In Interaction"));
         OnInteraction.Broadcast();
 		break;
 
@@ -48,27 +47,8 @@ void ASLBothInteractableObjectBase::BeginPlay()
 	BattleComponent->OnCharacterHited.AddUniqueDynamic(this, &ThisClass::OnHited);
 }
 
-void ASLBothInteractableObjectBase::OnHited(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType)
+void ASLBothInteractableObjectBase::OnDestroied()
 {
-	if (ASLPlayerCharacterBase* Character = Cast<ASLPlayerCharacterBase>(DamageCauser))
-	{
-		TriggerReact(Character, ESLReactiveTriggerType::ERT_Hit);
-		OnObjectHit.Broadcast(HitResult);
-	}
-}
-
-void ASLBothInteractableObjectBase::InComingAttack()
-{
-    if (CurrentHp > 0)
-    {
-        if (InteractionSound)
-        {
-            UGameplayStatics::PlaySoundAtLocation(this, InteractionSound, GetActorLocation());
-        }
-        CurrentHp--;
-        return;
-    }
-
     if (DestroyEffect) // UNiagaraSystem* 변수
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(
@@ -98,4 +78,28 @@ void ASLBothInteractableObjectBase::InComingAttack()
     SetActorTickEnabled(false);
 
     OnObjectBreaked.Broadcast();
+}
+
+void ASLBothInteractableObjectBase::OnHited(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType)
+{
+	if (ASLPlayerCharacterBase* Character = Cast<ASLPlayerCharacterBase>(DamageCauser))
+	{
+		TriggerReact(Character, ESLReactiveTriggerType::ERT_Hit);
+		OnObjectHit.Broadcast(HitResult);
+	}
+}
+
+void ASLBothInteractableObjectBase::InComingAttack()
+{
+    if (CurrentHp > 0)
+    {
+        if (IsValid(HitSound))
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, HitSound, GetActorLocation());
+        }
+        CurrentHp--;
+        return;
+    }
+
+    OnDestroied();
 }

@@ -26,6 +26,9 @@ public:
 	virtual void BeginPlay() override;
 
 protected:
+	UFUNCTION(BlueprintCallable, Category = "Events")
+	void OnDestroied();
+
 	UFUNCTION()
 	virtual void OnHited(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType HitAnimType);
 
@@ -44,6 +47,9 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject")
 	TObjectPtr<UBoxComponent> InteractionCollision;
+
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	TObjectPtr<USoundBase> HitSound;
 
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	TObjectPtr<UNiagaraSystem> DestroyEffect;
