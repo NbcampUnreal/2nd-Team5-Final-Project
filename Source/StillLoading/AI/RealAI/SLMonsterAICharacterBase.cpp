@@ -4,15 +4,13 @@
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Component/AIAttributeComponent.h"
 #include "Component/SLAIPushComponent.h"
-#include "Component/SLAITokenSystemComponent.h"
 #include "Component/SLAIStateComponent.h"
 
 ASLMonsterAICharacterBase::ASLMonsterAICharacterBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	AIWarComp = CreateDefaultSubobject<USLAIStateComponent>(TEXT("AIWarComponent"));
-	AITokenComp = CreateDefaultSubobject<USLAITokenSystemComponent>(TEXT("AITokenSystemComponent"));
+	AIStateComp = CreateDefaultSubobject<USLAIStateComponent>(TEXT("AIWarComponent"));
 	AIPushComp = CreateDefaultSubobject<USLAIPushComponent>(TEXT("AIPushComponent"));
 	AIAttributeComp = CreateDefaultSubobject<UAIAttributeComponent>(TEXT("AIAttributeComponent"));
 	AnimationComponent = CreateDefaultSubobject<UAnimationMontageComponent>(TEXT("AnimationComponent"));

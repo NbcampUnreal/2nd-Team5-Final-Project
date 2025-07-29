@@ -30,10 +30,7 @@ public:
 	bool IsInPrimaryState(const FGameplayTag StateToCheck) const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
-	TObjectPtr<USLAITokenSystemComponent> AITokenComp;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
-	TObjectPtr<USLAIStateComponent> AIWarComp;
+	TObjectPtr<USLAIStateComponent> AIStateComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAIPushComponent> AIPushComp;
@@ -53,13 +50,16 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<ASLBattleManager> BattleManager;
 
+	UPROPERTY()
+	float MaxHealth;
+	
+	UPROPERTY()
+	float CurrentHealth;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StateTags;
-
-	UPROPERTY()
-	float CurrentHealth;
 };

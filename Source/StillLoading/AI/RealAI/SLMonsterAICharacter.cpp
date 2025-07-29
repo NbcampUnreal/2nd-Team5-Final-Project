@@ -1,5 +1,6 @@
 #include "SLMonsterAICharacter.h"
 
+#include "BattleManager/SLBattleManager.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/DataAsset/AttackDataAsset.h"
@@ -7,7 +8,6 @@
 #include "Character/Item/ArrowProjectile.h"
 #include "Character/Item/SpearProjectile.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
-#include "Component/SLAITokenSystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -533,20 +533,9 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 
 void ASLMonsterAICharacter::HandleAIPoolReturnOnDeath()
 {
-	UE_LOG(LogTemp, Log, TEXT("AI 유닛 '%s' 사망 시 토큰 반납 및 풀 반환 처리 시작."), *GetName());
-
-	if (IsValid(AITokenComp))
-	{
-		for (const auto& Pair : AITokenComp->HasTokenMap)
-		{
-			if (Pair.Value)
-			{
-				AITokenComp->ReturnToken(Pair.Key);
-				UE_LOG(LogTemp, Log, TEXT("AI 유닛 '%s': 사망으로 인해 토큰 '%s' 반납."), *GetName(), *UEnum::GetValueAsString(Pair.Key));
-			}
-		}
-	}
-
+	CurrentHealth = MaxHealth;
+	SetPrimaryState(TAG_AI_Idle);
+	
 	if (IsValid(BornSpawner))
 	{
 		BornSpawner->ReturnUnitToPool(this);

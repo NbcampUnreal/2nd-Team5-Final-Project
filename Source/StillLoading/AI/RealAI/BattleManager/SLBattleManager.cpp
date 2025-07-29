@@ -1,14 +1,14 @@
 #include "SLBattleManager.h"
 
+#include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/Component/SLAIStateComponent.h"
-#include "AI/RealAI/Component/SLAITokenSystemComponent.h"
 #include "AI/RealAI/Spawner/SLSwarmSpawner.h"
 #include "Engine/TargetPoint.h"
 #include "GameFramework/Character.h"
 
 ASLBattleManager::ASLBattleManager()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	PrimaryActorTick.TickInterval = 0.1f;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
@@ -23,25 +23,16 @@ void ASLBattleManager::BeginPlay()
 	RegisteredUnits.Empty();
 	TeamUnitIndices.Empty();
 
-	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
-	{
-		if (IsValid(Spawner))
-		{
-			Spawner->SetCachedBattleManager(this);
-
-			Spawner->OnWaveCompletedBySpawner.AddDynamic(this, &ASLBattleManager::HandleWaveCompleted);
-			Spawner->OnAllWavesCompletedBySpawner.AddDynamic(this, &ASLBattleManager::HandleAllWavesCompleted);
-			UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 스포너 '%s'의 웨이브 이벤트에 바인딩했습니다."), *Spawner->GetName());
-		}
-	}
-
 	BindToSpawnerEvents();
 
-	for (const auto& Pair : MaxTokensPerType)
-	{
-		CurrentAvailableTokens.Add(Pair.Key, Pair.Value);
-		TokenRequestQueues.Add(Pair.Key, FTokenRequestQueueWrapper());
-	}
+	// 권한 재 할당
+	GetWorld()->GetTimerManager().SetTimer(
+		PermissionReassignmentTimerHandle,
+		this,
+		&ASLBattleManager::ReassignPermissions,
+		PermissionReassignmentInterval,
+		true
+	);
 
 #if WITH_EDITOR
 	if (GetWorld())
@@ -97,13 +88,6 @@ void ASLBattleManager::BeginPlay()
 #endif
 }
 
-void ASLBattleManager::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-
-	ProcessTokenRequests();
-}
-
 void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	EndBattle();
@@ -132,6 +116,9 @@ void ASLBattleManager::BindToSpawnerEvents()
 	{
 		if (IsValid(Spawner))
 		{
+			Spawner->SetCachedBattleManager(this);
+			Spawner->OnWaveCompletedBySpawner.AddDynamic(this, &ASLBattleManager::HandleWaveCompleted);
+			Spawner->OnAllWavesCompletedBySpawner.AddDynamic(this, &ASLBattleManager::HandleAllWavesCompleted);
 			Spawner->OnUnitSpawned.AddDynamic(this, &ASLBattleManager::OnSpawnerUnitSpawnedHandler);
 			Spawner->OnUnitReturnedToPool.AddDynamic(this, &ASLBattleManager::OnSpawnerUnitReturnedToPoolHandler);
 			Spawner->OnUnitActuallyDestroyed.AddDynamic(this, &ASLBattleManager::OnSpawnerUnitActuallyDestroyedHandler);
@@ -252,36 +239,26 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 		WarComp = BattleComp;
 	}
 
-	if (USLAITokenSystemComponent* FoundTokenComp = Actor->FindComponentByClass<USLAITokenSystemComponent>())
-	{
-		TokenComp = FoundTokenComp;
-	}
-
 	FBattleUnitInfo NewUnit;
 	NewUnit.Actor = Actor;
 	NewUnit.TeamId = TeamId;
 	NewUnit.bIsPlayer = bIsPlayer;
 	NewUnit.SourceSpawner = SourceSpawner;
+	NewUnit.CurrentPermission = EUnitActionPermission::SupportOrIdle;
 
 	if (IsValid(WarComp))
 	{
 		NewUnit.WarComponent = WarComp;
 	}
 
-	if (IsValid(TokenComp))
-	{
-		NewUnit.TokenComponent = TokenComp;
-	}
-
 	int32 NewIndex = RegisteredUnits.Add(NewUnit);
 	RebuildTeamIndices();
 
-	UE_LOG(LogTemp, Log, TEXT("배틀매니저: 유닛 등록됨: %s (팀: %d, 플레이어: %s, 스포너: %s, 토큰컴포넌트 유효: %s)"),
+	UE_LOG(LogTemp, Log, TEXT("배틀매니저: 유닛 등록됨: %s (팀: %d, 플레이어: %s, 스포너: %s)"),
 	       *Actor->GetName(),
 	       NewUnit.TeamId.GetId(),
 	       bIsPlayer ? TEXT("예") : TEXT("아니오"),
-	       IsValid(SourceSpawner) ? *SourceSpawner->GetName() : TEXT("없음"),
-	       IsValid(NewUnit.TokenComponent) ? TEXT("예") : TEXT("아니오"));
+	       IsValid(SourceSpawner) ? *SourceSpawner->GetName() : TEXT("없음"));
 }
 
 void ASLBattleManager::UnregisterUnit(AActor* Actor)
@@ -300,7 +277,9 @@ void ASLBattleManager::UnregisterUnit(AActor* Actor)
 
 	if (FoundIndex != INDEX_NONE)
 	{
-		const FBattleUnitInfo& UnitInfoToRemove = RegisteredUnits[FoundIndex];
+		FBattleUnitInfo& UnitInfoToRemove = RegisteredUnits[FoundIndex];
+		UnitInfoToRemove.CurrentPermission = EUnitActionPermission::None;
+		UnitInfoToRemove.CurrentEngagedTarget = nullptr;
 
 		RegisteredUnits.RemoveAt(FoundIndex);
 		RebuildTeamIndices();
@@ -542,92 +521,73 @@ void ASLBattleManager::EndBattle()
 	TeamUnitIndices.Empty();
 }
 
-// Token System
-bool ASLBattleManager::RequestToken(USLAITokenSystemComponent* Requester, ETokenType TokenType, int32 Priority)
+// Engage System
+EUnitActionPermission ASLBattleManager::GetUnitActionPermission(AActor* Unit) const
 {
-	if (!Requester || TokenType == ETokenType::None) return false;
-
-	if (!CurrentAvailableTokens.Contains(TokenType))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: 알 수 없는 토큰 타입 '%s' 요청됨."), *UEnum::GetValueAsString(TokenType));
-		return false;
-	}
-
-	if (CurrentAvailableTokens[TokenType] > 0)
-	{
-		CurrentAvailableTokens[TokenType]--;
-		UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 토큰 '%s' 할당됨. 남은 개수: %d"), *UEnum::GetValueAsString(TokenType),
-		       CurrentAvailableTokens[TokenType]);
-		return true;
-	}
-	else
-	{
-		// 토큰이 없으므로 대기열에 추가
-		FTokenRequest NewRequest;
-		NewRequest.Requester = Requester;
-		NewRequest.TokenType = TokenType;
-		NewRequest.RequestTime = GetWorld()->GetTimeSeconds();
-		NewRequest.Priority = Priority;
-
-		// 우선순위큐 (logN) Heapify는 기존껄 힙구조로 변환할떄만 한번 호출해주면 된다.
-		TokenRequestQueues[TokenType].Requests.HeapPush(NewRequest, [](const FTokenRequest& A, const FTokenRequest& B) {
-			if (A.Priority != B.Priority) return A.Priority > B.Priority;
-			return A.RequestTime < B.RequestTime;
-		});
-
-		UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 토큰 '%s' 요청 대기열에 추가됨. 현재 대기열 크기: %d"),
-		       *UEnum::GetValueAsString(TokenType), TokenRequestQueues[TokenType].Requests.Num());
-		return false;
-	}
+    for (const FBattleUnitInfo& UnitInfo : RegisteredUnits)
+    {
+        if (UnitInfo.Actor == Unit)
+        {
+            return UnitInfo.CurrentPermission;
+        }
+    }
+    return EUnitActionPermission::SupportOrIdle;
 }
 
-void ASLBattleManager::ReturnToken(USLAITokenSystemComponent* Requester, ETokenType TokenType)
+bool ASLBattleManager::RequestEngagementPermission(AActor* RequestingUnit, AActor* TargetActor)
 {
-	if (TokenType == ETokenType::None) return;
+    if (!RequestingUnit || !TargetActor)
+    {
+        return false;
+    }
 
-	if (CurrentAvailableTokens.Contains(TokenType))
-	{
-		CurrentAvailableTokens[TokenType]++;
-		CurrentAvailableTokens[TokenType] = FMath::Min(CurrentAvailableTokens[TokenType], MaxTokensPerType[TokenType]);
-		UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 토큰 '%s' 반납됨. 현재 개수: %d"), *UEnum::GetValueAsString(TokenType),
-		       CurrentAvailableTokens[TokenType]);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: 알 수 없는 토큰 타입 '%s' 반납 요청됨."),
-		       *UEnum::GetValueAsString(TokenType));
-	}
+    int32 EngagedCount = 0;
+    for (const FBattleUnitInfo& UnitInfo : RegisteredUnits)
+    {
+        if (UnitInfo.CurrentEngagedTarget == TargetActor && UnitInfo.CurrentPermission == EUnitActionPermission::EngageTarget)
+        {
+            EngagedCount++;
+        }
+    }
+
+    // 설정된 최대 교전 유닛 수보다 적으면 허가
+    if (EngagedCount < MaxEngagingUnitsPerTarget)
+    {
+        return true;
+    }
+	
+    return false;
 }
 
-void ASLBattleManager::ProcessTokenRequests()
+void ASLBattleManager::ReassignPermissions()
 {
-	for (auto& Pair : TokenRequestQueues)
-	{
-		ETokenType TokenType = Pair.Key;
-		TArray<FTokenRequest>& Queue = Pair.Value.Requests;
+    TMap<AActor*, int32> TargetEngagementCounts;
+    
+    for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
+    {
+        if (!UnitInfo.Actor) continue;
 
-		if (Queue.Num() == 0 || !CurrentAvailableTokens.Contains(TokenType) || CurrentAvailableTokens[TokenType] <= 0)
-		{
-			continue;
-		}
+    	ASLMonsterAICharacter* AICharacter = Cast<ASLMonsterAICharacter>(UnitInfo.Actor);
+    	if (!AICharacter) continue;
 
-		FTokenRequest GrantedRequest;
-		// 우선순위큐 (logN)
-		Queue.HeapPop(GrantedRequest, [](const FTokenRequest& A, const FTokenRequest& B) {
-			if (A.Priority != B.Priority) return A.Priority > B.Priority;
-			return A.RequestTime < B.RequestTime;
-		});
-
-		if (GrantedRequest.Requester)
-		{
-			CurrentAvailableTokens[TokenType]--;
-			GrantedRequest.Requester->HasTokenMap.Add(TokenType, true);
-			UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 대기열에서 토큰 '%s'이(가) '%s'에게 할당됨. 남은 개수: %d"),
-				   *UEnum::GetValueAsString(TokenType), *GrantedRequest.Requester->GetOwner()->GetName(), CurrentAvailableTokens[TokenType]);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: 유효하지 않은 요청자에게 토큰 할당 시도. 요청 제거."));
-		}
-	}
+        if (AActor* ClosestEnemy = AICharacter->AIStateComp->CurrentTarget)
+        {
+            if (TargetEngagementCounts.FindOrAdd(ClosestEnemy, 0) < MaxEngagingUnitsPerTarget)
+            {
+                UnitInfo.CurrentPermission = EUnitActionPermission::EngageTarget;
+                UnitInfo.CurrentEngagedTarget = ClosestEnemy;
+                TargetEngagementCounts[ClosestEnemy]++;
+            }
+            else
+            {
+                UnitInfo.CurrentPermission = EUnitActionPermission::SupportOrIdle;
+                UnitInfo.CurrentEngagedTarget = nullptr;
+            }
+        }
+        else
+        {
+            UnitInfo.CurrentPermission = EUnitActionPermission::SupportOrIdle;
+            UnitInfo.CurrentEngagedTarget = nullptr;
+        }
+    }
 }

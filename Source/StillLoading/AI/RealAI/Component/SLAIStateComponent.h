@@ -103,7 +103,7 @@ public:
 
 	// 현재 공격 대상
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AIWar|Target")
-	TWeakObjectPtr<AActor> CurrentTarget;
+	TObjectPtr<AActor> CurrentTarget;
 	
 	UPROPERTY()
 	TWeakObjectPtr<ASLSwarmSpawner> SourceSpawner; 

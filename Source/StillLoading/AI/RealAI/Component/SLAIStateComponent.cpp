@@ -286,7 +286,7 @@ void USLAIStateComponent::PerformAttack()
 
 void USLAIStateComponent::UpdateAttacking(float DeltaTime)
 {
-	if (!CurrentTarget.IsValid())
+	if (!IsValid(CurrentTarget))
 	{
 		ClearTarget();
 		RequestNextTargetPoint();

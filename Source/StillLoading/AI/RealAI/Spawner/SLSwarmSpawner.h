@@ -5,6 +5,8 @@
 #include "GameFramework/Actor.h"
 #include "SLSwarmSpawner.generated.h"
 
+// 풀링 기반 AI 스폰
+
 class USLWaveSpawnerComponent;
 class ASLBattleManager;
 class UNiagaraSystem;
