@@ -391,7 +391,6 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 	if (USLAIStateComponent* WarComp = SpawnedUnit->FindComponentByClass<USLAIStateComponent>())
 	{
 		WarComp->Initialize();
-		WarComp->SourceSpawner = this;
 	}
 
 	if (UCharacterMovementComponent* MovementComp = SpawnedUnit->GetCharacterMovement())

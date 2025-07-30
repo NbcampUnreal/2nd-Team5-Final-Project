@@ -14,14 +14,6 @@ class UBoxComponent;
 class ASLSwarmSpawner;
 class USLAIStateComponent;
 
-UENUM(BlueprintType)
-enum class EUnitActionPermission : uint8
-{
-	None UMETA(DisplayName = "None"),
-	EngageTarget UMETA(DisplayName = "Engage Target"),
-	SupportOrIdle UMETA(DisplayName = "Support or Idle")
-};
-
 USTRUCT(BlueprintType)
 struct FBattleUnitInfo
 {
@@ -35,9 +27,6 @@ struct FBattleUnitInfo
 
 	UPROPERTY()
 	bool bIsPlayer = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	EUnitActionPermission CurrentPermission;
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<AActor> CurrentEngagedTarget;
@@ -68,6 +57,15 @@ struct FTeamIndicesArrayWrapper
 
 	UPROPERTY()
 	TArray<int32> Indices;
+};
+
+USTRUCT(BlueprintType)
+struct FEngagedUnitsWrapper
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> EngagedUnits;
 };
 
 UCLASS()
@@ -149,17 +147,28 @@ public:
 	// AI 워 컴포넌트가 다음 타겟 포인트를 요청할 때 사용
 	UFUNCTION(BlueprintCallable, Category = "Battle Management|TargetPoints")
 	FVector GetNextTargetPointLocationForSpawner(ASLSwarmSpawner* ForSpawner, int32& CurrentTargetIndex) const;
-
+	
 	// 전투 Permission 관리
 	UFUNCTION(BlueprintCallable, Category = "Battle Management|Permissions")
-	EUnitActionPermission GetUnitActionPermission(AActor* Unit) const;
-	UFUNCTION(BlueprintCallable, Category = "Battle Management|Permissions")
 	bool RequestEngagementPermission(AActor* RequestingUnit, AActor* TargetActor);
+	// AI가 교전을 중단할 때 호출하는 함수
+	UFUNCTION(BlueprintCallable, Category = "Battle Management|Permissions")
+	void ReleaseEngagementPermission(AActor* ReleasingUnit, AActor* TargetActor);
+	// 특정 타겟에 대한 교전 상황 조회
+	UFUNCTION(BlueprintCallable, Category = "Battle Management|Permissions")
+	int32 GetCurrentEngagementCount(AActor* TargetActor) const;
+	// 유닛이 파괴되거나 비활성화될 때 호출
+	UFUNCTION(BlueprintCallable, Category = "Battle Management|Permissions")
+	void OnUnitDestroyed(AActor* DestroyedUnit);
 	
 private:
-	void ReassignPermissions();
-	FTimerHandle PermissionReassignmentTimerHandle;
+	FBattleUnitInfo* FindUnitInfo(AActor* Unit);
 
+	UPROPERTY()
+	TMap<TObjectPtr<AActor>, int32> TargetEngagementCounts;
+	UPROPERTY()
+	TMap<TObjectPtr<AActor>, FEngagedUnitsWrapper> EngagedUnitsPerTarget;
+	
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	float PermissionReassignmentInterval = 0.2f;
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")

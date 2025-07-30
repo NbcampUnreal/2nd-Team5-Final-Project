@@ -22,17 +22,12 @@ void ASLBattleManager::BeginPlay()
 
 	RegisteredUnits.Empty();
 	TeamUnitIndices.Empty();
+	TargetEngagementCounts.Empty();
+	EngagedUnitsPerTarget.Empty();
+
+	TeamUnitIndices.Reserve(1000); // 미리 공간 확보 O(1) 버킷 할당
 
 	BindToSpawnerEvents();
-
-	// 권한 재 할당
-	GetWorld()->GetTimerManager().SetTimer(
-		PermissionReassignmentTimerHandle,
-		this,
-		&ASLBattleManager::ReassignPermissions,
-		PermissionReassignmentInterval,
-		true
-	);
 
 #if WITH_EDITOR
 	if (GetWorld())
@@ -244,7 +239,6 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 	NewUnit.TeamId = TeamId;
 	NewUnit.bIsPlayer = bIsPlayer;
 	NewUnit.SourceSpawner = SourceSpawner;
-	NewUnit.CurrentPermission = EUnitActionPermission::SupportOrIdle;
 
 	if (IsValid(WarComp))
 	{
@@ -265,6 +259,8 @@ void ASLBattleManager::UnregisterUnit(AActor* Actor)
 {
 	if (!IsValid(Actor)) return;
 
+	OnUnitDestroyed(Actor);
+
 	int32 FoundIndex = INDEX_NONE;
 	for (int32 i = 0; i < RegisteredUnits.Num(); ++i)
 	{
@@ -278,7 +274,6 @@ void ASLBattleManager::UnregisterUnit(AActor* Actor)
 	if (FoundIndex != INDEX_NONE)
 	{
 		FBattleUnitInfo& UnitInfoToRemove = RegisteredUnits[FoundIndex];
-		UnitInfoToRemove.CurrentPermission = EUnitActionPermission::None;
 		UnitInfoToRemove.CurrentEngagedTarget = nullptr;
 
 		RegisteredUnits.RemoveAt(FoundIndex);
@@ -522,72 +517,145 @@ void ASLBattleManager::EndBattle()
 }
 
 // Engage System
-EUnitActionPermission ASLBattleManager::GetUnitActionPermission(AActor* Unit) const
-{
-    for (const FBattleUnitInfo& UnitInfo : RegisteredUnits)
-    {
-        if (UnitInfo.Actor == Unit)
-        {
-            return UnitInfo.CurrentPermission;
-        }
-    }
-    return EUnitActionPermission::SupportOrIdle;
-}
-
 bool ASLBattleManager::RequestEngagementPermission(AActor* RequestingUnit, AActor* TargetActor)
 {
     if (!RequestingUnit || !TargetActor)
     {
+        UE_LOG(LogTemp, Warning, TEXT("RequestEngagementPermission: 유효하지 않은 유닛 또는 타겟입니다."));
         return false;
     }
 
-    int32 EngagedCount = 0;
-    for (const FBattleUnitInfo& UnitInfo : RegisteredUnits)
+    for (auto& EngagementPair : EngagedUnitsPerTarget)
     {
-        if (UnitInfo.CurrentEngagedTarget == TargetActor && UnitInfo.CurrentPermission == EUnitActionPermission::EngageTarget)
+        if (EngagementPair.Value.EngagedUnits.Contains(RequestingUnit))
         {
-            EngagedCount++;
+            if (EngagementPair.Key == TargetActor)
+            {
+                UE_LOG(LogTemp, Log, TEXT("RequestEngagementPermission: %s는 이미 %s와 교전 중입니다."), 
+                       *RequestingUnit->GetName(), *TargetActor->GetName());
+                return true;
+            }
+            UE_LOG(LogTemp, Log, TEXT("RequestEngagementPermission: %s가 기존 타겟과의 교전을 해제하고 새 타겟으로 전환합니다."), 
+                   *RequestingUnit->GetName());
+            ReleaseEngagementPermission(RequestingUnit, EngagementPair.Key);
+            break;
         }
     }
 
-    // 설정된 최대 교전 유닛 수보다 적으면 허가
-    if (EngagedCount < MaxEngagingUnitsPerTarget)
+    const int32 CurrentCount = TargetEngagementCounts.FindOrAdd(TargetActor, 0);
+    
+    if (CurrentCount < MaxEngagingUnitsPerTarget)
     {
+        TargetEngagementCounts[TargetActor] = CurrentCount + 1;
+        EngagedUnitsPerTarget.FindOrAdd(TargetActor).EngagedUnits.AddUnique(RequestingUnit);
+        
+        if (FBattleUnitInfo* UnitInfo = FindUnitInfo(RequestingUnit))
+        {
+            UnitInfo->CurrentEngagedTarget = TargetActor;
+        }
+        
+        UE_LOG(LogTemp, Log, TEXT("교전 권한 승인: %s -> %s (현재 교전: %d/%d)"), 
+               *RequestingUnit->GetName(), *TargetActor->GetName(), 
+               CurrentCount + 1, MaxEngagingUnitsPerTarget);
+        
         return true;
     }
-	
-    return false;
-}
-
-void ASLBattleManager::ReassignPermissions()
-{
-    TMap<AActor*, int32> TargetEngagementCounts;
-    
-    for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
+    else
     {
-        if (!UnitInfo.Actor) continue;
-
-    	ASLMonsterAICharacter* AICharacter = Cast<ASLMonsterAICharacter>(UnitInfo.Actor);
-    	if (!AICharacter) continue;
-
-        if (AActor* ClosestEnemy = AICharacter->AIStateComp->CurrentTarget)
+        // 권한 거부 - 타겟이 이미 최대 교전 유닛 수에 도달
+        if (FBattleUnitInfo* UnitInfo = FindUnitInfo(RequestingUnit))
         {
-            if (TargetEngagementCounts.FindOrAdd(ClosestEnemy, 0) < MaxEngagingUnitsPerTarget)
-            {
-                UnitInfo.CurrentPermission = EUnitActionPermission::EngageTarget;
-                UnitInfo.CurrentEngagedTarget = ClosestEnemy;
-                TargetEngagementCounts[ClosestEnemy]++;
-            }
-            else
-            {
-                UnitInfo.CurrentPermission = EUnitActionPermission::SupportOrIdle;
-                UnitInfo.CurrentEngagedTarget = nullptr;
-            }
+            UnitInfo->CurrentEngagedTarget = nullptr;
         }
-        else
-        {
-            UnitInfo.CurrentPermission = EUnitActionPermission::SupportOrIdle;
-            UnitInfo.CurrentEngagedTarget = nullptr;
-        }
+        
+        UE_LOG(LogTemp, Warning, TEXT("교전 권한 거부: %s -> %s (최대 교전 유닛 수 도달: %d)"), 
+               *RequestingUnit->GetName(), *TargetActor->GetName(), MaxEngagingUnitsPerTarget);
+        
+        return false;
     }
 }
+
+void ASLBattleManager::ReleaseEngagementPermission(AActor* ReleasingUnit, AActor* TargetActor)
+{
+    if (!ReleasingUnit || !TargetActor)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ReleaseEngagementPermission: 유효하지 않은 유닛 또는 타겟입니다."));
+        return;
+    }
+
+    if (int32* CountPtr = TargetEngagementCounts.Find(TargetActor))
+    {
+        *CountPtr = FMath::Max(0, *CountPtr - 1);
+        
+        if (*CountPtr == 0)
+        {
+            TargetEngagementCounts.Remove(TargetActor);
+        }
+    }
+
+    if (FEngagedUnitsWrapper* EngagedUnits = EngagedUnitsPerTarget.Find(TargetActor))
+    {
+        EngagedUnits->EngagedUnits.Remove(ReleasingUnit);
+        
+        if (EngagedUnits->EngagedUnits.Num() == 0)
+        {
+            EngagedUnitsPerTarget.Remove(TargetActor);
+        }
+    }
+
+    if (FBattleUnitInfo* UnitInfo = FindUnitInfo(ReleasingUnit))
+    {
+        UnitInfo->CurrentEngagedTarget = nullptr;
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("교전 권한 해제: %s -> %s"), 
+           *ReleasingUnit->GetName(), *TargetActor->GetName());
+}
+
+int32 ASLBattleManager::GetCurrentEngagementCount(AActor* TargetActor) const
+{
+    if (const int32* CountPtr = TargetEngagementCounts.Find(TargetActor))
+    {
+        return *CountPtr;
+    }
+    return 0;
+}
+
+void ASLBattleManager::OnUnitDestroyed(AActor* DestroyedUnit)
+{
+    if (!DestroyedUnit)
+    {
+        return;
+    }
+
+    TArray<TObjectPtr<AActor>> TargetsToCleanup;
+    
+    for (auto& EngagementPair : EngagedUnitsPerTarget)
+    {
+        if (EngagementPair.Value.EngagedUnits.Contains(DestroyedUnit))
+        {
+            TargetsToCleanup.Add(EngagementPair.Key);
+        }
+    }
+
+    for (TObjectPtr<AActor> Target : TargetsToCleanup)
+    {
+        ReleaseEngagementPermission(DestroyedUnit, Target);
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("유닛 파괴로 인한 교전 권한 정리 완료: %s"), *DestroyedUnit->GetName());
+}
+
+// 헬퍼 함수 - 유닛 정보 찾기
+FBattleUnitInfo* ASLBattleManager::FindUnitInfo(AActor* Unit)
+{
+    for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
+    {
+        if (UnitInfo.Actor == Unit)
+        {
+            return &UnitInfo;
+        }
+    }
+    return nullptr;
+}
+

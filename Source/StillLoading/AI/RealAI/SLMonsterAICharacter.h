@@ -41,6 +41,11 @@ public:
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
 	UFUNCTION()
 	void HandleHitNotify();
+	
+	// Anim
+	void PlayAttackAnim();
+	void PlayETCAnim();
+	void PlayETCWaitAnim();
 
 	UFUNCTION()
 	void Dead(const AActor* Attacker, bool bIsChangeMaterial);
@@ -68,10 +73,15 @@ public:
 	TObjectPtr<AActor> Throwable;
 
 	// 피격시 BlendSpace 용
+	UFUNCTION(BlueprintCallable)
+	bool GetHit() const { return bIsHit; }
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	float ForwardDot = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	float RightDot = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
+	bool bIsHit = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
 	float RetreatDistanceThreshold = 300.f;
@@ -118,7 +128,7 @@ private:
 	UFUNCTION()
 	void ResetMaterial();
 	UFUNCTION()
-	void HitDirection(AActor* Causer);
+	void GetHitDirection(AActor* Causer);
 	UFUNCTION()
 	void RotateToHitCauser(const AActor* Causer);
 	UFUNCTION()
@@ -127,11 +137,6 @@ private:
 	void StartFlyingState();
 	UFUNCTION(BlueprintCallable)
 	void StopFlyingState();
-
-	// Anim
-	void PlayAttackAnim();
-	void PlayETCAnim();
-	void PlayETCWaitAnim();
 
 	UFUNCTION()
 	USLSoundSubsystem* GetBattleSoundSubSystem() const;

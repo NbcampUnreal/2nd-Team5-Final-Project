@@ -1,6 +1,9 @@
 #include "AnimationMontageComponent.h"
 
+#include "AIController.h"
+#include "AI/RealAI/SLMonsterAICharacter.h"
 #include "Character/DataAsset/MontageDataAsset.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "GameFramework/Character.h"
 
 UAnimationMontageComponent::UAnimationMontageComponent()
@@ -153,13 +156,16 @@ void UAnimationMontageComponent::Play2DAttackMontage(FName Section)
 
 void UAnimationMontageComponent::PlayAIAttackMontage(FName Section)
 {
-	//AnimInstance->Montage_Stop(0.25f);
+	StopAIMovement();
+	
 	if (MontageData)
 		PlayMontage(MontageData->AIAttackMontage, Section);
 }
 
 void UAnimationMontageComponent::PlayAIHitMontage(FName Section)
 {
+	StopAIMovement();
+	
 	AnimInstance->Montage_Stop(0.25f);
 	if (MontageData)
 		PlayMontage(MontageData->AIHitMontage, Section);
@@ -167,7 +173,8 @@ void UAnimationMontageComponent::PlayAIHitMontage(FName Section)
 
 void UAnimationMontageComponent::PlayAIETCMontage(FName Section)
 {
-	//AnimInstance->Montage_Stop(0.25f);
+	StopAIMovement();
+	
 	if (MontageData)
 		PlayMontage(MontageData->AIETCMontage, Section);
 }
@@ -180,4 +187,18 @@ bool UAnimationMontageComponent::IsMontagePlayingHelper(const UAnimMontage* Mont
     }
     
     return false;
+}
+
+void UAnimationMontageComponent::StopAIMovement() const
+{
+	if (ASLMonsterAICharacter* AICharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+	{
+		AICharacter->SetPrimaryState(TAG_AI_IsPlayingMontage);
+
+		AAIController* AIController = Cast<AAIController>(AICharacter->GetController());
+		if (IsValid(AIController))
+		{
+			AIController->StopMovement();
+		}
+	}
 }

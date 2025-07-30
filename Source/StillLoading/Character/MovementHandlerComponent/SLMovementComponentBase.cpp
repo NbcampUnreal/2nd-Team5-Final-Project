@@ -127,7 +127,7 @@ void USLMovementComponentBase::OnActionTriggered_Implementation(EInputActionType
 }
 
 void USLMovementComponentBase::OnActionStarted_Implementation(EInputActionType ActionType)
-{
+	{
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_PresentGoal:

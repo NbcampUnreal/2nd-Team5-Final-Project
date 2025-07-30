@@ -281,7 +281,7 @@ void ASLMonsterAICharacter::RotateToHitCauser(const AActor* Causer)
 	SetActorRotation(TargetRotation);
 }
 
-void ASLMonsterAICharacter::HitDirection(AActor* Causer)
+void ASLMonsterAICharacter::GetHitDirection(AActor* Causer)
 {
 	if (!Causer) return;
 
@@ -368,8 +368,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 			AIController->SetControlRotation(FRotator(0.f, NewRotation.Yaw, 0.f));
 		}
 	}
-
-	HitDirection(Causer);
+	
 	RotateToHitCauser(Causer);
 	//ChangeMeshTemporarily();
 	StartFlyingState();
@@ -379,6 +378,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 	case EHitAnimType::HAT_WeakHit:
 	case EHitAnimType::HAT_HardHit:
 		{
+			GetHitDirection(Causer);
 			PlayHitMontageAndSetupRecovery(0.8);
 
 			FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
@@ -395,6 +395,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 				LaunchCharacter(KnockbackDir * 1200, true, false);
 			}
 
+			SetPrimaryState(TAG_AI_Idle);
 			break;
 		}
 	case EHitAnimType::HAT_AirBorne:
@@ -408,7 +409,6 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 		}
 		break;
 	case EHitAnimType::HAT_FallBack:
-		RotateToHitCauser(Causer);
 		{
 			AnimationComponent->PlayAIHitMontage("GroundHit");
 		}
@@ -491,6 +491,7 @@ void ASLMonsterAICharacter::HandleHitNotify()
 
 void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
+	SetPrimaryState(TAG_AI_Dead);
 	OnDeath();
 	ToggleWeaponState(false);
 	HandleAIPoolReturnOnDeath();
@@ -589,12 +590,14 @@ USLSoundSubsystem* ASLMonsterAICharacter::GetBattleSoundSubSystem() const
 void ASLMonsterAICharacter::RecoverFromHitState()
 {
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	bIsHit = false;
 }
 
 void ASLMonsterAICharacter::PlayHitMontageAndSetupRecovery(const float Length)
 {
 	if (Length > 0.f)
 	{
+		bIsHit = true;
 		FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
 		if (TimerManager.IsTimerActive(CollisionResetTimerHandle))
