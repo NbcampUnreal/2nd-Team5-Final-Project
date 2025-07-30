@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Interactable/SLInteractableObjectBase.h"
+#include "UI/SLUITypes.h"
 #include "SLInteractableObject.generated.h"
 
 class UBoxComponent;
@@ -45,6 +46,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject")
 	TObjectPtr<UBoxComponent> InteractionCollision;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject")
+	ESLTalkTargetType TalkTargetType;
 	
 	UPROPERTY()
 	TObjectPtr<USLUISubsystem> UISubsystem = nullptr;

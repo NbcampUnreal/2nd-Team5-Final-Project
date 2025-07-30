@@ -19,9 +19,6 @@ class STILLLOADING_API ASLInteractableCharacter : public ASLInteractableObject
 public:
 	ASLInteractableCharacter();
 	
-protected:
-	virtual void StartTalk() override;
-
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> CharacterMesh;
