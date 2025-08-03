@@ -83,21 +83,43 @@ void USLSaveGameSubsystem::LoadSettingData()
     SendWidgetData();
 }
 
-void USLSaveGameSubsystem::SaveGameDataByIndex(const int Index)
+TArray<FSlotSaveData> USLSaveGameSubsystem::GetSaveSlotList()
 {
-    if (GameSaveSlotList.IsValidIndex(Index))
+    TArray<FSlotSaveData> SaveSlotList;
+    for (int32 Index = 0; Index < GameSaveSlotList.Num(); Index++)
     {
-        SaveChapterData();
-        SaveObjectiveData();
+        USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(GameSaveSlotList[Index], 0);
+        USLSaveGame* SaveGame = Cast<USLSaveGame>(Loaded);
         
-        UGameplayStatics::SaveGameToSlot(CurrentGameSaveData, GameSaveSlotList[Index], 0);
+        SaveSlotList.Add(SaveGame->SlotSaveData);
     }
+    return SaveSlotList;
 }
 
-void USLSaveGameSubsystem::LoadGameDataByIndex(const int Index)
+void USLSaveGameSubsystem::SaveGameDataByIndex(const int Index)
 {
-    StartSaveLoadTime = FPlatformTime::Seconds();
+    check(GameSaveSlotList.IsValidIndex(Index));
 
+    SaveChapterData();
+    SaveObjectiveData();
+    SaveSlotData();
+    
+    CurrentGameSaveData->SlotSaveData.SaveTime = FDateTime::Now();
+    
+    UGameplayStatics::SaveGameToSlot(CurrentGameSaveData, GameSaveSlotList[Index], 0);
+}
+
+const FSlotSaveData& USLSaveGameSubsystem::LoadGameDataByIndex(const int Index)
+{
+    check(GameSaveSlotList.IsValidIndex(Index));
+    
+    CurrentGameSlotName = GameSaveSlotList[Index];
+    
+    StartSaveLoadTime = FPlatformTime::Seconds();
+    USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(CurrentGameSlotName, 0);
+    CurrentGameSaveData = Cast<USLSaveGame>(Loaded);
+    
+    return CurrentGameSaveData->SlotSaveData;
 }
 
 void USLSaveGameSubsystem::OnSelectedNewGame()

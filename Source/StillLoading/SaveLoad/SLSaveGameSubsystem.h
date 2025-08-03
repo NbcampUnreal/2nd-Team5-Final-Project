@@ -31,10 +31,15 @@ public:
     UFUNCTION(BlueprintCallable)
     void LoadSettingData();
 
+    // 세이브 슬롯 리스트 반환하는 함수
+    UFUNCTION(BlueprintCallable)
+    TArray<FSlotSaveData> GetSaveSlotList();
+    // 지정한 인덱스의 세이브 슬롯에 저장하는 함수
     UFUNCTION(BlueprintCallable)
     void SaveGameDataByIndex(const int Index);
+    // 지정한 인덱스의 세이브 슬롯을 로드하는 함수
     UFUNCTION(BlueprintCallable)
-    void LoadGameDataByIndex(const int Index);
+    const FSlotSaveData& LoadGameDataByIndex(const int Index);
     
     void SaveSettingData();
     void OnSelectedNewGame();
