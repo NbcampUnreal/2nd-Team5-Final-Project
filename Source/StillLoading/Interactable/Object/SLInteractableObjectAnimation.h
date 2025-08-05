@@ -32,7 +32,12 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Hiding")
 	void OnPlayerExitHiding(ASLPlayerCharacterBase* InCharacter);
 
-protected:
+	UFUNCTION()
+	void OnEnterMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+	void OnExitMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UArrowComponent> EnterTransformArrow;
 	
@@ -44,4 +49,8 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
 	bool bIsPlayerHiding;
+
+private:
+	UPROPERTY()
+	TObjectPtr<ASLPlayerCharacterBase> CachedCharacter;
 };
