@@ -16,7 +16,7 @@ class URendererSettings;
 class USLUISubsystem;
 class USLTextPoolSubsystem;
 class USLSoundSubsystem;
-struct FUserSaveData;
+struct FSettingSaveData;
 
 UCLASS()
 class STILLLOADING_API USLUserDataSubsystem : public UGameInstanceSubsystem
@@ -29,7 +29,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetCurrentScreenHeightSize();
 
-	void ApplyLoadedUserData(const FUserSaveData& LoadData);
+	void ApplyLoadedUserData(const FSettingSaveData& LoadData);
 	void ApplyDefaultUserData();
 
 	void SetLanguage(ESLLanguageType NewType);
