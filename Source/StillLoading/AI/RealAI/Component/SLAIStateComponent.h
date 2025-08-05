@@ -55,12 +55,13 @@ public:
     void RequestNextTargetPoint();
     void SetCurrentTargetPointIndex(int32 NewIndex);
 
+    // 서포트 모드 관현
+    UFUNCTION()
+    void StartSupportMovement(AActor* TargetToSupport);
+
     // 컴포넌트 참조 가져오기
     UFUNCTION(BlueprintPure, Category = "AI|Components")
     USLAICombatComponent* GetCombatComponent() const { return CombatComponent; }
-    
-    UFUNCTION(BlueprintPure, Category = "AI|Components")  
-    USLAISupportModeComponent* GetSupportModeComponent() const { return SupportModeComponent; }
 
     // 이벤트
     UPROPERTY(BlueprintAssignable, Category = "AI|Events")
@@ -94,9 +95,15 @@ private:
     // 컴포넌트 참조들
     UPROPERTY()
     TObjectPtr<USLAICombatComponent> CombatComponent;
-    UPROPERTY()
-    TObjectPtr<USLAISupportModeComponent> SupportModeComponent;
     
     // 순찰 관련
     int32 CurrentTargetPointIndex = 0;
+
+    // 서포트 모드 관련
+    FVector FindSupportPosition(const FVector& TargetLocation, const FVector& MyLocation) const;
+
+    UPROPERTY()
+    TObjectPtr<AActor> SupportTargetActor = nullptr;
+    UPROPERTY()
+    bool bIsSupportMoving = false;
 };

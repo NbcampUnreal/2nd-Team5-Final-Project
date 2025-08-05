@@ -6,14 +6,12 @@
 #include "Component/SLAICombatComponent.h"
 #include "Component/SLAIPushComponent.h"
 #include "Component/SLAIStateComponent.h"
-#include "Component/SLAISupportModeComponent.h"
 
 ASLMonsterAICharacterBase::ASLMonsterAICharacterBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
 	AIStateComp = CreateDefaultSubobject<USLAIStateComponent>(TEXT("AIStateComponent"));
-	AISupportComp = CreateDefaultSubobject<USLAISupportModeComponent>(TEXT("AISupportComponent"));
 	AICombatComp = CreateDefaultSubobject<USLAICombatComponent>(TEXT("AICombatComponent"));
 	AIPushComp = CreateDefaultSubobject<USLAIPushComponent>(TEXT("AIPushComponent"));
 	AIAttributeComp = CreateDefaultSubobject<UAIAttributeComponent>(TEXT("AIAttributeComponent"));

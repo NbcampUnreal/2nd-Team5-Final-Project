@@ -55,6 +55,20 @@ bool USLWaveSpawnerComponent::StartWaveByIndex(int32 WaveIndex)
         return false;
     }
 
+    if (bEnableInfiniteRespawn)
+    {
+        if (WaveIndex != 0)
+        {
+            UE_LOG(LogTemp, Log, TEXT("무한 리스폰 모드: 첫 번째 웨이브만 진행합니다."));
+            return false;
+        }
+        
+        CurrentWaveIndex = 0;
+        bIsSpawningActive = true;
+        InitializeInfiniteRespawnMode();
+        return true;
+    }
+
     if (bIsSpawningActive && CurrentWaveIndex == WaveIndex)
     {
         UE_LOG(LogTemp, Warning, TEXT("웨이브 %d는 이미 진행 중입니다."), WaveIndex);
@@ -126,6 +140,134 @@ void USLWaveSpawnerComponent::FinishCurrentWave()
     }
 }
 
+void USLWaveSpawnerComponent::InitializeInfiniteRespawnMode()
+{
+    if (!Waves.IsValidIndex(0))
+    {
+        UE_LOG(LogTemp, Error, TEXT("무한 리스폰 모드: 첫 번째 웨이브가 없습니다!"));
+        return;
+    }
+
+    const FWaveData& FirstWave = Waves[0];
+    
+    TargetUnitCounts.Empty();
+    CurrentUnitCounts.Empty();
+    UnitCompositionData.Empty();
+    
+    for (const FWaveCompositionData& Composition : FirstWave.WaveCompositions)
+    {
+        TargetUnitCounts.Add(Composition.UnitClass, Composition.SpawnCount);
+        CurrentUnitCounts.Add(Composition.UnitClass, 0);
+        UnitCompositionData.Add(Composition.UnitClass, Composition);
+        
+        for (int32 i = 0; i < Composition.SpawnCount; ++i)
+        {
+            if (ACharacter* SpawnedUnit = CachedOwnerSpawner->SpawnAndConfigureUnit(
+                Composition.UnitClass,
+                Composition.ControllerClass,
+                Composition.TeamID,
+                Composition.AvoidanceWeight))
+            {
+                CurrentUnitCounts[Composition.UnitClass]++;
+            }
+        }
+    }
+
+    GetWorld()->GetTimerManager().SetTimer(
+        RespawnCheckTimerHandle,
+        this,
+        &USLWaveSpawnerComponent::CheckAndRespawnUnits,
+        0.5f,
+        true
+    );
+}
+
+void USLWaveSpawnerComponent::CheckAndRespawnUnits()
+{
+    if (!bEnableInfiniteRespawn || !IsValid(CachedOwnerSpawner)) return;
+    
+    for (const auto& TargetPair : TargetUnitCounts)
+    {
+        TSubclassOf<ACharacter> UnitClass = TargetPair.Key;
+        int32 TargetCount = TargetPair.Value;
+        int32 CurrentCount = CurrentUnitCounts.FindRef(UnitClass);
+        
+        if (CurrentCount < TargetCount)
+        {
+            ImmediateRespawnFromPool(UnitClass);
+        }
+    }
+}
+
+void USLWaveSpawnerComponent::OnUnitReturnedToPool(TSubclassOf<ACharacter> UnitClass)
+{
+    if (!bEnableInfiniteRespawn) return;
+    
+    if (int32* CurrentCount = CurrentUnitCounts.Find(UnitClass))
+    {
+        *CurrentCount = FMath::Max(0, *CurrentCount - 1);
+        
+        FTimerHandle RespawnHandle;
+        GetWorld()->GetTimerManager().SetTimer(
+            RespawnHandle,
+            [this, UnitClass]()
+            {
+                ImmediateRespawnFromPool(UnitClass);
+            },
+            RespawnDelay,
+            false
+        );
+        
+        UE_LOG(LogTemp, Log, TEXT("무한 리스폰: 유닛 %s 풀 반납됨, %.1f초 후 리스폰"), 
+               *UnitClass->GetName(), RespawnDelay);
+    }
+}
+
+void USLWaveSpawnerComponent::ImmediateRespawnFromPool(TSubclassOf<ACharacter> UnitClass)
+{
+    if (!bEnableInfiniteRespawn || !IsValid(CachedOwnerSpawner)) return;
+    
+    const FWaveCompositionData* CompositionData = UnitCompositionData.Find(UnitClass);
+    if (!CompositionData) return;
+    
+    if (!CachedOwnerSpawner->GetPooledUnit(UnitClass))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("무한 리스폰: 풀에서 %s 유닛을 가져올 수 없음"), *UnitClass->GetName());
+    }
+    
+    CachedOwnerSpawner->SpawnAndConfigureUnit(
+            UnitClass, 
+            CompositionData->ControllerClass, 
+            CompositionData->TeamID, 
+            CompositionData->AvoidanceWeight
+        );
+        
+    CurrentUnitCounts[UnitClass]++;
+        
+    UE_LOG(LogTemp, Log, TEXT("무한 리스폰: 유닛 %s 풀에서 리스폰됨. 현재: %d/%d"), 
+           *UnitClass->GetName(), 
+           CurrentUnitCounts[UnitClass], 
+           TargetUnitCounts[UnitClass]);
+}
+
+void USLWaveSpawnerComponent::RespawnUnit(TSubclassOf<ACharacter> UnitClass, const FWaveCompositionData& CompositionData)
+{
+    if (!IsValid(CachedOwnerSpawner)) return;
+    
+    if (ACharacter* RespawnedUnit = CachedOwnerSpawner->SpawnAndConfigureUnit(
+        CompositionData.UnitClass,
+        CompositionData.ControllerClass,
+        CompositionData.TeamID,
+        CompositionData.AvoidanceWeight))
+    {
+        CurrentUnitCounts[UnitClass]++;
+        UE_LOG(LogTemp, Log, TEXT("무한 리스폰: 유닛 %s 리스폰됨. 현재: %d/%d"), 
+               *UnitClass->GetName(), 
+               CurrentUnitCounts[UnitClass], 
+               TargetUnitCounts[UnitClass]);
+    }
+}
+
 void USLWaveSpawnerComponent::StopWaveSpawning()
 {
     bIsSpawningActive = false;
@@ -133,7 +275,16 @@ void USLWaveSpawnerComponent::StopWaveSpawning()
     {
         GetWorld()->GetTimerManager().ClearTimer(WaveSpawnTimerHandle);
         GetWorld()->GetTimerManager().ClearTimer(DelayAfterWaveTimerHandle);
+        GetWorld()->GetTimerManager().ClearTimer(RespawnCheckTimerHandle); 
     }
+
+    if (bEnableInfiniteRespawn)
+    {
+        TargetUnitCounts.Empty();
+        CurrentUnitCounts.Empty();
+        UnitCompositionData.Empty();
+    }
+    
     UE_LOG(LogTemp, Log, TEXT("USLWaveSpawnerComponent '%s': 스폰 강제 중지."), *GetName());
 }
 

@@ -57,6 +57,19 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Wave Spawning")
 	bool IsWaveSpawningActive() const;
 
+	// 무한 스폰
+	UFUNCTION(BlueprintCallable)
+	bool IsInfiniteRespawnMode() const { return bEnableInfiniteRespawn; }
+	UFUNCTION()
+	void OnUnitReturnedToPool(TSubclassOf<ACharacter> UnitClass);
+	UFUNCTION()
+	void ImmediateRespawnFromPool(TSubclassOf<ACharacter> UnitClass);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Infinite Respawn")
+	bool bEnableInfiniteRespawn = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Infinite Respawn", meta = (EditCondition = "bEnableInfiniteRespawn"))
+	float RespawnDelay = 5.0f;
+
 	// 웨이브 완료 시 호출될 델리게이트 (ASwarmSpawner가 리슨)
 	UPROPERTY(BlueprintAssignable, Category = "Wave Spawning|Events")
 	FOnWaveCompleted OnWaveCompleted;
@@ -76,4 +89,22 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<ASLSwarmSpawner> CachedOwnerSpawner;
+
+private:
+	// 무한 스폰용
+	UFUNCTION()
+	void InitializeInfiniteRespawnMode();
+	UFUNCTION()
+	void CheckAndRespawnUnits();
+	UFUNCTION()
+	void RespawnUnit(TSubclassOf<ACharacter> UnitClass, const FWaveCompositionData& CompositionData);
+	
+	UPROPERTY()
+	TMap<TSubclassOf<ACharacter>, int32> TargetUnitCounts; // 각 유닛 타입별 목표 개수
+	UPROPERTY()
+	TMap<TSubclassOf<ACharacter>, int32> CurrentUnitCounts; // 현재 살아있는 개수
+	UPROPERTY()
+	TMap<TSubclassOf<ACharacter>, FWaveCompositionData> UnitCompositionData; // 리스폰용 데이터
+	UPROPERTY()
+	FTimerHandle RespawnCheckTimerHandle;
 };

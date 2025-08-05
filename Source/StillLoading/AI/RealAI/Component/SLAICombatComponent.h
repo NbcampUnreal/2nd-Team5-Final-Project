@@ -1,13 +1,27 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SLAIStateComponent.h"
 #include "Components/ActorComponent.h"
 #include "SLAICombatComponent.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(SLAICombatComponent, Log, All);
+class ASLMonsterAICharacter;
+DECLARE_LOG_CATEGORY_EXTERN(LogAICombatComponent, Log, All);
 
 class USLAIStateComponent;
 class ASLBattleManager;
+
+USTRUCT(BlueprintType)
+struct FTargetInfomation
+{
+    GENERATED_BODY()
+
+    UPROPERTY()
+    TObjectPtr<AActor> TargetActor = nullptr;
+
+    UPROPERTY()
+    int32 HoldingTime = 0;
+};
 
 UENUM(BlueprintType)
 enum class EAIAnimType : uint8
@@ -15,9 +29,6 @@ enum class EAIAnimType : uint8
     Attack        UMETA(DisplayName = "공격"),
     Wonder        UMETA(DisplayName = "대기"),
 };
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTargetChanged, AActor*, NewTarget);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPerformAnim, EAIAnimType, AnimType);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API USLAICombatComponent : public UActorComponent
@@ -27,7 +38,7 @@ class STILLLOADING_API USLAICombatComponent : public UActorComponent
 public:    
     USLAICombatComponent();
     virtual void BeginPlay() override;
-    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+    virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     // 적 탐지 및 관리
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
@@ -37,65 +48,88 @@ public:
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
     void HandleNoEnemyDetected();
 
+    // 서포트 모드 관련
+    void UpdateSupporting(float DeltaTime);
+    bool IsSupporting() const { return bIsSupporting; }
+
+    // 후퇴 관련
+    void RetreatFromTarget(float DeltaTime);
+    void StartRetreating();
+    void StopRetreating();
+
+    // 공전 관련
+    UFUNCTION()
+    void StartRandomTurn();
+    UFUNCTION()
+    void FinishRandomTurn();
+    void UpdateOrbiting(float DeltaTime) const;
+
     // 타겟 관리
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
     void SetTarget(AActor* NewTarget);
     UFUNCTION(BlueprintPure, Category = "AI|Combat")
-    AActor* GetCurrentTarget() const { return CurrentTarget; }
+    AActor* GetCurrentTarget() const { return CurrentTarget.TargetActor; }
     void ClearTarget();
 
     // 공격 관리
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
     bool CanAttack() const;
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
-    void PerformAttack();
+    void PerformAttack(float DeltaTime);
     void UpdateAttacking(float DeltaTime);
 
     // 교전 권한 관리
     bool RequestEngagementPermission(AActor* TargetActor);
     void ReleaseCurrentTargetEngagement();
 
-    // 적 추적 정보 (지원 모드에서 사용)
-    FVector GetEnemyMovementDirection() const { return EnemyVelocity; }
-    FVector GetLastEnemyPosition() const { return LastEnemyPosition; }
-
     // 설정
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
-    float DetectionRange = 800.0f;
+    float DetectionRange = 500.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
     float AttackRange = 150.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
-    float AttackCooldown = 2.0f;
-
-    // 이벤트
-    UPROPERTY(BlueprintAssignable, Category = "AI|Events")
-    FOnTargetChanged OnTargetChanged;
-    UPROPERTY(BlueprintAssignable, Category = "AI|Events")
-    FOnPerformAnim OnPerformAnim;
+    float AttackCooldown = 3.0f;
 
 private:
     UPROPERTY()
     TObjectPtr<USLAIStateComponent> StateComponent;
+
     UPROPERTY()
-    TObjectPtr<AActor> CurrentTarget;
+    FTargetInfomation CurrentTarget;
+
+    UPROPERTY()
+    TObjectPtr<ASLMonsterAICharacter> CachedMyCharacter;
+
+    // 공전용
+    UPROPERTY()
+    bool bIsOrbiting = false;
+    UPROPERTY()
+    float OrbitDirection = 1.0f;
 
     // 적 추적
-    FVector LastEnemyPosition = FVector::ZeroVector;
-    FVector EnemyVelocity = FVector::ZeroVector;
-    float LastEnemyTrackTime = 0.0f;
+    bool bIsRetreating = false;
+
+    // 후퇴용
+    float RetreatDistance = 0.f;
     
     // 공격 관련
     float LastAttackTime = -9999.0f;
-    
-    // 타겟 클리어 관련
+    float OriginalSpeed = 0.f;
+
+    // 서포트 모드 관련
+    bool bIsSupporting;
+
+    // 타이머
     FTimerHandle TargetClearTimerHandle;
+    FTimerHandle RetreatTimerHandle;
+    FTimerHandle RandomTurnTimerHandle;
+    
     UPROPERTY(EditAnywhere, Category = "AI|Combat")
     float TargetLostGracePeriod = 3.0f;
 
     // 내부 함수들
     bool IsValidEnemy(AActor* Actor) const;
-    void LookAtTarget(AActor* Target);
-    void UpdateEnemyTracking(AActor* Enemy);
+    void SafeLookAtTarget(AActor* Target, float DeltaTime);
     
     UFUNCTION()
     void ClearTargetInternal();

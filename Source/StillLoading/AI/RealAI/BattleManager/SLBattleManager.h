@@ -164,13 +164,23 @@ public:
 private:
 	FBattleUnitInfo* FindUnitInfo(AActor* Unit);
 
+	// 여유 AI 리빌딩 로직
+	UFUNCTION()
+	void ProcessSupportingAIReassignment();
+	UFUNCTION()
+	TArray<FBattleUnitInfo> FindSupportingAIs();
+	UFUNCTION()
+	TArray<AActor*> FindTargetsWithOpenSlots();
+	UFUNCTION()
+	void AssignSupportingAIToTarget(const FBattleUnitInfo& SupportingAI, AActor* Target);
+
 	UPROPERTY()
 	TMap<TObjectPtr<AActor>, int32> TargetEngagementCounts;
 	UPROPERTY()
 	TMap<TObjectPtr<AActor>, FEngagedUnitsWrapper> EngagedUnitsPerTarget;
 	
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
-	float PermissionReassignmentInterval = 0.2f;
-	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
-	int32 MaxEngagingUnitsPerTarget = 5;
+	int32 MaxEngagingUnitsPerTarget = 3;
+	UPROPERTY()
+	FTimerHandle SupportReassignmentTimerHandle;
 };

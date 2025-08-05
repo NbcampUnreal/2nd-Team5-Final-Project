@@ -1,8 +1,9 @@
 #include "SLAIStateComponent.h"
 
+#include "AIAttributeComponent.h"
 #include "AIController.h"
+#include "NavigationSystem.h"
 #include "SLAICombatComponent.h"
-#include "SLAISupportModeComponent.h"
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/SLMonsterAICharacterBase.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
@@ -15,7 +16,7 @@ DEFINE_LOG_CATEGORY(LogAIStateComponent);
 USLAIStateComponent::USLAIStateComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.TickInterval = 0.5f;
+	PrimaryComponentTick.TickInterval = 2.0f;
 	CurrentState = EAIBattleState::Idle;
 	CurrentTargetPointIndex = 0;
 }
@@ -25,12 +26,6 @@ void USLAIStateComponent::BeginPlay()
     Super::BeginPlay();
 
     CombatComponent = GetOwner()->FindComponentByClass<USLAICombatComponent>();
-    SupportModeComponent = GetOwner()->FindComponentByClass<USLAISupportModeComponent>();
-    
-    if (!CombatComponent || !SupportModeComponent)
-    {
-        LogStateModeStatus(TEXT("필수 AI 컴포넌트들을 찾을 수 없습니다!"));
-    }
 
     Initialize();
 }
@@ -43,7 +38,7 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
     if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
     {
-        if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage)) return;
+        if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->IsInPrimaryState(TAG_AI_Dead)) return;
     }
 
     if (CombatComponent)
@@ -71,10 +66,6 @@ void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
         break;
 
     case EAIBattleState::SupportOrIdle:
-        if (SupportModeComponent)
-        {
-            SupportModeComponent->UpdateSupportMode(DeltaTime);
-        }
         break;
         
     default:
@@ -102,7 +93,6 @@ void USLAIStateComponent::OnEnterState(EAIBattleState NewState)
         if (CachedAIController.IsValid())
         {
             CachedAIController->StopMovement();
-            CachedAIController->ClearFocus(EAIFocusPriority::Gameplay);
         }
         RequestNextTargetPoint();
         break;
@@ -180,11 +170,6 @@ void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation)
     }
 
     MovementTargetLocation = NewTargetLocation;
-    
-    if (SupportModeComponent)
-    {
-        SupportModeComponent->UpdateApproachDirection(NewTargetLocation);
-    }
 
     if (CachedAIController.IsValid())
     {
@@ -197,7 +182,7 @@ void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation)
             return;
         }
 
-        LogStateModeStatus(FString::Printf(TEXT("이동 시작: %s"), *MovementTargetLocation.ToString()));
+        //LogStateModeStatus(FString::Printf(TEXT("이동 시작: %s"), *MovementTargetLocation.ToString()));
     }
     else
     {
@@ -261,6 +246,62 @@ void USLAIStateComponent::RequestNextTargetPoint()
 void USLAIStateComponent::SetCurrentTargetPointIndex(int32 NewIndex)
 {
     CurrentTargetPointIndex = NewIndex;
+}
+
+// 서포트 모드 관련
+void USLAIStateComponent::StartSupportMovement(AActor* TargetToSupport)
+{
+    if (!IsValid(TargetToSupport)) return;
+    
+    SupportTargetActor = TargetToSupport;
+    bIsSupportMoving = true;
+
+    const FVector TargetLocation = TargetToSupport->GetActorLocation();
+    const FVector MyLocation = GetOwner()->GetActorLocation();
+
+    const FVector SupportPosition = FindSupportPosition(TargetLocation, MyLocation);
+    
+    if (!SupportPosition.IsZero())
+    {
+        SetMovementTarget(SupportPosition);
+        SetState(EAIBattleState::Moving);
+        
+        LogStateModeStatus(FString::Printf(TEXT("지원 이동 시작 -> %s"), *TargetToSupport->GetName()));
+    }
+}
+
+FVector USLAIStateComponent::FindSupportPosition(const FVector& TargetLocation, const FVector& MyLocation) const
+{
+    float AttackRange = 150.0f;
+
+    if (const ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+    {
+        if (const UAIAttributeComponent* AttributeComp = MyCharacter->AIAttributeComp)
+        {
+            AttackRange = AttributeComp->AttackRange;
+        }
+    }
+    
+    for (int32 i = 0; i < 12; ++i)
+    {
+        float Angle = (360.0f / 12.0f) * i;
+        const float RadianAngle = FMath::DegreesToRadians(Angle);
+        
+        FVector TestPosition = TargetLocation + FVector(
+            FMath::Cos(RadianAngle) * (AttackRange * 0.8f),
+            FMath::Sin(RadianAngle) * (AttackRange * 0.8f),
+            0.0f
+        );
+        
+        FNavLocation NavLocation;
+        UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+        if (NavSys && NavSys->GetRandomReachablePointInRadius(TestPosition, 100.0f, NavLocation))
+        {
+            return NavLocation.Location;
+        }
+    }
+    
+    return FVector::ZeroVector;
 }
 
 void USLAIStateComponent::LogStateModeStatus(const FString& Message) const

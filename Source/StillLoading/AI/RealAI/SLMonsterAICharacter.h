@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "SLMonsterAICharacterBase.h"
 #include "SLMonsterAICharacter.generated.h"
 
@@ -49,6 +48,7 @@ public:
 
 	UFUNCTION()
 	void Dead(const AActor* Attacker, bool bIsChangeMaterial);
+	UFUNCTION()
 	void HandleAIPoolReturnOnDeath();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "On Death")
@@ -103,7 +103,7 @@ protected:
 	UFUNCTION()
 	void UpdateSpawnMovement(float Alpha);
 	UFUNCTION()
-	void OnSpawnMovementFinished();
+	void OnSpawnMovementFinished() const;
 
 	UPROPERTY()
 	TObjectPtr<UTimelineComponent> SpawnTimeline;
@@ -146,14 +146,10 @@ private:
 	UPROPERTY()
 	TObjectPtr<AActor> LastAttacker;
 
-	UPROPERTY()
 	FTimerHandle PushResetHandle;
-	UPROPERTY()
 	FTimerHandle MaterialResetTimerHandle;
-	UPROPERTY()
 	FTimerHandle CollisionResetTimerHandle;
-	UPROPERTY()
-	FTimerHandle StateFixTimerHandle;
+	FTimerHandle DeadTimerHandle;
 	
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInterface>> OriginalMaterials;

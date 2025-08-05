@@ -1,6 +1,5 @@
 #include "SLMonsterAICharacter.h"
 
-#include "BattleManager/SLBattleManager.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/DataAsset/AttackDataAsset.h"
@@ -8,6 +7,8 @@
 #include "Character/Item/ArrowProjectile.h"
 #include "Character/Item/SpearProjectile.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
+#include "Component/SLAICombatComponent.h"
+#include "Component/SLWaveSpawnerComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -158,7 +159,7 @@ void ASLMonsterAICharacter::UpdateSpawnMovement(float Alpha)
 	SetActorLocation(NewLocation);
 }
 
-void ASLMonsterAICharacter::OnSpawnMovementFinished()
+void ASLMonsterAICharacter::OnSpawnMovementFinished() const
 {
 	//SetActorEnableCollision(true);
 
@@ -239,8 +240,10 @@ void ASLMonsterAICharacter::OnHitByCharacter(UPrimitiveComponent* HitComp, AActo
                                              UPrimitiveComponent* OtherComp, FVector NormalImpulse,
                                              const FHitResult& Hit)
 {
-	if (OtherActor && OtherActor->IsA(ASLMonsterAICharacter::StaticClass())
-		|| OtherActor->IsA(ASLPlayerCharacter::StaticClass()))
+	//if (OtherActor && OtherActor->IsA(ASLMonsterAICharacter::StaticClass())
+	//	|| OtherActor->IsA(ASLPlayerCharacter::StaticClass()))
+	
+	if (OtherActor->IsA(ASLPlayerCharacter::StaticClass()))
 	{
 		if (!bRecentlyPushed)
 		{
@@ -249,7 +252,7 @@ void ASLMonsterAICharacter::OnHitByCharacter(UPrimitiveComponent* HitComp, AActo
 			PushDirection.Z = 0.0f;
 			PushDirection.Normalize();
 
-			LaunchCharacter(PushDirection * 500.0f, true, true);
+			LaunchCharacter(PushDirection * 300.0f, true, true);
 
 			GetWorld()->GetTimerManager().SetTimer(PushResetHandle, this, &ASLMonsterAICharacter::ResetPushFlag, 0.5f,
 			                                       false);
@@ -372,6 +375,10 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 	RotateToHitCauser(Causer);
 	//ChangeMeshTemporarily();
 	StartFlyingState();
+	if (AICombatComp)
+	{
+		AICombatComp->SetTarget(Causer);
+	}
 
 	switch (AnimType)
 	{
@@ -494,7 +501,6 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 	SetPrimaryState(TAG_AI_Dead);
 	OnDeath();
 	ToggleWeaponState(false);
-	HandleAIPoolReturnOnDeath();
 
 	if (DeathMaterial && bIsChangeMaterial)
 	{
@@ -530,12 +536,44 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 			}
 		}
 	}
+
+	GetWorld()->GetTimerManager().SetTimer(
+		DeadTimerHandle,
+		this,
+		&ASLMonsterAICharacter::HandleAIPoolReturnOnDeath,
+		2.0f,
+		false
+		);
 }
 
 void ASLMonsterAICharacter::HandleAIPoolReturnOnDeath()
 {
 	CurrentHealth = MaxHealth;
 	SetPrimaryState(TAG_AI_Idle);
+
+	if (AnimationComponent)
+	{
+		AnimationComponent->StopAllMontages(0.0f);
+	}
+
+	if (bOriginalMaterialsInitialized)
+	{
+		USkeletalMeshComponent* MeshComp = GetMesh();
+		for (int32 i = 0; i < OriginalMaterials.Num(); ++i)
+		{
+			MeshComp->SetMaterial(i, OriginalMaterials[i]);
+		}
+	}
+
+	ToggleWeaponState(true);
+
+	GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(DeadTimerHandle);
+
+	bIsHit = false;
+	bRecentlyPushed = false;
+	LastAttacker = nullptr;
 	
 	if (IsValid(BornSpawner))
 	{

@@ -33,28 +33,18 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAIStateComponent> AIStateComp;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
-	TObjectPtr<USLAISupportModeComponent> AISupportComp;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAICombatComponent> AICombatComp;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAIPushComponent> AIPushComp;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<UAIAttributeComponent> AIAttributeComp;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UBattleComponent> BattleComponent;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<ASLSwarmSpawner> BornSpawner;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<ASLBattleManager> BattleManager;
 

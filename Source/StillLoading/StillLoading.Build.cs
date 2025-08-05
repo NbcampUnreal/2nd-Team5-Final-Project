@@ -34,7 +34,7 @@ public class StillLoading : ModuleRules
 
         });
 
-        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore"});
+        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore", "VulkanRHI" });
 
         PrivateIncludePaths.Add("StillLoading");
 	}

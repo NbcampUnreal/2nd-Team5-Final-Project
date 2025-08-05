@@ -20,6 +20,9 @@ protected:
 	void InitializeData();
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "AI Attributes")
+	void SetAIStat(EAIChapterType NewChapterType, EAIUnitType NewUnitType);
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Attributes")
 	TObjectPtr<UDataTable> AIStatsDataTable;
 
@@ -29,8 +32,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Attributes")
 	EAIChapterType AIChapterType = EAIChapterType::None;
 
-	UFUNCTION(BlueprintCallable, Category = "AI Attributes")
-	void SetAIStat(EAIChapterType NewChapterType, EAIUnitType NewUnitType);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Attributes")
+	float AttackRange = 150.f;
 
 protected:
 	void ApplyRandomStatsToOwner(const FAIUnitStatsData& StatsData);

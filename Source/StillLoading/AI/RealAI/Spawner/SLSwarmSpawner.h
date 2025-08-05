@@ -19,10 +19,10 @@ struct FWaveCompositionData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	TSubclassOf<class ACharacter> UnitClass; // 스폰할 유닛 클래스
+	TSubclassOf<ACharacter> UnitClass; // 스폰할 유닛 클래스
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	TSubclassOf<class AAIController> ControllerClass; // 유닛에 할당할 AI 컨트롤러 클래스
+	TSubclassOf<AAIController> ControllerClass; // 유닛에 할당할 AI 컨트롤러 클래스
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
 	int32 SpawnCount = 1; // 스폰할 개수
@@ -49,7 +49,6 @@ struct FPooledUnit
 	TSubclassOf<ACharacter> UnitClass;
 };
 
-// 단순 스폰 구성 (기존 그대로 유지)
 USTRUCT(BlueprintType)
 struct FSimpleSpawnComposition
 {

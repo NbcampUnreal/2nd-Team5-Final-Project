@@ -50,6 +50,11 @@ void UAIAttributeComponent::SetAIStat(EAIChapterType NewChapterType, EAIUnitType
         return;
     }
 
+	if (NewUnitType == EAIUnitType::Ranger)
+	{
+		AttackRange = 600.f;
+	}
+
     FString UnitTypeString = UnitTypeEnum->GetNameByValue(static_cast<int64>(NewUnitType)).ToString();
     FString ChapterTypeString = ChapterTypeEnum->GetNameByValue(static_cast<int64>(NewChapterType)).ToString();
 

@@ -8,7 +8,9 @@
 #include "AI/RealAI/Component/AIAttributeComponent.h"
 #include "AI/RealAI/Component/SLAIStateComponent.h"
 #include "AI/RealAI/Component/SLWaveSpawnerComponent.h"
+#include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -216,6 +218,15 @@ void ASLSwarmSpawner::ReturnUnitToPool(ACharacter* Unit)
 			Unit->SetActorLocation(GetActorLocation() + FVector(0, 0, -10000));
 
 			OnUnitReturnedToPool.Broadcast(Unit, this);
+
+			if (USLWaveSpawnerComponent* WaveComp = FindComponentByClass<USLWaveSpawnerComponent>())
+			{
+				if (WaveComp->IsInfiniteRespawnMode())
+				{
+					WaveComp->OnUnitReturnedToPool(Unit->GetClass());
+				}
+			}
+			
 			UE_LOG(LogTemp, Log, TEXT("SwarmSpawner: 유닛 '%s' 풀에 반환."), *Unit->GetName());
 			return;
 		}
@@ -347,6 +358,17 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 {
 	if (!IsValid(SpawnedUnit)) return;
 
+	if (ASLMonsterAICharacter* MonsterAI = Cast<ASLMonsterAICharacter>(SpawnedUnit))
+	{
+		if (MonsterAI->IsInPrimaryState(TAG_AI_Dead))
+		{
+			MonsterAI->SetPrimaryState(TAG_AI_Idle);
+			MonsterAI->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			MonsterAI->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			MonsterAI->ToggleWeaponState(true);
+		}
+	}
+
 	AController* CurrentController = SpawnedUnit->GetController();
 	AAIController* AIController = Cast<AAIController>(CurrentController);
 	ASLMonsterAICharacterBase* MonsterAI = Cast<ASLMonsterAICharacterBase>(SpawnedUnit);
@@ -415,8 +437,9 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 }
 
 ACharacter* ASLSwarmSpawner::SpawnAndConfigureUnit(TSubclassOf<ACharacter> UnitClass,
-                                                 TSubclassOf<AAIController> ControllerClass, FGenericTeamId TeamID,
-                                                 float AvoidanceWeight)
+                                                 const TSubclassOf<AAIController> ControllerClass,
+                                                 const FGenericTeamId TeamID,
+                                                 const float AvoidanceWeight)
 {
 	ACharacter* SpawnedUnit = GetOrCreateAndPlaceUnit(UnitClass);
 

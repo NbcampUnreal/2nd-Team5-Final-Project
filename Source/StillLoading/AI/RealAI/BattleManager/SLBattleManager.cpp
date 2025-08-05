@@ -1,6 +1,6 @@
 #include "SLBattleManager.h"
 
-#include "AI/RealAI/SLMonsterAICharacter.h"
+#include "AI/RealAI/Component/SLAICombatComponent.h"
 #include "AI/RealAI/Component/SLAIStateComponent.h"
 #include "AI/RealAI/Spawner/SLSwarmSpawner.h"
 #include "Engine/TargetPoint.h"
@@ -9,7 +9,6 @@
 ASLBattleManager::ASLBattleManager()
 {
 	PrimaryActorTick.bCanEverTick = false;
-	PrimaryActorTick.TickInterval = 0.1f;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
@@ -28,6 +27,14 @@ void ASLBattleManager::BeginPlay()
 	TeamUnitIndices.Reserve(1000); // 미리 공간 확보 O(1) 버킷 할당
 
 	BindToSpawnerEvents();
+
+	GetWorld()->GetTimerManager().SetTimer(
+		SupportReassignmentTimerHandle,
+		this,
+		&ASLBattleManager::ProcessSupportingAIReassignment,
+		10.0f,
+		true
+	);
 
 #if WITH_EDITOR
 	if (GetWorld())
@@ -93,9 +100,7 @@ void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		{
 			Spawner->OnUnitSpawned.RemoveDynamic(this, &ASLBattleManager::OnSpawnerUnitSpawnedHandler);
 			Spawner->OnUnitReturnedToPool.RemoveDynamic(this, &ASLBattleManager::OnSpawnerUnitReturnedToPoolHandler);
-			Spawner->OnUnitActuallyDestroyed.RemoveDynamic(
-				this, &ASLBattleManager::OnSpawnerUnitActuallyDestroyedHandler);
-
+			Spawner->OnUnitActuallyDestroyed.RemoveDynamic(this, &ASLBattleManager::OnSpawnerUnitActuallyDestroyedHandler);
 			Spawner->OnWaveCompletedBySpawner.RemoveDynamic(this, &ASLBattleManager::HandleWaveCompleted);
 			Spawner->OnAllWavesCompletedBySpawner.RemoveDynamic(this, &ASLBattleManager::HandleAllWavesCompleted);
 		}
@@ -514,6 +519,8 @@ void ASLBattleManager::EndBattle()
 
 	RegisteredUnits.Empty();
 	TeamUnitIndices.Empty();
+	TargetEngagementCounts.Empty();
+	EngagedUnitsPerTarget.Empty();
 }
 
 // Engage System
@@ -542,11 +549,11 @@ bool ASLBattleManager::RequestEngagementPermission(AActor* RequestingUnit, AActo
         }
     }
 
-    const int32 CurrentCount = TargetEngagementCounts.FindOrAdd(TargetActor, 0);
-    
-    if (CurrentCount < MaxEngagingUnitsPerTarget)
+	// Race Condition
+    int32& CurrentCountRef = TargetEngagementCounts.FindOrAdd(TargetActor, 0);
+    if (CurrentCountRef < MaxEngagingUnitsPerTarget)
     {
-        TargetEngagementCounts[TargetActor] = CurrentCount + 1;
+    	CurrentCountRef++;
         EngagedUnitsPerTarget.FindOrAdd(TargetActor).EngagedUnits.AddUnique(RequestingUnit);
         
         if (FBattleUnitInfo* UnitInfo = FindUnitInfo(RequestingUnit))
@@ -556,23 +563,12 @@ bool ASLBattleManager::RequestEngagementPermission(AActor* RequestingUnit, AActo
         
         UE_LOG(LogTemp, Log, TEXT("교전 권한 승인: %s -> %s (현재 교전: %d/%d)"), 
                *RequestingUnit->GetName(), *TargetActor->GetName(), 
-               CurrentCount + 1, MaxEngagingUnitsPerTarget);
+               CurrentCountRef, MaxEngagingUnitsPerTarget);
         
         return true;
     }
-    else
-    {
-        // 권한 거부 - 타겟이 이미 최대 교전 유닛 수에 도달
-        if (FBattleUnitInfo* UnitInfo = FindUnitInfo(RequestingUnit))
-        {
-            UnitInfo->CurrentEngagedTarget = nullptr;
-        }
-        
-        UE_LOG(LogTemp, Warning, TEXT("교전 권한 거부: %s -> %s (최대 교전 유닛 수 도달: %d)"), 
-               *RequestingUnit->GetName(), *TargetActor->GetName(), MaxEngagingUnitsPerTarget);
-        
-        return false;
-    }
+	
+	return false;
 }
 
 void ASLBattleManager::ReleaseEngagementPermission(AActor* ReleasingUnit, AActor* TargetActor)
@@ -610,6 +606,91 @@ void ASLBattleManager::ReleaseEngagementPermission(AActor* ReleasingUnit, AActor
 
     UE_LOG(LogTemp, Log, TEXT("교전 권한 해제: %s -> %s"), 
            *ReleasingUnit->GetName(), *TargetActor->GetName());
+}
+
+// Rebuild AI
+void ASLBattleManager::ProcessSupportingAIReassignment()
+{
+    // 지원 중인 AI들 찾기
+    TArray<FBattleUnitInfo> SupportingAIs = FindSupportingAIs();
+    if (SupportingAIs.Num() == 0)
+    {
+        return;
+    }
+    
+    // 여분이 있는 타겟들 찾기
+    TArray<AActor*> AvailableTargets = FindTargetsWithOpenSlots();
+    if (AvailableTargets.Num() == 0)
+    {
+        return;
+    }
+    
+    // AI들을 타겟에 배치
+    int32 TargetIndex = 0;
+    for (FBattleUnitInfo& SupportingAI : SupportingAIs)
+    {
+        if (TargetIndex >= AvailableTargets.Num())
+        {
+            break;
+        }
+        
+        AActor* SelectedTarget = AvailableTargets[TargetIndex];
+        AssignSupportingAIToTarget(SupportingAI, SelectedTarget);
+        
+        TargetIndex = (TargetIndex + 1) % AvailableTargets.Num();
+    }
+}
+
+TArray<FBattleUnitInfo> ASLBattleManager::FindSupportingAIs()
+{
+    TArray<FBattleUnitInfo> SupportingAIs;
+    
+    for (FBattleUnitInfo& Unit : RegisteredUnits)
+    {
+        if (!IsValid(Unit.Actor)) continue;
+        
+        if (const USLAICombatComponent* CombatComp = Unit.Actor->FindComponentByClass<USLAICombatComponent>())
+        {
+            if (CombatComp->IsSupporting())
+            {
+                SupportingAIs.Add(Unit);
+            }
+        }
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("지원 가능한 AI %d개 발견"), SupportingAIs.Num());
+    return SupportingAIs;
+}
+
+TArray<AActor*> ASLBattleManager::FindTargetsWithOpenSlots()
+{
+    TArray<AActor*> AvailableTargets;
+    
+    for (const auto& EngagementPair : TargetEngagementCounts)
+    {
+        AActor* Target = EngagementPair.Key;
+        const int32 CurrentEngagements = EngagementPair.Value;
+        
+        if (IsValid(Target) && CurrentEngagements < MaxEngagingUnitsPerTarget)
+        {
+            AvailableTargets.Add(Target);
+        }
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("여분이 있는 타겟 %d개 발견"), AvailableTargets.Num());
+    return AvailableTargets;
+}
+
+void ASLBattleManager::AssignSupportingAIToTarget(const FBattleUnitInfo& SupportingAI, AActor* Target)
+{
+    if (!IsValid(SupportingAI.Actor) || !IsValid(Target)) return;
+    
+    if (USLAIStateComponent* StateComp = SupportingAI.Actor->FindComponentByClass<USLAIStateComponent>())
+    {
+        StateComp->StartSupportMovement(Target);
+        UE_LOG(LogTemp, Log, TEXT("지원 AI %s를 타겟 %s로 이동 지시"), 
+               *SupportingAI.Actor->GetName(), *Target->GetName());
+    }
 }
 
 int32 ASLBattleManager::GetCurrentEngagementCount(AActor* TargetActor) const
