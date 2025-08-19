@@ -1096,9 +1096,6 @@ TArray<FVector> ASLAIBaseCharacter::GenerateHorizontalFanDirections(const FVecto
 
 		Direction.Normalize();
 		Directions.Add(Direction);
-
-		UE_LOG(LogTemp, Display, TEXT("Fan Direction %d: %s (offset: %.1f°)"), 
-			   i, *Direction.ToString(), OffsetAngle);
 	}
 
 	return Directions;

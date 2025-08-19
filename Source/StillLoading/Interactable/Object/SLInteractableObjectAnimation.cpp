@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SLInteractableObjectAnimation.h"
+
+#include "AI/AIInterface/SLHideableInterface.h"
 #include "Components/ArrowComponent.h"
 #include "Animation/AnimMontage.h"
 #include "StillLoading/Character/SLPlayerCharacterBase.h"
@@ -37,14 +39,23 @@ void ASLInteractableObjectAnimation::OnInteracted(const ASLPlayerCharacterBase* 
 	ASLPlayerCharacterBase* MutableCharacter = const_cast<ASLPlayerCharacterBase*>(InCharacter);
 	CachedCharacter = MutableCharacter;
 	
+	// 숨기 인터페이스 체크
+	if (!MutableCharacter->GetClass()->ImplementsInterface(USLHideableInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Character does not implement ISLHideableInterface"));
+		return;
+	}
+	
 	if (!bIsPlayerHiding)
 	{
 		ExecuteEnterAnimation(MutableCharacter);
+		ISLHideableInterface::Execute_SetHidingState(MutableCharacter, true);
 		bIsPlayerHiding = true;
 	}
 	else
 	{
 		ExecuteExitAnimation(MutableCharacter);
+		ISLHideableInterface::Execute_SetHidingState(MutableCharacter, false);
 		bIsPlayerHiding = false;
 	}
 }
@@ -125,11 +136,7 @@ void ASLInteractableObjectAnimation::OnEnterMontageEnded(UAnimMontage* Montage, 
 
 	if (Montage == EnterMontage)
 	{
-		// 들어가는 애니메이션이 끝나면 AI 감지 비활성화
-		if (CachedCharacter->StimuliSource)
-		{
-			CachedCharacter->StimuliSource->SetActive(false);
-		}
+		// 들어가는 애니메이션이 끝나면 AI 감지 비활성화는 이미 인터페이스에서 처리됨
 
 		USkeletalMeshComponent* MeshComp = CachedCharacter->GetMesh();
 		if (IsValid(MeshComp))

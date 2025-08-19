@@ -6,11 +6,15 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "SubSystem/SLSoundSubsystem.h"
+#include "Perception/AISense_Hearing.h"
+#include "Sound/SoundBase.h"
 
 USLFootstepNotify::USLFootstepNotify()
 {
 	TraceDistance = 100.0f;
 	TraceChannel = ECC_Visibility;
+	SoundLevel = EFootstepSoundLevel::Normal;
+	bEmitNoiseEvent = true;
 }
 
 void USLFootstepNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -33,6 +37,11 @@ void USLFootstepNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBa
 	if (PerformGroundTrace(MeshComp, HitResult))
 	{
 		PlayFootstepSound(HitResult, HitResult.Location);
+		
+		if (bEmitNoiseEvent)
+		{
+			EmitFootstepNoiseEvent(HitResult.Location, MeshComp);
+		}
 	}
 }
 
@@ -101,4 +110,50 @@ void USLFootstepNotify::PlayFootstepSound(const FHitResult& HitResult, const FVe
 	}
 
 	SoundSubsystem->PlayBattleSound(SoundType, Location);
+}
+
+void USLFootstepNotify::EmitFootstepNoiseEvent(const FVector& Location, USkeletalMeshComponent* MeshComp)
+{
+	UWorld* World = MeshComp->GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	// 소리 레벨에 따른 파라미터 설정 (SLSoundEmitterObject와 동일한 패턴)
+	float Loudness = 1.0f;
+	float Range = 800.0f;
+
+	switch (SoundLevel)
+	{
+	case EFootstepSoundLevel::Quiet:
+		Loudness = 0.5f;  
+		Range = 600.0f;  
+		break;
+	case EFootstepSoundLevel::Normal:
+		Loudness = 1.0f;  
+		Range = 1000.0f;  
+		break;
+	case EFootstepSoundLevel::Loud:
+		Loudness = 1.5f;  
+		Range = 1400.0f;  
+		break;
+	}
+
+	// 소리 발생자 찾기
+	APawn* SoundInstigator = Cast<APawn>(MeshComp->GetOwner());
+	if (!SoundInstigator)
+	{
+		SoundInstigator = UGameplayStatics::GetPlayerPawn(World, 0);
+	}
+
+	// AI에게 소리 이벤트 보고
+	UAISense_Hearing::ReportNoiseEvent(
+		World,
+		Location,
+		Loudness,
+		SoundInstigator,
+		Range,
+		FName("Footstep")
+	);
 }
