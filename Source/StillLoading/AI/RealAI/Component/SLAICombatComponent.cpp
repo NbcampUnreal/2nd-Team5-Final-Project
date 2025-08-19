@@ -14,7 +14,6 @@ DEFINE_LOG_CATEGORY(LogAICombatComponent);
 USLAICombatComponent::USLAICombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	//PrimaryComponentTick.TickInterval = 0.2f;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	LastAttackTime = -9999.0f;
 }
@@ -124,6 +123,8 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 void USLAICombatComponent::UpdateSupporting(float DeltaTime)
 {
 	bIsSupporting = true;
+
+	
 }
 
 // StateComponent 에서 실행
@@ -324,6 +325,8 @@ void USLAICombatComponent::RetreatFromTarget(float DeltaTime)
 	const FVector RetreatDirection = (MyLocation - TargetLocation).GetSafeNormal();
 	const float CurrentDistance = FVector::Dist(MyLocation, TargetLocation);
 
+	SafeLookAtTarget(CurrentTarget.TargetActor, DeltaTime);
+
 	if (CurrentDistance >= RetreatDistance)
 	{
 		// 대기 상태 진입
@@ -337,11 +340,6 @@ void USLAICombatComponent::RetreatFromTarget(float DeltaTime)
 		RetreatDistance = 0;
 		return;
 	}
-
-	/*
-	const FRotator LookAtRot = FRotationMatrix::MakeFromX(TargetLocation - MyLocation).Rotator();
-	CachedMyCharacter->SetActorRotation(LookAtRot);
-	*/
 
 	if (UCharacterMovementComponent* MoveComp = CachedMyCharacter->GetCharacterMovement())
 	{
@@ -371,11 +369,6 @@ void USLAICombatComponent::UpdateOrbiting(float DeltaTime) const
 	const FVector TangentDirection = FVector(-DirectionFromTarget.Y * OrbitDirection,
 	                                         DirectionFromTarget.X * OrbitDirection,
 	                                         0.0f);
-
-	/*
-	const FRotator LookAtRot = FRotationMatrix::MakeFromX(TargetLocation - MyLocation).Rotator();
-	MyCharacter->SetActorRotation(LookAtRot);
-	*/
 
 	constexpr float OrbitSpeed = 1.0f;
 	MyCharacter->AddMovementInput(TangentDirection, OrbitSpeed);

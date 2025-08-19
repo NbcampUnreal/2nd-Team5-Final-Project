@@ -82,9 +82,11 @@ public:
     bool RequestEngagementPermission(AActor* TargetActor);
     void ReleaseCurrentTargetEngagement();
 
+    void SafeLookAtTarget(AActor* Target, float DeltaTime);
+
     // 설정
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
-    float DetectionRange = 500.0f;
+    float DetectionRange = 1000.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
     float AttackRange = 150.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
@@ -127,9 +129,7 @@ private:
     UPROPERTY(EditAnywhere, Category = "AI|Combat")
     float TargetLostGracePeriod = 3.0f;
 
-    // 내부 함수들
     bool IsValidEnemy(AActor* Actor) const;
-    void SafeLookAtTarget(AActor* Target, float DeltaTime);
     
     UFUNCTION()
     void ClearTargetInternal();

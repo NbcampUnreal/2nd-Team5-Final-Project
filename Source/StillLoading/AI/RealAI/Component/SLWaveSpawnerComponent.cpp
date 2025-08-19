@@ -217,9 +217,6 @@ void USLWaveSpawnerComponent::OnUnitReturnedToPool(TSubclassOf<ACharacter> UnitC
             RespawnDelay,
             false
         );
-        
-        UE_LOG(LogTemp, Log, TEXT("무한 리스폰: 유닛 %s 풀 반납됨, %.1f초 후 리스폰"), 
-               *UnitClass->GetName(), RespawnDelay);
     }
 }
 
@@ -243,11 +240,6 @@ void USLWaveSpawnerComponent::ImmediateRespawnFromPool(TSubclassOf<ACharacter> U
         );
         
     CurrentUnitCounts[UnitClass]++;
-        
-    UE_LOG(LogTemp, Log, TEXT("무한 리스폰: 유닛 %s 풀에서 리스폰됨. 현재: %d/%d"), 
-           *UnitClass->GetName(), 
-           CurrentUnitCounts[UnitClass], 
-           TargetUnitCounts[UnitClass]);
 }
 
 void USLWaveSpawnerComponent::RespawnUnit(TSubclassOf<ACharacter> UnitClass, const FWaveCompositionData& CompositionData)
@@ -261,10 +253,6 @@ void USLWaveSpawnerComponent::RespawnUnit(TSubclassOf<ACharacter> UnitClass, con
         CompositionData.AvoidanceWeight))
     {
         CurrentUnitCounts[UnitClass]++;
-        UE_LOG(LogTemp, Log, TEXT("무한 리스폰: 유닛 %s 리스폰됨. 현재: %d/%d"), 
-               *UnitClass->GetName(), 
-               CurrentUnitCounts[UnitClass], 
-               TargetUnitCounts[UnitClass]);
     }
 }
 

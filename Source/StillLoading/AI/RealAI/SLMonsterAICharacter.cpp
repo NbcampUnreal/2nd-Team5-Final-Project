@@ -342,7 +342,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
                                           EHitAnimType AnimType)
 {
 	AnimationComponent->StopAllMontages(0.2f);
-	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
+	//GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
 
 	LastAttacker = Causer;
 	CurrentHealth -= Damage;
