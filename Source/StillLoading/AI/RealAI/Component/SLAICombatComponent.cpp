@@ -30,15 +30,9 @@ void USLAICombatComponent::BeginPlay()
 		OriginalSpeed = MovementComponent->MaxWalkSpeed;
 	}
 
-	if (CachedMyCharacter)
+	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 	{
-		CachedMyCharacter->bUseControllerRotationYaw = false;
-        
-		if (UCharacterMovementComponent* MovementComp = CachedMyCharacter->GetCharacterMovement())
-		{
-			MovementComp->RotationRate = FRotator(0.0f, 360.0f, 0.0f);
-			MovementComp->bOrientRotationToMovement = true;
-		}
+		CachedMyCharacter = MyCharacter;
 	}
 }
 
@@ -96,7 +90,7 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 
 		if (StateComponent)
 		{
-			StateComponent->RequestNextTargetPoint();
+			StateComponent->SetState(EAIBattleState::Idle);
 		}
 		return;
 	}
@@ -123,8 +117,6 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 void USLAICombatComponent::UpdateSupporting(float DeltaTime)
 {
 	bIsSupporting = true;
-
-	
 }
 
 // StateComponent 에서 실행
@@ -178,38 +170,30 @@ void USLAICombatComponent::HandleEnemyDetection(AActor* DetectedEnemy)
 
 		if (!IsValid(CurrentTarget.TargetActor) || CurrentTarget.TargetActor != DetectedEnemy)
 		{
-			float AvailDistance = 300.0f;
-			if (IsValid(CachedMyCharacter))
-			{
-				if (CachedMyCharacter->AIAttributeComp->AIUnitType == EAIUnitType::Ranger)
-				{
-					AvailDistance = 800.0f;
-				}
-			}
-		
-			const float Distance = FVector::Dist(GetOwner()->GetActorLocation(), DetectedEnemy->GetActorLocation());
-			if (Distance < AvailDistance)
+			ASLBattleManager* BattleManager = CachedMyCharacter->BattleManager;
+			if (!BattleManager) return;
+
+			if (!BattleManager->PlayerOnly())
 			{
 				if (RequestEngagementPermission(DetectedEnemy))
 				{
 					LogCombatModeStatus(FString::Printf(TEXT("전투 권환 흭득 [%s]"), *GetOwner()->GetName()));
-					SetTarget(DetectedEnemy);
 					if (StateComponent)
 					{
 						StateComponent->SetState(EAIBattleState::Attacking);
 					}
-
-					SetComponentTickEnabled(true);
-					bIsSupporting = false;
-				}
-				else
-				{
-					LogCombatModeStatus(FString::Printf(TEXT("서포팅 모드 진입 [%s]"), *GetOwner()->GetName()));
-					StateComponent->SetState(EAIBattleState::SupportOrIdle);
-					SetTarget(DetectedEnemy);
-					bIsSupporting = true;
 				}
 			}
+			else
+			{
+				SetTarget(DetectedEnemy);
+				if (StateComponent)
+				{
+					StateComponent->SetState(EAIBattleState::Attacking);
+				}
+			}
+
+			SetComponentTickEnabled(true);
 		}
 
 		if (GetWorld()->GetTimerManager().IsTimerActive(TargetClearTimerHandle))
@@ -241,10 +225,6 @@ void USLAICombatComponent::HandleNoEnemyDetected()
 			);
 		}
 	}
-	else if (StateComponent && StateComponent->GetCurrentState() == EAIBattleState::Attacking)
-	{
-		StateComponent->RequestNextTargetPoint();
-	}
 }
 
 void USLAICombatComponent::SetTarget(AActor* NewTarget)
@@ -270,6 +250,10 @@ void USLAICombatComponent::ClearTarget()
 {
 	SetTarget(nullptr);
 	GetWorld()->GetTimerManager().ClearTimer(TargetClearTimerHandle);
+	if (StateComponent)
+	{
+		StateComponent->RequestNextTargetPoint();
+	}
 }
 
 bool USLAICombatComponent::CanAttack() const
@@ -282,8 +266,17 @@ bool USLAICombatComponent::CanAttack() const
 		return false;
 	}
 
+	float AvailDistance = 150.0f;
+	if (IsValid(CachedMyCharacter))
+	{
+		if (CachedMyCharacter->AIAttributeComp->AIUnitType == EAIUnitType::Ranger)
+		{
+			AvailDistance = 500.0f;
+		}
+	}
+	
 	float Distance = FVector::Dist(GetOwner()->GetActorLocation(), CurrentTarget.TargetActor->GetActorLocation());
-	return Distance <= AttackRange;
+	return Distance <= AvailDistance;
 }
 
 void USLAICombatComponent::PerformAttack(float DeltaTime)
@@ -343,7 +336,7 @@ void USLAICombatComponent::RetreatFromTarget(float DeltaTime)
 
 	if (UCharacterMovementComponent* MoveComp = CachedMyCharacter->GetCharacterMovement())
 	{
-		MoveComp->MaxWalkSpeed = 200.0f;
+		MoveComp->MaxWalkSpeed = 300.0f;
 	}
 
 	constexpr float RetreatSpeedScale = 0.5f;
@@ -364,6 +357,11 @@ void USLAICombatComponent::UpdateOrbiting(float DeltaTime) const
 	if (DirectionFromTarget.IsNearlyZero())
 	{
 		return;
+	}
+
+	if (UCharacterMovementComponent* MoveComp = CachedMyCharacter->GetCharacterMovement())
+	{
+		MoveComp->MaxWalkSpeed = 200.0f;
 	}
 	
 	const FVector TangentDirection = FVector(-DirectionFromTarget.Y * OrbitDirection,
@@ -392,6 +390,14 @@ void USLAICombatComponent::FinishRandomTurn()
 {
 	bIsOrbiting = false;
 	SetComponentTickEnabled(false);
+
+	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+	{
+		if (UCharacterMovementComponent* MoveComp = MyCharacter->GetCharacterMovement())
+		{
+			MoveComp->MaxWalkSpeed = OriginalSpeed;
+		}
+	}
 }
 
 void USLAICombatComponent::StopRetreating()
@@ -405,11 +411,6 @@ void USLAICombatComponent::StopRetreating()
 		{
 			MoveComp->MaxWalkSpeed = OriginalSpeed;
 		}
-	}
-
-	if (StateComponent && StateComponent->CachedAIController.IsValid())
-	{
-		StateComponent->CachedAIController->StopMovement();
 	}
 }
 

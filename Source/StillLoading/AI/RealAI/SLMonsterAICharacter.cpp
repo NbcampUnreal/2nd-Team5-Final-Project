@@ -361,6 +361,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 		AAIController* AIController = Cast<AAIController>(GetController());
 		if (AIController != nullptr)
 		{
+			AIController->StopMovement();
 			bUseControllerRotationYaw = true;
 			GetCharacterMovement()->bOrientRotationToMovement = false;
 

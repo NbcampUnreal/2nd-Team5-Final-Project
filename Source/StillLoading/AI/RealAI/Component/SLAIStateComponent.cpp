@@ -9,6 +9,7 @@
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
 #include "AI/RealAI/Spawner/SLSwarmSpawner.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 
 DEFINE_LOG_CATEGORY(LogAIStateComponent);
@@ -16,7 +17,7 @@ DEFINE_LOG_CATEGORY(LogAIStateComponent);
 USLAIStateComponent::USLAIStateComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.TickInterval = 2.0f;
+	PrimaryComponentTick.TickInterval = 1.0f;
 	CurrentState = EAIBattleState::Idle;
 	CurrentTargetPointIndex = 0;
 }
@@ -44,6 +45,10 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
     if (CombatComponent)
     {
         AActor* DetectedEnemy = CombatComponent->FindEnemyInDetectionRange();
+        if (IsValid(DetectedEnemy))
+        {
+            CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
+        }
         CombatComponent->HandleEnemyDetection(DetectedEnemy);
     }
     
@@ -55,6 +60,7 @@ void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
     switch (CurrentState)
     {
     case EAIBattleState::Idle:
+        break;
     case EAIBattleState::Moving:
         break;
         
@@ -63,9 +69,6 @@ void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
         {
             CombatComponent->UpdateAttacking(DeltaTime);
         }
-        break;
-
-    case EAIBattleState::SupportOrIdle:
         break;
         
     default:
@@ -90,24 +93,25 @@ void USLAIStateComponent::OnEnterState(EAIBattleState NewState)
     switch (NewState)
     {
     case EAIBattleState::Idle:
-        if (CachedAIController.IsValid())
+        if (CachedAIController.IsValid() && IsValid(CachedMyCharacter))
         {
             CachedAIController->StopMovement();
+            CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
         }
-        RequestNextTargetPoint();
         break;
         
     case EAIBattleState::Moving:
-        break;
-        
-    case EAIBattleState::Attacking:
-        if (CachedAIController.IsValid())
+        if (CachedAIController.IsValid() && IsValid(CachedMyCharacter))
         {
-            CachedAIController->StopMovement();
+            CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
         }
         break;
         
-    case EAIBattleState::SupportOrIdle:
+    case EAIBattleState::Attacking:
+        if (CachedAIController.IsValid() && IsValid(CachedMyCharacter))
+        {
+            CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+        }
         break;
     }
 }
@@ -131,15 +135,15 @@ void USLAIStateComponent::Initialize()
             }
         }
     }
+
+    if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+    {
+        CachedMyCharacter = MyCharacter;
+    }
 }
 
 void USLAIStateComponent::ActivateAndMoveToInitialTarget(int32 InitialTargetPointIndex)
 {
-    if (CurrentState != EAIBattleState::Idle)
-    {
-        return;
-    }
-
     SetCurrentTargetPointIndex(InitialTargetPointIndex);
     RequestNextTargetPoint();
 }
@@ -161,7 +165,7 @@ void USLAIStateComponent::DeactivateAndReset()
     CurrentTargetPointIndex = 0;
 }
 
-void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation)
+void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, float AvailRange)
 {
     if (NewTargetLocation.IsNearlyZero(KINDA_SMALL_NUMBER))
     {
@@ -173,16 +177,17 @@ void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation)
 
     if (CachedAIController.IsValid())
     {
-        FAIRequestID RequestID = CachedAIController->MoveToLocation(MovementTargetLocation);
-
+        FAIRequestID RequestID = CachedAIController->MoveToLocation(MovementTargetLocation, AvailRange);
+        if (CurrentState != EAIBattleState::Attacking)
+        {
+            SetState(EAIBattleState::Moving);
+        }
+        
         if (RequestID == FAIRequestID::InvalidRequest)
         {
             LogStateModeStatus(TEXT("MoveToLocation 실패"));
             SetState(EAIBattleState::Idle);
-            return;
         }
-
-        //LogStateModeStatus(FString::Printf(TEXT("이동 시작: %s"), *MovementTargetLocation.ToString()));
     }
     else
     {
@@ -193,13 +198,15 @@ void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation)
 
 void USLAIStateComponent::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
 {
-    if (CurrentState == EAIBattleState::Moving)
+    if (Result.IsSuccess())
     {
+        CurrentTargetPointIndex++;
+        
         GetWorld()->GetTimerManager().SetTimer(
             MovementCompletionTimerHandle,
             this,
             &USLAIStateComponent::RequestNextTargetPoint,
-            0.1f,
+            0.2f,
             false
         );
     }
@@ -223,17 +230,7 @@ void USLAIStateComponent::RequestNextTargetPoint()
             if (DistanceToTarget > 300.0f)
             {
                 SetMovementTarget(NextLocation);
-                SetState(EAIBattleState::Moving);
             }
-            else
-            {
-                SetState(EAIBattleState::Idle);
-            }
-        }
-        else
-        {
-            LogStateModeStatus(TEXT("더 이상 유효한 타겟 포인트 없음"));
-            SetState(EAIBattleState::Idle);
         }
     }
     else
@@ -264,7 +261,6 @@ void USLAIStateComponent::StartSupportMovement(AActor* TargetToSupport)
     if (!SupportPosition.IsZero())
     {
         SetMovementTarget(SupportPosition);
-        SetState(EAIBattleState::Moving);
         
         LogStateModeStatus(FString::Printf(TEXT("지원 이동 시작 -> %s"), *TargetToSupport->GetName()));
     }

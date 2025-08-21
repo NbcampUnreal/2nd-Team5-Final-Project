@@ -86,7 +86,7 @@ public:
 
     // 설정
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
-    float DetectionRange = 1000.0f;
+    float DetectionRange = 800.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
     float AttackRange = 150.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")

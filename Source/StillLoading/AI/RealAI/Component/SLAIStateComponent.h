@@ -6,6 +6,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "SLAIStateComponent.generated.h"
 
+class ASLMonsterAICharacter;
 class USLAICombatComponent;
 class USLAISupportModeComponent;
 class AAIController;
@@ -19,7 +20,6 @@ enum class EAIBattleState : uint8
     Idle            UMETA(DisplayName = "대기"),
     Moving          UMETA(DisplayName = "이동"),
     Attacking       UMETA(DisplayName = "공격"),
-    SupportOrIdle   UMETA(DisplayName = "공격지원"),
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAIStateChanged, EAIBattleState, NewState);
@@ -48,7 +48,7 @@ public:
 
     // 이동 목표 설정
     UFUNCTION(BlueprintCallable, Category = "AI|Movement")
-    void SetMovementTarget(FVector NewTargetLocation);
+    void SetMovementTarget(FVector NewTargetLocation, float AvailRange = 100.f);
 
     // 순찰 관리
     UFUNCTION(BlueprintCallable, Category = "AI|Movement")
@@ -76,6 +76,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Controller")
     TWeakObjectPtr<AAIController> CachedAIController;
+
+    UPROPERTY()
+    TObjectPtr<ASLMonsterAICharacter> CachedMyCharacter;
 
     // 이동 관련 (다른 컴포넌트에서 참조)
     FVector MovementTargetLocation;

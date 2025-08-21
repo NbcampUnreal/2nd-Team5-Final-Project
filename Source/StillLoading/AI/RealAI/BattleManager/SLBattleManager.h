@@ -95,10 +95,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnregisterUnit(AActor* Actor);
 	UFUNCTION(BlueprintCallable)
+	bool PlayerOnly() { return bIsPlayerOnly; }
+	UFUNCTION(BlueprintCallable)
 	FORCEINLINE int32 GetRegisteredUnitCount() const { return RegisteredUnits.Num(); }
 
 protected:
 	void BindToSpawnerEvents(); // ASLSwarmSpawner 이벤트 바인딩
+	void InitializeAISupportingMode();
 	UFUNCTION()
 	void OnSpawnerUnitSpawnedHandler(AActor* SpawnedUnit, ASLSwarmSpawner* SourceSpawner);
 	UFUNCTION()
@@ -181,6 +184,8 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	int32 MaxEngagingUnitsPerTarget = 3;
+	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
+	bool bIsPlayerOnly = false;
 	UPROPERTY()
 	FTimerHandle SupportReassignmentTimerHandle;
 };

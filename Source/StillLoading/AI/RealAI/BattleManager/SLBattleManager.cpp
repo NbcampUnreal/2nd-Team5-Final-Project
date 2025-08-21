@@ -27,14 +27,7 @@ void ASLBattleManager::BeginPlay()
 	TeamUnitIndices.Reserve(1000); // 미리 공간 확보 O(1) 버킷 할당
 
 	BindToSpawnerEvents();
-
-	GetWorld()->GetTimerManager().SetTimer(
-		SupportReassignmentTimerHandle,
-		this,
-		&ASLBattleManager::ProcessSupportingAIReassignment,
-		10.0f,
-		true
-	);
+	InitializeAISupportingMode();
 
 #if WITH_EDITOR
 	if (GetWorld())
@@ -100,7 +93,8 @@ void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		{
 			Spawner->OnUnitSpawned.RemoveDynamic(this, &ASLBattleManager::OnSpawnerUnitSpawnedHandler);
 			Spawner->OnUnitReturnedToPool.RemoveDynamic(this, &ASLBattleManager::OnSpawnerUnitReturnedToPoolHandler);
-			Spawner->OnUnitActuallyDestroyed.RemoveDynamic(this, &ASLBattleManager::OnSpawnerUnitActuallyDestroyedHandler);
+			Spawner->OnUnitActuallyDestroyed.RemoveDynamic(
+				this, &ASLBattleManager::OnSpawnerUnitActuallyDestroyedHandler);
 			Spawner->OnWaveCompletedBySpawner.RemoveDynamic(this, &ASLBattleManager::HandleWaveCompleted);
 			Spawner->OnAllWavesCompletedBySpawner.RemoveDynamic(this, &ASLBattleManager::HandleAllWavesCompleted);
 		}
@@ -124,6 +118,20 @@ void ASLBattleManager::BindToSpawnerEvents()
 			Spawner->OnUnitActuallyDestroyed.AddDynamic(this, &ASLBattleManager::OnSpawnerUnitActuallyDestroyedHandler);
 			UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 스포너 %s의 이벤트에 바인딩했습니다."), *Spawner->GetName());
 		}
+	}
+}
+
+void ASLBattleManager::InitializeAISupportingMode()
+{
+	if (!bIsPlayerOnly)
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			SupportReassignmentTimerHandle,
+			this,
+			&ASLBattleManager::ProcessSupportingAIReassignment,
+			10.0f,
+			true
+		);
 	}
 }
 
@@ -526,217 +534,216 @@ void ASLBattleManager::EndBattle()
 // Engage System
 bool ASLBattleManager::RequestEngagementPermission(AActor* RequestingUnit, AActor* TargetActor)
 {
-    if (!RequestingUnit || !TargetActor)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("RequestEngagementPermission: 유효하지 않은 유닛 또는 타겟입니다."));
-        return false;
-    }
+	if (!RequestingUnit || !TargetActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RequestEngagementPermission: 유효하지 않은 유닛 또는 타겟입니다."));
+		return false;
+	}
 
-    for (auto& EngagementPair : EngagedUnitsPerTarget)
-    {
-        if (EngagementPair.Value.EngagedUnits.Contains(RequestingUnit))
-        {
-            if (EngagementPair.Key == TargetActor)
-            {
-                UE_LOG(LogTemp, Log, TEXT("RequestEngagementPermission: %s는 이미 %s와 교전 중입니다."), 
-                       *RequestingUnit->GetName(), *TargetActor->GetName());
-                return true;
-            }
-            UE_LOG(LogTemp, Log, TEXT("RequestEngagementPermission: %s가 기존 타겟과의 교전을 해제하고 새 타겟으로 전환합니다."), 
-                   *RequestingUnit->GetName());
-            ReleaseEngagementPermission(RequestingUnit, EngagementPair.Key);
-            break;
-        }
-    }
+	for (auto& EngagementPair : EngagedUnitsPerTarget)
+	{
+		if (EngagementPair.Value.EngagedUnits.Contains(RequestingUnit))
+		{
+			if (EngagementPair.Key == TargetActor)
+			{
+				UE_LOG(LogTemp, Log, TEXT("RequestEngagementPermission: %s는 이미 %s와 교전 중입니다."),
+				       *RequestingUnit->GetName(), *TargetActor->GetName());
+				return true;
+			}
+			UE_LOG(LogTemp, Log, TEXT("RequestEngagementPermission: %s가 기존 타겟과의 교전을 해제하고 새 타겟으로 전환합니다."),
+			       *RequestingUnit->GetName());
+			ReleaseEngagementPermission(RequestingUnit, EngagementPair.Key);
+			break;
+		}
+	}
 
 	// Race Condition
-    int32& CurrentCountRef = TargetEngagementCounts.FindOrAdd(TargetActor, 0);
-    if (CurrentCountRef < MaxEngagingUnitsPerTarget)
-    {
-    	CurrentCountRef++;
-        EngagedUnitsPerTarget.FindOrAdd(TargetActor).EngagedUnits.AddUnique(RequestingUnit);
-        
-        if (FBattleUnitInfo* UnitInfo = FindUnitInfo(RequestingUnit))
-        {
-            UnitInfo->CurrentEngagedTarget = TargetActor;
-        }
-        
-        UE_LOG(LogTemp, Log, TEXT("교전 권한 승인: %s -> %s (현재 교전: %d/%d)"), 
-               *RequestingUnit->GetName(), *TargetActor->GetName(), 
-               CurrentCountRef, MaxEngagingUnitsPerTarget);
-        
-        return true;
-    }
-	
+	int32& CurrentCountRef = TargetEngagementCounts.FindOrAdd(TargetActor, 0);
+	if (CurrentCountRef < MaxEngagingUnitsPerTarget)
+	{
+		CurrentCountRef++;
+		EngagedUnitsPerTarget.FindOrAdd(TargetActor).EngagedUnits.AddUnique(RequestingUnit);
+
+		if (FBattleUnitInfo* UnitInfo = FindUnitInfo(RequestingUnit))
+		{
+			UnitInfo->CurrentEngagedTarget = TargetActor;
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("교전 권한 승인: %s -> %s (현재 교전: %d/%d)"),
+		       *RequestingUnit->GetName(), *TargetActor->GetName(),
+		       CurrentCountRef, MaxEngagingUnitsPerTarget);
+
+		return true;
+	}
+
 	return false;
 }
 
 void ASLBattleManager::ReleaseEngagementPermission(AActor* ReleasingUnit, AActor* TargetActor)
 {
-    if (!ReleasingUnit || !TargetActor)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("ReleaseEngagementPermission: 유효하지 않은 유닛 또는 타겟입니다."));
-        return;
-    }
+	if (!ReleasingUnit || !TargetActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ReleaseEngagementPermission: 유효하지 않은 유닛 또는 타겟입니다."));
+		return;
+	}
 
-    if (int32* CountPtr = TargetEngagementCounts.Find(TargetActor))
-    {
-        *CountPtr = FMath::Max(0, *CountPtr - 1);
-        
-        if (*CountPtr == 0)
-        {
-            TargetEngagementCounts.Remove(TargetActor);
-        }
-    }
+	if (int32* CountPtr = TargetEngagementCounts.Find(TargetActor))
+	{
+		*CountPtr = FMath::Max(0, *CountPtr - 1);
 
-    if (FEngagedUnitsWrapper* EngagedUnits = EngagedUnitsPerTarget.Find(TargetActor))
-    {
-        EngagedUnits->EngagedUnits.Remove(ReleasingUnit);
-        
-        if (EngagedUnits->EngagedUnits.Num() == 0)
-        {
-            EngagedUnitsPerTarget.Remove(TargetActor);
-        }
-    }
+		if (*CountPtr == 0)
+		{
+			TargetEngagementCounts.Remove(TargetActor);
+		}
+	}
 
-    if (FBattleUnitInfo* UnitInfo = FindUnitInfo(ReleasingUnit))
-    {
-        UnitInfo->CurrentEngagedTarget = nullptr;
-    }
+	if (FEngagedUnitsWrapper* EngagedUnits = EngagedUnitsPerTarget.Find(TargetActor))
+	{
+		EngagedUnits->EngagedUnits.Remove(ReleasingUnit);
 
-    UE_LOG(LogTemp, Log, TEXT("교전 권한 해제: %s -> %s"), 
-           *ReleasingUnit->GetName(), *TargetActor->GetName());
+		if (EngagedUnits->EngagedUnits.Num() == 0)
+		{
+			EngagedUnitsPerTarget.Remove(TargetActor);
+		}
+	}
+
+	if (FBattleUnitInfo* UnitInfo = FindUnitInfo(ReleasingUnit))
+	{
+		UnitInfo->CurrentEngagedTarget = nullptr;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("교전 권한 해제: %s -> %s"),
+	       *ReleasingUnit->GetName(), *TargetActor->GetName());
 }
 
 // Rebuild AI
 void ASLBattleManager::ProcessSupportingAIReassignment()
 {
-    // 지원 중인 AI들 찾기
-    TArray<FBattleUnitInfo> SupportingAIs = FindSupportingAIs();
-    if (SupportingAIs.Num() == 0)
-    {
-        return;
-    }
-    
-    // 여분이 있는 타겟들 찾기
-    TArray<AActor*> AvailableTargets = FindTargetsWithOpenSlots();
-    if (AvailableTargets.Num() == 0)
-    {
-        return;
-    }
-    
-    // AI들을 타겟에 배치
-    int32 TargetIndex = 0;
-    for (FBattleUnitInfo& SupportingAI : SupportingAIs)
-    {
-        if (TargetIndex >= AvailableTargets.Num())
-        {
-            break;
-        }
-        
-        AActor* SelectedTarget = AvailableTargets[TargetIndex];
-        AssignSupportingAIToTarget(SupportingAI, SelectedTarget);
-        
-        TargetIndex = (TargetIndex + 1) % AvailableTargets.Num();
-    }
+	// 지원 중인 AI들 찾기
+	TArray<FBattleUnitInfo> SupportingAIs = FindSupportingAIs();
+	if (SupportingAIs.Num() == 0)
+	{
+		return;
+	}
+
+	// 여분이 있는 타겟들 찾기
+	TArray<AActor*> AvailableTargets = FindTargetsWithOpenSlots();
+	if (AvailableTargets.Num() == 0)
+	{
+		return;
+	}
+
+	// AI들을 타겟에 배치
+	int32 TargetIndex = 0;
+	for (FBattleUnitInfo& SupportingAI : SupportingAIs)
+	{
+		if (TargetIndex >= AvailableTargets.Num())
+		{
+			break;
+		}
+
+		AActor* SelectedTarget = AvailableTargets[TargetIndex];
+		AssignSupportingAIToTarget(SupportingAI, SelectedTarget);
+
+		TargetIndex = (TargetIndex + 1) % AvailableTargets.Num();
+	}
 }
 
 TArray<FBattleUnitInfo> ASLBattleManager::FindSupportingAIs()
 {
-    TArray<FBattleUnitInfo> SupportingAIs;
-    
-    for (FBattleUnitInfo& Unit : RegisteredUnits)
-    {
-        if (!IsValid(Unit.Actor)) continue;
-        
-        if (const USLAICombatComponent* CombatComp = Unit.Actor->FindComponentByClass<USLAICombatComponent>())
-        {
-            if (CombatComp->IsSupporting())
-            {
-                SupportingAIs.Add(Unit);
-            }
-        }
-    }
-    
-    UE_LOG(LogTemp, Log, TEXT("지원 가능한 AI %d개 발견"), SupportingAIs.Num());
-    return SupportingAIs;
+	TArray<FBattleUnitInfo> SupportingAIs;
+
+	for (FBattleUnitInfo& Unit : RegisteredUnits)
+	{
+		if (!IsValid(Unit.Actor)) continue;
+
+		if (const USLAICombatComponent* CombatComp = Unit.Actor->FindComponentByClass<USLAICombatComponent>())
+		{
+			if (CombatComp->IsSupporting())
+			{
+				SupportingAIs.Add(Unit);
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("지원 가능한 AI %d개 발견"), SupportingAIs.Num());
+	return SupportingAIs;
 }
 
 TArray<AActor*> ASLBattleManager::FindTargetsWithOpenSlots()
 {
-    TArray<AActor*> AvailableTargets;
-    
-    for (const auto& EngagementPair : TargetEngagementCounts)
-    {
-        AActor* Target = EngagementPair.Key;
-        const int32 CurrentEngagements = EngagementPair.Value;
-        
-        if (IsValid(Target) && CurrentEngagements < MaxEngagingUnitsPerTarget)
-        {
-            AvailableTargets.Add(Target);
-        }
-    }
-    
-    UE_LOG(LogTemp, Log, TEXT("여분이 있는 타겟 %d개 발견"), AvailableTargets.Num());
-    return AvailableTargets;
+	TArray<AActor*> AvailableTargets;
+
+	for (const auto& EngagementPair : TargetEngagementCounts)
+	{
+		AActor* Target = EngagementPair.Key;
+		const int32 CurrentEngagements = EngagementPair.Value;
+
+		if (IsValid(Target) && CurrentEngagements < MaxEngagingUnitsPerTarget)
+		{
+			AvailableTargets.Add(Target);
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("여분이 있는 타겟 %d개 발견"), AvailableTargets.Num());
+	return AvailableTargets;
 }
 
 void ASLBattleManager::AssignSupportingAIToTarget(const FBattleUnitInfo& SupportingAI, AActor* Target)
 {
-    if (!IsValid(SupportingAI.Actor) || !IsValid(Target)) return;
-    
-    if (USLAIStateComponent* StateComp = SupportingAI.Actor->FindComponentByClass<USLAIStateComponent>())
-    {
-        StateComp->StartSupportMovement(Target);
-        UE_LOG(LogTemp, Log, TEXT("지원 AI %s를 타겟 %s로 이동 지시"), 
-               *SupportingAI.Actor->GetName(), *Target->GetName());
-    }
+	if (!IsValid(SupportingAI.Actor) || !IsValid(Target)) return;
+
+	if (USLAIStateComponent* StateComp = SupportingAI.Actor->FindComponentByClass<USLAIStateComponent>())
+	{
+		StateComp->StartSupportMovement(Target);
+		UE_LOG(LogTemp, Log, TEXT("지원 AI %s를 타겟 %s로 이동 지시"),
+		       *SupportingAI.Actor->GetName(), *Target->GetName());
+	}
 }
 
 int32 ASLBattleManager::GetCurrentEngagementCount(AActor* TargetActor) const
 {
-    if (const int32* CountPtr = TargetEngagementCounts.Find(TargetActor))
-    {
-        return *CountPtr;
-    }
-    return 0;
+	if (const int32* CountPtr = TargetEngagementCounts.Find(TargetActor))
+	{
+		return *CountPtr;
+	}
+	return 0;
 }
 
 void ASLBattleManager::OnUnitDestroyed(AActor* DestroyedUnit)
 {
-    if (!DestroyedUnit)
-    {
-        return;
-    }
+	if (!DestroyedUnit)
+	{
+		return;
+	}
 
-    TArray<TObjectPtr<AActor>> TargetsToCleanup;
-    
-    for (auto& EngagementPair : EngagedUnitsPerTarget)
-    {
-        if (EngagementPair.Value.EngagedUnits.Contains(DestroyedUnit))
-        {
-            TargetsToCleanup.Add(EngagementPair.Key);
-        }
-    }
+	TArray<TObjectPtr<AActor>> TargetsToCleanup;
 
-    for (TObjectPtr<AActor> Target : TargetsToCleanup)
-    {
-        ReleaseEngagementPermission(DestroyedUnit, Target);
-    }
+	for (auto& EngagementPair : EngagedUnitsPerTarget)
+	{
+		if (EngagementPair.Value.EngagedUnits.Contains(DestroyedUnit))
+		{
+			TargetsToCleanup.Add(EngagementPair.Key);
+		}
+	}
 
-    UE_LOG(LogTemp, Log, TEXT("유닛 파괴로 인한 교전 권한 정리 완료: %s"), *DestroyedUnit->GetName());
+	for (TObjectPtr<AActor> Target : TargetsToCleanup)
+	{
+		ReleaseEngagementPermission(DestroyedUnit, Target);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("유닛 파괴로 인한 교전 권한 정리 완료: %s"), *DestroyedUnit->GetName());
 }
 
 // 헬퍼 함수 - 유닛 정보 찾기
 FBattleUnitInfo* ASLBattleManager::FindUnitInfo(AActor* Unit)
 {
-    for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
-    {
-        if (UnitInfo.Actor == Unit)
-        {
-            return &UnitInfo;
-        }
-    }
-    return nullptr;
+	for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
+	{
+		if (UnitInfo.Actor == Unit)
+		{
+			return &UnitInfo;
+		}
+	}
+	return nullptr;
 }
-
