@@ -178,6 +178,7 @@ void USLAICombatComponent::HandleEnemyDetection(AActor* DetectedEnemy)
 				if (RequestEngagementPermission(DetectedEnemy))
 				{
 					LogCombatModeStatus(FString::Printf(TEXT("전투 권환 흭득 [%s]"), *GetOwner()->GetName()));
+					SetTarget(DetectedEnemy);
 					if (StateComponent)
 					{
 						StateComponent->SetState(EAIBattleState::Attacking);

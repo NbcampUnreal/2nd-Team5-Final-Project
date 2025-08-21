@@ -48,7 +48,7 @@ public:
 
     // 이동 목표 설정
     UFUNCTION(BlueprintCallable, Category = "AI|Movement")
-    void SetMovementTarget(FVector NewTargetLocation, float AvailRange = 100.f);
+    void SetMovementTarget(FVector NewTargetLocation, float AvailRange = 200.f);
 
     // 순찰 관리
     UFUNCTION(BlueprintCallable, Category = "AI|Movement")
