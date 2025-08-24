@@ -1,76 +1,241 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "Character/RunnerTypes.h"
 #include "CoreMinimal.h"
-#include "Character/SLPlayerCharacterBase.h"
+#include "GameFramework/Character.h"
 #include "SLPlayerRunnerCharacter.generated.h"
 
 class UDynamicIMCComponent;
 class UBoxComponent;
 class USLRunnerAnimInstance;
-enum class EInputActionType : uint8;
+class USplineComponent;
+class UAnimMontage;
+class USpringArmComponent;
+class UCameraComponent;
+class UCameraShakeBase;
+class ASLSplineTrack;
 struct FInputActionValue;
+enum class EInputActionType : uint8;
+
+UENUM(BlueprintType)
+enum class ECameraPreset : uint8
+{
+	Default, Slide, Jump, Attack, Hit
+};
+
+USTRUCT(BlueprintType)
+struct FRunnerCamPreset
+{
+	GENERATED_BODY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float TargetArmLength = 350.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector SocketOffset = FVector(0,0,80);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FRotator ArmRotation = FRotator(-10,0,0);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float FOV = 90.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float BlendSpeed = 8.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float ShakeAmplitude = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float ShakeFrequency = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float YawAroundCharacter = 0.f;
+};
 
 UCLASS()
 class STILLLOADING_API ASLPlayerRunnerCharacter : public ACharacter
 {
 	GENERATED_BODY()
+
 public:
 	ASLPlayerRunnerCharacter();
-
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
+
+	UFUNCTION(BlueprintCallable, Category="Runner|Spline")
+	void SnapToNearestOnSpline();
+
+	UFUNCTION(BlueprintCallable, Category="Runner|Spline")
+	void SetSplineDistance(const float NewDistance);
+
+	UFUNCTION(BlueprintCallable, Category="Runner|Spline")
+	void SetSplineDriveEnabled(const bool bEnable);
 
 protected:
-	// 입력 디스패처 콜백
 	UFUNCTION()
 	void OnActionTriggeredCallback(const EInputActionType ActionType, const FInputActionValue InputValue);
 
-	// 허들 충돌
+	UFUNCTION()
+	void OnActionStartedCallback(EInputActionType ActionType);
+
+	UFUNCTION()
+	void OnActionCompletedCallback(EInputActionType ActionType);
+
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 						UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	// 데미지/사망
+	UFUNCTION(BlueprintImplementableEvent)
 	void ApplyDamage();
+	UFUNCTION(BlueprintCallable)
 	void OnDie();
 
+private:
+	USLRunnerAnimInstance* GetRunnerAnim() const;
+	void PushToAnim(ERunnerAction Action) const;
+
+	void StartIFrame(float Duration);
+	void EnterRootMotionAction(float ExpectedDuration);
+	void ExitRootMotionAction();
+
+	void ApplyTransformAtDistance(float Distance);
+	void ApplyRotationAtDistance(float Distance);
+
+	void TryAdvanceToNextTrack();
+	void SwitchToTrack(ASLSplineTrack* NewTrack);
+	
+	UFUNCTION()
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+	void OnMontageBlendingOutStarted(UAnimMontage* Montage, bool bInterrupted);
+
+	bool IsHitMontage(const UAnimMontage* Montage) const;
+
+	void BuildPointDistances();
+	void MapDistanceToSegment(float Distance);
+	void AdvanceAlongSegment(float DeltaSeconds);
+	void ReachGoal();
+
+	void SetCameraPreset(ECameraPreset Preset, float HoldTime = 0.f);
+	void ApplyCamera(float DeltaSeconds);
+	void StartShake(TSubclassOf<UCameraShakeBase> ShakeClass, float Scale = 1.f);
+
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
+	TObjectPtr<USpringArmComponent> SpringArm;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
+	TObjectPtr<UCameraComponent> FollowCamera;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
+	FRunnerCamPreset Cam_Default;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
+	FRunnerCamPreset Cam_Slide;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
+	FRunnerCamPreset Cam_Jump;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
+	FRunnerCamPreset Cam_Attack;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
+	FRunnerCamPreset Cam_Hit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
+	TSubclassOf<UCameraShakeBase> JumpShakeClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
+	TSubclassOf<UCameraShakeBase> SlideShakeClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
+	TSubclassOf<UCameraShakeBase> HitShakeClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
+	TSubclassOf<UCameraShakeBase> AttackShakeClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Spline")
+	float ForwardSpeed = 600.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Spline")
+	bool bStartAtSplineStart = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Spline")
+	bool bFollowFullRotation = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Spline", meta=(EditCondition="bFollowFullRotation==true"))
+	bool bSmoothRotation = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Spline", meta=(EditCondition="bSmoothRotation", ClampMin="0.0"))
+	float RotationInterpSpeed = 10.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Strafe")
+	float LateralSpeed = 1200.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Strafe")
+	float LateralClamp = 180.f;
+
+	UPROPERTY(EditInstanceOnly, Category="Runner|Spline")
+	TObjectPtr<ASLSplineTrack> CurrentTrack = nullptr;
+
 protected:
-	// --- Components ---
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Components")
 	TObjectPtr<UBoxComponent> BoxComp;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Components")
 	TObjectPtr<UDynamicIMCComponent> DynamicIMCComponent;
 
-	// --- State / Health ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|State")
 	EHurdleState CurrentState = EHurdleState::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Health")
 	int32 MaxHealth = 2;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Health")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Health")
 	int32 CurrentHealth = 2;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Health")
 	float RecoveryTime = 2.0f;
 
-	// 액션 유지 타이머(0.3~0.5s)
-	FTimerHandle StateTimerHandle;
-
-	// 체력 회복 타이머
-	FTimerHandle RecoveryTimerHandle;
-
-	// 연속 피격 방지(i-Frame)
-	bool bInvincible = false;
-	FTimerHandle IFrameTimerHandle;
-	UPROPERTY(EditAnywhere, Category="Runner|Combat")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Combat")
 	float IFrameDuration = 0.2f;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
+	float SplineDistance = 0.f;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
+	bool bSplineDriveEnabled = true;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
+	bool bGoalReached = false;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
+	float GoalDistance = 0.f;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
+	int32 LastPointIndex = 0;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
+	int32 CurrentPointIndex = 0;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
+	float CurrentSegmentEndDistance = 0.f;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Strafe")
+	float LateralOffset = 0.f;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
+	TArray<float> PointDistances;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
+	ECameraPreset ActivePreset = ECameraPreset::Default;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
+	FRunnerCamPreset CamTarget;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
+	FRunnerCamPreset CamCurrent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
+	float CamNoiseTime = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Track")
+	TObjectPtr<USplineComponent> TrackSpline;
+	float CurrentLateralInput = 0.f;
+	bool bInvincible = false;
+
+	FTimerHandle StateTimerHandle;
+	FTimerHandle RecoveryTimerHandle;
+	FTimerHandle IFrameTimerHandle;
+
+	float SplineDistOnActionStart = 0.f;
+
 private:
-	USLRunnerAnimInstance* GetRunnerAnim() const;
-	void PushToAnim(ERunnerAction Action) const;
-	void PlayMatched(EHurdleState State) const;
+	FTimerHandle ActionRootMotionTimer;
+	FTimerHandle CamPresetTimer;
 };
