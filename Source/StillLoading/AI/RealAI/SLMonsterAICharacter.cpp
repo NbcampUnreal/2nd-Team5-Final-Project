@@ -8,11 +8,9 @@
 #include "Character/Item/SpearProjectile.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Component/SLAICombatComponent.h"
-#include "Component/SLWaveSpawnerComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Navigation/PathFollowingComponent.h"
 #include "SubSystem/SLSoundSubsystem.h"
 #include "Controller/SLBasePlayerController.h"
 #include "Controller/SLMonsterAIController.h"
@@ -342,6 +340,8 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
                                           EHitAnimType AnimType)
 {
 	AnimationComponent->StopAllMontages(0.2f);
+	AICombatComp->StopRetreating();
+	AICombatComp->StartRandomTurn();
 	//GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
 
 	LastAttacker = Causer;

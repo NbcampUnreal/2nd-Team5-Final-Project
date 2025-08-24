@@ -38,8 +38,7 @@ class STILLLOADING_API USLAICombatComponent : public UActorComponent
 public:    
     USLAICombatComponent();
     virtual void BeginPlay() override;
-    virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+    
     // 적 탐지 및 관리
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
     AActor* FindEnemyInDetectionRange() const;
@@ -53,16 +52,21 @@ public:
     bool IsSupporting() const { return bIsSupporting; }
 
     // 후퇴 관련
-    void RetreatFromTarget(float DeltaTime);
+    void RetreatFromTarget();
     void StartRetreating();
     void StopRetreating();
+    void TryScheduleRetreat();
+
+    FTimerHandle BeginRetreatTimerHandle;
+    FTimerHandle RetreatTimerHandle;
 
     // 공전 관련
-    UFUNCTION()
     void StartRandomTurn();
-    UFUNCTION()
     void FinishRandomTurn();
-    void UpdateOrbiting(float DeltaTime) const;
+    void UpdateOrbiting();
+
+    FTimerHandle OrbitUpdateTimerHandle;
+    FTimerHandle EndOrbitTimerHandle;
 
     // 타겟 관리
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
@@ -81,38 +85,36 @@ public:
     // 교전 권한 관리
     bool RequestEngagementPermission(AActor* TargetActor);
     void ReleaseCurrentTargetEngagement();
-
     void SafeLookAtTarget(AActor* Target, float DeltaTime);
 
     // 설정
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
     float DetectionRange = 800.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
-    float AttackRange = 150.0f;
+    float AttackRange = 200.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Combat")
     float AttackCooldown = 3.0f;
 
 private:
     UPROPERTY()
     TObjectPtr<USLAIStateComponent> StateComponent;
-
     UPROPERTY()
     FTargetInfomation CurrentTarget;
-
     UPROPERTY()
     TObjectPtr<ASLMonsterAICharacter> CachedMyCharacter;
+    UPROPERTY()
+    TObjectPtr<AAIController> CachedAIController;
 
     // 공전용
-    UPROPERTY()
     bool bIsOrbiting = false;
-    UPROPERTY()
     float OrbitDirection = 1.0f;
+    float DefaultBrakingDeceleration = 0.f;
 
     // 적 추적
     bool bIsRetreating = false;
 
-    // 후퇴용
-    float RetreatDistance = 0.f;
+    // 후퇴 거리
+    float RetreatDistance = 400.0f;
     
     // 공격 관련
     float LastAttackTime = -9999.0f;
@@ -123,8 +125,6 @@ private:
 
     // 타이머
     FTimerHandle TargetClearTimerHandle;
-    FTimerHandle RetreatTimerHandle;
-    FTimerHandle RandomTurnTimerHandle;
     
     UPROPERTY(EditAnywhere, Category = "AI|Combat")
     float TargetLostGracePeriod = 3.0f;

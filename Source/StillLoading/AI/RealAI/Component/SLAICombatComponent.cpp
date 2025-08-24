@@ -2,6 +2,7 @@
 
 #include "AIAttributeComponent.h"
 #include "AIController.h"
+#include "NavigationSystem.h"
 #include "SLAIStateComponent.h"
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
@@ -13,7 +14,7 @@ DEFINE_LOG_CATEGORY(LogAICombatComponent);
 
 USLAICombatComponent::USLAICombatComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	LastAttackTime = -9999.0f;
 }
@@ -33,49 +34,26 @@ void USLAICombatComponent::BeginPlay()
 	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 	{
 		CachedMyCharacter = MyCharacter;
-	}
-}
-
-void USLAICombatComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
-                                         FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (!IsValid(CachedMyCharacter))
-	{
-		CachedMyCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
-		return;
-	}
-	
-	if (CachedMyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || CachedMyCharacter->IsInPrimaryState(TAG_AI_Dead)) return;
-
-	SafeLookAtTarget(CurrentTarget.TargetActor, DeltaTime);
-
-	// 후퇴 로직
-	if (bIsRetreating)
-	{
-		RetreatFromTarget(DeltaTime);
-	}
-
-	if (bIsOrbiting)
-	{
-		UpdateOrbiting(DeltaTime);
+		if (MyCharacter)
+		{
+			CachedAIController = Cast<AAIController>(MyCharacter->GetController());
+		}
 	}
 }
 
 void USLAICombatComponent::SafeLookAtTarget(AActor* Target, float DeltaTime)
 {
 	if (!Target || !CachedMyCharacter) return;
-    
+
 	const FVector ToTarget = Target->GetActorLocation() - CachedMyCharacter->GetActorLocation();
 	if (ToTarget.IsNearlyZero()) return;
-    
+
 	const FRotator TargetRotation = FRotationMatrix::MakeFromX(ToTarget).Rotator();
 	const FRotator CurrentRotation = CachedMyCharacter->GetActorRotation();
-    
+
 	constexpr float RotationSpeed = 3.0f;
 	const FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, RotationSpeed);
-    
+
 	CachedMyCharacter->SetActorRotation(FRotator(0.0f, NewRotation.Yaw, 0.0f)); // Pitch, Roll은 0으로
 }
 
@@ -105,7 +83,12 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 	{
 		if (StateComponent && !bIsOrbiting && !bIsRetreating)
 		{
-			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation());
+			if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+			{
+				if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->IsInPrimaryState(TAG_AI_Dead)) return;
+			}
+			
+			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), 50);
 		}
 	}
 	else if (CanAttack())
@@ -158,6 +141,8 @@ AActor* USLAICombatComponent::FindEnemyInDetectionRange() const
 // StateComponent 에서 실행
 void USLAICombatComponent::HandleEnemyDetection(AActor* DetectedEnemy)
 {
+	if (bIsOrbiting || bIsRetreating) return;
+
 	if (IsValid(DetectedEnemy))
 	{
 		const float CurrentTime = GetWorld()->GetTimeSeconds();
@@ -193,8 +178,6 @@ void USLAICombatComponent::HandleEnemyDetection(AActor* DetectedEnemy)
 					StateComponent->SetState(EAIBattleState::Attacking);
 				}
 			}
-
-			SetComponentTickEnabled(true);
 		}
 
 		if (GetWorld()->GetTimerManager().IsTimerActive(TargetClearTimerHandle))
@@ -239,11 +222,6 @@ void USLAICombatComponent::SetTarget(AActor* NewTarget)
 
 		CurrentTarget.TargetActor = NewTarget;
 		CurrentTarget.HoldingTime = GetWorld()->GetTimeSeconds();
-
-		LogCombatModeStatus(FString::Printf(TEXT("타겟 설정 -> %s"),
-		                                    IsValid(NewTarget) ? *NewTarget->GetName() : TEXT("없음")));
-
-		SetComponentTickEnabled(IsValid(NewTarget));
 	}
 }
 
@@ -275,7 +253,7 @@ bool USLAICombatComponent::CanAttack() const
 			AvailDistance = 500.0f;
 		}
 	}
-	
+
 	float Distance = FVector::Dist(GetOwner()->GetActorLocation(), CurrentTarget.TargetActor->GetActorLocation());
 	return Distance <= AvailDistance;
 }
@@ -291,7 +269,7 @@ void USLAICombatComponent::PerformAttack(float DeltaTime)
 		MyCharacter->PlayAttackAnim();
 	}
 
-	StartRetreating();
+	TryScheduleRetreat();
 }
 
 void USLAICombatComponent::StartRetreating()
@@ -302,75 +280,93 @@ void USLAICombatComponent::StartRetreating()
 		{
 			StateComponent->CachedAIController->StopMovement();
 		}
-		
+
 		bIsRetreating = true;
-		SetComponentTickEnabled(true);
 		RetreatDistance = FMath::RandRange(200.0f, 400.0f);
+
+		RetreatFromTarget();
+
+		GetWorld()->GetTimerManager().SetTimer(
+			RetreatTimerHandle,
+			this,
+			&USLAICombatComponent::StopRetreating,
+			1.5f,
+			false
+		);
 	}
 }
 
-void USLAICombatComponent::RetreatFromTarget(float DeltaTime)
+void USLAICombatComponent::RetreatFromTarget()
 {
-	if (!IsValid(CurrentTarget.TargetActor)) return;
-	if (bIsOrbiting) return;
+	AActor* MyActor = GetOwner();
+	if (!IsValid(CurrentTarget.TargetActor) || !MyActor)
+	{
+		StopRetreating();
+		return;
+	}
 
-	const FVector MyLocation = CachedMyCharacter->GetActorLocation();
+	AAIController* MyController = Cast<AAIController>(MyActor->GetInstigatorController());
+	if (!MyController)
+	{
+		UE_LOG(LogTemp, Error, TEXT("RetreatFromTarget: AIController is invalid!"));
+		StopRetreating();
+		return;
+	}
+
+	const FVector MyLocation = MyActor->GetActorLocation();
 	const FVector TargetLocation = CurrentTarget.TargetActor->GetActorLocation();
 	const FVector RetreatDirection = (MyLocation - TargetLocation).GetSafeNormal();
-	const float CurrentDistance = FVector::Dist(MyLocation, TargetLocation);
 
-	SafeLookAtTarget(CurrentTarget.TargetActor, DeltaTime);
-
-	if (CurrentDistance >= RetreatDistance)
+	if (RetreatDirection.IsNearlyZero())
 	{
-		// 대기 상태 진입
-		if (StateComponent && StateComponent->CachedAIController.IsValid())
-		{
-			StateComponent->CachedAIController->StopMovement();
-		}
-		
-		StartRandomTurn();
 		StopRetreating();
-		RetreatDistance = 0;
 		return;
 	}
 
-	if (UCharacterMovementComponent* MoveComp = CachedMyCharacter->GetCharacterMovement())
+	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	if (!NavSys)
 	{
-		MoveComp->MaxWalkSpeed = 300.0f;
-	}
-
-	constexpr float RetreatSpeedScale = 0.5f;
-	CachedMyCharacter->AddMovementInput(RetreatDirection, RetreatSpeedScale);
-}
-
-void USLAICombatComponent::UpdateOrbiting(float DeltaTime) const
-{
-	if (!bIsOrbiting || !IsValid(CurrentTarget.TargetActor)) return;
-
-	ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
-	if (!MyCharacter) return;
-
-	const FVector MyLocation = MyCharacter->GetActorLocation();
-	const FVector TargetLocation = CurrentTarget.TargetActor->GetActorLocation();
-	const FVector DirectionFromTarget = (MyLocation - TargetLocation).GetSafeNormal();
-
-	if (DirectionFromTarget.IsNearlyZero())
-	{
+		StopRetreating();
 		return;
 	}
 
-	if (UCharacterMovementComponent* MoveComp = CachedMyCharacter->GetCharacterMovement())
-	{
-		MoveComp->MaxWalkSpeed = 200.0f;
-	}
-	
-	const FVector TangentDirection = FVector(-DirectionFromTarget.Y * OrbitDirection,
-	                                         DirectionFromTarget.X * OrbitDirection,
-	                                         0.0f);
+	FNavLocation NavigableRetreatLocation;
+	bool bFoundPoint = false;
 
-	constexpr float OrbitSpeed = 1.0f;
-	MyCharacter->AddMovementInput(TangentDirection, OrbitSpeed);
+	for (int32 i = 0; i < 10; ++i)
+	{
+		FVector RandomOffset = FMath::VRand() * FMath::FRandRange(RetreatDistance * 0.5f, RetreatDistance);
+		FVector TestPoint = MyLocation + RetreatDirection * RetreatDistance + RandomOffset;
+
+		if (NavSys->GetRandomReachablePointInRadius(TestPoint, 200.0f, NavigableRetreatLocation))
+		{
+			bFoundPoint = true;
+			break;
+		}
+	}
+
+	if (!bFoundPoint)
+	{
+		bFoundPoint = NavSys->GetRandomReachablePointInRadius(MyLocation, RetreatDistance, NavigableRetreatLocation);
+	}
+
+	if (bFoundPoint)
+	{
+		//DrawDebugSphere(GetWorld(), NavigableRetreatLocation.Location, 50.f, 12, FColor::Green, false, 3.0f);
+
+		if (auto* MoveComp = Cast<ACharacter>(MyActor)->GetCharacterMovement())
+		{
+			MoveComp->MaxWalkSpeed = 300.0f;
+		}
+
+		MyController->SetFocus(CurrentTarget.TargetActor);
+		MyController->MoveToLocation(NavigableRetreatLocation.Location);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("최종 후퇴 지점 탐색 실패! 주변에 NavMesh가 충분하지 않을 수 있습니다."));
+		StopRetreating();
+	}
 }
 
 void USLAICombatComponent::StartRandomTurn()
@@ -378,19 +374,110 @@ void USLAICombatComponent::StartRandomTurn()
 	bIsOrbiting = true;
 	OrbitDirection = FMath::RandBool() ? 1.0f : -1.0f;
 
+	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+	{
+		if (UCharacterMovementComponent* MoveComp = MyCharacter->GetCharacterMovement())
+		{
+			MoveComp->MaxWalkSpeed = 300.0f;
+			DefaultBrakingDeceleration = MoveComp->BrakingDecelerationWalking;
+			MoveComp->BrakingDecelerationWalking = 0.f;
+		}
+	}
+
 	GetWorld()->GetTimerManager().SetTimer(
-		RandomTurnTimerHandle,
+		OrbitUpdateTimerHandle,
+		this,
+		&USLAICombatComponent::UpdateOrbiting,
+		0.3f,
+		true
+	);
+
+	GetWorld()->GetTimerManager().SetTimer(
+		EndOrbitTimerHandle,
 		this,
 		&USLAICombatComponent::FinishRandomTurn,
-		FMath::RandRange(0.5f, 2.0f),
+		FMath::RandRange(2.0f, 3.0f),
 		false
 	);
 }
 
 void USLAICombatComponent::FinishRandomTurn()
 {
+	if(!bIsOrbiting) return;
+	
 	bIsOrbiting = false;
-	SetComponentTickEnabled(false);
+	GetWorld()->GetTimerManager().ClearTimer(OrbitUpdateTimerHandle);
+
+	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+	{
+		if (UCharacterMovementComponent* MoveComp = MyCharacter->GetCharacterMovement())
+		{
+			MoveComp->MaxWalkSpeed = OriginalSpeed;
+			MoveComp->BrakingDecelerationWalking = DefaultBrakingDeceleration;
+		}
+
+		if (AAIController* MyController = MyCharacter->GetController<AAIController>())
+		{
+			MyController->StopMovement();
+		}
+	}
+}
+
+void USLAICombatComponent::UpdateOrbiting()
+{
+	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+	{
+		if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->IsInPrimaryState(TAG_AI_Dead)) return;
+	}
+	
+	if (!bIsOrbiting || !IsValid(CurrentTarget.TargetActor))
+	{
+		FinishRandomTurn();
+		return;
+	}
+
+	ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
+	if (!MyCharacter) return;
+
+	AAIController* MyController = MyCharacter->GetController<AAIController>();
+	if (!MyController)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UpdateOrbiting: AIController가 없습니다!"));
+		return;
+	}
+
+	const FVector MyLocation = MyCharacter->GetActorLocation();
+	const FVector TargetLocation = CurrentTarget.TargetActor->GetActorLocation();
+	const float OrbitRadius = 400.0f;
+
+	FVector DirectionFromTarget = MyLocation - TargetLocation;
+	DirectionFromTarget.Z = 0;
+
+	if (DirectionFromTarget.IsNearlyZero())
+	{
+		DirectionFromTarget = MyCharacter->GetActorForwardVector();
+	}
+
+	const FVector NormalizedDirection = DirectionFromTarget.GetSafeNormal();
+
+	const float AngleStep = 25.0f;
+	const FVector RotatedDirection = NormalizedDirection.RotateAngleAxis(AngleStep * OrbitDirection, FVector::UpVector);
+	const FVector NextOrbitPoint = TargetLocation + RotatedDirection.GetSafeNormal() * OrbitRadius;
+
+	MyController->MoveToLocation(
+		NextOrbitPoint,
+		-1.0f, // AcceptanceRadius: 목표에 얼마나 가까워져야 성공으로 간주할지 (-1은 기본값 사용)
+		true, // bStopOnOverlap
+		true // bUsePathfinding
+	);
+}
+
+void USLAICombatComponent::StopRetreating()
+{
+	if (!bIsRetreating) return;
+	bIsRetreating = false;
+
+	StartRandomTurn();
 
 	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 	{
@@ -401,17 +488,30 @@ void USLAICombatComponent::FinishRandomTurn()
 	}
 }
 
-void USLAICombatComponent::StopRetreating()
+void USLAICombatComponent::TryScheduleRetreat()
 {
-	if (!bIsRetreating) return;
-	bIsRetreating = false;
+	ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
+	if (!MyCharacter) return;
 
-	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+	if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage))
 	{
-		if (UCharacterMovementComponent* MoveComp = MyCharacter->GetCharacterMovement())
-		{
-			MoveComp->MaxWalkSpeed = OriginalSpeed;
-		}
+		GetWorld()->GetTimerManager().SetTimer(
+			BeginRetreatTimerHandle,
+			this,
+			&USLAICombatComponent::TryScheduleRetreat,
+			0.2f,
+			false
+		);
+	}
+	else
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			BeginRetreatTimerHandle,
+			this,
+			&USLAICombatComponent::StartRetreating,
+			1.0f,
+			false
+		);
 	}
 }
 
