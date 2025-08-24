@@ -24,6 +24,8 @@ protected:
 
 public:	
 	const EHurdleState GetHurdleState() { return HurdleState; }
+	const ERunnerMontageSection GetRunnerMontageSection() { return RunnerMontageSection; }
+	void SetDefaultHurdleState() { HurdleState = EHurdleState::None; }
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UStaticMeshComponent> StaticMeshComp;
@@ -34,5 +36,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EHurdleState HurdleState = EHurdleState::None;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ERunnerMontageSection RunnerMontageSection = ERunnerMontageSection::None;
 };

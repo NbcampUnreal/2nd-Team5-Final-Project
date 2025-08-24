@@ -3,7 +3,6 @@
 
 #include "Minigame/Object/SLRunnerHurdle.h"
 #include "Components/BoxComponent.h"
-#include "Kismet\GameplayStatics.h"
 
 // Sets default values
 ASLRunnerHurdle::ASLRunnerHurdle()
@@ -12,7 +11,11 @@ ASLRunnerHurdle::ASLRunnerHurdle()
 	SceneComp = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComp"));
 	SetRootComponent(SceneComp);
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
+	StaticMeshComp->SetupAttachment(SceneComp);
+	StaticMeshComp->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
+	BoxComp->SetupAttachment(SceneComp);
+	Tags.Add(TEXT("Hurdle"));
 }
 
 // Called when the game starts or when spawned
