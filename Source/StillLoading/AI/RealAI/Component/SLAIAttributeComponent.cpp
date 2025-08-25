@@ -1,23 +1,23 @@
-#include "AIAttributeComponent.h"
+#include "SLAIAttributeComponent.h"
 
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 
-UAIAttributeComponent::UAIAttributeComponent()
+USLAIAttributeComponent::USLAIAttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UAIAttributeComponent::BeginPlay()
+void USLAIAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	InitializeData();
 }
 
-void UAIAttributeComponent::InitializeData()
+void USLAIAttributeComponent::InitializeData()
 {
 	if (!AIStatsDataTable)
 	{
@@ -39,7 +39,7 @@ void UAIAttributeComponent::InitializeData()
 	SetAIStat(AIChapterType, AIUnitType);
 }
 
-void UAIAttributeComponent::SetAIStat(EAIChapterType NewChapterType, EAIUnitType NewUnitType)
+void USLAIAttributeComponent::SetAIStat(EAIChapterType NewChapterType, EAIUnitType NewUnitType)
 {
 	const UEnum* UnitTypeEnum = StaticEnum<EAIUnitType>();
     const UEnum* ChapterTypeEnum = StaticEnum<EAIChapterType>();
@@ -78,7 +78,7 @@ void UAIAttributeComponent::SetAIStat(EAIChapterType NewChapterType, EAIUnitType
     }
 }
 
-void UAIAttributeComponent::ApplyRandomStatsToOwner(const FAIUnitStatsData& StatsData)
+void USLAIAttributeComponent::ApplyRandomStatsToOwner(const FAIUnitStatsData& StatsData)
 {
 	AActor* OwnerActor = GetOwner();
 	if (!IsValid(OwnerActor)) return;

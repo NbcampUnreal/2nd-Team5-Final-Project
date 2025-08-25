@@ -1,6 +1,6 @@
 #include "SLAIStateComponent.h"
 
-#include "AIAttributeComponent.h"
+#include "SLAIAttributeComponent.h"
 #include "AIController.h"
 #include "NavigationSystem.h"
 #include "SLAICombatComponent.h"
@@ -84,7 +84,7 @@ void USLAIStateComponent::SetState(EAIBattleState NewState)
         CurrentState = NewState;
         OnEnterState(NewState);
         OnStateChanged.Broadcast(NewState);
-        LogStateModeStatus(FString::Printf(TEXT("상태 변경 -> %s"), *UEnum::GetValueAsString(NewState)));
+        //LogStateModeStatus(FString::Printf(TEXT("상태 변경 -> %s"), *UEnum::GetValueAsString(NewState)));
     }
 }
 
@@ -272,7 +272,7 @@ FVector USLAIStateComponent::FindSupportPosition(const FVector& TargetLocation, 
 
     if (const ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
     {
-        if (const UAIAttributeComponent* AttributeComp = MyCharacter->AIAttributeComp)
+        if (const USLAIAttributeComponent* AttributeComp = MyCharacter->AIAttributeComp)
         {
             AttackRange = AttributeComp->AttackRange;
         }

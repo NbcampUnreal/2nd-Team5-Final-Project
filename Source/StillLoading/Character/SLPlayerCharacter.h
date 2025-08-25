@@ -14,7 +14,7 @@ enum class EItemType : uint8;
 enum class EOrbitDirection : uint8;
 
 UENUM(BlueprintType)
-enum class EQueryType : uint8 // enum class 는 앞에 안붙이는게 더 낫다
+enum class EQueryType : uint8
 {
 	EQT_MovementBlock UMETA(DisplayName = "Movement Block"),
 	EQT_AttackBlock UMETA(DisplayName = "Attack Block"),

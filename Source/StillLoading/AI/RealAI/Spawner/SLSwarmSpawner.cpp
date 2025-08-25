@@ -5,7 +5,7 @@
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/SLMonsterAICharacterBase.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
-#include "AI/RealAI/Component/AIAttributeComponent.h"
+#include "AI/RealAI/Component/SLAIAttributeComponent.h"
 #include "AI/RealAI/Component/SLAIStateComponent.h"
 #include "AI/RealAI/Component/SLWaveSpawnerComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"

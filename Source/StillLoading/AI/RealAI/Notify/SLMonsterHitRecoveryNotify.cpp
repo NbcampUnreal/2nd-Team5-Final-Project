@@ -16,5 +16,4 @@ void USLMonsterHitRecoveryNotify::Notify(USkeletalMeshComponent* MeshComp, UAnim
 	if (!MyCharacter) return;
 
 	MyCharacter->HandleHitNotify();
-	
 }

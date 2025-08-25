@@ -11,7 +11,7 @@ class USLAICombatComponent;
 class USLAISupportModeComponent;
 class UBattleComponent;
 class UAnimationMontageComponent;
-class UAIAttributeComponent;
+class USLAIAttributeComponent;
 class USLAIPushComponent;
 class ASLBattleManager;
 class ASLSwarmSpawner;
@@ -38,7 +38,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAIPushComponent> AIPushComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
-	TObjectPtr<UAIAttributeComponent> AIAttributeComp;
+	TObjectPtr<USLAIAttributeComponent> AIAttributeComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")

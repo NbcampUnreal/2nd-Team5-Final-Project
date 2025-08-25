@@ -4,15 +4,15 @@
 #include "AI/RealAI/Data/EAIUnitType.h"
 #include "AI/RealAI/Data/FAIUnitStatsData.h"
 #include "Components/ActorComponent.h"
-#include "AIAttributeComponent.generated.h"
+#include "SLAIAttributeComponent.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class STILLLOADING_API UAIAttributeComponent : public UActorComponent
+class STILLLOADING_API USLAIAttributeComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UAIAttributeComponent();
+	USLAIAttributeComponent();
 
 protected:
 	virtual void BeginPlay() override;

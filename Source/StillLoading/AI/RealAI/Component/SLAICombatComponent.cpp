@@ -1,6 +1,6 @@
 #include "SLAICombatComponent.h"
 
-#include "AIAttributeComponent.h"
+#include "SLAIAttributeComponent.h"
 #include "AIController.h"
 #include "NavigationSystem.h"
 #include "SLAIStateComponent.h"

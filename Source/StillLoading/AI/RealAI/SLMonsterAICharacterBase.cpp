@@ -2,7 +2,7 @@
 
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
-#include "Component/AIAttributeComponent.h"
+#include "Component/SLAIAttributeComponent.h"
 #include "Component/SLAICombatComponent.h"
 #include "Component/SLAIPushComponent.h"
 #include "Component/SLAIStateComponent.h"
@@ -14,7 +14,7 @@ ASLMonsterAICharacterBase::ASLMonsterAICharacterBase()
 	AIStateComp = CreateDefaultSubobject<USLAIStateComponent>(TEXT("AIStateComponent"));
 	AICombatComp = CreateDefaultSubobject<USLAICombatComponent>(TEXT("AICombatComponent"));
 	AIPushComp = CreateDefaultSubobject<USLAIPushComponent>(TEXT("AIPushComponent"));
-	AIAttributeComp = CreateDefaultSubobject<UAIAttributeComponent>(TEXT("AIAttributeComponent"));
+	AIAttributeComp = CreateDefaultSubobject<USLAIAttributeComponent>(TEXT("AIAttributeComponent"));
 	AnimationComponent = CreateDefaultSubobject<UAnimationMontageComponent>(TEXT("AnimationComponent"));
 	BattleComponent = CreateDefaultSubobject<UBattleComponent>(TEXT("BattleComponent"));
 }
