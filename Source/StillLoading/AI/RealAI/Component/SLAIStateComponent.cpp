@@ -17,7 +17,6 @@ DEFINE_LOG_CATEGORY(LogAIStateComponent);
 USLAIStateComponent::USLAIStateComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.TickInterval = 1.0f;
 	CurrentState = EAIBattleState::Idle;
 	CurrentTargetPointIndex = 0;
 }
@@ -110,6 +109,7 @@ void USLAIStateComponent::OnEnterState(EAIBattleState NewState)
     case EAIBattleState::Attacking:
         if (CachedAIController.IsValid() && IsValid(CachedMyCharacter))
         {
+            CachedAIController->StopMovement();
             CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
         }
         break;

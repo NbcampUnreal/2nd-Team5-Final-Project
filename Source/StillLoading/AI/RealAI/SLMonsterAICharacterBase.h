@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "SLMonsterAICharacterBase.generated.h"
 
+class USLAILODComponent;
 class USLAICombatComponent;
 class USLAISupportModeComponent;
 class UBattleComponent;
@@ -35,6 +36,8 @@ public:
 	TObjectPtr<USLAIStateComponent> AIStateComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAICombatComponent> AICombatComp;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
+	TObjectPtr<USLAILODComponent> AILODComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAIPushComponent> AIPushComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")

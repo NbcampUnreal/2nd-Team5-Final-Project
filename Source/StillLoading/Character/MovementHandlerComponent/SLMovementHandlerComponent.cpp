@@ -710,7 +710,7 @@ void UMovementHandlerComponent::SetViewMode(bool bIsTPS)
     {
         OwnerCharacter->bUseControllerRotationYaw = true;
         OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
-        //OwnerCharacter->CameraBoom->bUsePawnControlRotation = true;
+        OwnerCharacter->CameraBoom->bUsePawnControlRotation = true;
 
     	OwnerCharacter->CameraBoom->SetRelativeLocation(FVector(85.f, 60.f, 60.f));
     	OwnerCharacter->CameraBoom->SetRelativeRotation(FRotator(0.f, -30.f, 0.f));

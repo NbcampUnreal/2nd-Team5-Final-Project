@@ -129,7 +129,7 @@ void ASLBattleManager::InitializeAISupportingMode()
 			SupportReassignmentTimerHandle,
 			this,
 			&ASLBattleManager::ProcessSupportingAIReassignment,
-			10.0f,
+			7.0f,
 			true
 		);
 	}

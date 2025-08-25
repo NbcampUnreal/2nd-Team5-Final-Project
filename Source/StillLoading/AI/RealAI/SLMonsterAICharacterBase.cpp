@@ -4,6 +4,7 @@
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Component/SLAIAttributeComponent.h"
 #include "Component/SLAICombatComponent.h"
+#include "Component/SLAILODComponent.h"
 #include "Component/SLAIPushComponent.h"
 #include "Component/SLAIStateComponent.h"
 
@@ -13,6 +14,7 @@ ASLMonsterAICharacterBase::ASLMonsterAICharacterBase()
 
 	AIStateComp = CreateDefaultSubobject<USLAIStateComponent>(TEXT("AIStateComponent"));
 	AICombatComp = CreateDefaultSubobject<USLAICombatComponent>(TEXT("AICombatComponent"));
+	AILODComp = CreateDefaultSubobject<USLAILODComponent>(TEXT("AILODComponent"));
 	AIPushComp = CreateDefaultSubobject<USLAIPushComponent>(TEXT("AIPushComponent"));
 	AIAttributeComp = CreateDefaultSubobject<USLAIAttributeComponent>(TEXT("AIAttributeComponent"));
 	AnimationComponent = CreateDefaultSubobject<UAnimationMontageComponent>(TEXT("AnimationComponent"));
