@@ -95,7 +95,7 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(true);
-			StateComponent->SetComponentTickInterval(0.5f);
+			StateComponent->SetComponentTickInterval(1.0f);
 		}
 		break;
 
@@ -103,7 +103,7 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(true);
-			StateComponent->SetComponentTickInterval(1.0f);
+			StateComponent->SetComponentTickInterval(2.0f);
 		}
 		break;
 
