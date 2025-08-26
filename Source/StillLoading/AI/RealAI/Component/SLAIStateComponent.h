@@ -105,6 +105,12 @@ private:
     // 서포트 모드 관련
     FVector FindSupportPosition(const FVector& TargetLocation, const FVector& MyLocation) const;
 
+    // 적 탐지 관련
+    void PerformEnemyDetection();
+
+    FTimerHandle DetectionTimerHandle;
+    TWeakObjectPtr<AActor> LastDetectedEnemy;
+
     UPROPERTY()
     TObjectPtr<AActor> SupportTargetActor = nullptr;
     UPROPERTY()

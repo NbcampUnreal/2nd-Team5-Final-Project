@@ -41,7 +41,7 @@ public:
     
     // 적 탐지 및 관리
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
-    AActor* FindEnemyInDetectionRange() const;
+    AActor* FindEnemyInDetectionRange();
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
     void HandleEnemyDetection(AActor* DetectedEnemy);
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
@@ -112,6 +112,8 @@ private:
 
     // 적 추적
     bool bIsRetreating = false;
+    float TargetFoundTime = 0.f;
+    float TargetAvailTime = 10.0f;
 
     // 후퇴 거리
     float RetreatDistance = 400.0f;
@@ -125,7 +127,8 @@ private:
 
     // 타이머
     FTimerHandle TargetClearTimerHandle;
-    
+
+    // 타겟 해제까지 걸리는 시간
     UPROPERTY(EditAnywhere, Category = "AI|Combat")
     float TargetLostGracePeriod = 3.0f;
 

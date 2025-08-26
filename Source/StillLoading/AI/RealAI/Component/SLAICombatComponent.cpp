@@ -103,8 +103,17 @@ void USLAICombatComponent::UpdateSupporting(float DeltaTime)
 }
 
 // StateComponent 에서 실행
-AActor* USLAICombatComponent::FindEnemyInDetectionRange() const
+AActor* USLAICombatComponent::FindEnemyInDetectionRange()
 {
+	if (CurrentTarget.TargetActor)
+	{
+		float CurrentTime = GetWorld()->GetTimeSeconds();
+		if (CurrentTime - TargetFoundTime < TargetAvailTime)
+		{
+			return CurrentTarget.TargetActor;
+		}
+	}
+	
 	TArray<FOverlapResult> OverlappingResults;
 	const FVector OwnerLocation = GetOwner()->GetActorLocation();
 
@@ -134,6 +143,8 @@ AActor* USLAICombatComponent::FindEnemyInDetectionRange() const
 			NearestEnemy = OverlappedActor;
 		}
 	}
+
+	TargetFoundTime = GetWorld()->GetTimeSeconds();
 
 	return NearestEnemy;
 }

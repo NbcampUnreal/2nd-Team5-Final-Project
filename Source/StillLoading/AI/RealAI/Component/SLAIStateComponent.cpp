@@ -27,6 +27,13 @@ void USLAIStateComponent::BeginPlay()
 
     CombatComponent = GetOwner()->FindComponentByClass<USLAICombatComponent>();
 
+    GetWorld()->GetTimerManager().SetTimer(
+        DetectionTimerHandle,
+        this,
+        &USLAIStateComponent::PerformEnemyDetection,
+        0.5f,
+        true);
+
     Initialize();
 }
 
@@ -41,17 +48,22 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
         if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->IsInPrimaryState(TAG_AI_Dead)) return;
     }
 
-    if (CombatComponent)
+    AActor* DetectedEnemy = LastDetectedEnemy.Get();
+    if (IsValid(DetectedEnemy))
     {
-        AActor* DetectedEnemy = CombatComponent->FindEnemyInDetectionRange();
-        if (IsValid(DetectedEnemy))
-        {
-            CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
-        }
-        CombatComponent->HandleEnemyDetection(DetectedEnemy);
+        CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
     }
+    CombatComponent->HandleEnemyDetection(DetectedEnemy);
     
     UpdateCurrentState(DeltaTime);
+}
+
+void USLAIStateComponent::PerformEnemyDetection()
+{
+    if (CombatComponent)
+    {
+        LastDetectedEnemy = CombatComponent->FindEnemyInDetectionRange();
+    }
 }
 
 void USLAIStateComponent::UpdateCurrentState(float DeltaTime)

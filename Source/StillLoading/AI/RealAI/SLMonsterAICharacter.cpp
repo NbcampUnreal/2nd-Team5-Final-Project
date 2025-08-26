@@ -18,7 +18,7 @@
 
 ASLMonsterAICharacter::ASLMonsterAICharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -83,11 +83,6 @@ void ASLMonsterAICharacter::BeginPlay()
 	}
 
 	SetPrimaryState(TAG_AI_Idle);
-}
-
-void ASLMonsterAICharacter::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
 }
 
 void ASLMonsterAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)

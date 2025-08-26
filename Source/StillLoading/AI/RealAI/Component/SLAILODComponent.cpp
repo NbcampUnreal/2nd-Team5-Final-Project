@@ -7,8 +7,7 @@
 
 USLAILODComponent::USLAILODComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.TickInterval = 0.3f;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void USLAILODComponent::BeginPlay()
@@ -19,26 +18,11 @@ void USLAILODComponent::BeginPlay()
 	if (!OwnerCharacter)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AILODComponent is attached to a non-character actor. Disabling component."));
-		SetComponentTickEnabled(false);
 		return;
 	}
 
 	StateComponent = OwnerCharacter->FindComponentByClass<USLAIStateComponent>();
 	SetLODLevel(CalculateLODLevel());
-}
-
-void USLAILODComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-                                      FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (!OwnerCharacter) return;
-
-	const EAILODLevel NewLODLevel = CalculateLODLevel();
-	if (NewLODLevel != CurrentLODLevel)
-	{
-		SetLODLevel(NewLODLevel);
-	}
 }
 
 EAILODLevel USLAILODComponent::CalculateLODLevel() const
@@ -48,8 +32,12 @@ EAILODLevel USLAILODComponent::CalculateLODLevel() const
 
 	const float DistanceSquared = FVector::DistSquared(OwnerCharacter->GetActorLocation(), PlayerPawn->GetActorLocation());
 	EAILODLevel DistanceLOD;
-    
-	if (DistanceSquared <= FMath::Square(HighDetailDistance))
+
+	if (DistanceSquared <= FMath::Square(MaxDetailDistance))
+	{
+		DistanceLOD = EAILODLevel::Max;
+	}
+	else if (DistanceSquared <= FMath::Square(HighDetailDistance))
 	{
 		DistanceLOD = EAILODLevel::High;
 	}
@@ -89,28 +77,40 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
 	CurrentLODLevel = NewLevel;
 
+	USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh();
+	if (!Mesh) return;
+	
 	switch (CurrentLODLevel)
 	{
+	case EAILODLevel::Max:
+		if (StateComponent)
+		{
+			StateComponent->SetComponentTickEnabled(true);
+			StateComponent->SetComponentTickInterval(0.2f);
+			Mesh->SetComponentTickEnabled(true);
+		}
+		break;
 	case EAILODLevel::High:
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(true);
-			StateComponent->SetComponentTickInterval(1.0f);
+			StateComponent->SetComponentTickInterval(0.5f);
+			Mesh->SetComponentTickEnabled(true);
 		}
 		break;
-
 	case EAILODLevel::Medium:
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(true);
 			StateComponent->SetComponentTickInterval(2.0f);
+			Mesh->SetComponentTickEnabled(false);
 		}
 		break;
-
 	case EAILODLevel::Low:
 	case EAILODLevel::Culled:
 		OwnerCharacter->SetActorHiddenInGame(true);
 		OwnerCharacter->ToggleWeaponState(false);
+		Mesh->SetComponentTickEnabled(false);
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(false);

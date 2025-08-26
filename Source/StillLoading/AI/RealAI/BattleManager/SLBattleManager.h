@@ -21,19 +21,14 @@ struct FBattleUnitInfo
 
 	UPROPERTY()
 	TObjectPtr<AActor> Actor = nullptr;
-
 	UPROPERTY()
 	FGenericTeamId TeamId;
-
 	UPROPERTY()
 	bool bIsPlayer = false;
-    
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<AActor> CurrentEngagedTarget;
-    
 	UPROPERTY()
 	TObjectPtr<USLAIStateComponent> WarComponent = nullptr;
-
 	UPROPERTY()
 	TObjectPtr<ASLSwarmSpawner> SourceSpawner = nullptr;
 };
@@ -45,7 +40,6 @@ struct FSpawnerTargetPoints
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetPoints")
 	TObjectPtr<ASLSwarmSpawner> Spawner = nullptr;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetPoints")
 	TArray<ATargetPoint*> TargetPoints;
 };
@@ -68,6 +62,19 @@ struct FEngagedUnitsWrapper
 	TArray<TObjectPtr<AActor>> EngagedUnits;
 };
 
+USTRUCT(BlueprintType)
+struct FBattleAILODBudget
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
+	int32 MaxLODCount = 10;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
+	int32 HighLODCount = 15;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
+	int32 MediumLODCount = 20;
+};
+
 UCLASS()
 class STILLLOADING_API ASLBattleManager : public AActor
 {
@@ -78,6 +85,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
@@ -115,6 +123,9 @@ protected:
 	UFUNCTION()
 	void HandleAllWavesCompleted(ASLSwarmSpawner* CompletedSpawner);
 	void RebuildTeamIndices();
+
+	// LOD 관리
+	void UpdateAILODs();
 
 	// --- 스포너 관리 ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle Management|Spawners")
@@ -186,6 +197,10 @@ private:
 	int32 MaxEngagingUnitsPerTarget = 3;
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	bool bIsPlayerOnly = false;
+	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
+	bool bUseLODSystem = true;
+	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
+	FBattleAILODBudget LODBudget;
 	UPROPERTY()
 	FTimerHandle SupportReassignmentTimerHandle;
 };
