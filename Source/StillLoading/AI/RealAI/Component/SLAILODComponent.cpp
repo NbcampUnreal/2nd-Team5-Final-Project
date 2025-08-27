@@ -2,6 +2,7 @@
 
 #include "SLAIStateComponent.h"
 #include "AI/RealAI/SLMonsterAICharacter.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -88,7 +89,9 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 	case EAILODLevel::Max:
 		Mesh->SetComponentTickEnabled(true);
 		Mesh->SetCastShadow(true);
+		Mesh->SetComponentTickInterval(0.0f);
 		MovementComponent->Activate();
+		OwnerCharacter->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(true);
@@ -98,7 +101,9 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 	case EAILODLevel::High:
 		Mesh->SetComponentTickEnabled(true);
 		Mesh->SetCastShadow(false);
+		Mesh->SetComponentTickInterval(0.1f);
 		MovementComponent->Activate();
+		OwnerCharacter->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(true);
@@ -108,7 +113,9 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 	case EAILODLevel::Medium:
 		Mesh->SetComponentTickEnabled(false);
 		Mesh->SetCastShadow(false);
+		Mesh->SetComponentTickInterval(0.2f);
 		MovementComponent->SetAvoidanceEnabled(false);
+		OwnerCharacter->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(false);
