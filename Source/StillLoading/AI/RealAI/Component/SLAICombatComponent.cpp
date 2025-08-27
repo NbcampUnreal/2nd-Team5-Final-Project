@@ -85,9 +85,10 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 		{
 			if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 			{
-				if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->IsInPrimaryState(TAG_AI_Dead)) return;
+				if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->
+					IsInPrimaryState(TAG_AI_Dead)) return;
 			}
-			
+
 			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), 50);
 		}
 	}
@@ -113,7 +114,7 @@ AActor* USLAICombatComponent::FindEnemyInDetectionRange()
 			return CurrentTarget.TargetActor;
 		}
 	}
-	
+
 	TArray<FOverlapResult> OverlappingResults;
 	const FVector OwnerLocation = GetOwner()->GetActorLocation();
 
@@ -220,6 +221,22 @@ void USLAICombatComponent::HandleNoEnemyDetected()
 			);
 		}
 	}
+}
+
+void USLAICombatComponent::UpdateFakeMovement(float DeltaTime)
+{
+	if (!IsValid(CurrentTarget.TargetActor))
+	{
+		return;
+	}
+	
+	FVector TargetLocation = CurrentTarget.TargetActor->GetActorLocation();
+	AActor* OwnerActor = GetOwner();
+
+	FVector Direction = (TargetLocation - OwnerActor->GetActorLocation()).GetSafeNormal();
+	OwnerActor->SetActorLocation(OwnerActor->GetActorLocation() + Direction * 200.0f * DeltaTime);
+
+	SafeLookAtTarget(CurrentTarget.TargetActor, DeltaTime);
 }
 
 void USLAICombatComponent::SetTarget(AActor* NewTarget)
@@ -414,8 +431,8 @@ void USLAICombatComponent::StartRandomTurn()
 
 void USLAICombatComponent::FinishRandomTurn()
 {
-	if(!bIsOrbiting) return;
-	
+	if (!bIsOrbiting) return;
+
 	bIsOrbiting = false;
 	GetWorld()->GetTimerManager().ClearTimer(OrbitUpdateTimerHandle);
 
@@ -438,9 +455,10 @@ void USLAICombatComponent::UpdateOrbiting()
 {
 	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 	{
-		if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->IsInPrimaryState(TAG_AI_Dead)) return;
+		if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->IsInPrimaryState(TAG_AI_Dead))
+			return;
 	}
-	
+
 	if (!bIsOrbiting || !IsValid(CurrentTarget.TargetActor))
 	{
 		FinishRandomTurn();

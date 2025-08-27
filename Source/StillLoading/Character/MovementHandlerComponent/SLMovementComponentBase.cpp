@@ -141,9 +141,7 @@ void USLMovementComponentBase::OnActionStarted_Implementation(EInputActionType A
 	case EInputActionType::EIAT_Special:
 		DanceTime();
 		break;
-
-	default:
-		break;
+	default: break;
 	}
 }
 

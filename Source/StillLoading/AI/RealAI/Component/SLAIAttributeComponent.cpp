@@ -4,7 +4,6 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-
 USLAIAttributeComponent::USLAIAttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -13,7 +12,6 @@ USLAIAttributeComponent::USLAIAttributeComponent()
 void USLAIAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
 	InitializeData();
 }
 

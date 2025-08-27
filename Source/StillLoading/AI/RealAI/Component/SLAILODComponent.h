@@ -32,21 +32,7 @@ private:
 	EAILODLevel CurrentLODLevel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float MaxDetailDistance = 2000.f; // 20m
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float HighDetailDistance = 5000.f; // 50m
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float MediumDetailDistance = 6000.f; // 60m
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float LowDetailDistance = 8000.f; // 80m
-
-	// LOD 상태를 얼마나 자주 체크할 것인지 (매 프레임 체크하는 것을 방지)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
 	float LODCheckInterval = 0.25f;
-
 	float LODCheckTimer;
 
 	UPROPERTY()
@@ -57,5 +43,5 @@ private:
 
 public:
 	void SetLODLevel(EAILODLevel NewLevel);
-	EAILODLevel CalculateLODLevel() const;
+	EAILODLevel CalculateLODLevel(float MaxDetailDistance, float HighDetailDistance, float MediumDetailDistance, float LowDetailDistance) const;
 };

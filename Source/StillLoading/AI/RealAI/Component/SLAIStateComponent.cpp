@@ -81,6 +81,13 @@ void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
             CombatComponent->UpdateAttacking(DeltaTime);
         }
         break;
+
+    case EAIBattleState::FakeMoving:
+        if (CombatComponent)
+        {
+            CombatComponent->UpdateFakeMovement(DeltaTime);
+        }
+        break;
         
     default:
         LogStateModeStatus(TEXT("알 수 없는 AI 상태"));
@@ -123,6 +130,12 @@ void USLAIStateComponent::OnEnterState(EAIBattleState NewState)
         {
             CachedAIController->StopMovement();
             CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+        }
+        break;
+    case EAIBattleState::FakeMoving:
+        if (CachedAIController.IsValid() && IsValid(CachedMyCharacter))
+        {
+            CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
         }
         break;
     }
@@ -213,12 +226,14 @@ void USLAIStateComponent::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
     if (Result.IsSuccess())
     {
         CurrentTargetPointIndex++;
+
+        float RandRequestRange = FMath::RandRange(0.5f, 1.0f);
         
         GetWorld()->GetTimerManager().SetTimer(
             MovementCompletionTimerHandle,
             this,
             &USLAIStateComponent::RequestNextTargetPoint,
-            0.2f,
+            RandRequestRange,
             false
         );
     }

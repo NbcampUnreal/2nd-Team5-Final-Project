@@ -11,7 +11,7 @@
 ASLBattleManager::ASLBattleManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = 0.25f;
+	PrimaryActorTick.TickInterval = 0.2f;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
@@ -329,105 +329,88 @@ void ASLBattleManager::RebuildTeamIndices()
 
 void ASLBattleManager::UpdateAILODs()
 {
-	const APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (!PlayerPawn || RegisteredUnits.Num() == 0) return;
+    const APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+    if (!PlayerPawn || RegisteredUnits.Num() == 0) return;
 
-	const FVector PlayerLocation = PlayerPawn->GetActorLocation();
+    const FVector PlayerLocation = PlayerPawn->GetActorLocation();
 
-	TArray<FBattleUnitInfo*> MaxDistanceAIs;
-	TArray<FBattleUnitInfo*> HighDistanceAIs;
-	TArray<FBattleUnitInfo*> MediumDistanceAIs;
-	TArray<FBattleUnitInfo*> LowDistanceAIs;
+    // 거리 기준으로 1차 분류.
+    TArray<FBattleUnitInfo*> UnitsByLOD[5]; // Max, High, Medium, Low, Culled
+    for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
+    {
+        if (!IsValid(UnitInfo.Actor) || !UnitInfo.Actor->FindComponentByClass<USLAILODComponent>())
+        {
+            continue;
+        }
 
-	for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
-	{
-		if (!IsValid(UnitInfo.Actor)) continue;
+        const float DistanceSquared = FVector::DistSquared(UnitInfo.Actor->GetActorLocation(), PlayerLocation);
+        EAILODLevel IdealLevel;
 
-		USLAILODComponent* LODComponent = UnitInfo.Actor->FindComponentByClass<USLAILODComponent>();
-		if (!LODComponent) continue;
+        if (DistanceSquared <= FMath::Square(LODDistances.MaxDetailDistance)) IdealLevel = EAILODLevel::Max;
+        else if (DistanceSquared <= FMath::Square(LODDistances.HighDetailDistance)) IdealLevel = EAILODLevel::High;
+        else if (DistanceSquared <= FMath::Square(LODDistances.MediumDetailDistance)) IdealLevel = EAILODLevel::Medium;
+        else if (DistanceSquared <= FMath::Square(LODDistances.LowDetailDistance)) IdealLevel = EAILODLevel::Low;
+        else IdealLevel = EAILODLevel::Culled;
 
-		const EAILODLevel CalculatedLOD = LODComponent->CalculateLODLevel();
+        UnitsByLOD[static_cast<int>(IdealLevel)].Add(&UnitInfo);
+    }
 
-		switch (CalculatedLOD)
-		{
-		case EAILODLevel::Max:
-			MaxDistanceAIs.Add(&UnitInfo);
-			break;
-		case EAILODLevel::High:
-			HighDistanceAIs.Add(&UnitInfo);
-			break;
-		case EAILODLevel::Medium:
-			MediumDistanceAIs.Add(&UnitInfo);
-			break;
-		case EAILODLevel::Low:
-			LowDistanceAIs.Add(&UnitInfo);
-			break;
-		case EAILODLevel::Culled:
-			LODComponent->SetLODLevel(EAILODLevel::Culled);
-			break;
-		}
-	}
+    // 고비용 등급(Max + High)의 AI 예산 초과 확인.
+    const int32 HighCostUnitCount = UnitsByLOD[0].Num() + UnitsByLOD[1].Num();
+    const int32 HighCostBudget = LODBudget.MaxLODCount + LODBudget.HighLODCount;
 
-	MaxDistanceAIs.Sort([PlayerLocation](const FBattleUnitInfo& A, const FBattleUnitInfo& B)
-	{
-		return FVector::DistSquared(A.Actor->GetActorLocation(), PlayerLocation) < FVector::DistSquared(
-			B.Actor->GetActorLocation(), PlayerLocation);
-	});
-	
-	for (int32 i = 0; i < MaxDistanceAIs.Num(); ++i)
-	{
-		USLAILODComponent* LODComponent = MaxDistanceAIs[i]->Actor->FindComponentByClass<USLAILODComponent>();
-		if (i < LODBudget.MaxLODCount)
-		{
-			LODComponent->SetLODLevel(EAILODLevel::Max);
-		}
-		else
-		{
-			LODComponent->SetLODLevel(EAILODLevel::High);
-		}
-	}
+    if (HighCostUnitCount > HighCostBudget)
+    {
+        TArray<FBattleUnitInfo*> HighCostUnits;
+        HighCostUnits.Append(UnitsByLOD[0]);
+        HighCostUnits.Append(UnitsByLOD[1]);
 
-	HighDistanceAIs.Sort([PlayerLocation](const FBattleUnitInfo& A, const FBattleUnitInfo& B)
-	{
-		return FVector::DistSquared(A.Actor->GetActorLocation(), PlayerLocation) < FVector::DistSquared(
-			B.Actor->GetActorLocation(), PlayerLocation);
-	});
-	for (int32 i = 0; i < HighDistanceAIs.Num(); ++i)
-	{
-		USLAILODComponent* LODComponent = HighDistanceAIs[i]->Actor->FindComponentByClass<USLAILODComponent>();
-		if (i < LODBudget.HighLODCount)
-		{
-			LODComponent->SetLODLevel(EAILODLevel::High);
-		}
-		else
-		{
-			LODComponent->SetLODLevel(EAILODLevel::Medium);
-		}
-	}
+        HighCostUnits.Sort([PlayerLocation](const FBattleUnitInfo& A, const FBattleUnitInfo& B)
+        {
+            return FVector::DistSquared(A.Actor->GetActorLocation(), PlayerLocation) < FVector::DistSquared(B.Actor->GetActorLocation(), PlayerLocation);
+        });
 
-	MediumDistanceAIs.Sort([PlayerLocation](const FBattleUnitInfo& A, const FBattleUnitInfo& B)
-	{
-		return FVector::DistSquared(A.Actor->GetActorLocation(), PlayerLocation) < FVector::DistSquared(
-			B.Actor->GetActorLocation(), PlayerLocation);
-	});
-	
-	for (int32 i = 0; i < MediumDistanceAIs.Num(); ++i)
-	{
-		USLAILODComponent* LODComponent = MediumDistanceAIs[i]->Actor->FindComponentByClass<USLAILODComponent>();
-		if (i < LODBudget.MediumLODCount)
-		{
-			LODComponent->SetLODLevel(EAILODLevel::Medium);
-		}
-		else
-		{
-			LODComponent->SetLODLevel(EAILODLevel::Low);
-		}
-	}
+        for (int32 i = 0; i < HighCostUnits.Num(); ++i)
+        {
+            USLAILODComponent* LODComponent = HighCostUnits[i]->Actor->FindComponentByClass<USLAILODComponent>();
+            if (i < LODBudget.MaxLODCount)
+            {
+                LODComponent->SetLODLevel(EAILODLevel::Max);
+            }
+            else if (i < HighCostBudget)
+            {
+                LODComponent->SetLODLevel(EAILODLevel::High);
+            }
+            else
+            {
+                LODComponent->SetLODLevel(EAILODLevel::Medium);
+            }
+        }
+    }
+    else
+    {
+        for (FBattleUnitInfo* UnitInfo : UnitsByLOD[0]) // Max
+        {
+            UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::Max);
+        }
+        for (FBattleUnitInfo* UnitInfo : UnitsByLOD[1]) // High
+        {
+            UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::High);
+        }
+    }
 
-	for (FBattleUnitInfo* UnitInfo : LowDistanceAIs)
-	{
-		UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::Low);
-	}
+    for (FBattleUnitInfo* UnitInfo : UnitsByLOD[2]) // Medium
+    {
+        UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::Medium);
+    }
+    for (FBattleUnitInfo* UnitInfo : UnitsByLOD[3]) // Low
+    {
+        UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::Low);
+    }
+    for (FBattleUnitInfo* UnitInfo : UnitsByLOD[4]) // Culled
+    {
+        UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::Culled);
+    }
 }
 
 bool ASLBattleManager::AreEnemies(const FGenericTeamId& me, const FGenericTeamId& target, const bool bIsPlayer) const

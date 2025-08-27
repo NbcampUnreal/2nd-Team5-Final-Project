@@ -20,6 +20,7 @@ enum class EAIBattleState : uint8
     Idle            UMETA(DisplayName = "대기"),
     Moving          UMETA(DisplayName = "이동"),
     Attacking       UMETA(DisplayName = "공격"),
+    FakeMoving,
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAIStateChanged, EAIBattleState, NewState);

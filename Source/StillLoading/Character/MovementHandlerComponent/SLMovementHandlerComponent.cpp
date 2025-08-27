@@ -179,13 +179,13 @@ void UMovementHandlerComponent::OnActionStarted_Implementation(EInputActionType 
 			BufferComp->OnIMCActionStarted(ActionType);
 		}
 		break;
-	case EInputActionType::EIAT_Interaction:
-		break;
 	case EInputActionType::EIAT_Walk:
 		DodgeLoco();
 		break;
 	case EInputActionType::EIAT_LockObject:
 		ToggleLockState();
+		break;
+	case EInputActionType::EIAT_Interaction:
 		break;
 	case EInputActionType::EIAT_ChangeView:
 		SetViewMode(!bActivateTPSView);
@@ -212,12 +212,12 @@ void UMovementHandlerComponent::OnActionCompleted_Implementation(EInputActionTyp
 	case EInputActionType::EIAT_MoveDown:
 	case EInputActionType::EIAT_MoveLeft:
 	case EInputActionType::EIAT_MoveRight:
+	case EInputActionType::EIAT_Interaction:
 		break;
 	case EInputActionType::EIAT_Walk:
 		break;
 	case EInputActionType::EIAT_Jump:
 		break;
-	case EInputActionType::EIAT_Interaction:
 	case EInputActionType::EIAT_Attack:
 		break;
 	case EInputActionType::EIAT_PointMove:

@@ -3,6 +3,7 @@
 #include "SLAIStateComponent.h"
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 USLAILODComponent::USLAILODComponent()
@@ -22,10 +23,9 @@ void USLAILODComponent::BeginPlay()
 	}
 
 	StateComponent = OwnerCharacter->FindComponentByClass<USLAIStateComponent>();
-	SetLODLevel(CalculateLODLevel());
 }
 
-EAILODLevel USLAILODComponent::CalculateLODLevel() const
+EAILODLevel USLAILODComponent::CalculateLODLevel(float MaxDetailDistance, float HighDetailDistance, float MediumDetailDistance, float LowDetailDistance) const
 {
 	const APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	if (!PlayerPawn || !OwnerCharacter) return EAILODLevel::Culled;
@@ -79,38 +79,50 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
 	USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh();
 	if (!Mesh) return;
-	
+
+	UCharacterMovementComponent* MovementComponent = OwnerCharacter->GetCharacterMovement();
+	if (!MovementComponent) return;
+
 	switch (CurrentLODLevel)
 	{
 	case EAILODLevel::Max:
+		Mesh->SetComponentTickEnabled(true);
+		Mesh->SetCastShadow(true);
+		MovementComponent->Activate();
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(true);
-			StateComponent->SetComponentTickInterval(0.2f);
-			Mesh->SetComponentTickEnabled(true);
+			StateComponent->SetComponentTickInterval(0.3f);
 		}
 		break;
 	case EAILODLevel::High:
+		Mesh->SetComponentTickEnabled(true);
+		Mesh->SetCastShadow(false);
+		MovementComponent->Activate();
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(true);
 			StateComponent->SetComponentTickInterval(0.5f);
-			Mesh->SetComponentTickEnabled(true);
 		}
 		break;
 	case EAILODLevel::Medium:
+		Mesh->SetComponentTickEnabled(false);
+		Mesh->SetCastShadow(false);
+		MovementComponent->SetAvoidanceEnabled(false);
 		if (StateComponent)
 		{
-			StateComponent->SetComponentTickEnabled(true);
-			StateComponent->SetComponentTickInterval(2.0f);
-			Mesh->SetComponentTickEnabled(false);
+			StateComponent->SetComponentTickEnabled(false);
+			//StateComponent->SetComponentTickInterval(1.0f);
+			StateComponent->SetState(EAIBattleState::FakeMoving);
 		}
 		break;
 	case EAILODLevel::Low:
 	case EAILODLevel::Culled:
 		OwnerCharacter->SetActorHiddenInGame(true);
 		OwnerCharacter->ToggleWeaponState(false);
+		MovementComponent->Deactivate();
 		Mesh->SetComponentTickEnabled(false);
+		Mesh->SetCastShadow(false);
 		if (StateComponent)
 		{
 			StateComponent->SetComponentTickEnabled(false);

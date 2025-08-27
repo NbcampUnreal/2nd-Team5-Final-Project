@@ -31,10 +31,9 @@ public class StillLoading : ModuleRules
             "LevelSequence",
             "MovieScene",
             "MovieSceneTracks"
-
         });
 
-        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore", "VulkanRHI" });
+        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore", "VulkanRHI", "ChaosCloth" });
 
         PrivateIncludePaths.Add("StillLoading");
 	}
