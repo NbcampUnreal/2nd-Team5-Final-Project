@@ -40,6 +40,8 @@ public:
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
 	UFUNCTION()
 	void HandleHitNotify();
+	UFUNCTION()
+	void ActivateMovementComponent();
 	
 	// Anim
 	void PlayAttackAnim();

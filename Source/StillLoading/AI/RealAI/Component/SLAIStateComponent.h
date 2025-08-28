@@ -84,6 +84,9 @@ public:
     // 이동 관련 (다른 컴포넌트에서 참조)
     FVector MovementTargetLocation;
 
+    // LOD 적용
+    FTimerHandle DetectionTimerHandle;
+
 private:
     // 로그 관리
     void LogStateModeStatus(const FString& Message) const;
@@ -108,8 +111,7 @@ private:
 
     // 적 탐지 관련
     void PerformEnemyDetection();
-
-    FTimerHandle DetectionTimerHandle;
+    
     TWeakObjectPtr<AActor> LastDetectedEnemy;
 
     UPROPERTY()

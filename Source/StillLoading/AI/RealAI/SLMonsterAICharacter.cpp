@@ -492,6 +492,14 @@ void ASLMonsterAICharacter::HandleHitNotify()
 	StopFlyingState();
 }
 
+void ASLMonsterAICharacter::ActivateMovementComponent()
+{
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->Activate();
+	}
+}
+
 void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
 	SetPrimaryState(TAG_AI_Dead);

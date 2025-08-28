@@ -4,6 +4,7 @@
 #include "AIController.h"
 #include "NavigationSystem.h"
 #include "SLAICombatComponent.h"
+#include "SLAILODComponent.h"
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/SLMonsterAICharacterBase.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
@@ -27,12 +28,15 @@ void USLAIStateComponent::BeginPlay()
 
     CombatComponent = GetOwner()->FindComponentByClass<USLAICombatComponent>();
 
+    const float InitialDelay = FMath::FRandRange(0.0f, 0.5f);
+
     GetWorld()->GetTimerManager().SetTimer(
         DetectionTimerHandle,
         this,
         &USLAIStateComponent::PerformEnemyDetection,
-        0.5f,
-        true);
+        1.0f,
+        true,
+        InitialDelay);
 
     Initialize();
 }
@@ -40,6 +44,12 @@ void USLAIStateComponent::BeginPlay()
 void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    USLAILODComponent* LODComponent = GetOwner()->FindComponentByClass<USLAILODComponent>();
+    if (LODComponent && LODComponent->GetCurrentLODLevel() == EAILODLevel::Culled)
+    {
+        return;
+    }
 
     if (!IsValid(GetOwner())) return;
 
@@ -132,12 +142,7 @@ void USLAIStateComponent::OnEnterState(EAIBattleState NewState)
             CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
         }
         break;
-    case EAIBattleState::FakeMoving:
-        if (CachedAIController.IsValid() && IsValid(CachedMyCharacter))
-        {
-            CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
-        }
-        break;
+    default: ;
     }
 }
 

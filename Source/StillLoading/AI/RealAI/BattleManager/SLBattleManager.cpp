@@ -411,6 +411,26 @@ void ASLBattleManager::UpdateAILODs()
     {
         UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::Culled);
     }
+
+	// Debug
+	int32 LodCounts[5] = {0};
+	for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
+	{
+		if (UnitInfo.Actor)
+		{
+			if (auto* LodComp = UnitInfo.Actor->FindComponentByClass<USLAILODComponent>())
+			{
+				LodCounts[static_cast<int>(LodComp->GetCurrentLODLevel())]++;
+			}
+		}
+	}
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Yellow, 
+			FString::Printf(TEXT("LOD Counts -> Max: %d, High: %d, Medium: %d, Low: %d, Culled: %d"), 
+			LodCounts[0], LodCounts[1], LodCounts[2], LodCounts[3], LodCounts[4]));
+	}
 }
 
 bool ASLBattleManager::AreEnemies(const FGenericTeamId& me, const FGenericTeamId& target, const bool bIsPlayer) const

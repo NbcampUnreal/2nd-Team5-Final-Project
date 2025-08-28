@@ -165,7 +165,6 @@ ACharacter* ASLSwarmSpawner::GetPooledUnit(TSubclassOf<ACharacter> UnitClass)
 
 			PoolEntry.Character->SetActorHiddenInGame(false);
 			PoolEntry.Character->SetActorEnableCollision(true);
-			PoolEntry.Character->SetActorTickEnabled(true);
 
 			if (AController* Controller = PoolEntry.Character->GetController())
 			{

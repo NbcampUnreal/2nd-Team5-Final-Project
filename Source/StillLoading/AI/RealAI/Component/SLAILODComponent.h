@@ -25,6 +25,8 @@ class STILLLOADING_API USLAILODComponent : public UActorComponent
 public:
 	USLAILODComponent();
 
+	EAILODLevel GetCurrentLODLevel() const { return CurrentLODLevel; }
+
 protected:
 	virtual void BeginPlay() override;
 

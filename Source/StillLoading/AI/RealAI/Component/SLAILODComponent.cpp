@@ -68,72 +68,132 @@ EAILODLevel USLAILODComponent::CalculateLODLevel(float MaxDetailDistance, float 
 
 void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 {
-	if (CurrentLODLevel == NewLevel || !OwnerCharacter) return;
+    if (CurrentLODLevel == NewLevel || !OwnerCharacter) return;
 
-	if (CurrentLODLevel >= EAILODLevel::Low && NewLevel < EAILODLevel::Low)
-	{
-		OwnerCharacter->SetActorHiddenInGame(false);
-		OwnerCharacter->ToggleWeaponState(true);
-	}
+    USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh();
+    UCapsuleComponent* Capsule = OwnerCharacter->GetCapsuleComponent();
+    UCharacterMovementComponent* MovementComponent = OwnerCharacter->GetCharacterMovement();
+    AController* Controller = OwnerCharacter->GetController();
 
-	CurrentLODLevel = NewLevel;
+    if (!Mesh || !MovementComponent || !Capsule) return;
 
-	USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh();
-	if (!Mesh) return;
+    if (CurrentLODLevel >= EAILODLevel::Low && NewLevel < EAILODLevel::Low)
+    {
+        OwnerCharacter->SetActorHiddenInGame(false);
+        OwnerCharacter->ToggleWeaponState(true);
+        OwnerCharacter->ActivateMovementComponent();
+        OwnerCharacter->SetActorTickEnabled(true);
+        if (Controller) Controller->SetActorTickEnabled(true);
+        if (StateComponent) GetWorld()->GetTimerManager().UnPauseTimer(StateComponent->DetectionTimerHandle);
+    }
+    else if (CurrentLODLevel < EAILODLevel::Low && NewLevel >= EAILODLevel::Low)
+    {
+        OwnerCharacter->SetActorHiddenInGame(true);
+        OwnerCharacter->ToggleWeaponState(false);
+    }
+    
+    CurrentLODLevel = NewLevel;
 
-	UCharacterMovementComponent* MovementComponent = OwnerCharacter->GetCharacterMovement();
-	if (!MovementComponent) return;
+    switch (CurrentLODLevel)
+    {
+    case EAILODLevel::Max:
+        OwnerCharacter->SetActorTickEnabled(true);
+        if (Controller) Controller->SetActorTickEnabled(true);
+        
+        Mesh->SetComponentTickEnabled(true);
+        Mesh->SetCastShadow(true);
+    	Mesh->SetVisibility(true);
+        Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 
-	switch (CurrentLODLevel)
-	{
-	case EAILODLevel::Max:
-		Mesh->SetComponentTickEnabled(true);
-		Mesh->SetCastShadow(true);
-		Mesh->SetComponentTickInterval(0.0f);
-		MovementComponent->Activate();
-		OwnerCharacter->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		if (StateComponent)
-		{
-			StateComponent->SetComponentTickEnabled(true);
-			StateComponent->SetComponentTickInterval(0.3f);
-		}
-		break;
-	case EAILODLevel::High:
-		Mesh->SetComponentTickEnabled(true);
-		Mesh->SetCastShadow(false);
-		Mesh->SetComponentTickInterval(0.1f);
-		MovementComponent->Activate();
-		OwnerCharacter->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		if (StateComponent)
-		{
-			StateComponent->SetComponentTickEnabled(true);
-			StateComponent->SetComponentTickInterval(0.5f);
-		}
-		break;
-	case EAILODLevel::Medium:
-		Mesh->SetComponentTickEnabled(false);
-		Mesh->SetCastShadow(false);
-		Mesh->SetComponentTickInterval(0.2f);
-		MovementComponent->SetAvoidanceEnabled(false);
-		OwnerCharacter->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		if (StateComponent)
-		{
-			StateComponent->SetComponentTickEnabled(false);
-			//StateComponent->SetComponentTickInterval(1.0f);
-			StateComponent->SetState(EAIBattleState::FakeMoving);
-		}
-		break;
-	case EAILODLevel::Low:
-	case EAILODLevel::Culled:
-		OwnerCharacter->SetActorHiddenInGame(true);
-		OwnerCharacter->ToggleWeaponState(false);
-		MovementComponent->Deactivate();
-		Mesh->SetComponentTickEnabled(false);
-		Mesh->SetCastShadow(false);
-		if (StateComponent)
-		{
-			StateComponent->SetComponentTickEnabled(false);
-		}
-		break;
-	}
+        OwnerCharacter->ActivateMovementComponent();
+        MovementComponent->SetComponentTickEnabled(true);
+        MovementComponent->SetAvoidanceEnabled(true);
+        
+        Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+        if (StateComponent)
+        {
+            if (StateComponent->GetCurrentState() == EAIBattleState::FakeMoving)
+            {
+                StateComponent->SetState(EAIBattleState::Idle);
+            }
+            StateComponent->SetComponentTickEnabled(true);
+            StateComponent->SetComponentTickInterval(0.5f);
+            GetWorld()->GetTimerManager().UnPauseTimer(StateComponent->DetectionTimerHandle);
+        }
+        break;
+
+    case EAILODLevel::High:
+        OwnerCharacter->SetActorTickEnabled(true);
+        if (Controller) Controller->SetActorTickEnabled(true);
+
+        Mesh->SetComponentTickEnabled(true);
+        Mesh->SetCastShadow(false);
+    	Mesh->SetVisibility(true);
+        Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+
+        OwnerCharacter->ActivateMovementComponent();
+        MovementComponent->SetComponentTickEnabled(true);
+        MovementComponent->SetAvoidanceEnabled(true);
+
+        Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+        if (StateComponent)
+        {
+            if (StateComponent->GetCurrentState() == EAIBattleState::FakeMoving)
+            {
+                StateComponent->SetState(EAIBattleState::Idle);
+            }
+            StateComponent->SetComponentTickEnabled(true);
+            StateComponent->SetComponentTickInterval(0.8f);
+            GetWorld()->GetTimerManager().UnPauseTimer(StateComponent->DetectionTimerHandle);
+        }
+        break;
+
+    case EAILODLevel::Medium:
+        OwnerCharacter->SetActorTickEnabled(false);
+        if (Controller) Controller->SetActorTickEnabled(false);
+       
+        Mesh->SetComponentTickEnabled(false);
+        Mesh->SetCastShadow(false);
+    	Mesh->SetVisibility(true);
+        Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+
+        MovementComponent->SetComponentTickEnabled(false);
+        MovementComponent->Deactivate();
+
+        Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        if (StateComponent)
+        {
+            StateComponent->SetComponentTickEnabled(true);
+            StateComponent->SetComponentTickInterval(1.0f);
+            StateComponent->SetState(EAIBattleState::FakeMoving);
+            GetWorld()->GetTimerManager().PauseTimer(StateComponent->DetectionTimerHandle);
+        }
+        break;
+
+    case EAILODLevel::Low:
+    case EAILODLevel::Culled:
+        OwnerCharacter->SetActorTickEnabled(false);
+        if (Controller) Controller->SetActorTickEnabled(false);
+        
+        Mesh->SetComponentTickEnabled(false);
+        Mesh->SetCastShadow(false);
+    	Mesh->SetVisibility(false);
+    	Mesh->SetSimulatePhysics(false); 
+        Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+
+        MovementComponent->SetComponentTickEnabled(false);
+        MovementComponent->Deactivate();
+       
+        Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        if (StateComponent)
+        {
+            StateComponent->SetComponentTickEnabled(false);
+            GetWorld()->GetTimerManager().PauseTimer(StateComponent->DetectionTimerHandle);
+        }
+        break;
+    }
 }
