@@ -23,7 +23,14 @@ void ASLBattleManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	RegisteredUnits.Empty();
+	UnitActors.Empty();
+	UnitLocations.Empty();
+	UnitTeamIDs.Empty();
+	UnitSourceSpawners.Empty();
+	UnitLODComponents.Empty();
+	UnitEngagedTargetIndices.Empty();
+    
+	UnitIndexMap.Empty();
 	TeamUnitIndices.Empty();
 	TargetEngagementCounts.Empty();
 	EngagedUnitsPerTarget.Empty();
@@ -112,6 +119,34 @@ void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+int32 ASLBattleManager::FindNearestEnemy(int32 MyIndex, float InRange) const
+{
+	if (!UnitActors.IsValidIndex(MyIndex)) return INDEX_NONE;
+
+	const FVector MyLocation = UnitLocations[MyIndex];
+	const FGenericTeamId MyTeamID = UnitTeamIDs[MyIndex];
+	const float RangeSq = FMath::Square(InRange);
+
+	int32 NearestEnemyIndex = INDEX_NONE;
+	float MinDistSq = FLT_MAX;
+
+	for (int32 i = 0; i < UnitActors.Num(); ++i)
+	{
+		if (i == MyIndex) continue;
+
+		if (AreEnemies(MyTeamID, UnitTeamIDs[i], false))
+		{
+			const float DistSq = FVector::DistSquared(MyLocation, UnitLocations[i]);
+			if (DistSq < MinDistSq && DistSq <= RangeSq)
+			{
+				MinDistSq = DistSq;
+				NearestEnemyIndex = i;
+			}
+		}
+	}
+	return NearestEnemyIndex;
 }
 
 // Spawner Events
@@ -226,20 +261,13 @@ FVector ASLBattleManager::GetNextTargetPointLocationForSpawner(ASLSwarmSpawner* 
 // Unit
 void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawner* SourceSpawner)
 {
-	if (!IsValid(Actor)) return;
-
-	for (auto& Unit : RegisteredUnits)
+	if (!IsValid(Actor) || UnitIndexMap.Contains(Actor))
 	{
-		if (Unit.Actor == Actor)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("유닛 %s는 이미 등록되어 있습니다."), *Actor->GetName());
-			return;
-		}
+		if (Actor) UE_LOG(LogTemp, Warning, TEXT("유닛 %s는 이미 등록되어 있습니다."), *Actor->GetName());
+		return;
 	}
 
 	FGenericTeamId TeamId = FGenericTeamId::NoTeam;
-	USLAITokenSystemComponent* TokenComp = nullptr;
-
 	if (APawn* Pawn = Cast<APawn>(Actor))
 	{
 		if (IGenericTeamAgentInterface* ControllerTeamAgent = Cast<IGenericTeamAgentInterface>(Pawn->GetController()))
@@ -252,21 +280,22 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 		TeamId = TeamAgent->GetGenericTeamId();
 	}
 
-	FBattleUnitInfo NewUnit;
-	NewUnit.Actor = Actor;
-	NewUnit.TeamId = TeamId;
-	NewUnit.bIsPlayer = bIsPlayer;
-	NewUnit.SourceSpawner = SourceSpawner;
+	const int32 NewIndex = UnitActors.Num();
+	UnitActors.Add(Actor);
+	UnitLocations.Add(Actor->GetActorLocation());
+	UnitTeamIDs.Add(TeamId);
+	UnitSourceSpawners.Add(SourceSpawner);
+	UnitLODComponents.Add(Actor->FindComponentByClass<USLAILODComponent>());
+	UnitCombatComponents.Add(Actor->FindComponentByClass<USLAICombatComponent>());
+	UnitEngagedTargetIndices.Add(INDEX_NONE);
 
-	int32 NewIndex = RegisteredUnits.Add(NewUnit);
 	UnitIndexMap.Add(Actor, NewIndex);
-	RebuildTeamIndices();
+	TeamUnitIndices.FindOrAdd(TeamId).Indices.Add(NewIndex);
 
-	UE_LOG(LogTemp, Log, TEXT("배틀매니저: 유닛 등록됨: %s (팀: %d, 플레이어: %s, 스포너: %s)"),
-	       *Actor->GetName(),
-	       NewUnit.TeamId.GetId(),
-	       bIsPlayer ? TEXT("예") : TEXT("아니오"),
-	       IsValid(SourceSpawner) ? *SourceSpawner->GetName() : TEXT("없음"));
+	UE_LOG(LogTemp, Log, TEXT("배틀매니저: 유닛 등록됨: %s (팀: %d, 스포너: %s)"),
+		  *Actor->GetName(),
+		  TeamId.GetId(),
+		  IsValid(SourceSpawner) ? *SourceSpawner->GetName() : TEXT("없음"));
 }
 
 void ASLBattleManager::UnregisterUnit(AActor* Actor)
@@ -275,61 +304,65 @@ void ASLBattleManager::UnregisterUnit(AActor* Actor)
 
 	OnUnitDestroyed(Actor);
 
-	if (const int32* FoundIndexPtr = UnitIndexMap.Find(Actor))
-	{
-		const int32 IndexToRemove = *FoundIndexPtr;
-		UE_LOG(LogTemp, Log, TEXT("배틀매니저: 유닛 등록 해제됨: %s"), *Actor->GetName());
+	const int32* IndexPtr = UnitIndexMap.Find(Actor);
+	if (!IndexPtr) return;
 
-		RegisteredUnits.RemoveAt(IndexToRemove);
-		UnitIndexMap.Remove(Actor);
-		UnitIndexMap.Empty();
-		for (int32 i = 0; i < RegisteredUnits.Num(); ++i)
+	const int32 IndexToRemove = *IndexPtr;
+	const int32 LastIndex = UnitActors.Num() - 1;
+
+	const FGenericTeamId TeamIdOfRemovedUnit = UnitTeamIDs[IndexToRemove];
+	if (FTeamIndicesArrayWrapper* Wrapper = TeamUnitIndices.Find(TeamIdOfRemovedUnit))
+	{
+		Wrapper->Indices.Remove(IndexToRemove);
+	}
+    
+	if (IndexToRemove < LastIndex)
+	{
+		const FGenericTeamId TeamIdOfSwappedUnit = UnitTeamIDs[LastIndex];
+		if (FTeamIndicesArrayWrapper* Wrapper = TeamUnitIndices.Find(TeamIdOfSwappedUnit))
 		{
-			UnitIndexMap.Add(RegisteredUnits[i].Actor, i);
+			Wrapper->Indices.Remove(LastIndex);
+			Wrapper->Indices.Add(IndexToRemove);
 		}
-
-		RebuildTeamIndices();
 	}
-	else
+
+	UnitActors.RemoveAtSwap(IndexToRemove);
+	UnitLocations.RemoveAtSwap(IndexToRemove);
+	UnitTeamIDs.RemoveAtSwap(IndexToRemove);
+	UnitSourceSpawners.RemoveAtSwap(IndexToRemove);
+	UnitLODComponents.RemoveAtSwap(IndexToRemove);
+	UnitCombatComponents.RemoveAtSwap(IndexToRemove);
+	UnitEngagedTargetIndices.RemoveAtSwap(IndexToRemove);
+
+	if (IndexToRemove < LastIndex)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("배틀매니저: 등록되지 않은 유닛 %s에 대한 등록 해제 요청."), *Actor->GetName());
+		AActor* SwappedActor = UnitActors[IndexToRemove];
+		UnitIndexMap.Add(SwappedActor, IndexToRemove);
 	}
-}
 
-void ASLBattleManager::RebuildTeamIndices()
-{
-	TeamUnitIndices.Empty();
-
-	for (int32 i = 0; i < RegisteredUnits.Num(); i++)
-	{
-		FGenericTeamId TeamId = RegisteredUnits[i].TeamId;
-
-		if (!TeamUnitIndices.Contains(TeamId))
-		{
-			TeamUnitIndices.Add(TeamId, FTeamIndicesArrayWrapper());
-		}
-
-		TeamUnitIndices[TeamId].Indices.Add(i);
-	}
+	UnitIndexMap.Remove(Actor);
 }
 
 void ASLBattleManager::UpdateAILODs()
 {
     const APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-    if (!PlayerPawn || RegisteredUnits.Num() == 0) return;
+    if (!PlayerPawn || UnitActors.Num() == 0) return;
 
     const FVector PlayerLocation = PlayerPawn->GetActorLocation();
+    const int32 NumUnits = UnitActors.Num();
 
-    // 거리 기준으로 1차 분류.
-    TArray<FBattleUnitInfo*> UnitsByLOD[5]; // Max, High, Medium, Low, Culled
-    for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
+    for (int32 i = 0; i < NumUnits; ++i)
     {
-        if (!IsValid(UnitInfo.Actor) || !UnitInfo.Actor->FindComponentByClass<USLAILODComponent>())
+        if (UnitActors[i])
         {
-            continue;
+            UnitLocations[i] = UnitActors[i]->GetActorLocation();
         }
+    }
 
-        const float DistanceSquared = FVector::DistSquared(UnitInfo.Actor->GetActorLocation(), PlayerLocation);
+    TArray<int32> UnitIndicesByLOD[5]; // Max, High, Medium, Low, Culled
+    for (int32 i = 0; i < NumUnits; ++i)
+    {
+        const float DistanceSquared = FVector::DistSquared(UnitLocations[i], PlayerLocation);
         EAILODLevel IdealLevel;
 
         if (DistanceSquared <= FMath::Square(LODDistances.MaxDetailDistance)) IdealLevel = EAILODLevel::Max;
@@ -338,85 +371,49 @@ void ASLBattleManager::UpdateAILODs()
         else if (DistanceSquared <= FMath::Square(LODDistances.LowDetailDistance)) IdealLevel = EAILODLevel::Low;
         else IdealLevel = EAILODLevel::Culled;
 
-        UnitsByLOD[static_cast<int>(IdealLevel)].Add(&UnitInfo);
+        UnitIndicesByLOD[static_cast<int>(IdealLevel)].Add(i);
     }
 
-    // 고비용 등급(Max + High)의 AI 예산 초과 확인.
-    const int32 HighCostUnitCount = UnitsByLOD[0].Num() + UnitsByLOD[1].Num();
+    const int32 HighCostUnitCount = UnitIndicesByLOD[0].Num() + UnitIndicesByLOD[1].Num();
     const int32 HighCostBudget = LODBudget.MaxLODCount + LODBudget.HighLODCount;
+
+    auto SetLODLevelForIndex = [&](int32 UnitIndex, EAILODLevel NewLevel)
+    {
+        if (UnitLODComponents.IsValidIndex(UnitIndex) && IsValid(UnitLODComponents[UnitIndex]))
+        {
+            UnitLODComponents[UnitIndex]->SetLODLevel(NewLevel);
+        }
+    };
 
     if (HighCostUnitCount > HighCostBudget)
     {
-        TArray<FBattleUnitInfo*> HighCostUnits;
-        HighCostUnits.Append(UnitsByLOD[0]);
-        HighCostUnits.Append(UnitsByLOD[1]);
+        TArray<int32> HighCostIndices;
+        HighCostIndices.Append(UnitIndicesByLOD[0]);
+        HighCostIndices.Append(UnitIndicesByLOD[1]);
 
-        HighCostUnits.Sort([PlayerLocation](const FBattleUnitInfo& A, const FBattleUnitInfo& B)
+        HighCostIndices.Sort([&](const int32& A, const int32& B)
         {
-            return FVector::DistSquared(A.Actor->GetActorLocation(), PlayerLocation) < FVector::DistSquared(B.Actor->GetActorLocation(), PlayerLocation);
+            return FVector::DistSquared(UnitLocations[A], PlayerLocation) < FVector::DistSquared(UnitLocations[B], PlayerLocation);
         });
 
-        for (int32 i = 0; i < HighCostUnits.Num(); ++i)
+        for (int32 i = 0; i < HighCostIndices.Num(); ++i)
         {
-            USLAILODComponent* LODComponent = HighCostUnits[i]->Actor->FindComponentByClass<USLAILODComponent>();
-            if (i < LODBudget.MaxLODCount)
-            {
-                LODComponent->SetLODLevel(EAILODLevel::Max);
-            }
-            else if (i < HighCostBudget)
-            {
-                LODComponent->SetLODLevel(EAILODLevel::High);
-            }
-            else
-            {
-                LODComponent->SetLODLevel(EAILODLevel::Medium);
-            }
+            const int32 UnitIndex = HighCostIndices[i];
+            if (i < LODBudget.MaxLODCount) SetLODLevelForIndex(UnitIndex, EAILODLevel::Max);
+            else if (i < HighCostBudget) SetLODLevelForIndex(UnitIndex, EAILODLevel::High);
+            else SetLODLevelForIndex(UnitIndex, EAILODLevel::Medium);
         }
     }
     else
     {
-        for (FBattleUnitInfo* UnitInfo : UnitsByLOD[0]) // Max
-        {
-            UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::Max);
-        }
-        for (FBattleUnitInfo* UnitInfo : UnitsByLOD[1]) // High
-        {
-            UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::High);
-        }
+        for (const int32 UnitIndex : UnitIndicesByLOD[0]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Max);
+        for (const int32 UnitIndex : UnitIndicesByLOD[1]) SetLODLevelForIndex(UnitIndex, EAILODLevel::High);
     }
 
-    for (FBattleUnitInfo* UnitInfo : UnitsByLOD[2]) // Medium
-    {
-        UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::Medium);
-    }
-    for (FBattleUnitInfo* UnitInfo : UnitsByLOD[3]) // Low
-    {
-        UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::Low);
-    }
-    for (FBattleUnitInfo* UnitInfo : UnitsByLOD[4]) // Culled
-    {
-        UnitInfo->Actor->FindComponentByClass<USLAILODComponent>()->SetLODLevel(EAILODLevel::Culled);
-    }
-
-	// Debug
-	int32 LodCounts[5] = {0};
-	for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
-	{
-		if (UnitInfo.Actor)
-		{
-			if (auto* LodComp = UnitInfo.Actor->FindComponentByClass<USLAILODComponent>())
-			{
-				LodCounts[static_cast<int>(LodComp->GetCurrentLODLevel())]++;
-			}
-		}
-	}
-
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Yellow, 
-			FString::Printf(TEXT("LOD Counts -> Max: %d, High: %d, Medium: %d, Low: %d, Culled: %d"), 
-			LodCounts[0], LodCounts[1], LodCounts[2], LodCounts[3], LodCounts[4]));
-	}
+    for (const int32 UnitIndex : UnitIndicesByLOD[2]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Medium);
+    for (const int32 UnitIndex : UnitIndicesByLOD[3]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Low);
+    for (const int32 UnitIndex : UnitIndicesByLOD[4]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Culled);
+    
 }
 
 bool ASLBattleManager::AreEnemies(const FGenericTeamId& me, const FGenericTeamId& target, const bool bIsPlayer) const
@@ -448,34 +445,44 @@ bool ASLBattleManager::AreEnemies(const FGenericTeamId& me, const FGenericTeamId
 TArray<FBattleUnitInfo> ASLBattleManager::GetUnitsOfTeam(const FGenericTeamId& TeamId)
 {
 	TArray<FBattleUnitInfo> Result;
-
-	if (TeamUnitIndices.Contains(TeamId))
+	if (const FTeamIndicesArrayWrapper* Wrapper = TeamUnitIndices.Find(TeamId))
 	{
-		const FTeamIndicesArrayWrapper& Wrapper = TeamUnitIndices[TeamId];
-		for (const int32 Index : Wrapper.Indices)
+		for (const int32 Index : Wrapper->Indices)
 		{
-			if (RegisteredUnits.IsValidIndex(Index))
-			{
-				Result.Add(RegisteredUnits[Index]);
-			}
+			Result.Add(GetUnitInfoByIndex(Index));
 		}
 	}
-
 	return Result;
+}
+
+FBattleUnitInfo ASLBattleManager::GetUnitInfoByIndex(int32 Index) const
+{
+	FBattleUnitInfo Info;
+	if (UnitActors.IsValidIndex(Index))
+	{
+		Info.Actor = UnitActors[Index];
+		Info.TeamId = UnitTeamIDs[Index];
+		Info.SourceSpawner = UnitSourceSpawners[Index];
+
+		const int32 TargetIndex = UnitEngagedTargetIndices[Index];
+		if (UnitActors.IsValidIndex(TargetIndex))
+		{
+			Info.CurrentEngagedTarget = UnitActors[TargetIndex];
+		}
+	}
+	return Info;
 }
 
 TArray<FBattleUnitInfo> ASLBattleManager::GetEnemiesOfTeam(const FGenericTeamId& TeamId)
 {
 	TArray<FBattleUnitInfo> Result;
-
-	for (const auto& Unit : RegisteredUnits)
+	for (int32 i = 0; i < UnitActors.Num(); ++i)
 	{
-		if (AreEnemies(TeamId, Unit.TeamId, false))
+		if (AreEnemies(TeamId, UnitTeamIDs[i], false))
 		{
-			Result.Add(Unit);
+			Result.Add(GetUnitInfoByIndex(i));
 		}
 	}
-
 	return Result;
 }
 
@@ -538,17 +545,13 @@ void ASLBattleManager::StartNextGlobalWave()
 TArray<FBattleUnitInfo> ASLBattleManager::GetUnitsSpawnedBySpawner(ASLSwarmSpawner* Spawner) const
 {
 	TArray<FBattleUnitInfo> Result;
-	if (!IsValid(Spawner))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("GetUnitsSpawnedBySpawner: 유효하지 않은 스포너가 전달되었습니다."));
-		return Result;
-	}
+	if (!IsValid(Spawner)) return Result;
 
-	for (const FBattleUnitInfo& Unit : RegisteredUnits)
+	for (int32 i = 0; i < UnitActors.Num(); ++i)
 	{
-		if (Unit.SourceSpawner == Spawner)
+		if (UnitSourceSpawners[i] == Spawner)
 		{
-			Result.Add(Unit);
+			Result.Add(GetUnitInfoByIndex(i));
 		}
 	}
 	return Result;
@@ -627,7 +630,14 @@ void ASLBattleManager::EndBattle()
 		}
 	}
 
-	RegisteredUnits.Empty();
+	UnitActors.Empty();
+	UnitLocations.Empty();
+	UnitTeamIDs.Empty();
+	UnitSourceSpawners.Empty();
+	UnitLODComponents.Empty();
+	UnitEngagedTargetIndices.Empty();
+    
+	UnitIndexMap.Empty();
 	TeamUnitIndices.Empty();
 	TargetEngagementCounts.Empty();
 	EngagedUnitsPerTarget.Empty();
@@ -666,9 +676,12 @@ bool ASLBattleManager::RequestEngagementPermission(AActor* RequestingUnit, AActo
 		CurrentCountRef++;
 		EngagedUnitsPerTarget.FindOrAdd(TargetActor).EngagedUnits.AddUnique(RequestingUnit);
 
-		if (FBattleUnitInfo* UnitInfo = FindUnitInfo(RequestingUnit))
+		if (const int32* UnitIndexPtr = UnitIndexMap.Find(RequestingUnit))
 		{
-			UnitInfo->CurrentEngagedTarget = TargetActor;
+			if (const int32* TargetIndexPtr = UnitIndexMap.Find(TargetActor))
+			{
+				UnitEngagedTargetIndices[*UnitIndexPtr] = *TargetIndexPtr;
+			}
 		}
 
 		UE_LOG(LogTemp, Log, TEXT("교전 권한 승인: %s -> %s (현재 교전: %d/%d)"),
@@ -709,9 +722,9 @@ void ASLBattleManager::ReleaseEngagementPermission(AActor* ReleasingUnit, AActor
 		}
 	}
 
-	if (FBattleUnitInfo* UnitInfo = FindUnitInfo(ReleasingUnit))
+	if (const int32* UnitIndexPtr = UnitIndexMap.Find(ReleasingUnit))
 	{
-		UnitInfo->CurrentEngagedTarget = nullptr;
+		UnitEngagedTargetIndices[*UnitIndexPtr] = INDEX_NONE;
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("교전 권한 해제: %s -> %s"),
@@ -721,23 +734,20 @@ void ASLBattleManager::ReleaseEngagementPermission(AActor* ReleasingUnit, AActor
 // Rebuild AI
 void ASLBattleManager::ProcessSupportingAIReassignment()
 {
-	// 지원 중인 AI들 찾기
-	TArray<FBattleUnitInfo> SupportingAIs = FindSupportingAIs();
-	if (SupportingAIs.Num() == 0)
+	TArray<int32> SupportingAIIndices = FindSupportingAIs();
+	if (SupportingAIIndices.Num() == 0)
 	{
 		return;
 	}
 
-	// 여분이 있는 타겟들 찾기
 	TArray<AActor*> AvailableTargets = FindTargetsWithOpenSlots();
 	if (AvailableTargets.Num() == 0)
 	{
 		return;
 	}
 
-	// AI들을 타겟에 배치
 	int32 TargetIndex = 0;
-	for (FBattleUnitInfo& SupportingAI : SupportingAIs)
+	for (const int32 AIIndex : SupportingAIIndices)
 	{
 		if (TargetIndex >= AvailableTargets.Num())
 		{
@@ -745,31 +755,27 @@ void ASLBattleManager::ProcessSupportingAIReassignment()
 		}
 
 		AActor* SelectedTarget = AvailableTargets[TargetIndex];
-		AssignSupportingAIToTarget(SupportingAI, SelectedTarget);
+		AssignSupportingAIToTarget(AIIndex, SelectedTarget); // 인덱스로 호출
 
 		TargetIndex = (TargetIndex + 1) % AvailableTargets.Num();
 	}
 }
 
-TArray<FBattleUnitInfo> ASLBattleManager::FindSupportingAIs()
+TArray<int32> ASLBattleManager::FindSupportingAIs()
 {
-	TArray<FBattleUnitInfo> SupportingAIs;
+	TArray<int32> SupportingAIIndices;
 
-	for (FBattleUnitInfo& Unit : RegisteredUnits)
+	for (int32 i = 0; i < UnitActors.Num(); ++i)
 	{
-		if (!IsValid(Unit.Actor)) continue;
-
-		if (const USLAICombatComponent* CombatComp = Unit.Actor->FindComponentByClass<USLAICombatComponent>())
+		const USLAICombatComponent* CombatComp = UnitCombatComponents[i];
+		if (IsValid(CombatComp) && CombatComp->IsSupporting())
 		{
-			if (CombatComp->IsSupporting())
-			{
-				SupportingAIs.Add(Unit);
-			}
+			SupportingAIIndices.Add(i);
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("지원 가능한 AI %d개 발견"), SupportingAIs.Num());
-	return SupportingAIs;
+	UE_LOG(LogTemp, Log, TEXT("지원 가능한 AI %d개 발견"), SupportingAIIndices.Num());
+	return SupportingAIIndices;
 }
 
 TArray<AActor*> ASLBattleManager::FindTargetsWithOpenSlots()
@@ -791,15 +797,15 @@ TArray<AActor*> ASLBattleManager::FindTargetsWithOpenSlots()
 	return AvailableTargets;
 }
 
-void ASLBattleManager::AssignSupportingAIToTarget(const FBattleUnitInfo& SupportingAI, AActor* Target)
+void ASLBattleManager::AssignSupportingAIToTarget(int32 SupportingAIIndex, AActor* Target)
 {
-	if (!IsValid(SupportingAI.Actor) || !IsValid(Target)) return;
+	if (!UnitActors.IsValidIndex(SupportingAIIndex) || !IsValid(Target)) return;
 
-	if (USLAIStateComponent* StateComp = SupportingAI.Actor->FindComponentByClass<USLAIStateComponent>())
+	AActor* SupportingActor = UnitActors[SupportingAIIndex];
+	if (USLAIStateComponent* StateComp = SupportingActor->FindComponentByClass<USLAIStateComponent>())
 	{
 		StateComp->StartSupportMovement(Target);
-		UE_LOG(LogTemp, Log, TEXT("지원 AI %s를 타겟 %s로 이동 지시"),
-		       *SupportingAI.Actor->GetName(), *Target->GetName());
+		UE_LOG(LogTemp, Log, TEXT("지원 AI %s를 타겟 %s로 이동 지시"), *SupportingActor->GetName(), *Target->GetName());
 	}
 }
 
@@ -835,17 +841,4 @@ void ASLBattleManager::OnUnitDestroyed(AActor* DestroyedUnit)
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("유닛 파괴로 인한 교전 권한 정리 완료: %s"), *DestroyedUnit->GetName());
-}
-
-// 헬퍼 함수 - 유닛 정보 찾기
-FBattleUnitInfo* ASLBattleManager::FindUnitInfo(AActor* Unit)
-{
-	for (FBattleUnitInfo& UnitInfo : RegisteredUnits)
-	{
-		if (UnitInfo.Actor == Unit)
-		{
-			return &UnitInfo;
-		}
-	}
-	return nullptr;
 }

@@ -115,39 +115,20 @@ AActor* USLAICombatComponent::FindEnemyInDetectionRange()
 		}
 	}
 
-	TArray<FOverlapResult> OverlappingResults;
-	const FVector OwnerLocation = GetOwner()->GetActorLocation();
+	if (!CachedMyCharacter || !CachedMyCharacter->BattleManager) return nullptr;
 
-	GetWorld()->OverlapMultiByChannel(
-		OverlappingResults,
-		OwnerLocation,
-		FQuat::Identity,
-		ECollisionChannel::ECC_Pawn,
-		FCollisionShape::MakeSphere(DetectionRange),
-		FCollisionQueryParams(SCENE_QUERY_STAT(AIAOD_Detection), false)
-	);
+	const int32* MyIndexPtr = CachedMyCharacter->BattleManager->GetUnitIndexMap().Find(GetOwner());
+	if (!MyIndexPtr) return nullptr;
 
-	AActor* NearestEnemy = nullptr;
-	float MinDistanceSq = FLT_MAX;
+	const int32 EnemyIndex = CachedMyCharacter->BattleManager->FindNearestEnemy(*MyIndexPtr, DetectionRange);
 
-	for (const FOverlapResult& Overlap : OverlappingResults)
+	if (CachedMyCharacter->BattleManager->GetUnitActors().IsValidIndex(EnemyIndex))
 	{
-		AActor* OverlappedActor = Overlap.GetActor();
-
-		if (!IsValidEnemy(OverlappedActor))
-			continue;
-
-		const float DistanceSq = FVector::DistSquared(OwnerLocation, OverlappedActor->GetActorLocation());
-		if (DistanceSq < MinDistanceSq)
-		{
-			MinDistanceSq = DistanceSq;
-			NearestEnemy = OverlappedActor;
-		}
+		TargetFoundTime = GetWorld()->GetTimeSeconds();
+		return CachedMyCharacter->BattleManager->GetUnitActors()[EnemyIndex];
 	}
 
-	TargetFoundTime = GetWorld()->GetTimeSeconds();
-
-	return NearestEnemy;
+	return nullptr;
 }
 
 // StateComponent 에서 실행
@@ -292,9 +273,9 @@ void USLAICombatComponent::PerformAttack(float DeltaTime)
 	LogCombatModeStatus(FString::Printf(TEXT("%s 공격!"), *CurrentTarget.TargetActor->GetName()));
 
 	SafeLookAtTarget(CurrentTarget.TargetActor, DeltaTime);
-	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+	if (IsValid(CachedMyCharacter)) 
 	{
-		MyCharacter->PlayAttackAnim();
+		CachedMyCharacter->PlayAttackAnim();
 	}
 
 	TryScheduleRetreat();
@@ -546,12 +527,9 @@ void USLAICombatComponent::TryScheduleRetreat()
 
 bool USLAICombatComponent::RequestEngagementPermission(AActor* TargetActor)
 {
-	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->BattleManager))
 	{
-		if (MyCharacter->BattleManager)
-		{
-			return MyCharacter->BattleManager->RequestEngagementPermission(GetOwner(), TargetActor);
-		}
+		return CachedMyCharacter->BattleManager->RequestEngagementPermission(GetOwner(), TargetActor);
 	}
 	return false;
 }

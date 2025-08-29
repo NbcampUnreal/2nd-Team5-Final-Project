@@ -7,6 +7,8 @@
 
 // 전투관리, 스폰된 유닛 관리, 타겟 관리
 
+class USLAICombatComponent;
+class USLAILODComponent;
 class USLAITokenSystemComponent;
 class ATargetPoint;
 class USLWaveSpawnerComponent;
@@ -23,8 +25,6 @@ struct FBattleUnitInfo
 	TObjectPtr<AActor> Actor = nullptr;
 	UPROPERTY()
 	FGenericTeamId TeamId;
-	UPROPERTY()
-	bool bIsPlayer = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<AActor> CurrentEngagedTarget;
 	UPROPERTY()
@@ -104,6 +104,8 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
+	int32 FindNearestEnemy(int32 MyIndex, float InRange) const;
+	
 	UFUNCTION(BlueprintCallable, Category = "Battle Management")
 	void StartBattle();
 	UFUNCTION(BlueprintCallable, Category = "Battle Management")
@@ -118,10 +120,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnregisterUnit(AActor* Actor);
 	UFUNCTION(BlueprintCallable)
-	bool PlayerOnly() { return bIsPlayerOnly; }
-	UFUNCTION(BlueprintCallable)
-	FORCEINLINE int32 GetRegisteredUnitCount() const { return RegisteredUnits.Num(); }
+	bool PlayerOnly() const { return bIsPlayerOnly; }
+	UFUNCTION(BlueprintCallable, Category = "Battle Management|Units")
+	FORCEINLINE int32 GetRegisteredUnitCount() const { return UnitActors.Num(); }
 
+	const TMap<TObjectPtr<AActor>, int32>& GetUnitIndexMap() const { return UnitIndexMap; }
+	const TArray<TObjectPtr<AActor>>& GetUnitActors() const { return UnitActors; }
+	const TArray<FVector>& GetUnitLocations() const { return UnitLocations; }
 protected:
 	void BindToSpawnerEvents(); // ASLSwarmSpawner 이벤트 바인딩
 	void InitializeAISupportingMode();
@@ -137,7 +142,6 @@ protected:
 	void HandleWaveCompleted(int32 WaveNumber, ASLSwarmSpawner* CompletedSpawner);
 	UFUNCTION()
 	void HandleAllWavesCompleted(ASLSwarmSpawner* CompletedSpawner);
-	void RebuildTeamIndices();
 
 	// LOD 관리
 	void UpdateAILODs();
@@ -146,9 +150,29 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle Management|Spawners")
 	TArray<ASLSwarmSpawner*> ManagedSpawners;
 
-	// --- 유닛 관리 ---
+	// --- 유닛 관리 DOD ---
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
-	TArray<FBattleUnitInfo> RegisteredUnits;
+	TArray<FVector> UnitLocations;
+	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
+	TArray<FGenericTeamId> UnitTeamIDs;
+	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
+	TArray<TObjectPtr<ASLSwarmSpawner>> UnitSourceSpawners;
+	UPROPERTY()
+	TMap<TObjectPtr<AActor>, int32> UnitIndexMap;
+	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
+	TArray<TObjectPtr<AActor>> UnitActors;
+
+	// LOD 관련 데이터
+	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
+	TArray<TObjectPtr<USLAILODComponent>> UnitLODComponents;
+
+	// Combat 관련 데이터
+	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
+	TArray<TObjectPtr<USLAICombatComponent>> UnitCombatComponents;
+
+	// 교전 관련 데이터
+	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
+	TArray<int32> UnitEngagedTargetIndices;
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
 	TMap<FGenericTeamId, FTeamIndicesArrayWrapper> TeamUnitIndices;
 
@@ -191,24 +215,22 @@ public:
 	void OnUnitDestroyed(AActor* DestroyedUnit);
 	
 private:
-	FBattleUnitInfo* FindUnitInfo(AActor* Unit);
-
 	// 여유 AI 리빌딩 로직
 	UFUNCTION()
 	void ProcessSupportingAIReassignment();
 	UFUNCTION()
-	TArray<FBattleUnitInfo> FindSupportingAIs();
+	TArray<int32> FindSupportingAIs();
 	UFUNCTION()
 	TArray<AActor*> FindTargetsWithOpenSlots();
 	UFUNCTION()
-	void AssignSupportingAIToTarget(const FBattleUnitInfo& SupportingAI, AActor* Target);
+	void AssignSupportingAIToTarget(int32 SupportingAIIndex, AActor* Target);
+
+	FBattleUnitInfo GetUnitInfoByIndex(int32 Index) const;
 
 	UPROPERTY()
 	TMap<TObjectPtr<AActor>, int32> TargetEngagementCounts;
 	UPROPERTY()
 	TMap<TObjectPtr<AActor>, FEngagedUnitsWrapper> EngagedUnitsPerTarget;
-	UPROPERTY()
-	TMap<TObjectPtr<AActor>, int32> UnitIndexMap;
 	
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	int32 MaxEngagingUnitsPerTarget = 3;

@@ -40,7 +40,7 @@ public:
     void SetState(EAIBattleState NewState);
     
     UFUNCTION(BlueprintPure, Category = "AI|State")
-    EAIBattleState GetCurrentState() const { return CurrentState; }
+    FORCEINLINE EAIBattleState GetCurrentState() const { return CurrentState; }
     
     // 초기화 및 활성화
     void Initialize();
@@ -113,7 +113,6 @@ private:
     void PerformEnemyDetection();
     
     TWeakObjectPtr<AActor> LastDetectedEnemy;
-
     UPROPERTY()
     TObjectPtr<AActor> SupportTargetActor = nullptr;
     UPROPERTY()

@@ -31,7 +31,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	EAILODLevel CurrentLODLevel;
+	EAILODLevel CurrentLODLevel = EAILODLevel::Max;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
 	float LODCheckInterval = 0.25f;

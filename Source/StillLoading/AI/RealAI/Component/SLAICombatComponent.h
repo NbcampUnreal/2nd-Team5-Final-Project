@@ -50,7 +50,7 @@ public:
 
     // 서포트 모드 관련
     void UpdateSupporting(float DeltaTime);
-    bool IsSupporting() const { return bIsSupporting; }
+    FORCEINLINE bool IsSupporting() const { return bIsSupporting; }
 
     // 후퇴 관련
     void RetreatFromTarget();
@@ -73,7 +73,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
     void SetTarget(AActor* NewTarget);
     UFUNCTION(BlueprintPure, Category = "AI|Combat")
-    AActor* GetCurrentTarget() const { return CurrentTarget.TargetActor; }
+    FORCEINLINE AActor* GetCurrentTarget() const { return CurrentTarget.TargetActor; }
     void ClearTarget();
 
     // 공격 관리
