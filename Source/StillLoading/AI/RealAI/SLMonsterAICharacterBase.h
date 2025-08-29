@@ -31,6 +31,7 @@ public:
 	void SetPrimaryState(const FGameplayTag NewState);
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	bool IsInPrimaryState(const FGameplayTag StateToCheck) const;
+	USLAIStateComponent* GetStateComponent() { return AIStateComp; }
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAIStateComponent> AIStateComp;

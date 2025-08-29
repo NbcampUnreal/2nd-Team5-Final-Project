@@ -15,19 +15,11 @@ USLAILODComponent::USLAILODComponent()
 void USLAILODComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	OwnerCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
-	if (!OwnerCharacter)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AILODComponent is attached to a non-character actor. Disabling component."));
-		return;
-	}
-
-	StateComponent = OwnerCharacter->FindComponentByClass<USLAIStateComponent>();
 }
 
 EAILODLevel USLAILODComponent::CalculateLODLevel(float MaxDetailDistance, float HighDetailDistance, float MediumDetailDistance, float LowDetailDistance) const
 {
+	const ASLMonsterAICharacter* OwnerCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
 	const APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	if (!PlayerPawn || !OwnerCharacter) return EAILODLevel::Culled;
 
@@ -68,14 +60,23 @@ EAILODLevel USLAILODComponent::CalculateLODLevel(float MaxDetailDistance, float 
 
 void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 {
-    if (CurrentLODLevel == NewLevel || !OwnerCharacter) return;
+	ASLMonsterAICharacter* OwnerCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
+	if (!OwnerCharacter) return;
 
-    USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh();
-    UCapsuleComponent* Capsule = OwnerCharacter->GetCapsuleComponent();
-    UCharacterMovementComponent* MovementComponent = OwnerCharacter->GetCharacterMovement();
-    AController* Controller = OwnerCharacter->GetController();
+	USLAIStateComponent* CurrentStateComponent = GetOwner()->FindComponentByClass<USLAIStateComponent>();
+	USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh();
+	UCapsuleComponent* Capsule = OwnerCharacter->GetCapsuleComponent();
+	UCharacterMovementComponent* MovementComponent = OwnerCharacter->GetCharacterMovement();
+	AController* Controller = OwnerCharacter->GetController();
+    
+	if (CurrentLODLevel == NewLevel)
+	{
+		return;
+	}
+    
+	CurrentLODLevel = NewLevel;
 
-    if (!Mesh || !MovementComponent || !Capsule) return;
+	if (!Mesh || !MovementComponent || !Capsule) return;
 
     if (CurrentLODLevel >= EAILODLevel::Low && NewLevel < EAILODLevel::Low)
     {
@@ -84,15 +85,13 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
         OwnerCharacter->ActivateMovementComponent();
         OwnerCharacter->SetActorTickEnabled(true);
         if (Controller) Controller->SetActorTickEnabled(true);
-        if (StateComponent) GetWorld()->GetTimerManager().UnPauseTimer(StateComponent->DetectionTimerHandle);
+        if (CurrentStateComponent) GetWorld()->GetTimerManager().UnPauseTimer(CurrentStateComponent->DetectionTimerHandle);
     }
     else if (CurrentLODLevel < EAILODLevel::Low && NewLevel >= EAILODLevel::Low)
     {
         OwnerCharacter->SetActorHiddenInGame(true);
         OwnerCharacter->ToggleWeaponState(false);
     }
-    
-    CurrentLODLevel = NewLevel;
 
     switch (CurrentLODLevel)
     {
@@ -111,15 +110,15 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
         
         Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-        if (StateComponent)
+        if (CurrentStateComponent)
         {
-            if (StateComponent->GetCurrentState() == EAIBattleState::FakeMoving)
+            if (CurrentStateComponent->GetCurrentState() == EAIBattleState::FakeMoving)
             {
-                StateComponent->SetState(EAIBattleState::Idle);
+                CurrentStateComponent->SetState(EAIBattleState::Idle);
             }
-            StateComponent->SetComponentTickEnabled(true);
-            StateComponent->SetComponentTickInterval(0.5f);
-            GetWorld()->GetTimerManager().UnPauseTimer(StateComponent->DetectionTimerHandle);
+            CurrentStateComponent->SetComponentTickEnabled(true);
+            CurrentStateComponent->SetComponentTickInterval(0.5f);
+            GetWorld()->GetTimerManager().UnPauseTimer(CurrentStateComponent->DetectionTimerHandle);
         }
         break;
 
@@ -138,15 +137,15 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
         Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-        if (StateComponent)
+        if (CurrentStateComponent)
         {
-            if (StateComponent->GetCurrentState() == EAIBattleState::FakeMoving)
+            if (CurrentStateComponent->GetCurrentState() == EAIBattleState::FakeMoving)
             {
-                StateComponent->SetState(EAIBattleState::Idle);
+                CurrentStateComponent->SetState(EAIBattleState::Idle);
             }
-            StateComponent->SetComponentTickEnabled(true);
-            StateComponent->SetComponentTickInterval(0.8f);
-            GetWorld()->GetTimerManager().UnPauseTimer(StateComponent->DetectionTimerHandle);
+            CurrentStateComponent->SetComponentTickEnabled(true);
+            CurrentStateComponent->SetComponentTickInterval(0.8f);
+            GetWorld()->GetTimerManager().UnPauseTimer(CurrentStateComponent->DetectionTimerHandle);
         }
         break;
 
@@ -164,12 +163,12 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
         Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-        if (StateComponent)
+        if (CurrentStateComponent)
         {
-            StateComponent->SetComponentTickEnabled(true);
-            StateComponent->SetComponentTickInterval(1.0f);
-            StateComponent->SetState(EAIBattleState::FakeMoving);
-            GetWorld()->GetTimerManager().PauseTimer(StateComponent->DetectionTimerHandle);
+            CurrentStateComponent->SetComponentTickEnabled(true);
+            CurrentStateComponent->SetComponentTickInterval(1.0f);
+            CurrentStateComponent->SetState(EAIBattleState::FakeMoving);
+            GetWorld()->GetTimerManager().PauseTimer(CurrentStateComponent->DetectionTimerHandle);
         }
         break;
 
@@ -189,10 +188,10 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
        
         Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-        if (StateComponent)
+        if (CurrentStateComponent)
         {
-            StateComponent->SetComponentTickEnabled(false);
-            GetWorld()->GetTimerManager().PauseTimer(StateComponent->DetectionTimerHandle);
+            CurrentStateComponent->SetComponentTickEnabled(false);
+            GetWorld()->GetTimerManager().PauseTimer(CurrentStateComponent->DetectionTimerHandle);
         }
         break;
     }

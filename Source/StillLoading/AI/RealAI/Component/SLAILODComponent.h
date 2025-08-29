@@ -37,12 +37,6 @@ private:
 	float LODCheckInterval = 0.25f;
 	float LODCheckTimer;
 
-	UPROPERTY()
-	TObjectPtr<ASLMonsterAICharacter> OwnerCharacter;
-
-	UPROPERTY()
-	TObjectPtr<USLAIStateComponent> StateComponent;
-
 public:
 	void SetLODLevel(EAILODLevel NewLevel);
 	EAILODLevel CalculateLODLevel(float MaxDetailDistance, float HighDetailDistance, float MediumDetailDistance, float LowDetailDistance) const;

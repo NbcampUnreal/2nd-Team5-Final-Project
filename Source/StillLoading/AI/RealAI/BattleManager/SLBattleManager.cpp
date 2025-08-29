@@ -1,5 +1,6 @@
 #include "SLBattleManager.h"
 
+#include "AI/RealAI/SLMonsterAICharacterBase.h"
 #include "AI/RealAI/Component/SLAICombatComponent.h"
 #include "AI/RealAI/Component/SLAILODComponent.h"
 #include "AI/RealAI/Component/SLAIStateComponent.h"
@@ -227,7 +228,7 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 {
 	if (!IsValid(Actor)) return;
 
-	for (const auto& Unit : RegisteredUnits)
+	for (auto& Unit : RegisteredUnits)
 	{
 		if (Unit.Actor == Actor)
 		{
@@ -237,7 +238,6 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 	}
 
 	FGenericTeamId TeamId = FGenericTeamId::NoTeam;
-	USLAIStateComponent* WarComp = nullptr;
 	USLAITokenSystemComponent* TokenComp = nullptr;
 
 	if (APawn* Pawn = Cast<APawn>(Actor))
@@ -252,23 +252,14 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 		TeamId = TeamAgent->GetGenericTeamId();
 	}
 
-	if (USLAIStateComponent* BattleComp = Actor->FindComponentByClass<USLAIStateComponent>())
-	{
-		WarComp = BattleComp;
-	}
-
 	FBattleUnitInfo NewUnit;
 	NewUnit.Actor = Actor;
 	NewUnit.TeamId = TeamId;
 	NewUnit.bIsPlayer = bIsPlayer;
 	NewUnit.SourceSpawner = SourceSpawner;
 
-	if (IsValid(WarComp))
-	{
-		NewUnit.WarComponent = WarComp;
-	}
-
 	int32 NewIndex = RegisteredUnits.Add(NewUnit);
+	UnitIndexMap.Add(Actor, NewIndex);
 	RebuildTeamIndices();
 
 	UE_LOG(LogTemp, Log, TEXT("배틀매니저: 유닛 등록됨: %s (팀: %d, 플레이어: %s, 스포너: %s)"),
@@ -284,25 +275,20 @@ void ASLBattleManager::UnregisterUnit(AActor* Actor)
 
 	OnUnitDestroyed(Actor);
 
-	int32 FoundIndex = INDEX_NONE;
-	for (int32 i = 0; i < RegisteredUnits.Num(); ++i)
+	if (const int32* FoundIndexPtr = UnitIndexMap.Find(Actor))
 	{
-		if (RegisteredUnits[i].Actor == Actor)
-		{
-			FoundIndex = i;
-			break;
-		}
-	}
-
-	if (FoundIndex != INDEX_NONE)
-	{
-		FBattleUnitInfo& UnitInfoToRemove = RegisteredUnits[FoundIndex];
-		UnitInfoToRemove.CurrentEngagedTarget = nullptr;
-
-		RegisteredUnits.RemoveAt(FoundIndex);
-		RebuildTeamIndices();
-
+		const int32 IndexToRemove = *FoundIndexPtr;
 		UE_LOG(LogTemp, Log, TEXT("배틀매니저: 유닛 등록 해제됨: %s"), *Actor->GetName());
+
+		RegisteredUnits.RemoveAt(IndexToRemove);
+		UnitIndexMap.Remove(Actor);
+		UnitIndexMap.Empty();
+		for (int32 i = 0; i < RegisteredUnits.Num(); ++i)
+		{
+			UnitIndexMap.Add(RegisteredUnits[i].Actor, i);
+		}
+
+		RebuildTeamIndices();
 	}
 	else
 	{

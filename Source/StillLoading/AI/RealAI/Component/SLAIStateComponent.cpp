@@ -17,9 +17,10 @@ DEFINE_LOG_CATEGORY(LogAIStateComponent);
 
 USLAIStateComponent::USLAIStateComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-	CurrentState = EAIBattleState::Idle;
-	CurrentTargetPointIndex = 0;
+    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bStartWithTickEnabled = false;
+    CurrentState = EAIBattleState::Idle;
+    CurrentTargetPointIndex = 0;
 }
 
 void USLAIStateComponent::BeginPlay()
@@ -44,12 +45,6 @@ void USLAIStateComponent::BeginPlay()
 void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-    USLAILODComponent* LODComponent = GetOwner()->FindComponentByClass<USLAILODComponent>();
-    if (LODComponent && LODComponent->GetCurrentLODLevel() == EAILODLevel::Culled)
-    {
-        return;
-    }
 
     if (!IsValid(GetOwner())) return;
 

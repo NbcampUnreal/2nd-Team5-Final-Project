@@ -28,8 +28,6 @@ struct FBattleUnitInfo
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<AActor> CurrentEngagedTarget;
 	UPROPERTY()
-	TObjectPtr<USLAIStateComponent> WarComponent = nullptr;
-	UPROPERTY()
 	TObjectPtr<ASLSwarmSpawner> SourceSpawner = nullptr;
 };
 
@@ -83,11 +81,11 @@ struct FLODDistanceSettings
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float MaxDetailDistance = 2000.f; // 20m
+	float MaxDetailDistance = 800.f; // 20m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float HighDetailDistance = 4000.f; // 50m
+	float HighDetailDistance = 2000.f; // 50m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float MediumDetailDistance = 5000.f; // 60m
+	float MediumDetailDistance = 4000.f; // 60m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
 	float LowDetailDistance = 6000.f; // 80m
 };
@@ -209,6 +207,8 @@ private:
 	TMap<TObjectPtr<AActor>, int32> TargetEngagementCounts;
 	UPROPERTY()
 	TMap<TObjectPtr<AActor>, FEngagedUnitsWrapper> EngagedUnitsPerTarget;
+	UPROPERTY()
+	TMap<TObjectPtr<AActor>, int32> UnitIndexMap;
 	
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	int32 MaxEngagingUnitsPerTarget = 3;

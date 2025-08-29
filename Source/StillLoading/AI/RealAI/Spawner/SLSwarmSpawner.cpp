@@ -199,9 +199,9 @@ void ASLSwarmSpawner::ReturnUnitToPool(ACharacter* Unit)
 		{
 			PoolEntry.bInUse = false;
 
-			if (USLAIStateComponent* WarComp = Unit->FindComponentByClass<USLAIStateComponent>())
+			if (USLAIStateComponent* StateComp = Unit->FindComponentByClass<USLAIStateComponent>())
 			{
-				WarComp->DeactivateAndReset();
+				StateComp->DeactivateAndReset();
 			}
 
 			Unit->SetActorHiddenInGame(true);

@@ -34,7 +34,7 @@ public:
     USLAIStateComponent();
     virtual void BeginPlay() override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+    
     // 상태 관리
     UFUNCTION(BlueprintCallable, Category = "AI|State")
     void SetState(EAIBattleState NewState);
