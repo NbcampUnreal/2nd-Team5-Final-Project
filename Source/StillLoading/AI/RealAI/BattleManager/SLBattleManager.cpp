@@ -12,7 +12,7 @@
 ASLBattleManager::ASLBattleManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = 0.3f;
+	PrimaryActorTick.TickInterval = 0.2f;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
@@ -368,7 +368,10 @@ void ASLBattleManager::UpdateAILODs()
         }
     }
 
-    TArray<int32> UnitIndicesByLOD[5]; // Max, High, Medium, Low, Culled
+    TArray<EAILODLevel> FinalLODs;
+    FinalLODs.SetNum(NumUnits);
+    TArray<int32> UnitIndicesByLOD[5];
+
     for (int32 i = 0; i < NumUnits; ++i)
     {
         const float DistanceSquared = FVector::DistSquared(UnitLocations[i], PlayerLocation);
@@ -381,18 +384,11 @@ void ASLBattleManager::UpdateAILODs()
         else IdealLevel = EAILODLevel::Culled;
 
         UnitIndicesByLOD[static_cast<int>(IdealLevel)].Add(i);
+        FinalLODs[i] = IdealLevel;
     }
 
     const int32 HighCostUnitCount = UnitIndicesByLOD[0].Num() + UnitIndicesByLOD[1].Num();
     const int32 HighCostBudget = LODBudget.MaxLODCount + LODBudget.HighLODCount;
-
-    auto SetLODLevelForIndex = [&](int32 UnitIndex, EAILODLevel NewLevel)
-    {
-        if (UnitLODComponents.IsValidIndex(UnitIndex) && IsValid(UnitLODComponents[UnitIndex]))
-        {
-            UnitLODComponents[UnitIndex]->SetLODLevel(NewLevel);
-        }
-    };
 
     if (HighCostUnitCount > HighCostBudget)
     {
@@ -404,24 +400,34 @@ void ASLBattleManager::UpdateAILODs()
         {
             return FVector::DistSquared(UnitLocations[A], PlayerLocation) < FVector::DistSquared(UnitLocations[B], PlayerLocation);
         });
-
-        for (int32 i = 0; i < HighCostIndices.Num(); ++i)
+    	
+        for (int32 i = HighCostBudget; i < HighCostIndices.Num(); ++i)
         {
             const int32 UnitIndex = HighCostIndices[i];
-            if (i < LODBudget.MaxLODCount) SetLODLevelForIndex(UnitIndex, EAILODLevel::Max);
-            else if (i < HighCostBudget) SetLODLevelForIndex(UnitIndex, EAILODLevel::High);
-            else SetLODLevelForIndex(UnitIndex, EAILODLevel::Medium);
+            FinalLODs[UnitIndex] = EAILODLevel::Medium;
+        }
+
+        for (int32 i = 0; i < HighCostBudget && i < HighCostIndices.Num(); ++i)
+        {
+            const int32 UnitIndex = HighCostIndices[i];
+            if (i < LODBudget.MaxLODCount)
+            {
+                FinalLODs[UnitIndex] = EAILODLevel::Max;
+            }
+            else
+            {
+                FinalLODs[UnitIndex] = EAILODLevel::High;
+            }
         }
     }
-    else
+	
+    for (int32 i = 0; i < NumUnits; ++i)
     {
-        for (const int32 UnitIndex : UnitIndicesByLOD[0]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Max);
-        for (const int32 UnitIndex : UnitIndicesByLOD[1]) SetLODLevelForIndex(UnitIndex, EAILODLevel::High);
+        if (UnitLODComponents.IsValidIndex(i) && IsValid(UnitLODComponents[i]))
+        {
+            UnitLODComponents[i]->SetLODLevel(FinalLODs[i]);
+        }
     }
-
-    for (const int32 UnitIndex : UnitIndicesByLOD[2]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Medium);
-    for (const int32 UnitIndex : UnitIndicesByLOD[3]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Low);
-    for (const int32 UnitIndex : UnitIndicesByLOD[4]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Culled);
 }
 
 void ASLBattleManager::UpdateEncounterPositions()

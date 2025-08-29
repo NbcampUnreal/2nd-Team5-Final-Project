@@ -40,7 +40,7 @@ void ASLSwarmSpawner::SetCachedBattleManager(ASLBattleManager* NewBattleManager)
 void ASLSwarmSpawner::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	if (IsValid(WaveSpawnerComponent))
 	{
 		WaveSpawnerComponent->OnWaveCompleted.AddDynamic(this, &ASLSwarmSpawner::HandleInternalWaveCompleted);
@@ -67,13 +67,14 @@ void ASLSwarmSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		CleanupPool();
 	}
-	
+
 	if (IsValid(WaveSpawnerComponent))
 	{
 		WaveSpawnerComponent->OnWaveCompleted.RemoveDynamic(this, &ASLSwarmSpawner::HandleInternalWaveCompleted);
-		WaveSpawnerComponent->OnAllWavesCompleted.RemoveDynamic(this, &ASLSwarmSpawner::HandleInternalAllWavesCompleted);
+		WaveSpawnerComponent->OnAllWavesCompleted.
+		                      RemoveDynamic(this, &ASLSwarmSpawner::HandleInternalAllWavesCompleted);
 	}
-	
+
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -85,7 +86,7 @@ void ASLSwarmSpawner::OnConstruction(const FTransform& Transform)
 void ASLSwarmSpawner::ReturnAllActiveUnitsToPool()
 {
 	TArray<FPooledUnit> ActiveUnitsCopy = ObjectPool;
-	
+
 	for (FPooledUnit& PoolEntry : ActiveUnitsCopy)
 	{
 		if (IsValid(PoolEntry.Character) && PoolEntry.bInUse)
@@ -171,7 +172,7 @@ void ASLSwarmSpawner::InitializeObjectPool(const TArray<FSimpleSpawnComposition>
 		TSubclassOf<ACharacter> DefaultUnitClass = RequiredUnitsPerClass.CreateConstIterator()->Key;
 		RequiredUnitsPerClass.FindOrAdd(DefaultUnitClass) += (InitialPoolSize - TotalRequired);
 	}
-    
+
 	for (auto const& Elem : RequiredUnitsPerClass)
 	{
 		if (Elem.Value > 0)
@@ -251,7 +252,7 @@ void ASLSwarmSpawner::ReturnUnitToPool(ACharacter* Unit)
 					WaveComp->OnUnitReturnedToPool(Unit->GetClass());
 				}
 			}
-			
+
 			UE_LOG(LogTemp, Log, TEXT("SwarmSpawner: 유닛 '%s' 풀에 반환."), *Unit->GetName());
 			return;
 		}
@@ -295,13 +296,13 @@ void ASLSwarmSpawner::ExpandPool(TSubclassOf<ACharacter> UnitClass, int32 Count)
 			{
 				Mesh->SetSimulatePhysics(false);
 			}
-          
+
 			if (UCharacterMovementComponent* MoveComp = NewUnit->GetCharacterMovement())
 			{
 				MoveComp->SetMovementMode(EMovementMode::MOVE_None);
 				MoveComp->Deactivate();
 			}
-          
+
 			if (ASLMonsterAICharacter* Monster = Cast<ASLMonsterAICharacter>(NewUnit))
 			{
 				Monster->ToggleWeaponState(false);
@@ -395,7 +396,7 @@ ACharacter* ASLSwarmSpawner::GetOrCreateAndPlaceUnit(TSubclassOf<ACharacter> Uni
 }
 
 void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSubclassOf<AAIController> ControllerClass,
-                                                 FGenericTeamId TeamID, float AvoidanceWeight)
+                                                   FGenericTeamId TeamID, float AvoidanceWeight)
 {
 	if (!IsValid(SpawnedUnit)) return;
 
@@ -408,6 +409,14 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 			MonsterAI->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			MonsterAI->ToggleWeaponState(true);
 		}
+	}
+
+	if (UCharacterMovementComponent* MovementComp = SpawnedUnit->GetCharacterMovement())
+	{
+		MovementComp->Activate();
+		MovementComp->SetMovementMode(EMovementMode::MOVE_Walking);
+		MovementComp->GravityScale = 1.f;
+		MovementComp->AvoidanceWeight = AvoidanceWeight;
 	}
 
 	AController* CurrentController = SpawnedUnit->GetController();
@@ -478,9 +487,9 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 }
 
 ACharacter* ASLSwarmSpawner::SpawnAndConfigureUnit(TSubclassOf<ACharacter> UnitClass,
-                                                 const TSubclassOf<AAIController> ControllerClass,
-                                                 const FGenericTeamId TeamID,
-                                                 const float AvoidanceWeight)
+                                                   const TSubclassOf<AAIController> ControllerClass,
+                                                   const FGenericTeamId TeamID,
+                                                   const float AvoidanceWeight)
 {
 	ACharacter* SpawnedUnit = GetOrCreateAndPlaceUnit(UnitClass);
 

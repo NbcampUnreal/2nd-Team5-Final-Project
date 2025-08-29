@@ -66,13 +66,13 @@ struct FBattleAILODBudget
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 MaxLODCount = 10;
+	int32 MaxLODCount = 30;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 HighLODCount = 15;
+	int32 HighLODCount = 35;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 MediumLODCount = 30;
+	int32 MediumLODCount = 40;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 LowLODCount = 1000;
+	int32 LowLODCount = 100;
 };
 
 USTRUCT(BlueprintType)
@@ -81,11 +81,11 @@ struct FLODDistanceSettings
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float MaxDetailDistance = 800.f; // 20m
+	float MaxDetailDistance = 1500.f; // 20m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float HighDetailDistance = 1500.f; // 50m
+	float HighDetailDistance = 2000.f; // 50m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float MediumDetailDistance = 2000.f; // 60m
+	float MediumDetailDistance = 3000.f; // 60m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
 	float LowDetailDistance = 4000.f; // 80m
 };

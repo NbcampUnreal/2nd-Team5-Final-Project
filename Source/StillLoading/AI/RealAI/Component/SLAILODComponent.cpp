@@ -99,7 +99,7 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
         MovementComponent->SetComponentTickEnabled(true);
         MovementComponent->SetAvoidanceEnabled(true);
-    	MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
+    	//MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
         Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
         if (CurrentStateComponent)
@@ -142,7 +142,7 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
         MovementComponent->SetComponentTickEnabled(false);
         MovementComponent->Deactivate();
-    	MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
+    	//MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
         Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
         if (CurrentStateComponent)
