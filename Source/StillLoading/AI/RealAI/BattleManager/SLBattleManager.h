@@ -81,13 +81,13 @@ struct FLODDistanceSettings
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float MaxDetailDistance = 800.f; // 20m
+	float MaxDetailDistance = 600.f; // 20m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float HighDetailDistance = 2000.f; // 50m
+	float HighDetailDistance = 1000.f; // 50m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float MediumDetailDistance = 4000.f; // 60m
+	float MediumDetailDistance = 2000.f; // 60m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float LowDetailDistance = 6000.f; // 80m
+	float LowDetailDistance = 4000.f; // 80m
 };
 
 UCLASS()
@@ -127,6 +127,7 @@ public:
 	const TMap<TObjectPtr<AActor>, int32>& GetUnitIndexMap() const { return UnitIndexMap; }
 	const TArray<TObjectPtr<AActor>>& GetUnitActors() const { return UnitActors; }
 	const TArray<FVector>& GetUnitLocations() const { return UnitLocations; }
+	const TArray<FVector>& GetUnitTargetLocations() const { return UnitTargetLocations; }
 protected:
 	void BindToSpawnerEvents(); // ASLSwarmSpawner 이벤트 바인딩
 	void InitializeAISupportingMode();
@@ -137,7 +138,7 @@ protected:
 	UFUNCTION()
 	void OnSpawnerUnitActuallyDestroyedHandler(AActor* DestroyedActor);
 
-	// --- 웨이브 컴포넌트 델리게이트 핸들러들 ---
+	// --- 웨이브 컴포넌트 델리게이트 핸들러 ---
 	UFUNCTION()
 	void HandleWaveCompleted(int32 WaveNumber, ASLSwarmSpawner* CompletedSpawner);
 	UFUNCTION()
@@ -145,6 +146,10 @@ protected:
 
 	// LOD 관리
 	void UpdateAILODs();
+
+	// 다대일 전투용
+	void UpdateEncounterPositions();
+	TArray<FVector> CalculateCirclePositions(const FVector& Center, float Radius, int32 NumSlots) const;
 
 	// --- 스포너 관리 ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle Management|Spawners")
@@ -169,6 +174,10 @@ protected:
 	// Combat 관련 데이터
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
 	TArray<TObjectPtr<USLAICombatComponent>> UnitCombatComponents;
+
+	// 다대일 전투를 위한 타겟 위치정보 배열
+	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
+	TArray<FVector> UnitTargetLocations;
 
 	// 교전 관련 데이터
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
@@ -231,6 +240,8 @@ private:
 	TMap<TObjectPtr<AActor>, int32> TargetEngagementCounts;
 	UPROPERTY()
 	TMap<TObjectPtr<AActor>, FEngagedUnitsWrapper> EngagedUnitsPerTarget;
+	UPROPERTY()
+	TWeakObjectPtr<APawn> PrimaryTarget;
 	
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	int32 MaxEngagingUnitsPerTarget = 3;
@@ -240,6 +251,12 @@ private:
 	bool bUseLODSystem = true;
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	FBattleAILODBudget LODBudget;
+
+	UPROPERTY(EditAnywhere, Category = "Battle Management|Encounter")
+	float PressurerCircleRadius = 600.0f;
+	UPROPERTY(EditAnywhere, Category = "Battle Management|Encounter")
+	float MediumCircleRadius = 1000.0f;
+	
 	UPROPERTY(EditAnywhere, Category = "AI LOD")
 	FLODDistanceSettings LODDistances;
 	UPROPERTY()

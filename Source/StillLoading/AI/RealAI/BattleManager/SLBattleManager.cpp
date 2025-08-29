@@ -23,6 +23,9 @@ void ASLBattleManager::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//TODO::추후에 가져오는 방식 변경 필요
+	PrimaryTarget = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
 	UnitActors.Empty();
 	UnitLocations.Empty();
 	UnitTeamIDs.Empty();
@@ -34,6 +37,7 @@ void ASLBattleManager::BeginPlay()
 	TeamUnitIndices.Empty();
 	TargetEngagementCounts.Empty();
 	EngagedUnitsPerTarget.Empty();
+	UnitTargetLocations.Empty();
 
 	TeamUnitIndices.Reserve(1000); // 미리 공간 확보 O(1) 버킷 할당
 
@@ -99,6 +103,9 @@ void ASLBattleManager::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	if (!bUseLODSystem) return;
 	UpdateAILODs();
+
+	if (!bIsPlayerOnly) return;
+	UpdateEncounterPositions();
 }
 
 void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -287,6 +294,7 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 	UnitSourceSpawners.Add(SourceSpawner);
 	UnitLODComponents.Add(Actor->FindComponentByClass<USLAILODComponent>());
 	UnitCombatComponents.Add(Actor->FindComponentByClass<USLAICombatComponent>());
+	UnitTargetLocations.Add(FVector::ZeroVector);
 	UnitEngagedTargetIndices.Add(INDEX_NONE);
 
 	UnitIndexMap.Add(Actor, NewIndex);
@@ -332,6 +340,7 @@ void ASLBattleManager::UnregisterUnit(AActor* Actor)
 	UnitSourceSpawners.RemoveAtSwap(IndexToRemove);
 	UnitLODComponents.RemoveAtSwap(IndexToRemove);
 	UnitCombatComponents.RemoveAtSwap(IndexToRemove);
+	UnitTargetLocations.RemoveAtSwap(IndexToRemove);
 	UnitEngagedTargetIndices.RemoveAtSwap(IndexToRemove);
 
 	if (IndexToRemove < LastIndex)
@@ -414,6 +423,88 @@ void ASLBattleManager::UpdateAILODs()
     for (const int32 UnitIndex : UnitIndicesByLOD[3]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Low);
     for (const int32 UnitIndex : UnitIndicesByLOD[4]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Culled);
     
+}
+
+void ASLBattleManager::UpdateEncounterPositions()
+{
+	if (!PrimaryTarget.IsValid() || UnitActors.Num() == 0)
+    {
+        return;
+    }
+    const FVector PlayerLocation = PrimaryTarget->GetActorLocation();
+
+    TArray<int32> HighLOD_Indices, MediumLOD_Indices;
+    for (int32 i = 0; i < UnitActors.Num(); ++i)
+    {
+        if (IsValid(UnitLODComponents[i]))
+        {
+            EAILODLevel LODLevel = UnitLODComponents[i]->GetCurrentLODLevel();
+            if (LODLevel == EAILODLevel::High)
+            {
+                HighLOD_Indices.Add(i);
+            }
+            else if (LODLevel == EAILODLevel::Medium)
+            {
+                MediumLOD_Indices.Add(i);
+            }
+            else
+            {
+                UnitTargetLocations[i] = FVector::ZeroVector;
+            }
+        }
+    }
+
+    if (HighLOD_Indices.Num() > 0)
+    {
+        const TArray<FVector> HighLOD_Slots = CalculateCirclePositions(PlayerLocation, PressurerCircleRadius, LODBudget.HighLODCount);
+        if (HighLOD_Slots.Num() > 0)
+        {
+            for (int32 i = 0; i < HighLOD_Indices.Num(); ++i)
+            {
+                const int32 UnitIndex = HighLOD_Indices[i];
+                const int32 SlotIndex = i % HighLOD_Slots.Num();
+                
+                FVector TargetSlot = HighLOD_Slots[SlotIndex];
+                FVector Jitter = FVector(FMath::RandRange(-75.f, 75.f), FMath::RandRange(-75.f, 75.f), 0.f);
+                
+                UnitTargetLocations[UnitIndex] = TargetSlot + Jitter;
+            }
+        }
+    }
+
+    if (MediumLOD_Indices.Num() > 0)
+    {
+        const TArray<FVector> MediumLOD_Slots = CalculateCirclePositions(PlayerLocation, MediumCircleRadius, LODBudget.MediumLODCount);
+        if (MediumLOD_Slots.Num() > 0)
+        {
+            for (int32 i = 0; i < MediumLOD_Indices.Num(); ++i)
+            {
+                const int32 UnitIndex = MediumLOD_Indices[i];
+                const int32 SlotIndex = i % MediumLOD_Slots.Num();
+                
+                FVector TargetSlot = MediumLOD_Slots[SlotIndex];
+                UnitTargetLocations[UnitIndex] = TargetSlot;
+            }
+        }
+    }
+}
+
+TArray<FVector> ASLBattleManager::CalculateCirclePositions(const FVector& Center, float Radius, int32 NumSlots) const
+{
+	TArray<FVector> Positions;
+	if (NumSlots <= 0) return Positions;
+
+	const float AngleStep = 360.0f / NumSlots;
+
+	for (int32 i = 0; i < NumSlots; ++i)
+	{
+		const float Angle = FMath::DegreesToRadians(AngleStep * i);
+		const float X = FMath::Cos(Angle) * Radius;
+		const float Y = FMath::Sin(Angle) * Radius;
+		Positions.Add(Center + FVector(X, Y, 0));
+	}
+
+	return Positions;
 }
 
 bool ASLBattleManager::AreEnemies(const FGenericTeamId& me, const FGenericTeamId& target, const bool bIsPlayer) const
@@ -641,6 +732,7 @@ void ASLBattleManager::EndBattle()
 	TeamUnitIndices.Empty();
 	TargetEngagementCounts.Empty();
 	EngagedUnitsPerTarget.Empty();
+	UnitTargetLocations.Empty();
 }
 
 // Engage System

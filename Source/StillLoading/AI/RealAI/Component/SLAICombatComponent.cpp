@@ -204,6 +204,23 @@ void USLAICombatComponent::HandleNoEnemyDetected()
 	}
 }
 
+void USLAICombatComponent::UpdateFakeMovement(const FVector& TargetLocation, float DeltaTime)
+{
+	AActor* OwnerActor = GetOwner();
+	if (!OwnerActor) return;
+
+	if (TargetLocation.IsNearlyZero()) return;
+
+	const FVector CurrentLocation = OwnerActor->GetActorLocation();
+	const FVector Direction = (TargetLocation - CurrentLocation).GetSafeNormal();
+
+	const float FakeMovementSpeed = 150.0f; 
+	OwnerActor->SetActorLocation(CurrentLocation + Direction * FakeMovementSpeed * DeltaTime);
+
+	const FRotator TargetRotation = Direction.Rotation();
+	OwnerActor->SetActorRotation(FRotator(0, TargetRotation.Yaw, 0));
+}
+
 void USLAICombatComponent::UpdateFakeMovement(float DeltaTime)
 {
 	if (!IsValid(CurrentTarget.TargetActor))
@@ -211,13 +228,7 @@ void USLAICombatComponent::UpdateFakeMovement(float DeltaTime)
 		return;
 	}
 	
-	FVector TargetLocation = CurrentTarget.TargetActor->GetActorLocation();
-	AActor* OwnerActor = GetOwner();
-
-	FVector Direction = (TargetLocation - OwnerActor->GetActorLocation()).GetSafeNormal();
-	OwnerActor->SetActorLocation(OwnerActor->GetActorLocation() + Direction * 200.0f * DeltaTime);
-
-	SafeLookAtTarget(CurrentTarget.TargetActor, DeltaTime);
+	UpdateFakeMovement(CurrentTarget.TargetActor->GetActorLocation(), DeltaTime);
 }
 
 void USLAICombatComponent::SetTarget(AActor* NewTarget)

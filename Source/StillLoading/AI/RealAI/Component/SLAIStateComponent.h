@@ -6,6 +6,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "SLAIStateComponent.generated.h"
 
+class USLAILODComponent;
 class ASLMonsterAICharacter;
 class USLAICombatComponent;
 class USLAISupportModeComponent;
@@ -102,6 +103,8 @@ private:
     // 컴포넌트 참조들
     UPROPERTY()
     TObjectPtr<USLAICombatComponent> CombatComponent;
+    UPROPERTY()
+    TObjectPtr<USLAILODComponent> CachedLODComponent;
     
     // 순찰 관련
     int32 CurrentTargetPointIndex = 0;

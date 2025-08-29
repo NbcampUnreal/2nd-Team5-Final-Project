@@ -76,6 +76,24 @@ void USLAIStateComponent::PerformEnemyDetection()
 
 void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
 {
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->BattleManager) && IsValid(CachedLODComponent))
+	{
+		const EAILODLevel CurrentLOD = CachedLODComponent->GetCurrentLODLevel();
+		const auto& UnitMap = CachedMyCharacter->BattleManager->GetUnitIndexMap();
+		if (const int32* MyIndexPtr = UnitMap.Find(GetOwner()))
+		{
+			const FVector TargetLocation = CachedMyCharacter->BattleManager->GetUnitTargetLocations()[*MyIndexPtr];
+			if (!TargetLocation.IsNearlyZero())
+			{
+				if (CurrentLOD == EAILODLevel::High)
+				{
+					SetMovementTarget(TargetLocation, 100.f);
+					return;
+				}
+			}
+		}
+	}
+	
 	switch (CurrentState)
 	{
 	case EAIBattleState::Idle:
@@ -170,6 +188,7 @@ void USLAIStateComponent::Initialize()
 	}
 
 	CombatComponent = GetOwner()->FindComponentByClass<USLAICombatComponent>();
+	CachedLODComponent = GetOwner()->FindComponentByClass<USLAILODComponent>();
 }
 
 void USLAIStateComponent::ActivateAndMoveToInitialTarget(int32 InitialTargetPointIndex)

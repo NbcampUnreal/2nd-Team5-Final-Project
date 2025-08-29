@@ -46,6 +46,8 @@ public:
     void HandleEnemyDetection(AActor* DetectedEnemy);
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
     void HandleNoEnemyDetected();
+    
+    void UpdateFakeMovement(const FVector& TargetLocation, float DeltaTime);
     void UpdateFakeMovement(float DeltaTime);
 
     // 서포트 모드 관련
