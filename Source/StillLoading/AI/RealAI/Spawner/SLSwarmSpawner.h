@@ -13,6 +13,12 @@ class UNiagaraSystem;
 class UBoxComponent;
 class AAIController;
 
+struct FQueuedSpawnRequest
+{
+	TSubclassOf<ACharacter> ClassToSpawn;
+	int32 Count;
+};
+
 USTRUCT(BlueprintType)
 struct FWaveCompositionData
 {
@@ -157,9 +163,16 @@ public:
     int32 GetActiveUnitCount() const;
 
     void SetCachedBattleManager(class ASLBattleManager* NewBattleManager);
+	
 protected:
     UFUNCTION()
     void HandleInternalWaveCompleted(int32 WaveNumber, USLWaveSpawnerComponent* CompletedComp);
     UFUNCTION()
     void HandleInternalAllWavesCompleted(USLWaveSpawnerComponent* CompletedComp);
+
+private:
+	TQueue<FQueuedSpawnRequest> SpawnQueue;
+	FTimerHandle PoolExpansionTimer;
+
+	void ExpandPoolIncrementally();
 };

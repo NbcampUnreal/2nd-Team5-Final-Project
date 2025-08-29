@@ -169,11 +169,23 @@ void ASLMonsterAICharacter::ToggleWeaponState(const bool bIsVisible)
 	if (Sword)
 	{
 		Sword->SetActorHiddenInGame(bShouldBeHidden);
+		Sword->SetActorEnableCollision(bIsVisible ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+		
+		if (UPrimitiveComponent* WeaponMesh = Cast<UPrimitiveComponent>(Sword->GetRootComponent()))
+		{
+			WeaponMesh->SetSimulatePhysics(false);
+		}
 	}
 
 	if (Shield)
 	{
 		Shield->SetActorHiddenInGame(bShouldBeHidden);
+		Shield->SetActorEnableCollision(bIsVisible ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+		
+		if (UPrimitiveComponent* WeaponMesh = Cast<UPrimitiveComponent>(Shield->GetRootComponent()))
+		{
+			WeaponMesh->SetSimulatePhysics(false);
+		}
 	}
 }
 

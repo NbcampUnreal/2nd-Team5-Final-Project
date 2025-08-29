@@ -78,8 +78,7 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
     AController* Controller = OwnerCharacter->GetController();
 
     if (!Mesh || !MovementComponent || !Capsule) return;
-
-
+	
     switch (CurrentLODLevel)
     {
     case EAILODLevel::Max:
@@ -100,6 +99,7 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
         MovementComponent->SetComponentTickEnabled(true);
         MovementComponent->SetAvoidanceEnabled(true);
+    	MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
         Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
         if (CurrentStateComponent)
@@ -142,12 +142,13 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
         MovementComponent->SetComponentTickEnabled(false);
         MovementComponent->Deactivate();
+    	MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
         Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
         if (CurrentStateComponent)
         {
             CurrentStateComponent->SetComponentTickEnabled(true);
-            CurrentStateComponent->SetComponentTickInterval(1.0f);
+            CurrentStateComponent->SetComponentTickInterval(0.5f);
             CurrentStateComponent->SetState(EAIBattleState::FakeMoving);
             GetWorld()->GetTimerManager().PauseTimer(CurrentStateComponent->DetectionTimerHandle);
         }
@@ -172,6 +173,7 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
         MovementComponent->SetComponentTickEnabled(false);
         MovementComponent->Deactivate();
         Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    	//Capsule->SetMobility(EComponentMobility::Static);
 
         if (CurrentStateComponent)
         {

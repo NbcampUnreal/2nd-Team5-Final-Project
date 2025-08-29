@@ -422,7 +422,6 @@ void ASLBattleManager::UpdateAILODs()
     for (const int32 UnitIndex : UnitIndicesByLOD[2]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Medium);
     for (const int32 UnitIndex : UnitIndicesByLOD[3]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Low);
     for (const int32 UnitIndex : UnitIndicesByLOD[4]) SetLODLevelForIndex(UnitIndex, EAILODLevel::Culled);
-    
 }
 
 void ASLBattleManager::UpdateEncounterPositions()
