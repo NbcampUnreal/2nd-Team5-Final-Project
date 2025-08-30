@@ -7,6 +7,7 @@
 #include "SLSplineTrack.generated.h"
 
 class USplineComponent;
+class ULevelSequence;
 
 UCLASS()
 class STILLLOADING_API ASLSplineTrack : public AActor
@@ -22,10 +23,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Track")
 	ASLSplineTrack* GetNextTrack() { return NextTrack; }
+
+	UFUNCTION(BlueprintCallable, Category="Track")
+	ULevelSequence* GetLevelSequence() { return LevelSequence; }
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Track")
 	TObjectPtr<USplineComponent> SplineComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Track")
-	TObjectPtr<ASLSplineTrack> NextTrack;
+	TObjectPtr<ASLSplineTrack> NextTrack = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Track")
+	TObjectPtr<ULevelSequence> LevelSequence = nullptr;
 };

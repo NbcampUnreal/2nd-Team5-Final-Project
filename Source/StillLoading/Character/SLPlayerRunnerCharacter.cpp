@@ -12,9 +12,12 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "InputActionValue.h"
+#include "LevelSequence.h"
 #include "Math/RotationMatrix.h"
 #include "TimerManager.h"
 #include "Minigame\System/SLSplineTrack.h"
+#include "LevelSequenceActor.h"
+#include "LevelSequencePlayer.h"
 
 ASLPlayerRunnerCharacter::ASLPlayerRunnerCharacter()
 {
@@ -122,7 +125,7 @@ void ASLPlayerRunnerCharacter::BeginPlay()
 void ASLPlayerRunnerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
+	if (bPlayingTransitionSequence) return;
 	if (TrackSpline && bSplineDriveEnabled && !bGoalReached)
 	{
 		AdvanceAlongSegment(DeltaSeconds);
@@ -187,15 +190,18 @@ void ASLPlayerRunnerCharacter::MapDistanceToSegment(float Distance)
 
 void ASLPlayerRunnerCharacter::AdvanceAlongSegment(float DeltaSeconds)
 {
+	if (bPlayingTransitionSequence) return;
+	
 	if (CurrentPointIndex >= LastPointIndex)
 	{
+		UE_LOG(LogTemp, Log, TEXT("[Runner] Reached the end of the track._1"));
 		ReachGoal();
 		return;
 	}
 
 	float Advance = ForwardSpeed * DeltaSeconds;
 
-	while (Advance > 0.f && !bGoalReached)
+	while (Advance > 0.f && !bGoalReached && bSplineDriveEnabled)
 	{
 		const float Rem = CurrentSegmentEndDistance - SplineDistance;
 		if (Advance >= Rem - KINDA_SMALL_NUMBER)
@@ -205,6 +211,7 @@ void ASLPlayerRunnerCharacter::AdvanceAlongSegment(float DeltaSeconds)
 
 			if (CurrentPointIndex + 1 >= LastPointIndex)
 			{
+				UE_LOG(LogTemp, Log, TEXT("[Runner] Reached the end of the track._2"));
 				ReachGoal();
 				break;
 			}
@@ -224,9 +231,17 @@ void ASLPlayerRunnerCharacter::AdvanceAlongSegment(float DeltaSeconds)
 
 void ASLPlayerRunnerCharacter::ReachGoal()
 {
+	UE_LOG(LogTemp, Log, TEXT("[Runner] ReachGoal"));
 	if (CurrentTrack->GetNextTrack() != nullptr)
 	{
-		SwitchToTrack(CurrentTrack->GetNextTrack());
+		if (ULevelSequence* Seq = CurrentTrack->GetLevelSequence())
+		{
+			PlayTransitionTrackSequence(Seq);
+		}
+		else
+		{
+			SwitchToTrack(CurrentTrack->GetNextTrack());
+		}
 		return;
 	}
 
@@ -243,19 +258,6 @@ void ASLPlayerRunnerCharacter::SnapToNearestOnSpline()
 	if (!TrackSpline) return;
 	const float Key = TrackSpline->FindInputKeyClosestToWorldLocation(GetActorLocation());
 	SplineDistance = TrackSpline->GetDistanceAlongSplineAtSplineInputKey(Key);
-}
-
-void ASLPlayerRunnerCharacter::SetSplineDistance(const float NewDistance)
-{
-	if (!TrackSpline) return;
-	const float D = FMath::Clamp(NewDistance, 0.f, GoalDistance);
-	MapDistanceToSegment(D);
-	ApplyTransformAtDistance(SplineDistance);
-}
-
-void ASLPlayerRunnerCharacter::SetSplineDriveEnabled(const bool bEnable)
-{
-	bSplineDriveEnabled = bEnable && !bGoalReached;
 }
 
 void ASLPlayerRunnerCharacter::OnActionTriggeredCallback(const EInputActionType ActionType, const FInputActionValue InputValue)
@@ -388,14 +390,6 @@ USLRunnerAnimInstance* ASLPlayerRunnerCharacter::GetRunnerAnim() const
 	return GetMesh() ? Cast<USLRunnerAnimInstance>(GetMesh()->GetAnimInstance()) : nullptr;
 }
 
-void ASLPlayerRunnerCharacter::PushToAnim(ERunnerAction Action) const
-{
-	if (USLRunnerAnimInstance* Anim = GetRunnerAnim())
-	{
-		Anim->PushAction(Action);
-	}
-}
-
 void ASLPlayerRunnerCharacter::StartIFrame(float Duration)
 {
 	bInvincible = true;
@@ -480,7 +474,7 @@ void ASLPlayerRunnerCharacter::ApplyRotationAtDistance(float Distance)
 void ASLPlayerRunnerCharacter::SwitchToTrack(ASLSplineTrack* NewTrack)
 {
 	checkf(NewTrack, TEXT("[Runner] SwitchToTrack: NewTrack is nullptr"));
-
+	UE_LOG(LogTemp, Log, TEXT("[Runner] SwitchToTrack: %s"), *NewTrack->GetName());
 	CurrentTrack  = NewTrack;
 	TrackSpline = NewTrack->GetSplineComp();
 	bGoalReached  = false;
@@ -495,6 +489,41 @@ void ASLPlayerRunnerCharacter::SwitchToTrack(ASLSplineTrack* NewTrack)
 	ApplyTransformAtDistance(SplineDistance);
 
 	// SetCameraPreset(ECameraPreset::Default, 0.15f);
+}
+
+void ASLPlayerRunnerCharacter::PlayTransitionTrackSequence(ULevelSequence* Sequence)
+{
+	checkf(Sequence, TEXT("ASLPlayerRunnerCharacter Missing Sequence. Line.485"))
+	bPlayingTransitionSequence = true;
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->SetMovementMode(MOVE_None);
+	ALevelSequenceActor* SeqActor = nullptr;
+	FMovieSceneSequencePlaybackSettings Settings;
+	Settings.bAutoPlay = false;
+	Settings.bPauseAtEnd = true;
+	TransitionSequence = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, Settings, SeqActor);
+	TransitionSequence->OnFinished.AddDynamic(this, &ASLPlayerRunnerCharacter::OnTransitionSequenceFinished);
+	TransitionSequence->Play();
+}
+
+void ASLPlayerRunnerCharacter::OnTransitionSequenceFinished()
+{
+	UE_LOG(LogTemp, Log, TEXT("[Runner] OnTransitionSequenceFinished"));
+	if (TransitionSequence)
+	{
+		TransitionSequence->OnFinished.RemoveAll(this);
+	}
+
+	if (ActivateSequenceActor.IsValid())
+	{
+		ActivateSequenceActor->Destroy();
+	}
+	SetAnimRootMotionTranslationScale(1.f);
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	TransitionSequence = nullptr;
+	ActivateSequenceActor = nullptr;
+	bPlayingTransitionSequence = false;
+	SwitchToTrack(CurrentTrack->GetNextTrack());
 }
 
 void ASLPlayerRunnerCharacter::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
