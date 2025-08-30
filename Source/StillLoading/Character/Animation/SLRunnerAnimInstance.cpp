@@ -17,41 +17,6 @@ void USLRunnerAnimInstance::PlayRunStart()
     );
 }
 
-void USLRunnerAnimInstance::PushAction(ERunnerAction InAction)
-{
-    if (bActionLocked || InAction == ERunnerAction::None) return;
-
-    // 전신 동작 중엔 상체 공격을 막고 싶다면(권장)
-    if (InAction == ERunnerAction::Attack && IsFullBodyBusy())
-        return;
-
-    RequestedAction = InAction;
-    bActionLocked   = true;
-
-    PlayActionMontage(InAction);
-
-    if (UWorld* World = GetWorld())
-    {
-        World->GetTimerManager().SetTimer(
-            LockTimer,
-            this, &USLRunnerAnimInstance::UnlockAction,
-            ActionLockDuration, false);
-    }
-}
-
-void USLRunnerAnimInstance::PlayActionMontage(ERunnerAction InAction)
-{
-    UAnimMontage* M = nullptr;
-    switch (InAction)
-    {
-    case ERunnerAction::Jump:   M = JumpMontage;   break; 
-    case ERunnerAction::Slide:  M = SlideMontage;  break;
-    case ERunnerAction::Attack: M = AttackMontage; break;  
-    default: break;
-    }
-    if (M) Montage_Play(M, 1.0f);
-}
-
 void USLRunnerAnimInstance::PlayMatchedMontage(EHurdleState StateMatched, ERunnerMontageSection Section)
 {
     UAnimMontage* M = nullptr;
@@ -65,8 +30,28 @@ void USLRunnerAnimInstance::PlayMatchedMontage(EHurdleState StateMatched, ERunne
         M = SlideMontage;
         break;
     case EHurdleState::Attack:
-        M = AttackMontage;
-        break;
+        if (!bAlreadyAttacked)
+        {
+            M = AttackMontage_1;
+            bAlreadyAttacked = true;
+            GetWorld()->GetTimerManager().SetTimer(NextAttackTimer,
+                [this]
+                {
+                    if (bAlreadyAttacked)
+                    {
+                        bAlreadyAttacked = false;
+                    }
+                },
+                0.6f,
+                false);
+        }
+        else
+        {
+            M = AttackMontage_2;
+            bAlreadyAttacked = false;
+            GetWorld()->GetTimerManager().ClearTimer(NextAttackTimer);
+        }
+        break;  
     default: break;
     }
 
@@ -107,13 +92,6 @@ void USLRunnerAnimInstance::PlayHitMontage(EHurdleState FromObstacle, ERunnerMon
             0.35f,
             false);
     }
-    
-}
-
-bool USLRunnerAnimInstance::IsFullBodyBusy() const
-{
-    return (JumpMontage  && Montage_IsPlaying(JumpMontage))
-        || (SlideMontage && Montage_IsPlaying(SlideMontage));
 }
 
 void USLRunnerAnimInstance::UnlockAction()

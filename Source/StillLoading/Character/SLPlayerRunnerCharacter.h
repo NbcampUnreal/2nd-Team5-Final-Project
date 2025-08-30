@@ -5,6 +5,9 @@
 #include "GameFramework/Character.h"
 #include "SLPlayerRunnerCharacter.generated.h"
 
+class ULevelSequence;
+class ALevelSequenceActor;
+class ULevelSequencePlayer;
 class UDynamicIMCComponent;
 class UBoxComponent;
 class USLRunnerAnimInstance;
@@ -50,12 +53,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Runner|Spline")
 	void SnapToNearestOnSpline();
 
-	UFUNCTION(BlueprintCallable, Category="Runner|Spline")
-	void SetSplineDistance(const float NewDistance);
-
-	UFUNCTION(BlueprintCallable, Category="Runner|Spline")
-	void SetSplineDriveEnabled(const bool bEnable);
-
 protected:
 	UFUNCTION()
 	void OnActionTriggeredCallback(const EInputActionType ActionType, const FInputActionValue InputValue);
@@ -76,18 +73,22 @@ protected:
 
 private:
 	USLRunnerAnimInstance* GetRunnerAnim() const;
-	void PushToAnim(ERunnerAction Action) const;
 
 	void StartIFrame(float Duration);
+
+	UFUNCTION(BlueprintCallable, Category="Runner|State")
 	void EnterRootMotionAction(float ExpectedDuration);
 	void ExitRootMotionAction();
 
 	void ApplyTransformAtDistance(float Distance);
 	void ApplyRotationAtDistance(float Distance);
 
-	void TryAdvanceToNextTrack();
+	UFUNCTION()
 	void SwitchToTrack(ASLSplineTrack* NewTrack);
-	
+	UFUNCTION()
+	void PlayTransitionTrackSequence(ULevelSequence* Sequence);
+	UFUNCTION()
+	void OnTransitionSequenceFinished();
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
@@ -193,6 +194,9 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
 	bool bGoalReached = false;
+	
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
+	bool bPlayingTransitionSequence = false;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
 	float GoalDistance = 0.f;
@@ -238,4 +242,9 @@ protected:
 private:
 	FTimerHandle ActionRootMotionTimer;
 	FTimerHandle CamPresetTimer;
+
+	UPROPERTY(Transient)
+	TObjectPtr<ULevelSequencePlayer> TransitionSequence = nullptr;
+	UPROPERTY(Transient)
+	TWeakObjectPtr<ALevelSequenceActor> ActivateSequenceActor = nullptr;
 };
