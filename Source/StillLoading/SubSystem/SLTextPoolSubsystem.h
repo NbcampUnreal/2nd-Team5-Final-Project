@@ -61,7 +61,6 @@ private:
 
 	UPROPERTY()
 	TMap<ESLTextDataType, ESLChapterType> TextPoolChapterMap;
-	//ESLChapterType DataChapter = ESLChapterType::EC_None;
 
 	UPROPERTY()
 	ESLLanguageType CurrentLanguage = ESLLanguageType::EL_Kor;
