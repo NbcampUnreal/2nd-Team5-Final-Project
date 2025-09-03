@@ -19,6 +19,74 @@ ASLBattleManager::ASLBattleManager()
 	CurrentGlobalWaveNumber = 0;
 }
 
+void ASLBattleManager::StartBattle_Implementation()
+{
+	if (ManagedSpawners.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: 관리할 스포너가 없습니다. 전투를 시작할 수 없습니다."));
+		return;
+	}
+
+	CurrentGlobalWaveNumber = 0;
+	SpawnerWaveCompletionStatus.Empty();
+
+	UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 전투 시작! 첫 전역 웨이브 (%d)를 지시합니다."), CurrentGlobalWaveNumber);
+
+	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
+	{
+		if (IsValid(Spawner))
+		{
+			Spawner->StartWave(CurrentGlobalWaveNumber);
+			SpawnerWaveCompletionStatus.Add(Spawner, false);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: ManagedSpawners에 유효하지 않은 스포너가 있습니다."));
+		}
+	}
+}
+
+void ASLBattleManager::EndBattle_Implementation()
+{
+	UE_LOG(LogTemp, Log, TEXT("SLBattleManager: 전투 종료!"));
+	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
+	{
+		if (IsValid(Spawner))
+		{
+			Spawner->StopWaveSpawning();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SLBattleManager: ManagedSpawners에 유효하지 않은 스포너가 있습니다. 종료할 수 없습니다."));
+		}
+	}
+
+	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
+	{
+		if (IsValid(Spawner))
+		{
+			Spawner->CleanupPool();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SLBattleManager: 등록된 스포너 중 유효하지 않은 것이 있습니다."));
+		}
+	}
+
+	UnitActors.Empty();
+	UnitLocations.Empty();
+	UnitTeamIDs.Empty();
+	UnitSourceSpawners.Empty();
+	UnitLODComponents.Empty();
+	UnitEngagedTargetIndices.Empty();
+    
+	UnitIndexMap.Empty();
+	TeamUnitIndices.Empty();
+	TargetEngagementCounts.Empty();
+	EngagedUnitsPerTarget.Empty();
+	UnitTargetLocations.Empty();
+}
+
 void ASLBattleManager::BeginPlay()
 {
 	Super::BeginPlay();
@@ -432,19 +500,53 @@ void ASLBattleManager::UpdateAILODs()
 
 void ASLBattleManager::UpdateEncounterPositions()
 {
-	if (!PrimaryTarget.IsValid() || UnitActors.Num() == 0)
+    if (!PrimaryTarget.IsValid() || UnitActors.Num() == 0)
     {
         return;
     }
     const FVector PlayerLocation = PrimaryTarget->GetActorLocation();
 
-    TArray<int32> HighLOD_Indices, MediumLOD_Indices;
+    // ==================================================================
+    // 1. Max LOD를 위한 슬롯 준비 및 정리 (기존 슬롯 점유자 유지)
+    // ==================================================================
+    const TArray<FVector> AttackSlots = CalculateCirclePositions(PlayerLocation, PressurerCircleRadius, LODBudget.MaxLODCount);
+    
+    // 유효하지 않은(죽거나 Max LOD가 아니게 된) 유닛이 차지한 슬롯을 비웁니다.
+    if (AttackSlots.Num() > 0)
+    {
+        TArray<int32> SlotsToClear;
+        for (auto& Elem : OccupiedAttackSlots)
+        {
+            const int32 UnitIndex = Elem.Value;
+            if (!UnitActors.IsValidIndex(UnitIndex) || !IsValid(UnitLODComponents[UnitIndex]) || UnitLODComponents[UnitIndex]->GetCurrentLODLevel() != EAILODLevel::Max)
+            {
+                SlotsToClear.Add(Elem.Key);
+            }
+        }
+        for (const int32 SlotIndex : SlotsToClear)
+        {
+            OccupiedAttackSlots.Remove(SlotIndex);
+        }
+    }
+
+    // ==================================================================
+    // 2. 모든 유닛을 LOD 레벨에 따라 분류
+    // ==================================================================
+    TArray<int32> MaxLOD_Candidates, HighLOD_Indices, MediumLOD_Indices;
     for (int32 i = 0; i < UnitActors.Num(); ++i)
     {
         if (IsValid(UnitLODComponents[i]))
         {
             EAILODLevel LODLevel = UnitLODComponents[i]->GetCurrentLODLevel();
-            if (LODLevel == EAILODLevel::High)
+            if (LODLevel == EAILODLevel::Max)
+            {
+                // 이 유닛이 아직 슬롯을 점유하지 않았다면, 새로운 후보가 됩니다.
+                if (!OccupiedAttackSlots.FindKey(i))
+                {
+                    MaxLOD_Candidates.Add(i);
+                }
+            }
+            else if (LODLevel == EAILODLevel::High)
             {
                 HighLOD_Indices.Add(i);
             }
@@ -454,11 +556,56 @@ void ASLBattleManager::UpdateEncounterPositions()
             }
             else
             {
-                UnitTargetLocations[i] = FVector::ZeroVector;
+                // Max, High, Medium이 아닌 유닛의 타겟 위치는 초기화합니다.
+                // 단, 이미 슬롯을 점유한 Max 유닛은 제외해야 하므로, 점유 상태를 확인합니다.
+                if (!OccupiedAttackSlots.FindKey(i))
+                {
+                    UnitTargetLocations[i] = FVector::ZeroVector;
+                }
             }
         }
     }
 
+    // ==================================================================
+    // 3. Max LOD 처리 (새로운 후보에게 빈 슬롯 우선 할당)
+    // ==================================================================
+    if (MaxLOD_Candidates.Num() > 0 && AttackSlots.Num() > 0)
+    {
+        // 후보들을 가까운 순으로 정렬
+        MaxLOD_Candidates.Sort([this, &PlayerLocation](const int32& A, const int32& B){
+            return FVector::DistSquared(UnitLocations[A], PlayerLocation) < FVector::DistSquared(UnitLocations[B], PlayerLocation);
+        });
+
+        // 정렬된 후보들에게 비어있는 슬롯 할당
+        for (const int32 CandidateIndex : MaxLOD_Candidates)
+        {
+            if (OccupiedAttackSlots.Num() >= AttackSlots.Num()) break;
+            for (int32 SlotIndex = 0; SlotIndex < AttackSlots.Num(); ++SlotIndex)
+            {
+                if (!OccupiedAttackSlots.Contains(SlotIndex))
+                {
+                    OccupiedAttackSlots.Add(SlotIndex, CandidateIndex);
+                    break;
+                }
+            }
+        }
+    }
+
+    // 최종적으로 점유된 모든 Max LOD 슬롯의 위치를 갱신
+    for (auto& Elem : OccupiedAttackSlots)
+    {
+        const int32 SlotIndex = Elem.Key;
+        const int32 UnitIndex = Elem.Value;
+        if (AttackSlots.IsValidIndex(SlotIndex))
+        {
+            FVector Jitter = FVector(FMath::RandRange(-75.f, 75.f), FMath::RandRange(-75.f, 75.f), 0.f);
+            UnitTargetLocations[UnitIndex] = AttackSlots[SlotIndex] + Jitter;
+        }
+    }
+    
+    // ==================================================================
+    // 4. High LOD 처리 (기존 로직 유지)
+    // ==================================================================
     if (HighLOD_Indices.Num() > 0)
     {
         const TArray<FVector> HighLOD_Slots = CalculateCirclePositions(PlayerLocation, PressurerCircleRadius, LODBudget.HighLODCount);
@@ -468,15 +615,14 @@ void ASLBattleManager::UpdateEncounterPositions()
             {
                 const int32 UnitIndex = HighLOD_Indices[i];
                 const int32 SlotIndex = i % HighLOD_Slots.Num();
-                
-                FVector TargetSlot = HighLOD_Slots[SlotIndex];
-                FVector Jitter = FVector(FMath::RandRange(-75.f, 75.f), FMath::RandRange(-75.f, 75.f), 0.f);
-                
-                UnitTargetLocations[UnitIndex] = TargetSlot + Jitter;
+                UnitTargetLocations[UnitIndex] = HighLOD_Slots[SlotIndex];
             }
         }
     }
 
+    // ==================================================================
+    // 5. Medium LOD 처리 (기존 로직 유지)
+    // ==================================================================
     if (MediumLOD_Indices.Num() > 0)
     {
         const TArray<FVector> MediumLOD_Slots = CalculateCirclePositions(PlayerLocation, MediumCircleRadius, LODBudget.MediumLODCount);
@@ -486,9 +632,7 @@ void ASLBattleManager::UpdateEncounterPositions()
             {
                 const int32 UnitIndex = MediumLOD_Indices[i];
                 const int32 SlotIndex = i % MediumLOD_Slots.Num();
-                
-                FVector TargetSlot = MediumLOD_Slots[SlotIndex];
-                UnitTargetLocations[UnitIndex] = TargetSlot;
+                UnitTargetLocations[UnitIndex] = MediumLOD_Slots[SlotIndex];
             }
         }
     }
@@ -670,76 +814,6 @@ void ASLBattleManager::HandleAllWavesCompleted(ASLSwarmSpawner* CompletedSpawner
 		       *CompletedSpawner->GetName());
 	}
 }
-
-void ASLBattleManager::StartBattle()
-{
-	if (ManagedSpawners.Num() == 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: 관리할 스포너가 없습니다. 전투를 시작할 수 없습니다."));
-		return;
-	}
-
-	CurrentGlobalWaveNumber = 0;
-	SpawnerWaveCompletionStatus.Empty();
-
-	UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 전투 시작! 첫 전역 웨이브 (%d)를 지시합니다."), CurrentGlobalWaveNumber);
-
-	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
-	{
-		if (IsValid(Spawner))
-		{
-			Spawner->StartWave(CurrentGlobalWaveNumber);
-			SpawnerWaveCompletionStatus.Add(Spawner, false);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: ManagedSpawners에 유효하지 않은 스포너가 있습니다."));
-		}
-	}
-}
-
-void ASLBattleManager::EndBattle()
-{
-	UE_LOG(LogTemp, Log, TEXT("SLBattleManager: 전투 종료!"));
-
-	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
-	{
-		if (IsValid(Spawner))
-		{
-			Spawner->StopWaveSpawning();
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("SLBattleManager: ManagedSpawners에 유효하지 않은 스포너가 있습니다. 종료할 수 없습니다."));
-		}
-	}
-
-	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
-	{
-		if (IsValid(Spawner))
-		{
-			Spawner->CleanupPool();
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("SLBattleManager: 등록된 스포너 중 유효하지 않은 것이 있습니다."));
-		}
-	}
-
-	UnitActors.Empty();
-	UnitLocations.Empty();
-	UnitTeamIDs.Empty();
-	UnitSourceSpawners.Empty();
-	UnitLODComponents.Empty();
-	UnitEngagedTargetIndices.Empty();
-    
-	UnitIndexMap.Empty();
-	TeamUnitIndices.Empty();
-	TargetEngagementCounts.Empty();
-	EngagedUnitsPerTarget.Empty();
-	UnitTargetLocations.Empty();
-}
-
 // Engage System
 bool ASLBattleManager::RequestEngagementPermission(AActor* RequestingUnit, AActor* TargetActor)
 {

@@ -25,7 +25,6 @@ void USLWaveSpawnerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
     if (GetWorld())
     {
         GetWorld()->GetTimerManager().ClearTimer(WaveSpawnTimerHandle);
-        GetWorld()->GetTimerManager().ClearTimer(DelayAfterWaveTimerHandle);
     }
     Super::EndPlay(EndPlayReason);
 }
@@ -116,17 +115,9 @@ void USLWaveSpawnerComponent::StartCurrentWaveSpawning()
         }
     }
 
-    UE_LOG(LogTemp, Log, TEXT("USLWaveSpawnerComponent '%s': 웨이브 %d 스폰 완료. 다음 웨이브까지 지연 시간: %.2f초."), *GetName(), CurrentWaveIndex, CurrentWaveData.DelayAfterWave);
     OnWaveCompleted.Broadcast(CurrentWaveIndex, this);
 
-    if (CurrentWaveData.DelayAfterWave > 0.0f)
-    {
-        GetWorld()->GetTimerManager().SetTimer(DelayAfterWaveTimerHandle, this, &USLWaveSpawnerComponent::FinishCurrentWave, CurrentWaveData.DelayAfterWave, false);
-    }
-    else
-    {
-        FinishCurrentWave();
-    }
+    FinishCurrentWave();
 }
 
 void USLWaveSpawnerComponent::FinishCurrentWave()
@@ -136,7 +127,6 @@ void USLWaveSpawnerComponent::FinishCurrentWave()
     if (CurrentWaveIndex + 1 >= Waves.Num())
     {
         OnAllWavesCompleted.Broadcast(this);
-        UE_LOG(LogTemp, Log, TEXT("USLWaveSpawnerComponent '%s': 모든 웨이브 최종 완료."), *GetName());
     }
 }
 
@@ -262,7 +252,6 @@ void USLWaveSpawnerComponent::StopWaveSpawning()
     if (GetWorld())
     {
         GetWorld()->GetTimerManager().ClearTimer(WaveSpawnTimerHandle);
-        GetWorld()->GetTimerManager().ClearTimer(DelayAfterWaveTimerHandle);
         GetWorld()->GetTimerManager().ClearTimer(RespawnCheckTimerHandle); 
     }
 

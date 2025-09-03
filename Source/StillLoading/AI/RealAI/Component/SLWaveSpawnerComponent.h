@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AI/RealAI/BattleManager/SLBattleTypes.h"
 #include "AI/RealAI/Spawner/SLSwarmSpawner.h"
 #include "Components/ActorComponent.h"
 #include "SLWaveSpawnerComponent.generated.h"
@@ -8,20 +9,6 @@
 class ASLSwarmSpawner;
 class AAIController;
 
-// 단일 웨이브에 대한 데이터 구조
-USTRUCT(BlueprintType)
-struct FWaveData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	TArray<FWaveCompositionData> WaveCompositions; // 이 웨이브에서 스폰할 유닛 구성
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	float DelayAfterWave = 5.0f; // 이 웨이브 완료 후 다음 웨이브까지의 지연 시간
-};
-
-// USLWaveSpawnerComponent의 델리게이트는 그대로 유지 (ASwarmSpawner에게 알림)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWaveCompleted, int32, WaveNumber, USLWaveSpawnerComponent*, CompletedSpawner);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAllWavesCompleted, USLWaveSpawnerComponent*, CompletedSpawner);
 
@@ -81,7 +68,6 @@ protected:
 	bool bIsSpawningActive; // 스폰 활성화 상태
 
 	FTimerHandle WaveSpawnTimerHandle; // 웨이브 스폰 타이머 핸들
-	FTimerHandle DelayAfterWaveTimerHandle; // 웨이브 후 지연 타이머 핸들
 
 	// 내부 스폰 로직 (웨이브 데이터 기반)
 	void StartCurrentWaveSpawning();

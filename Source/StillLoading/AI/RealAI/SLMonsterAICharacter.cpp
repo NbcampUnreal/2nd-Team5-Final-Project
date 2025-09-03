@@ -566,6 +566,7 @@ void ASLMonsterAICharacter::HandleAIPoolReturnOnDeath()
 {
 	CurrentHealth = MaxHealth;
 	SetPrimaryState(TAG_AI_Idle);
+	OnMonsterDied.Broadcast(this);
 
 	if (AnimationComponent)
 	{

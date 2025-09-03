@@ -2,11 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "GenericTeamAgentInterface.h"
+#include "SLBattleManagerInterface.h"
+#include "SLBattleTypes.h"
 #include "GameFramework/Actor.h"
 #include "SLBattleManager.generated.h"
 
 // 전투관리, 스폰된 유닛 관리, 타겟 관리
-
 class USLAICombatComponent;
 class USLAILODComponent;
 class USLAITokenSystemComponent;
@@ -16,87 +17,16 @@ class UBoxComponent;
 class ASLSwarmSpawner;
 class USLAIStateComponent;
 
-USTRUCT(BlueprintType)
-struct FBattleUnitInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TObjectPtr<AActor> Actor = nullptr;
-	UPROPERTY()
-	FGenericTeamId TeamId;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<AActor> CurrentEngagedTarget;
-	UPROPERTY()
-	TObjectPtr<ASLSwarmSpawner> SourceSpawner = nullptr;
-};
-
-USTRUCT(BlueprintType)
-struct FSpawnerTargetPoints
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetPoints")
-	TObjectPtr<ASLSwarmSpawner> Spawner = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetPoints")
-	TArray<ATargetPoint*> TargetPoints;
-};
-
-USTRUCT(BlueprintType)
-struct FTeamIndicesArrayWrapper
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TArray<int32> Indices;
-};
-
-USTRUCT(BlueprintType)
-struct FEngagedUnitsWrapper
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TArray<TObjectPtr<AActor>> EngagedUnits;
-};
-
-USTRUCT(BlueprintType)
-struct FBattleAILODBudget
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 MaxLODCount = 30;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 HighLODCount = 35;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 MediumLODCount = 40;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 LowLODCount = 100;
-};
-
-USTRUCT(BlueprintType)
-struct FLODDistanceSettings
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float MaxDetailDistance = 1500.f; // 20m
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float HighDetailDistance = 2000.f; // 50m
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float MediumDetailDistance = 3000.f; // 60m
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings", meta = (AllowPrivateAccess = "true"))
-	float LowDetailDistance = 4000.f; // 80m
-};
-
 UCLASS()
-class STILLLOADING_API ASLBattleManager : public AActor
+class STILLLOADING_API ASLBattleManager : public AActor, public ISLBattleManagerInterface
 {
 	GENERATED_BODY()
 
 public:    
 	ASLBattleManager();
+
+	virtual void StartBattle_Implementation() override;
+	virtual void EndBattle_Implementation() override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -106,10 +36,6 @@ protected:
 public:
 	int32 FindNearestEnemy(int32 MyIndex, float InRange) const;
 	
-	UFUNCTION(BlueprintCallable, Category = "Battle Management")
-	void StartBattle();
-	UFUNCTION(BlueprintCallable, Category = "Battle Management")
-	void EndBattle();
 	UFUNCTION(BlueprintCallable, Category = "Battle Management|Waves")
 	void StartNextGlobalWave();
 
@@ -128,6 +54,7 @@ public:
 	const TArray<TObjectPtr<AActor>>& GetUnitActors() const { return UnitActors; }
 	const TArray<FVector>& GetUnitLocations() const { return UnitLocations; }
 	const TArray<FVector>& GetUnitTargetLocations() const { return UnitTargetLocations; }
+	
 protected:
 	void BindToSpawnerEvents(); // ASLSwarmSpawner 이벤트 바인딩
 	void InitializeAISupportingMode();
@@ -178,6 +105,7 @@ protected:
 	// 다대일 전투를 위한 타겟 위치정보 배열
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
 	TArray<FVector> UnitTargetLocations;
+	TMap<int32, int32> OccupiedAttackSlots;
 
 	// 교전 관련 데이터
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
@@ -248,7 +176,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	bool bIsPlayerOnly = false;
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
-	bool bUseLODSystem = true;
+	bool bUseLODSystem = false;
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	FBattleAILODBudget LODBudget;
 

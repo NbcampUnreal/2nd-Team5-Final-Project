@@ -1,21 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AI/RealAI/BattleManager/SLBattleTypes.h"
 #include "Components/ActorComponent.h"
 #include "SLAILODComponent.generated.h"
 
 class ASLMonsterAICharacter;
 class USLAIStateComponent;
-
-UENUM(BlueprintType)
-enum class EAILODLevel : uint8
-{
-	Max    UMETA(DisplayName = "Max"),
-	High    UMETA(DisplayName = "High"),
-	Medium  UMETA(DisplayName = "Medium"),
-	Low     UMETA(DisplayName = "Low"),
-	Culled  UMETA(DisplayName = "Culled")
-};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STILLLOADING_API USLAILODComponent : public UActorComponent

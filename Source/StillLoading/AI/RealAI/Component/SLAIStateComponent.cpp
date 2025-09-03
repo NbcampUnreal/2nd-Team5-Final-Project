@@ -79,16 +79,19 @@ void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
 	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->BattleManager) && IsValid(CachedLODComponent))
 	{
 		const EAILODLevel CurrentLOD = CachedLODComponent->GetCurrentLODLevel();
-		const auto& UnitMap = CachedMyCharacter->BattleManager->GetUnitIndexMap();
-		if (const int32* MyIndexPtr = UnitMap.Find(GetOwner()))
+		if (CurrentLOD == EAILODLevel::Max)
 		{
-			const FVector TargetLocation = CachedMyCharacter->BattleManager->GetUnitTargetLocations()[*MyIndexPtr];
-			if (!TargetLocation.IsNearlyZero())
+			const auto& UnitMap = CachedMyCharacter->BattleManager->GetUnitIndexMap();
+			if (const int32* MyIndexPtr = UnitMap.Find(GetOwner()))
 			{
-				if (CurrentLOD == EAILODLevel::High)
+				const FVector TargetLocation = CachedMyCharacter->BattleManager->GetUnitTargetLocations()[*MyIndexPtr];
+				if (!TargetLocation.IsNearlyZero())
 				{
-					SetMovementTarget(TargetLocation, 100.f);
-					return;
+					if (CurrentState != EAIBattleState::Attacking)
+					{
+						SetMovementTarget(TargetLocation, 100.f);
+						return;
+					}
 				}
 			}
 		}
@@ -249,6 +252,15 @@ void USLAIStateComponent::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
 {
 	if (Result.IsSuccess())
 	{
+		if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->BattleManager) && IsValid(CachedLODComponent))
+		{
+			if (CachedLODComponent->GetCurrentLODLevel() == EAILODLevel::Max)
+			{
+				SetState(EAIBattleState::Attacking);
+				return;
+			}
+		}
+		
 		CurrentTargetPointIndex++;
 
 		float RandRequestRange = FMath::RandRange(0.5f, 1.0f);
