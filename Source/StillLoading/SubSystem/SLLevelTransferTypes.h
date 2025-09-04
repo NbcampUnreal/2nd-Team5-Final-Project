@@ -11,6 +11,7 @@ enum class ESLLevelNameType : uint8
 {
 	ELN_None = 0,
 	ELN_Intro,
+	ELN_MainTitle,
 	ELN_Title,
 	ELN_MapList,
 	ELN_Mini1,
