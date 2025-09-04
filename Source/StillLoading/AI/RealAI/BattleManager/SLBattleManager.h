@@ -27,9 +27,6 @@ class STILLLOADING_API ASLBattleManager : public AActor, public ISLBattleManager
 public:    
 	ASLBattleManager();
 
-	UFUNCTION(BlueprintPure, Category = "Battle Management")
-	static ASLBattleManager* GetInstance();
-
 	virtual void StartWave_Implementation(const TArray<ASLSwarmSpawner*>& SpawnersToActivate, int32 WaveIndex = 0) override;
 	virtual void StartInfiniteSpawnMode_Implementation(const TArray<ASLSwarmSpawner*>& SpawnersToActivate) override;
 	virtual void EndBattle_Implementation(bool bPlayerWon) override;
@@ -194,6 +191,4 @@ private:
 
 	bool bIsBattleActive;
 	int32 TotalSpawnedUnitCount;
-	
-	static ASLBattleManager* Instance;
 };

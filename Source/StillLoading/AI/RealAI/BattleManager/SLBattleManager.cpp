@@ -19,11 +19,6 @@ ASLBattleManager::ASLBattleManager()
 	CurrentGlobalWaveNumber = 0;
 }
 
-ASLBattleManager* ASLBattleManager::GetInstance()
-{
-	return Instance;
-}
-
 void ASLBattleManager::StartWave_Implementation(const TArray<ASLSwarmSpawner*>& SpawnersToActivate, int32 WaveIndex)
 {
 	if (SpawnersToActivate.Num() == 0)
@@ -156,15 +151,6 @@ void ASLBattleManager::BeginPlay()
 
 	BindToSpawnerEvents();
 	InitializeAISupportingMode();
-
-	if (Instance == nullptr)
-	{
-		Instance = this;
-	}
-	else
-	{
-		Destroy();
-	}
 }
 
 void ASLBattleManager::Tick(float DeltaSeconds)
@@ -192,11 +178,6 @@ void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			Spawner->OnWaveCompletedBySpawner.RemoveDynamic(this, &ASLBattleManager::HandleWaveCompleted);
 			Spawner->OnAllWavesCompletedBySpawner.RemoveDynamic(this, &ASLBattleManager::HandleAllWavesCompleted);
 		}
-	}
-
-	if (Instance == this)
-	{
-		Instance = nullptr;
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -233,6 +214,20 @@ int32 ASLBattleManager::FindNearestEnemy(int32 MyIndex, float InRange) const
 // Spawner Events
 void ASLBattleManager::BindToSpawnerEvents()
 {
+	if (ManagedSpawners.IsEmpty())
+	{
+		TArray<AActor*> TempSpawners;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASLSwarmSpawner::StaticClass(), TempSpawners);
+
+		for (AActor* Spawner : TempSpawners)
+		{
+			if (ASLSwarmSpawner* SpawnerCast = Cast<ASLSwarmSpawner>(Spawner))
+			{
+				ManagedSpawners.Add(SpawnerCast);
+			}
+		}
+	}
+	
 	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
 	{
 		if (IsValid(Spawner))
