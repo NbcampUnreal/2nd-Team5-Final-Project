@@ -11,6 +11,7 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/AssetManager.h"
 #include "Engine/TargetPoint.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -144,37 +145,60 @@ void ASLSwarmSpawner::HandleInternalAllWavesCompleted(USLWaveSpawnerComponent* C
 
 void ASLSwarmSpawner::ExpandPoolIncrementally()
 {
-	if (SpawnQueue.IsEmpty())
+	if (!CurrentAsyncRequest.IsValid() && !SpawnRequestQueue.IsEmpty())
 	{
-		GetWorld()->GetTimerManager().ClearTimer(PoolExpansionTimer);
-		UE_LOG(LogTemp, Log, TEXT("SwarmSpawner: 객체 풀 분산 스폰 완료. 총 %d 유닛 풀링됨."), ObjectPool.Num());
+		CurrentAsyncRequest = MakeShared<FAsyncSpawnRequest>();
+		SpawnRequestQueue.Dequeue(*CurrentAsyncRequest);
+
+		FStreamableManager& StreamableManager = UAssetManager::Get().GetStreamableManager();
+		CurrentAsyncRequest->StreamableHandle = StreamableManager.RequestAsyncLoad(
+			CurrentAsyncRequest->UnitClass.ToSoftObjectPath(),
+			FStreamableDelegate::CreateUObject(this, &ASLSwarmSpawner::OnUnitClassLoaded)
+		);
 		return;
 	}
-	FQueuedSpawnRequest* CurrentRequest = SpawnQueue.Peek();
 
-	constexpr int32 MaxSpawnThisFrame = 5;
-	const int32 NumToSpawn = FMath::Min(CurrentRequest->Count, MaxSpawnThisFrame);
-
-	ExpandPool(CurrentRequest->ClassToSpawn, NumToSpawn);
-
-	CurrentRequest->Count -= NumToSpawn;
-	if (CurrentRequest->Count <= 0)
+	if (!CurrentAsyncRequest.IsValid() && SpawnRequestQueue.IsEmpty())
 	{
-		SpawnQueue.Dequeue(*CurrentRequest);
+		GetWorld()->GetTimerManager().ClearTimer(PoolExpansionTimer);
+		UE_LOG(LogTemp, Log, TEXT("SwarmSpawner: 객체 풀 비동기 스폰 완료. 총 %d 유닛 풀링됨."), ObjectPool.Num());
+	}
+}
+
+void ASLSwarmSpawner::OnUnitClassLoaded()
+{
+	if (!CurrentAsyncRequest.IsValid() || !CurrentAsyncRequest->StreamableHandle.IsValid()) return;
+
+	if (CurrentAsyncRequest->StreamableHandle->HasLoadCompleted())
+	{
+		TSubclassOf<ACharacter> LoadedClass(Cast<UClass>(CurrentAsyncRequest->StreamableHandle->GetLoadedAsset()));
+		if (LoadedClass)
+		{
+			constexpr int32 MaxSpawnThisFrame = 2;
+			const int32 NumToSpawn = FMath::Min(CurrentAsyncRequest->Count, MaxSpawnThisFrame);
+			ExpandPool(LoadedClass, NumToSpawn);
+
+			CurrentAsyncRequest->Count -= NumToSpawn;
+		}
+	}
+
+	if (CurrentAsyncRequest->Count <= 0)
+	{
+		CurrentAsyncRequest.Reset();
 	}
 }
 
 void ASLSwarmSpawner::InitializeObjectPool(const TArray<FSimpleSpawnComposition>& AllCompositionsToPool)
 {
 	ObjectPool.Empty();
-	SpawnQueue.Empty();
+	SpawnRequestQueue.Empty();
 
-	TMap<TSubclassOf<ACharacter>, int32> RequiredUnitsPerClass;
+	TMap<TSoftClassPtr<ACharacter>, int32> RequiredUnitsPerClass;
 	for (const FSimpleSpawnComposition& Composition : AllCompositionsToPool)
 	{
-		if (Composition.UnitClass)
+		if (IsValid(Composition.UnitClass))
 		{
-			RequiredUnitsPerClass.FindOrAdd(Composition.UnitClass) += Composition.SpawnCount;
+			RequiredUnitsPerClass.FindOrAdd(Composition.UnitClass.Get()) += Composition.SpawnCount;
 		}
 	}
 
@@ -185,7 +209,7 @@ void ASLSwarmSpawner::InitializeObjectPool(const TArray<FSimpleSpawnComposition>
 	}
 	if (TotalRequired < InitialPoolSize && RequiredUnitsPerClass.Num() > 0)
 	{
-		TSubclassOf<ACharacter> DefaultUnitClass = RequiredUnitsPerClass.CreateConstIterator()->Key;
+		const TSoftClassPtr<ACharacter> DefaultUnitClass = RequiredUnitsPerClass.CreateConstIterator()->Key;
 		RequiredUnitsPerClass.FindOrAdd(DefaultUnitClass) += (InitialPoolSize - TotalRequired);
 	}
 
@@ -193,7 +217,7 @@ void ASLSwarmSpawner::InitializeObjectPool(const TArray<FSimpleSpawnComposition>
 	{
 		if (Elem.Value > 0)
 		{
-			SpawnQueue.Enqueue({Elem.Key, Elem.Value});
+			SpawnRequestQueue.Enqueue({Elem.Key, Elem.Value, nullptr});
 		}
 	}
 }
@@ -274,7 +298,7 @@ void ASLSwarmSpawner::ReturnUnitToPool(ACharacter* Unit)
 	UE_LOG(LogTemp, Warning, TEXT("SwarmSpawner: 풀에 없는 유닛 '%s'을(를) 반환하려 시도했습니다."), *Unit->GetName());
 }
 
-void ASLSwarmSpawner::ExpandPool(TSubclassOf<ACharacter> UnitClass, int32 Count)
+void ASLSwarmSpawner::ExpandPool(const TSubclassOf<ACharacter>& UnitClass, const int32 Count)
 {
 	UWorld* World = GetWorld();
 	if (!World || !UnitClass || Count <= 0) return;
@@ -293,10 +317,10 @@ void ASLSwarmSpawner::ExpandPool(TSubclassOf<ACharacter> UnitClass, int32 Count)
 
 		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, -10000);
 		ACharacter* NewUnit = World->SpawnActor<ACharacter>(
-			UnitClass,
-			SpawnLocation,
-			FRotator::ZeroRotator,
-			SpawnParams
+		   UnitClass,
+		   SpawnLocation,
+		   FRotator::ZeroRotator,
+		   SpawnParams
 		);
 
 		if (NewUnit)
@@ -306,28 +330,14 @@ void ASLSwarmSpawner::ExpandPool(TSubclassOf<ACharacter> UnitClass, int32 Count)
 			NewEntry.bInUse = false;
 			NewEntry.UnitClass = UnitClass;
 
-			if (USkeletalMeshComponent* Mesh = NewUnit->GetMesh())
-			{
-				Mesh->SetSimulatePhysics(false);
-			}
-
-			if (UCharacterMovementComponent* MoveComp = NewUnit->GetCharacterMovement())
-			{
-				MoveComp->SetMovementMode(EMovementMode::MOVE_None);
-				MoveComp->Deactivate();
-			}
-
 			if (ASLMonsterAICharacter* Monster = Cast<ASLMonsterAICharacter>(NewUnit))
 			{
 				Monster->ToggleWeaponState(false);
 			}
-
-			// 초기 상태로 비활성화
+          
 			NewUnit->SetActorHiddenInGame(true);
 			NewUnit->SetActorEnableCollision(false);
 			NewUnit->SetActorTickEnabled(false);
-
-			// 파괴 이벤트 바인딩 (풀링된 유닛이 외부에서 파괴될 경우를 대비)
 			NewUnit->OnDestroyed.AddDynamic(this, &ASLSwarmSpawner::OnUnitDestroyed);
 
 			ObjectPool.Add(NewEntry);

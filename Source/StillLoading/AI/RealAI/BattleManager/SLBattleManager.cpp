@@ -444,6 +444,7 @@ void ASLBattleManager::UpdateAILODs()
     }
 }
 
+// TODO::로직 개선 필요
 void ASLBattleManager::UpdateEncounterPositions()
 {
     if (!PrimaryTarget.IsValid() || UnitActors.Num() == 0)
