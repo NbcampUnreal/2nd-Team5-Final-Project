@@ -19,6 +19,11 @@ ASLBattleManager::ASLBattleManager()
 	CurrentGlobalWaveNumber = 0;
 }
 
+ASLBattleManager* ASLBattleManager::GetInstance()
+{
+	return Instance;
+}
+
 void ASLBattleManager::StartWave_Implementation(const TArray<ASLSwarmSpawner*>& SpawnersToActivate, int32 WaveIndex)
 {
 	if (SpawnersToActivate.Num() == 0)
@@ -103,6 +108,11 @@ int32 ASLBattleManager::GetTotalSpawnedUnitCount_Implementation() const
 	return TotalSpawnedUnitCount;
 }
 
+void ASLBattleManager::ResetSpawnedUnitCount_Implementation()
+{
+	TotalSpawnedUnitCount = 0;
+}
+
 bool ASLBattleManager::IsBattleInProgress_Implementation() const
 {
 	return bIsBattleActive;
@@ -146,6 +156,15 @@ void ASLBattleManager::BeginPlay()
 
 	BindToSpawnerEvents();
 	InitializeAISupportingMode();
+
+	if (Instance == nullptr)
+	{
+		Instance = this;
+	}
+	else
+	{
+		Destroy();
+	}
 }
 
 void ASLBattleManager::Tick(float DeltaSeconds)
@@ -173,6 +192,11 @@ void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			Spawner->OnWaveCompletedBySpawner.RemoveDynamic(this, &ASLBattleManager::HandleWaveCompleted);
 			Spawner->OnAllWavesCompletedBySpawner.RemoveDynamic(this, &ASLBattleManager::HandleAllWavesCompleted);
 		}
+	}
+
+	if (Instance == this)
+	{
+		Instance = nullptr;
 	}
 
 	Super::EndPlay(EndPlayReason);

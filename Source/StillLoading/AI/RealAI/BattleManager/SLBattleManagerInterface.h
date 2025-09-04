@@ -54,6 +54,12 @@ public:
 	int32 GetTotalSpawnedUnitCount() const;
 
 	/**
+	* 스폰된 유닛 카운트를 초기화 합니다.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Battle Management|Queries")
+	void ResetSpawnedUnitCount();
+
+	/**
 	 * 현재 전투가 진행 중인지 여부를 반환합니다.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Battle Management|Queries")
