@@ -21,23 +21,6 @@ struct FQueuedSpawnRequest
 	int32 Count;
 };
 
-USTRUCT(BlueprintType)
-struct FWaveCompositionData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	TSubclassOf<ACharacter> UnitClass;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	TSubclassOf<AAIController> ControllerClass;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	int32 SpawnCount = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	FGenericTeamId TeamID;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	float AvoidanceWeight = 0.5f;
-};
-
 USTRUCT()
 struct FPooledUnit
 {
@@ -168,7 +151,9 @@ private:
 	
 	FTimerHandle PoolExpansionTimer;
 	TArray<FPooledUnit> ObjectPool;
+	
 	TQueue<FAsyncSpawnRequest> SpawnRequestQueue;
 	TSharedPtr<FAsyncSpawnRequest> CurrentAsyncRequest;
+	
 	TWeakObjectPtr<ASLBattleManager> CachedBattleManager;
 };

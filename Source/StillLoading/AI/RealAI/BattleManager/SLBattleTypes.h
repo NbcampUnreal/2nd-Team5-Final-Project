@@ -4,11 +4,11 @@
 #include "GenericTeamAgentInterface.h"
 #include "SLBattleTypes.generated.h"
 
-struct FWaveCompositionData;
-// 전방 선언
 class ASLSwarmSpawner;
 class ATargetPoint;
 class AActor;
+class ACharacter;
+class AAIController;
 
 UENUM(BlueprintType)
 enum class EAILODLevel : uint8
@@ -34,6 +34,23 @@ struct FBattleUnitInfo
 	TObjectPtr<AActor> CurrentEngagedTarget;
 	UPROPERTY()
 	TObjectPtr<ASLSwarmSpawner> SourceSpawner = nullptr;
+};
+
+USTRUCT(BlueprintType)
+struct FWaveCompositionData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
+	TSubclassOf<ACharacter> UnitClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
+	TSubclassOf<AAIController> ControllerClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
+	int32 SpawnCount = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
+	FGenericTeamId TeamID;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
+	float AvoidanceWeight = 0.5f;
 };
 
 USTRUCT(BlueprintType)

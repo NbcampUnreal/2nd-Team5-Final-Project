@@ -150,6 +150,7 @@ void ASLSwarmSpawner::ExpandPoolIncrementally()
 		CurrentAsyncRequest = MakeShared<FAsyncSpawnRequest>();
 		SpawnRequestQueue.Dequeue(*CurrentAsyncRequest);
 
+		// 램에 미리 넣어두는 과정, 완료 되면 콜백 함수 호출 (느린 IO작업 미리 선행)
 		FStreamableManager& StreamableManager = UAssetManager::Get().GetStreamableManager();
 		CurrentAsyncRequest->StreamableHandle = StreamableManager.RequestAsyncLoad(
 			CurrentAsyncRequest->UnitClass.ToSoftObjectPath(),
