@@ -173,7 +173,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	int32 MaxEngagingUnitsPerTarget = 3;
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
-	bool bIsPlayerOnly = false;
+	bool bIsPlayerOnly = true;
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	bool bUseLODSystem = false;
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
