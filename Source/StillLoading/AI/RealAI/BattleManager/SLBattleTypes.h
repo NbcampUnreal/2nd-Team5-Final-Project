@@ -69,11 +69,11 @@ struct FBattleAILODBudget
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 MaxLODCount = 20;
+	int32 MaxLODCount = 25;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 HighLODCount = 25;
+	int32 HighLODCount = 30;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
-	int32 MediumLODCount = 30;
+	int32 MediumLODCount = 35;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Budget")
 	int32 LowLODCount = 100;
 };
