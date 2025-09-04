@@ -11,6 +11,7 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/TargetPoint.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -78,11 +79,6 @@ void ASLSwarmSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void ASLSwarmSpawner::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-}
-
 void ASLSwarmSpawner::ReturnAllActiveUnitsToPool()
 {
 	TArray<FPooledUnit> ActiveUnitsCopy = ObjectPool;
@@ -95,6 +91,26 @@ void ASLSwarmSpawner::ReturnAllActiveUnitsToPool()
 		}
 	}
 	UE_LOG(LogTemp, Log, TEXT("SwarmSpawner '%s': 모든 활성 유닛을 풀로 반환했습니다."), *GetName());
+}
+
+FVector ASLSwarmSpawner::GetNextTargetPointLocation(int32& CurrentTargetIndex) const
+{
+	if (PatrolPoints.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("'%s' 스포너에 순찰 지점(PatrolPoints)이 등록되지 않았습니다."), *GetName());
+		return GetActorLocation();
+	}
+
+	if (!PatrolPoints.IsValidIndex(CurrentTargetIndex) || !IsValid(PatrolPoints[CurrentTargetIndex]))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("'%s' 스포너의 순찰 지점 인덱스 %d가 유효하지 않습니다. 인덱스를 0으로 초기화합니다."), *GetName(), CurrentTargetIndex);
+		CurrentTargetIndex = 0;
+	}
+
+	const FVector Location = PatrolPoints[CurrentTargetIndex]->GetActorLocation();
+	CurrentTargetIndex = (CurrentTargetIndex + 1) % PatrolPoints.Num();
+
+	return Location;
 }
 
 bool ASLSwarmSpawner::StartWave(int32 WaveIndex)
@@ -189,30 +205,28 @@ ACharacter* ASLSwarmSpawner::GetPooledUnit(TSubclassOf<ACharacter> UnitClass)
 		if (!PoolEntry.bInUse && PoolEntry.UnitClass == UnitClass && IsValid(PoolEntry.Character))
 		{
 			PoolEntry.bInUse = true;
-
 			PoolEntry.Character->SetActorHiddenInGame(false);
 			PoolEntry.Character->SetActorEnableCollision(true);
-
-			if (AController* Controller = PoolEntry.Character->GetController())
-			{
-				Controller->SetActorTickEnabled(true);
-				if (AAIController* AIController = Cast<AAIController>(Controller))
-				{
-					AIController->StopMovement();
-				}
-			}
 			return PoolEntry.Character;
 		}
 	}
 
 	if (bExpandPoolIfNeeded && ObjectPool.Num() < MaxPoolSize)
 	{
-		UE_LOG(LogTemp, Log, TEXT("SwarmSpawner: 풀 확장 (유닛 클래스: %s, 5개)."), *UnitClass->GetName());
 		ExpandPool(UnitClass, 5);
-		return GetPooledUnit(UnitClass);
+
+		for (FPooledUnit& PoolEntry : ObjectPool)
+		{
+			if (!PoolEntry.bInUse && PoolEntry.UnitClass == UnitClass && IsValid(PoolEntry.Character))
+			{
+				PoolEntry.bInUse = true;
+				PoolEntry.Character->SetActorHiddenInGame(false);
+				PoolEntry.Character->SetActorEnableCollision(true);
+				return PoolEntry.Character;
+			}
+		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("SwarmSpawner: 풀에 사용 가능한 유닛이 없거나 최대 풀 크기에 도달함 (%s)."), *UnitClass->GetName());
 	return nullptr;
 }
 
@@ -456,13 +470,16 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 	if (MonsterAI)
 	{
 		MonsterAI->BornSpawner = this;
-		MonsterAI->BattleManager = CachedBattleManager.Get();
+		if (CachedBattleManager.IsValid())
+		{
+			MonsterAI->BattleManager = CachedBattleManager.Get();
+		}
 		MonsterAI->AIAttributeComp->SetAIStat(EAIChapterType::Chapter4, EAIUnitType::Normal);
 	}
 
-	if (USLAIStateComponent* WarComp = SpawnedUnit->FindComponentByClass<USLAIStateComponent>())
+	if (USLAIStateComponent* StateComp = SpawnedUnit->FindComponentByClass<USLAIStateComponent>())
 	{
-		WarComp->Initialize();
+		StateComp->Initialize();
 	}
 
 	if (UCharacterMovementComponent* MovementComp = SpawnedUnit->GetCharacterMovement())
@@ -473,17 +490,6 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 	UE_LOG(LogTemp, Log, TEXT("스폰 및 설정된 유닛: %s, 팀: %d"),
 	       *SpawnedUnit->GetName(),
 	       TeamID.GetId());
-
-	if (SpawnEffectTemplate)
-	{
-		const FVector EffectLocation = SpawnedUnit->GetActorLocation() + FVector(0.f, 0.f, EffectSpawnHeightOffset);
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			SpawnEffectTemplate,
-			EffectLocation,
-			FRotator::ZeroRotator
-		);
-	}
 }
 
 ACharacter* ASLSwarmSpawner::SpawnAndConfigureUnit(TSubclassOf<ACharacter> UnitClass,

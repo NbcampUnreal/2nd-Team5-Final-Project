@@ -17,6 +17,8 @@ class UBoxComponent;
 class ASLSwarmSpawner;
 class USLAIStateComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitUnregistered, AActor*, UnregisteredUnit);
+
 UCLASS()
 class STILLLOADING_API ASLBattleManager : public AActor, public ISLBattleManagerInterface
 {
@@ -25,8 +27,15 @@ class STILLLOADING_API ASLBattleManager : public AActor, public ISLBattleManager
 public:    
 	ASLBattleManager();
 
-	virtual void StartBattle_Implementation() override;
-	virtual void EndBattle_Implementation() override;
+	virtual void StartWave_Implementation(const TArray<ASLSwarmSpawner*>& SpawnersToActivate, int32 WaveIndex = 0) override;
+	virtual void StartInfiniteSpawnMode_Implementation(const TArray<ASLSwarmSpawner*>& SpawnersToActivate) override;
+	virtual void EndBattle_Implementation(bool bPlayerWon) override;
+	virtual int32 GetTotalSpawnedUnitCount_Implementation() const override;
+	virtual bool IsBattleInProgress_Implementation() const override;
+	virtual void StopBattle_Implementation() override;
+
+	UPROPERTY(BlueprintAssignable, Category = "Battle Management|Events")
+	FOnUnitUnregistered OnUnitUnregistered;
 
 protected:
 	virtual void BeginPlay() override;
@@ -113,13 +122,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
 	TMap<FGenericTeamId, FTeamIndicesArrayWrapper> TeamUnitIndices;
 
-	// --- 타겟 포인트 관리 ---
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle Management|TargetPoints")
-	TArray<FSpawnerTargetPoints> SpawnerTargetPointData;
-
-	// --- 웨이브 관리 ---
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Battle Management|Waves")
-	TArray<FSpawnerTargetPoints> CurrentWaveTargetPoints;
 	int32 CurrentGlobalWaveNumber;
 
 	UPROPERTY()
@@ -133,10 +135,6 @@ public:
 	TArray<FBattleUnitInfo> GetUnitsOfTeam(const FGenericTeamId& TeamId);
 	UFUNCTION(BlueprintPure, Category = "Battle Management|Units")
 	TArray<FBattleUnitInfo> GetEnemiesOfTeam(const FGenericTeamId& TeamId);
-	
-	// AI 워 컴포넌트가 다음 타겟 포인트를 요청할 때 사용
-	UFUNCTION(BlueprintCallable, Category = "Battle Management|TargetPoints")
-	FVector GetNextTargetPointLocationForSpawner(ASLSwarmSpawner* ForSpawner, int32& CurrentTargetIndex) const;
 	
 	// 전투 Permission 관리
 	UFUNCTION(BlueprintCallable, Category = "Battle Management|Permissions")
@@ -189,4 +187,7 @@ private:
 	FLODDistanceSettings LODDistances;
 	UPROPERTY()
 	FTimerHandle SupportReassignmentTimerHandle;
+
+	bool bIsBattleActive;
+	int32 TotalSpawnedUnitCount;
 };

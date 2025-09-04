@@ -37,38 +37,6 @@ struct FBattleUnitInfo
 };
 
 USTRUCT(BlueprintType)
-struct FSpawnerTargetPoints
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetPoints")
-	TObjectPtr<ASLSwarmSpawner> Spawner = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetPoints")
-	TArray<ATargetPoint*> TargetPoints;
-};
-/*
-USTRUCT(BlueprintType)
-struct FSpawnerWaveCommand
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<ASLSwarmSpawner> Spawner;
-
-	UPROPERTY(EditAnywhere)
-	int32 LocalWaveIndexToRun;
-};
-
-USTRUCT(BlueprintType)
-struct FGlobalWaveConfig
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere)
-	TArray<FSpawnerWaveCommand> SpawnerCommands;
-};
-*/
-USTRUCT(BlueprintType)
 struct FWaveData
 {
 	GENERATED_BODY()

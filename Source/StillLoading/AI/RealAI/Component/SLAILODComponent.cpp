@@ -63,15 +63,17 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
     ASLMonsterAICharacter* OwnerCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
     if (!OwnerCharacter) return;
 
+	/*
     if (CurrentLODLevel == NewLevel)
     {
         return;
     }
+    */
 
     const EAILODLevel OldLODLevel = CurrentLODLevel;
     CurrentLODLevel = NewLevel;
 
-    USLAIStateComponent* CurrentStateComponent = OwnerCharacter->FindComponentByClass<USLAIStateComponent>();
+    USLAIStateComponent* CurrentStateComponent = OwnerCharacter->AIStateComp;
     USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh();
     UCapsuleComponent* Capsule = OwnerCharacter->GetCapsuleComponent();
     UCharacterMovementComponent* MovementComponent = OwnerCharacter->GetCharacterMovement();
@@ -83,12 +85,9 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
     {
     case EAILODLevel::Max:
     case EAILODLevel::High:
-        if (OldLODLevel >= EAILODLevel::Low)
-        {
-            OwnerCharacter->SetActorHiddenInGame(false);
-            OwnerCharacter->ToggleWeaponState(true);
-            OwnerCharacter->ActivateMovementComponent();
-        }
+    	OwnerCharacter->SetActorHiddenInGame(false);
+    	OwnerCharacter->ToggleWeaponState(true);
+    	OwnerCharacter->ActivateMovementComponent();
 
         OwnerCharacter->SetActorTickEnabled(true);
         if (Controller) Controller->SetActorTickEnabled(true);
@@ -125,12 +124,9 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
         break;
 
     case EAILODLevel::Medium:
-        if (OldLODLevel >= EAILODLevel::Low)
-        {
-            OwnerCharacter->SetActorHiddenInGame(false);
-            OwnerCharacter->ToggleWeaponState(true);
-            OwnerCharacter->ActivateMovementComponent();
-        }
+    	OwnerCharacter->SetActorHiddenInGame(false);
+    	OwnerCharacter->ToggleWeaponState(true);
+    	OwnerCharacter->ActivateMovementComponent();
         
         OwnerCharacter->SetActorTickEnabled(false);
         if (Controller) Controller->SetActorTickEnabled(false);
@@ -156,11 +152,8 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
     case EAILODLevel::Low:
     case EAILODLevel::Culled:
-        if (OldLODLevel < EAILODLevel::Low)
-        {
-            OwnerCharacter->SetActorHiddenInGame(true);
-            OwnerCharacter->ToggleWeaponState(false);
-        }
+    	OwnerCharacter->SetActorHiddenInGame(true);
+    	OwnerCharacter->ToggleWeaponState(false);
         
         OwnerCharacter->SetActorTickEnabled(false);
         if (Controller) Controller->SetActorTickEnabled(false);

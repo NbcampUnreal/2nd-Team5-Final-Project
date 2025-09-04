@@ -7,6 +7,7 @@
 
 // 풀링 기반 AI 스폰
 
+class ATargetPoint;
 class USLWaveSpawnerComponent;
 class ASLBattleManager;
 class UNiagaraSystem;
@@ -85,11 +86,13 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    virtual void OnConstruction(const FTransform& Transform) override;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Pooling")
 	void ReturnAllActiveUnitsToPool();
+
+	UFUNCTION(BlueprintCallable)
+	FVector GetNextTargetPointLocation(int32& CurrentTargetIndex) const;
 	
     // ASLBattleManager가 이 스포너에게 웨이브 시작을 지시할 함수
     UFUNCTION(BlueprintCallable, Category = "Spawner|WaveControl")
@@ -117,15 +120,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ObjectPool")
     int32 InitialPoolSize = 50;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ObjectPool")
-    int32 MaxPoolSize = 100;
+    int32 MaxPoolSize = 400;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ObjectPool")
     bool bExpandPoolIfNeeded = true;
-
-    // 스폰 이펙트 UPROPERTY
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpawnEffect")
-	TObjectPtr<UNiagaraSystem> SpawnEffectTemplate;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpawnEffect")
-    float EffectSpawnHeightOffset = 50.0f;
 
     UPROPERTY()
     TArray<FPooledUnit> ObjectPool;
@@ -134,6 +131,10 @@ public:
 	TObjectPtr<UBoxComponent> SpawnBox;
 
 	TWeakObjectPtr<ASLBattleManager> CachedBattleManager;
+
+	// AI가 순회할 타겟 포인트
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI | Patrol", meta = (MakeEditWidget = "true"))
+	TArray<TObjectPtr<ATargetPoint>> PatrolPoints;
 
 	// USLWaveSpawnerComponent를 정확한 타입으로 선언하고 생성합니다.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave Spawning")

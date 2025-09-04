@@ -217,11 +217,6 @@ void USLWaveSpawnerComponent::ImmediateRespawnFromPool(TSubclassOf<ACharacter> U
     const FWaveCompositionData* CompositionData = UnitCompositionData.Find(UnitClass);
     if (!CompositionData) return;
     
-    if (!CachedOwnerSpawner->GetPooledUnit(UnitClass))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("무한 리스폰: 풀에서 %s 유닛을 가져올 수 없음"), *UnitClass->GetName());
-    }
-    
     CachedOwnerSpawner->SpawnAndConfigureUnit(
             UnitClass, 
             CompositionData->ControllerClass, 

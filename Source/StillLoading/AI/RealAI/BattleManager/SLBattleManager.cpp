@@ -4,8 +4,8 @@
 #include "AI/RealAI/Component/SLAICombatComponent.h"
 #include "AI/RealAI/Component/SLAILODComponent.h"
 #include "AI/RealAI/Component/SLAIStateComponent.h"
+#include "AI/RealAI/Component/SLWaveSpawnerComponent.h"
 #include "AI/RealAI/Spawner/SLSwarmSpawner.h"
-#include "Engine/TargetPoint.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -19,59 +19,70 @@ ASLBattleManager::ASLBattleManager()
 	CurrentGlobalWaveNumber = 0;
 }
 
-void ASLBattleManager::StartBattle_Implementation()
+void ASLBattleManager::StartWave_Implementation(const TArray<ASLSwarmSpawner*>& SpawnersToActivate, int32 WaveIndex)
 {
-	if (ManagedSpawners.Num() == 0)
+	if (SpawnersToActivate.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: 관리할 스포너가 없습니다. 전투를 시작할 수 없습니다."));
+		UE_LOG(LogTemp, Warning, TEXT("BattleManager: StartWave에 활성화할 스포너가 전달되지 않았습니다."));
 		return;
 	}
 
-	CurrentGlobalWaveNumber = 0;
+	bIsBattleActive = true;
 	SpawnerWaveCompletionStatus.Empty();
 
-	UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 전투 시작! 첫 전역 웨이브 (%d)를 지시합니다."), CurrentGlobalWaveNumber);
+	UE_LOG(LogTemp, Log, TEXT("BattleManager: %d개의 스포너로 웨이브 %d를 시작합니다."), SpawnersToActivate.Num(), WaveIndex);
 
-	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
+	for (ASLSwarmSpawner* Spawner : SpawnersToActivate)
 	{
-		if (IsValid(Spawner))
+		if(IsValid(Spawner))
 		{
-			Spawner->StartWave(CurrentGlobalWaveNumber);
+			Spawner->StartWave(WaveIndex);
 			SpawnerWaveCompletionStatus.Add(Spawner, false);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: ManagedSpawners에 유효하지 않은 스포너가 있습니다."));
 		}
 	}
 }
 
-void ASLBattleManager::EndBattle_Implementation()
+void ASLBattleManager::StartInfiniteSpawnMode_Implementation(const TArray<ASLSwarmSpawner*>& SpawnersToActivate)
 {
-	UE_LOG(LogTemp, Log, TEXT("SLBattleManager: 전투 종료!"));
+	if (SpawnersToActivate.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BattleManager: StartInfiniteSpawnMode에 활성화할 스포너가 전달되지 않았습니다."));
+		return;
+	}
+
+	bIsBattleActive = true;
+	TotalSpawnedUnitCount = 0;
+	SpawnerWaveCompletionStatus.Empty();
+
+	UE_LOG(LogTemp, Log, TEXT("BattleManager: %d개의 스포너에 대해 무한 스폰 모드를 시작합니다."), SpawnersToActivate.Num());
+
+	for (ASLSwarmSpawner* Spawner : SpawnersToActivate)
+	{
+		if(IsValid(Spawner) && IsValid(Spawner->WaveSpawnerComponent))
+		{
+			Spawner->WaveSpawnerComponent->bEnableInfiniteRespawn = true;
+			Spawner->StartWave(0);
+		}
+	}
+}
+
+void ASLBattleManager::EndBattle_Implementation(bool bPlayerWon)
+{
+	if (!bIsBattleActive) return;
+	bIsBattleActive = false;
+
+	UE_LOG(LogTemp, Log, TEXT("SLBattleManager: 전투 종료! 승리 여부: %s"), bPlayerWon ? TEXT("승리") : TEXT("패배"));
+
 	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
 	{
 		if (IsValid(Spawner))
 		{
 			Spawner->StopWaveSpawning();
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("SLBattleManager: ManagedSpawners에 유효하지 않은 스포너가 있습니다. 종료할 수 없습니다."));
+			Spawner->CleanupPool();
 		}
 	}
 
-	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
-	{
-		if (IsValid(Spawner))
-		{
-			Spawner->CleanupPool();
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("SLBattleManager: 등록된 스포너 중 유효하지 않은 것이 있습니다."));
-		}
-	}
+	UnitActors.Empty();
 
 	UnitActors.Empty();
 	UnitLocations.Empty();
@@ -85,6 +96,30 @@ void ASLBattleManager::EndBattle_Implementation()
 	TargetEngagementCounts.Empty();
 	EngagedUnitsPerTarget.Empty();
 	UnitTargetLocations.Empty();
+}
+
+int32 ASLBattleManager::GetTotalSpawnedUnitCount_Implementation() const
+{
+	return TotalSpawnedUnitCount;
+}
+
+bool ASLBattleManager::IsBattleInProgress_Implementation() const
+{
+	return bIsBattleActive;
+}
+
+void ASLBattleManager::StopBattle_Implementation()
+{
+	if (!bIsBattleActive) return;
+
+	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
+	{
+		if (IsValid(Spawner))
+		{
+			Spawner->StopWaveSpawning();
+			Spawner->ReturnAllActiveUnitsToPool();
+		}
+	}
 }
 
 void ASLBattleManager::BeginPlay()
@@ -111,59 +146,6 @@ void ASLBattleManager::BeginPlay()
 
 	BindToSpawnerEvents();
 	InitializeAISupportingMode();
-
-#if WITH_EDITOR
-	if (GetWorld())
-	{
-		TArray<FColor> DebugColors;
-		DebugColors.Add(FColor::Red); // 스포너 0번
-		DebugColors.Add(FColor::Green); // 스포너 1번
-		DebugColors.Add(FColor::Blue);
-		DebugColors.Add(FColor::Yellow);
-		DebugColors.Add(FColor::Cyan);
-		DebugColors.Add(FColor::Orange);
-		DebugColors.Add(FColor::Purple);
-		DebugColors.Add(FColor::White);
-
-		int32 SpawnerIndex = 0;
-
-		for (const FSpawnerTargetPoints& SpawnerData : SpawnerTargetPointData)
-		{
-			if (!IsValid(SpawnerData.Spawner))
-			{
-				SpawnerIndex++;
-				continue;
-			}
-
-			FColor CurrentColor = DebugColors.IsValidIndex(SpawnerIndex) ? DebugColors[SpawnerIndex] : FColor::White;
-
-			DrawDebugSphere(GetWorld(), SpawnerData.Spawner->GetActorLocation(), 70.f, 12, CurrentColor, true, -1.f, 0,
-			                4.f);
-			DrawDebugString(GetWorld(), SpawnerData.Spawner->GetActorLocation() + FVector(0, 0, 100),
-			                FString::Printf(TEXT("Spawner %d"), SpawnerIndex), nullptr, CurrentColor, -1.f, true);
-
-			FVector PreviousTargetLocation = SpawnerData.Spawner->GetActorLocation();
-
-			for (int32 i = 0; i < SpawnerData.TargetPoints.Num(); ++i)
-			{
-				ATargetPoint* TargetPoint = SpawnerData.TargetPoints[i];
-				if (IsValid(TargetPoint))
-				{
-					FVector CurrentTargetLocation = TargetPoint->GetActorLocation();
-
-					DrawDebugSphere(GetWorld(), CurrentTargetLocation, 100.f, 12, CurrentColor, true, -1.f, 0, 3.f);
-					DrawDebugLine(GetWorld(), PreviousTargetLocation, CurrentTargetLocation, CurrentColor, true, -1.f,
-					              0, 2.f);
-					DrawDebugString(GetWorld(), CurrentTargetLocation + FVector(0, 0, 50), FString::FromInt(i), nullptr,
-					                CurrentColor, -1.f, true);
-
-					PreviousTargetLocation = CurrentTargetLocation;
-				}
-			}
-			SpawnerIndex++;
-		}
-	}
-#endif
 }
 
 void ASLBattleManager::Tick(float DeltaSeconds)
@@ -178,7 +160,7 @@ void ASLBattleManager::Tick(float DeltaSeconds)
 
 void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	EndBattle();
+	EndBattle_Implementation(true);
 
 	for (ASLSwarmSpawner* Spawner : ManagedSpawners)
 	{
@@ -260,6 +242,7 @@ void ASLBattleManager::OnSpawnerUnitSpawnedHandler(AActor* SpawnedUnit, ASLSwarm
 {
 	if (IsValid(SpawnedUnit))
 	{
+		TotalSpawnedUnitCount++;
 		RegisterUnit(SpawnedUnit, false, SourceSpawner);
 	}
 
@@ -280,6 +263,11 @@ void ASLBattleManager::OnSpawnerUnitReturnedToPoolHandler(AActor* ReturnedUnit, 
 	if (IsValid(ReturnedUnit))
 	{
 		UnregisterUnit(ReturnedUnit);
+
+		if (OnUnitUnregistered.IsBound())
+		{
+			OnUnitUnregistered.Broadcast(ReturnedUnit);
+		}
 	}
 }
 
@@ -289,48 +277,6 @@ void ASLBattleManager::OnSpawnerUnitActuallyDestroyedHandler(AActor* DestroyedAc
 	{
 		UnregisterUnit(DestroyedActor);
 	}
-}
-
-FVector ASLBattleManager::GetNextTargetPointLocationForSpawner(ASLSwarmSpawner* ForSpawner,
-                                                               int32& CurrentTargetIndex) const
-{
-	if (!IsValid(ForSpawner))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("GetNextTargetPointLocationForSpawner: 유효하지 않은 스포너가 전달되었습니다."));
-		return FVector::ZeroVector;
-	}
-
-	for (const FSpawnerTargetPoints& SpawnerData : SpawnerTargetPointData)
-	{
-		if (SpawnerData.Spawner == ForSpawner)
-		{
-			const int32 NumTargetPoints = SpawnerData.TargetPoints.Num();
-
-			if (NumTargetPoints == 0 || !SpawnerData.TargetPoints.IsValidIndex(CurrentTargetIndex)
-				|| SpawnerData.TargetPoints[CurrentTargetIndex] == nullptr)
-			{
-				UE_LOG(LogTemp, Warning,
-				       TEXT(
-					       "GetNextTargetPointLocationForSpawner: 스포너 '%s'의 타겟 포인트 인덱스 %d에 유효한 타겟이 없거나, 타겟 포인트가 없습니다. 순회 종료."
-				       ),
-				       *ForSpawner->GetName(), CurrentTargetIndex);
-				return FVector::ZeroVector;
-			}
-
-			FVector Location = SpawnerData.TargetPoints[CurrentTargetIndex]->GetActorLocation();
-
-			if (NumTargetPoints != 1)
-			{
-				CurrentTargetIndex = (CurrentTargetIndex + 1) % NumTargetPoints;
-			}
-
-			return Location;
-		}
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("GetNextTargetPointLocationForSpawner: 스포너 '%s'에 대한 타겟 포인트 데이터를 찾을 수 없습니다."),
-	       *ForSpawner->GetName());
-	return FVector::ZeroVector;
 }
 
 // Unit
@@ -778,7 +724,7 @@ void ASLBattleManager::StartNextGlobalWave()
 	if (!bAnySpawnerHasNextWave)
 	{
 		UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 모든 스포너 컴포넌트의 모든 웨이브가 최종적으로 완료되었습니다!"));
-		EndBattle();
+		EndBattle_Implementation(true);
 	}
 }
 

@@ -27,16 +27,6 @@ void USLAIStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const float InitialDelay = FMath::FRandRange(0.0f, 0.5f);
-
-	GetWorld()->GetTimerManager().SetTimer(
-		DetectionTimerHandle,
-		this,
-		&USLAIStateComponent::PerformEnemyDetection,
-		1.0f,
-		true,
-		InitialDelay);
-
 	Initialize();
 }
 
@@ -55,6 +45,8 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		if (CachedMyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || CachedMyCharacter->
 			IsInPrimaryState(TAG_AI_Dead)) return;
 	}
+
+	PerformEnemyDetection();
 
 	AActor* DetectedEnemy = LastDetectedEnemy.Get();
 	if (IsValid(DetectedEnemy))
@@ -188,10 +180,12 @@ void USLAIStateComponent::Initialize()
 	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 	{
 		CachedMyCharacter = MyCharacter;
-	}
 
-	CombatComponent = GetOwner()->FindComponentByClass<USLAICombatComponent>();
-	CachedLODComponent = GetOwner()->FindComponentByClass<USLAILODComponent>();
+		CombatComponent = MyCharacter->AICombatComp;
+		CachedLODComponent = MyCharacter->AILODComp;
+	}
+	
+	SetComponentTickEnabled(true);
 }
 
 void USLAIStateComponent::ActivateAndMoveToInitialTarget(int32 InitialTargetPointIndex)
@@ -214,6 +208,7 @@ void USLAIStateComponent::DeactivateAndReset()
 	}
 
 	SetState(EAIBattleState::Idle);
+	SetComponentTickEnabled(false);
 	CurrentTargetPointIndex = 0;
 }
 
@@ -280,10 +275,9 @@ void USLAIStateComponent::RequestNextTargetPoint()
 	const ASLMonsterAICharacterBase* MyCharacter = Cast<ASLMonsterAICharacterBase>(GetOwner());
 	if (!MyCharacter) return;
 
-	if (IsValid(MyCharacter->BattleManager) && IsValid(MyCharacter->BornSpawner))
+	if (IsValid(MyCharacter->BornSpawner))
 	{
-		const FVector NextLocation = MyCharacter->BattleManager->GetNextTargetPointLocationForSpawner(
-			MyCharacter->BornSpawner, CurrentTargetPointIndex);
+		const FVector NextLocation = MyCharacter->BornSpawner->GetNextTargetPointLocation(CurrentTargetPointIndex);
 
 		if (!NextLocation.IsNearlyZero())
 		{
