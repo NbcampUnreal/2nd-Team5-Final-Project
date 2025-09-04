@@ -64,17 +64,17 @@ public:
 	FOnAllWavesCompleted OnAllWavesCompleted;
 
 protected:
-	int32 CurrentWaveIndex; // 현재 진행 중인 웨이브의 인덱스
-	bool bIsSpawningActive; // 스폰 활성화 상태
-
-	FTimerHandle WaveSpawnTimerHandle; // 웨이브 스폰 타이머 핸들
-
 	// 내부 스폰 로직 (웨이브 데이터 기반)
 	void StartCurrentWaveSpawning();
 	void FinishCurrentWave();
 
 	UPROPERTY(Transient)
 	TObjectPtr<ASLSwarmSpawner> CachedOwnerSpawner;
+
+	int32 CurrentWaveIndex; // 현재 진행 중인 웨이브의 인덱스
+	bool bIsSpawningActive; // 스폰 활성화 상태
+
+	FTimerHandle WaveSpawnTimerHandle; // 웨이브 스폰 타이머 핸들
 
 private:
 	// 무한 스폰용

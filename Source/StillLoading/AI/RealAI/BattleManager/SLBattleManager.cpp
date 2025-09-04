@@ -15,7 +15,6 @@ ASLBattleManager::ASLBattleManager()
 	PrimaryActorTick.TickInterval = 0.1f;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-
 	CurrentGlobalWaveNumber = 0;
 }
 
@@ -34,7 +33,7 @@ void ASLBattleManager::StartWave_Implementation(const TArray<ASLSwarmSpawner*>& 
 
 	for (ASLSwarmSpawner* Spawner : SpawnersToActivate)
 	{
-		if(IsValid(Spawner))
+		if (IsValid(Spawner))
 		{
 			Spawner->StartWave(WaveIndex);
 			SpawnerWaveCompletionStatus.Add(Spawner, false);
