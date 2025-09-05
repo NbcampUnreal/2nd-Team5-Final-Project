@@ -27,7 +27,6 @@ USLAIStateComponent::USLAIStateComponent()
 void USLAIStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
 	Initialize();
 }
 

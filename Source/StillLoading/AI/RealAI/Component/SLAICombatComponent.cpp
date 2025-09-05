@@ -165,7 +165,6 @@ AActor* USLAICombatComponent::FindEnemyInDetectionRange()
     if (IsValid(FoundEnemy))
     {
        TargetFoundTime = GetWorld()->GetTimeSeconds();
-       CurrentTarget.TargetActor = FoundEnemy;
     }
 
     return FoundEnemy;

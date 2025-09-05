@@ -62,7 +62,6 @@ FGenericTeamId ASLPlayerCharacterBase::GetGenericTeamId() const
 void ASLPlayerCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ASLPlayerCharacterBase::Tick(float DeltaTime)
