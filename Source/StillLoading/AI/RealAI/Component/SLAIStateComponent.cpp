@@ -9,6 +9,7 @@
 #include "AI/RealAI/SLMonsterAICharacterBase.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
 #include "AI/RealAI/Spawner/SLSwarmSpawner.h"
+#include "Character/DataAsset/AttackDataAsset.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -18,7 +19,7 @@ DEFINE_LOG_CATEGORY(LogAIStateComponent);
 USLAIStateComponent::USLAIStateComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = false;
+	PrimaryComponentTick.bStartWithTickEnabled = true;
 	CurrentState = EAIBattleState::Idle;
 	CurrentTargetPointIndex = 0;
 }
@@ -40,28 +41,33 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		return;
 	}
 
-	if (CachedMyCharacter)
+	if (IsValid(CachedAIController))
 	{
-		if (CachedMyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || CachedMyCharacter->
-			IsInPrimaryState(TAG_AI_Dead))
+		if (CachedMyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage)
+			|| CachedMyCharacter->IsInPrimaryState(TAG_AI_Dead))
+		{
+			if (CachedMyCharacter->GetLastAnimType() == EHitAnimType::HAT_FallBack)
+			{
+				CachedAIController->StopMovement();
+			}
 			return;
+		}
 	}
 
-	if (IsValid(CachedMyCharacter->BattleManager) && CachedMyCharacter->BattleManager->IsBerserkMode())
+	if (IsValid(CachedMyCharacter->BattleManager) && CachedMyCharacter->BattleManager->IsBerserkMode() || bIsBerserkMode)
 	{
 		SetBerserkMode(DeltaTime);
-		UpdateCurrentState(DeltaTime);
-		return;
 	}
-
-	PerformEnemyDetection();
-
-	AActor* DetectedEnemy = LastDetectedEnemy.Get();
-	if (IsValid(DetectedEnemy))
+	else
 	{
-		CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
+		PerformEnemyDetection();
+		AActor* DetectedEnemy = LastDetectedEnemy.Get();
+		if (IsValid(DetectedEnemy))
+		{
+			CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
+		}
+		CombatComponent->HandleEnemyDetection(DetectedEnemy);
 	}
-	CombatComponent->HandleEnemyDetection(DetectedEnemy);
 
 	UpdateCurrentState(DeltaTime);
 }
@@ -76,27 +82,6 @@ void USLAIStateComponent::PerformEnemyDetection()
 
 void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
 {
-	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->BattleManager) && IsValid(CachedLODComponent))
-	{
-		const EAILODLevel CurrentLOD = CachedLODComponent->GetCurrentLODLevel();
-		if (CurrentLOD == EAILODLevel::Max)
-		{
-			const auto& UnitMap = CachedMyCharacter->BattleManager->GetUnitIndexMap();
-			if (const int32* MyIndexPtr = UnitMap.Find(GetOwner()))
-			{
-				const FVector TargetLocation = CachedMyCharacter->BattleManager->GetUnitTargetLocations()[*MyIndexPtr];
-				if (!TargetLocation.IsNearlyZero())
-				{
-					if (CurrentState != EAIBattleState::Attacking)
-					{
-						SetMovementTarget(TargetLocation, 100.f);
-						return;
-					}
-				}
-			}
-		}
-	}
-
 	switch (CurrentState)
 	{
 	case EAIBattleState::Idle:
@@ -140,7 +125,7 @@ void USLAIStateComponent::OnEnterState(EAIBattleState NewState)
 	switch (NewState)
 	{
 	case EAIBattleState::Idle:
-		if (CachedAIController.IsValid() && IsValid(CachedMyCharacter))
+		if (IsValid(CachedAIController) && IsValid(CachedMyCharacter))
 		{
 			CachedAIController->StopMovement();
 			CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -148,14 +133,14 @@ void USLAIStateComponent::OnEnterState(EAIBattleState NewState)
 		break;
 
 	case EAIBattleState::Moving:
-		if (CachedAIController.IsValid() && IsValid(CachedMyCharacter))
+		if (IsValid(CachedAIController) && IsValid(CachedMyCharacter))
 		{
 			CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
 		}
 		break;
 
 	case EAIBattleState::Attacking:
-		if (CachedAIController.IsValid() && IsValid(CachedMyCharacter))
+		if (IsValid(CachedAIController) && IsValid(CachedMyCharacter))
 		{
 			CachedAIController->StopMovement();
 			CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -170,7 +155,7 @@ void USLAIStateComponent::Initialize()
 	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))
 	{
 		CachedAIController = Cast<AAIController>(OwnerPawn->GetController());
-		if (CachedAIController.IsValid())
+		if (IsValid(CachedAIController))
 		{
 			if (IGenericTeamAgentInterface* OwnerTeamAgent = Cast<IGenericTeamAgentInterface>(CachedAIController))
 			{
@@ -204,7 +189,7 @@ void USLAIStateComponent::ActivateAndMoveToInitialTarget(int32 InitialTargetPoin
 
 void USLAIStateComponent::DeactivateAndReset()
 {
-	if (CachedAIController.IsValid())
+	if (IsValid(CachedAIController))
 	{
 		CachedAIController->StopMovement();
 	}
@@ -230,7 +215,7 @@ void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, float Ava
 
 	MovementTargetLocation = NewTargetLocation;
 
-	if (CachedAIController.IsValid())
+	if (IsValid(CachedAIController))
 	{
 		FAIRequestID RequestID = CachedAIController->MoveToLocation(MovementTargetLocation, AvailRange);
 		if (CurrentState != EAIBattleState::Attacking)

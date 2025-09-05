@@ -481,10 +481,6 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 	if (MonsterAI)
 	{
 		MonsterAI->BornSpawner = this;
-		if (CachedBattleManager.IsValid())
-		{
-			MonsterAI->BattleManager = CachedBattleManager.Get();
-		}
 		MonsterAI->AIAttributeComp->SetAIStat(EAIChapterType::Chapter4, EAIUnitType::Normal);
 	}
 

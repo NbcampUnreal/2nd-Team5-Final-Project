@@ -38,9 +38,10 @@ public:
     // 상태 관리
     UFUNCTION(BlueprintCallable, Category = "AI|State")
     void SetState(EAIBattleState NewState);
-    
     UFUNCTION(BlueprintPure, Category = "AI|State")
     FORCEINLINE EAIBattleState GetCurrentState() const { return CurrentState; }
+    UFUNCTION(BlueprintCallable, Category = "AI|State")
+    void SetSingleBerserkMode(bool bIsOn) { bIsBerserkMode = bIsOn; };
     
     // 초기화 및 활성화
     void Initialize();
@@ -80,7 +81,7 @@ public:
     EAIBattleState CurrentState;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Controller")
-    TWeakObjectPtr<AAIController> CachedAIController;
+    TObjectPtr<AAIController> CachedAIController;
 
     UPROPERTY()
     TObjectPtr<ASLMonsterAICharacter> CachedMyCharacter;
@@ -123,4 +124,5 @@ private:
     TObjectPtr<AActor> SupportTargetActor = nullptr;
     UPROPERTY()
     bool bIsSupportMoving = false;
+    bool bIsBerserkMode = false;
 };

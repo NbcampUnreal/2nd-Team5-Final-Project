@@ -346,9 +346,18 @@ void ASLMonsterAICharacter::OnUnhoveredByCursor_Implementation(ASLBasePlayerCont
 void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                           EHitAnimType AnimType)
 {
+	LastAnimType = AnimType;
+	/*
+	if (LastAnimType == EHitAnimType::HAT_FallBack && !IsInPrimaryState(TAG_AI_Idle))
+	{
+		return;
+	}
+	*/
+	
 	AnimationComponent->StopAllMontages(0.2f);
 	AICombatComp->StopRetreating();
 	AICombatComp->StartRandomTurn();
+	AIStateComp->SetSingleBerserkMode(true);
 	//GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
 
 	LastAttacker = Causer;
@@ -490,11 +499,12 @@ void ASLMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage
 	case EAttackAnimType::AAT_FinalAttackC:
 	case EAttackAnimType::AAT_Dead:
 		GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterDie, GetActorLocation());
+		break;
+	case EAttackAnimType::AAT_Airborn:
 		//Dead(LastAttacker, true);
 		return;
 	}
-
-	SetPrimaryState(TAG_AI_Idle);
+	
 	StopFlyingState();
 }
 

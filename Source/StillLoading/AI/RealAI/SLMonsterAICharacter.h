@@ -4,6 +4,7 @@
 #include "SLMonsterAICharacterBase.h"
 #include "SLMonsterAICharacter.generated.h"
 
+enum class EHitAnimType : uint8;
 class ASLBasePlayerController;
 class USLSoundSubsystem;
 class USLBattleSoundSubsystem;
@@ -47,6 +48,7 @@ public:
 	void PlayAttackAnim();
 	void PlayETCAnim();
 	void PlayETCWaitAnim();
+	EHitAnimType GetLastAnimType() const { return LastAnimType; };
 
 	UFUNCTION()
 	void Dead(const AActor* Attacker, bool bIsChangeMaterial);
@@ -164,4 +166,5 @@ private:
 	FVector SpawnStartLocation;
 	UPROPERTY()
 	FVector SpawnEndLocation;
+	EHitAnimType LastAnimType;
 };

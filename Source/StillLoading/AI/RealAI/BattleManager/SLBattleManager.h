@@ -43,8 +43,12 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	void UpdateAllUnitLocations();
+
 public:
 	int32 FindNearestEnemy(int32 MyIndex, float InRange) const;
+
+	void RegisterPlayerUnit(const AController* PlayerController);
 	
 	UFUNCTION(BlueprintCallable, Category = "Battle Management|Waves")
 	void StartNextGlobalWave();
@@ -89,7 +93,7 @@ protected:
 	TArray<FVector> CalculateCirclePositions(const FVector& Center, float Radius, int32 NumSlots) const;
 
 	// --- 스포너 관리 ---
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle Management|Spawners")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Battle Management|Spawners")
 	TArray<ASLSwarmSpawner*> ManagedSpawners;
 
 	// --- 유닛 관리 DOD ---
@@ -103,6 +107,7 @@ protected:
 	TMap<TObjectPtr<AActor>, int32> UnitIndexMap;
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
 	TArray<TObjectPtr<AActor>> UnitActors;
+	int32 PlayerUnitIndex = INDEX_NONE;;
 
 	// LOD 관련 데이터
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
@@ -116,6 +121,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")
 	TArray<FVector> UnitTargetLocations;
 	TMap<int32, int32> OccupiedAttackSlots;
+	TMap<int32, int32> OccupiedHighLODSlots;
+	TMap<int32, int32> OccupiedMediumLODSlots;
 
 	// 교전 관련 데이터
 	UPROPERTY(VisibleAnywhere, Category = "Battle Management|Units")

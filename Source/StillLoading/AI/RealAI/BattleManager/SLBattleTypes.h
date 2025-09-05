@@ -20,7 +20,6 @@ enum class EAILODLevel : uint8
 	Culled	UMETA(DisplayName = "Culled")
 };
 
-
 USTRUCT(BlueprintType)
 struct FBattleUnitInfo
 {
@@ -48,7 +47,7 @@ struct FWaveCompositionData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
 	int32 SpawnCount = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	FGenericTeamId TeamID = 2;
+	FGenericTeamId TeamID = FGenericTeamId(2);;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
 	float AvoidanceWeight = 1.0f;
 };

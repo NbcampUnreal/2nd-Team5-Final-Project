@@ -7,8 +7,8 @@
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
-#include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogAICombatComponent);
 
@@ -43,6 +43,9 @@ void USLAICombatComponent::BeginPlay()
 
 void USLAICombatComponent::SafeLookAtTarget(AActor* Target, float DeltaTime)
 {
+	if (CachedMyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage)
+			|| CachedMyCharacter->IsInPrimaryState(TAG_AI_Dead)) return;
+	
 	if (!Target || !CachedMyCharacter) return;
 
 	const FVector ToTarget = Target->GetActorLocation() - CachedMyCharacter->GetActorLocation();
@@ -61,7 +64,7 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 {
 	if (!IsValid(CurrentTarget.TargetActor))
 	{
-		if (StateComponent && StateComponent->CachedAIController.IsValid())
+		if (StateComponent && IsValid(StateComponent->CachedAIController))
 		{
 			StateComponent->CachedAIController->ClearFocus(EAIFocusPriority::Gameplay);
 		}
@@ -106,29 +109,66 @@ void USLAICombatComponent::UpdateSupporting(float DeltaTime)
 // StateComponent 에서 실행
 AActor* USLAICombatComponent::FindEnemyInDetectionRange()
 {
-	if (CurrentTarget.TargetActor)
-	{
-		float CurrentTime = GetWorld()->GetTimeSeconds();
-		if (CurrentTime - TargetFoundTime < TargetAvailTime)
-		{
-			return CurrentTarget.TargetActor;
-		}
-	}
+    if (IsValid(CurrentTarget.TargetActor))
+    {
+       const float CurrentTime = GetWorld()->GetTimeSeconds();
+       if (CurrentTime - TargetFoundTime < TargetAvailTime)
+       {
+          return CurrentTarget.TargetActor;
+       }
+    }
 
-	if (!CachedMyCharacter || !CachedMyCharacter->BattleManager) return nullptr;
+    if (!CachedMyCharacter) return nullptr;
 
-	const int32* MyIndexPtr = CachedMyCharacter->BattleManager->GetUnitIndexMap().Find(GetOwner());
-	if (!MyIndexPtr) return nullptr;
+    ASLBattleManager* BattleManager = CachedMyCharacter->BattleManager.Get();
+    if (!IsValid(BattleManager))
+    {
+       AActor* FoundActor = UGameplayStatics::GetActorOfClass(GetWorld(), ASLBattleManager::StaticClass());
+       BattleManager = Cast<ASLBattleManager>(FoundActor);
+       if (IsValid(BattleManager))
+       {
+          CachedMyCharacter->BattleManager = BattleManager;
+       }
+       else
+       {
+          return nullptr;
+       }
+    }
+	
+    AActor* FoundEnemy = nullptr;
 
-	const int32 EnemyIndex = CachedMyCharacter->BattleManager->FindNearestEnemy(*MyIndexPtr, DetectionRange);
+    if (BattleManager->PlayerOnly())
+    {
+        APawn* PlayerPawn = BattleManager->GetPrimaryTarget();
+        if (IsValid(PlayerPawn))
+        {
+            const float DistSq = FVector::DistSquared(GetOwner()->GetActorLocation(), PlayerPawn->GetActorLocation());
+            if (DistSq <= FMath::Square(DetectionRange))
+            {
+                FoundEnemy = PlayerPawn;
+            }
+        }
+    }
+    else
+    {
+        const int32* MyIndexPtr = BattleManager->GetUnitIndexMap().Find(GetOwner());
+        if (MyIndexPtr)
+        {
+            const int32 EnemyIndex = BattleManager->FindNearestEnemy(*MyIndexPtr, DetectionRange);
+            if (BattleManager->GetUnitActors().IsValidIndex(EnemyIndex))
+            {
+                FoundEnemy = BattleManager->GetUnitActors()[EnemyIndex];
+            }
+        }
+    }
 
-	if (CachedMyCharacter->BattleManager->GetUnitActors().IsValidIndex(EnemyIndex))
-	{
-		TargetFoundTime = GetWorld()->GetTimeSeconds();
-		return CachedMyCharacter->BattleManager->GetUnitActors()[EnemyIndex];
-	}
+    if (IsValid(FoundEnemy))
+    {
+       TargetFoundTime = GetWorld()->GetTimeSeconds();
+       CurrentTarget.TargetActor = FoundEnemy;
+    }
 
-	return nullptr;
+    return FoundEnemy;
 }
 
 // StateComponent 에서 실행
@@ -296,7 +336,7 @@ void USLAICombatComponent::StartRetreating()
 {
 	if (!bIsRetreating)
 	{
-		if (StateComponent && StateComponent->CachedAIController.IsValid())
+		if (StateComponent && IsValid(StateComponent->CachedAIController))
 		{
 			StateComponent->CachedAIController->StopMovement();
 		}

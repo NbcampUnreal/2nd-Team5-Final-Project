@@ -43,9 +43,9 @@ public:
 	TObjectPtr<USLAIPushComponent> AIPushComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAIAttributeComponent> AIAttributeComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cached")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cached")
 	TObjectPtr<UBattleComponent> BattleComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<ASLSwarmSpawner> BornSpawner;

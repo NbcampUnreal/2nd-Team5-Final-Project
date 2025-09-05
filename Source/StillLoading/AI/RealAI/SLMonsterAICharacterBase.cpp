@@ -24,6 +24,8 @@ ASLMonsterAICharacterBase::ASLMonsterAICharacterBase()
 void ASLMonsterAICharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	
 }
 
 void ASLMonsterAICharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

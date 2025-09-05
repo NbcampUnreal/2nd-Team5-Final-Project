@@ -1,9 +1,11 @@
 #include "SLBasePlayerController.h"
 
+#include "AI/RealAI/BattleManager/SLBattleManager.h"
 #include "Blueprint/UserWidget.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/SLTargetableInterface.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/HUD/SLInGameHUD.h"
 
 ASLBasePlayerController::ASLBasePlayerController()

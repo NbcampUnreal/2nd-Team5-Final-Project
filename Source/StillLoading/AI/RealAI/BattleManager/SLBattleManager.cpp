@@ -158,11 +158,18 @@ void ASLBattleManager::BeginPlay()
 void ASLBattleManager::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	if (!bUseLODSystem) return;
-	UpdateAILODs();
 
-	if (!bIsPlayerOnly) return;
-	UpdateEncounterPositions();
+	UpdateAllUnitLocations();
+	
+	if (bUseLODSystem)
+	{
+		UpdateAILODs();
+	}
+
+	if (bIsPlayerOnly)
+	{
+		UpdateEncounterPositions();
+	}
 }
 
 void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -185,6 +192,26 @@ void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void ASLBattleManager::UpdateAllUnitLocations()
+{
+	const int32 NumUnits = UnitActors.Num();
+	for (int32 i = 0; i < NumUnits; ++i)
+	{
+		if (IsValid(UnitActors[i]))
+		{
+			UnitLocations[i] = UnitActors[i]->GetActorLocation();
+		}
+	}
+}
+
+void ASLBattleManager::RegisterPlayerUnit(const AController* PlayerController)
+{
+	if (PlayerController && PlayerController->GetPawn())
+	{
+		RegisterUnit(PlayerController->GetPawn(), true, nullptr);
+	}
+}
+
 int32 ASLBattleManager::FindNearestEnemy(int32 MyIndex, float InRange) const
 {
 	if (!UnitActors.IsValidIndex(MyIndex)) return INDEX_NONE;
@@ -200,7 +227,9 @@ int32 ASLBattleManager::FindNearestEnemy(int32 MyIndex, float InRange) const
 	{
 		if (i == MyIndex) continue;
 
-		if (AreEnemies(MyTeamID, UnitTeamIDs[i], false))
+		const bool bIsTargetPlayer = (i == PlayerUnitIndex);
+		
+		if (AreEnemies(MyTeamID, UnitTeamIDs[i], bIsTargetPlayer))
 		{
 			const float DistSq = FVector::DistSquared(MyLocation, UnitLocations[i]);
 			if (DistSq < MinDistSq && DistSq <= RangeSq)
@@ -323,6 +352,12 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 	}
 
 	const int32 NewIndex = UnitActors.Num();
+	
+	if (bIsPlayer)
+	{
+		PlayerUnitIndex = NewIndex;
+	}
+	
 	UnitActors.Add(Actor);
 	UnitLocations.Add(Actor->GetActorLocation());
 	UnitTeamIDs.Add(TeamId);
@@ -395,14 +430,6 @@ void ASLBattleManager::UpdateAILODs()
     const FVector PlayerLocation = PlayerPawn->GetActorLocation();
     const int32 NumUnits = UnitActors.Num();
 
-    for (int32 i = 0; i < NumUnits; ++i)
-    {
-        if (UnitActors[i])
-        {
-            UnitLocations[i] = UnitActors[i]->GetActorLocation();
-        }
-    }
-
     TArray<EAILODLevel> FinalLODs;
     FinalLODs.SetNum(NumUnits);
     TArray<int32> UnitIndicesByLOD[5];
@@ -465,7 +492,6 @@ void ASLBattleManager::UpdateAILODs()
     }
 }
 
-// TODO::로직 개선 필요
 void ASLBattleManager::UpdateEncounterPositions()
 {
     if (!PrimaryTarget.IsValid() || UnitActors.Num() == 0)
@@ -475,131 +501,68 @@ void ASLBattleManager::UpdateEncounterPositions()
     const FVector PlayerLocation = PrimaryTarget->GetActorLocation();
 
     // ==================================================================
-    // 1. Max LOD를 위한 슬롯 준비 및 정리 (기존 슬롯 점유자 유지)
+    // 1. 슬롯 준비 및 모든 점유 슬롯 정리
     // ==================================================================
-    const TArray<FVector> AttackSlots = CalculateCirclePositions(PlayerLocation, PressurerCircleRadius, LODBudget.MaxLODCount);
-    
-    // 유효하지 않은(죽거나 Max LOD가 아니게 된) 유닛이 차지한 슬롯을 비웁니다.
-    if (AttackSlots.Num() > 0)
-    {
-        TArray<int32> SlotsToClear;
-        for (auto& Elem : OccupiedAttackSlots)
-        {
-            const int32 UnitIndex = Elem.Value;
-            if (!UnitActors.IsValidIndex(UnitIndex) || !IsValid(UnitLODComponents[UnitIndex]) || UnitLODComponents[UnitIndex]->GetCurrentLODLevel() != EAILODLevel::Max)
-            {
-                SlotsToClear.Add(Elem.Key);
-            }
-        }
-        for (const int32 SlotIndex : SlotsToClear)
-        {
-            OccupiedAttackSlots.Remove(SlotIndex);
-        }
-    }
+    const TArray<FVector> MaxLOD_Slots = CalculateCirclePositions(PlayerLocation, PressurerCircleRadius, LODBudget.MaxLODCount);
+    const TArray<FVector> HighLOD_Slots = CalculateCirclePositions(PlayerLocation, PressurerCircleRadius, LODBudget.HighLODCount);
+    const TArray<FVector> MediumLOD_Slots = CalculateCirclePositions(PlayerLocation, MediumCircleRadius, LODBudget.MediumLODCount);
 
-    // ==================================================================
-    // 2. 모든 유닛을 LOD 레벨에 따라 분류
-    // ==================================================================
-    TArray<int32> MaxLOD_Candidates, HighLOD_Indices, MediumLOD_Indices;
-    for (int32 i = 0; i < UnitActors.Num(); ++i)
-    {
-        if (IsValid(UnitLODComponents[i]))
-        {
-            EAILODLevel LODLevel = UnitLODComponents[i]->GetCurrentLODLevel();
-            if (LODLevel == EAILODLevel::Max)
-            {
-                // 이 유닛이 아직 슬롯을 점유하지 않았다면, 새로운 후보가 됩니다.
-                if (!OccupiedAttackSlots.FindKey(i))
-                {
-                    MaxLOD_Candidates.Add(i);
-                }
-            }
-            else if (LODLevel == EAILODLevel::High)
-            {
-                HighLOD_Indices.Add(i);
-            }
-            else if (LODLevel == EAILODLevel::Medium)
-            {
-                MediumLOD_Indices.Add(i);
-            }
-            else
-            {
-                // Max, High, Medium이 아닌 유닛의 타겟 위치는 초기화합니다.
-                // 단, 이미 슬롯을 점유한 Max 유닛은 제외해야 하므로, 점유 상태를 확인합니다.
-                if (!OccupiedAttackSlots.FindKey(i))
-                {
-                    UnitTargetLocations[i] = FVector::ZeroVector;
-                }
-            }
-        }
-    }
+    OccupiedAttackSlots.Empty();
+    OccupiedHighLODSlots.Empty();
+    OccupiedMediumLODSlots.Empty();
 
-    // ==================================================================
-    // 3. Max LOD 처리 (새로운 후보에게 빈 슬롯 우선 할당)
-    // ==================================================================
-    if (MaxLOD_Candidates.Num() > 0 && AttackSlots.Num() > 0)
+    // 모든 유닛의 목표 위치를 우선 초기화
+    for (int32 i = 0; i < UnitTargetLocations.Num(); ++i)
     {
-        // 후보들을 가까운 순으로 정렬
-        MaxLOD_Candidates.Sort([this, &PlayerLocation](const int32& A, const int32& B){
-            return FVector::DistSquared(UnitLocations[A], PlayerLocation) < FVector::DistSquared(UnitLocations[B], PlayerLocation);
-        });
-
-        // 정렬된 후보들에게 비어있는 슬롯 할당
-        for (const int32 CandidateIndex : MaxLOD_Candidates)
-        {
-            if (OccupiedAttackSlots.Num() >= AttackSlots.Num()) break;
-            for (int32 SlotIndex = 0; SlotIndex < AttackSlots.Num(); ++SlotIndex)
-            {
-                if (!OccupiedAttackSlots.Contains(SlotIndex))
-                {
-                    OccupiedAttackSlots.Add(SlotIndex, CandidateIndex);
-                    break;
-                }
-            }
-        }
-    }
-
-    // 최종적으로 점유된 모든 Max LOD 슬롯의 위치를 갱신
-    for (auto& Elem : OccupiedAttackSlots)
-    {
-        const int32 SlotIndex = Elem.Key;
-        const int32 UnitIndex = Elem.Value;
-        if (AttackSlots.IsValidIndex(SlotIndex))
-        {
-            FVector Jitter = FVector(FMath::RandRange(-75.f, 75.f), FMath::RandRange(-75.f, 75.f), 0.f);
-            UnitTargetLocations[UnitIndex] = AttackSlots[SlotIndex] + Jitter;
-        }
+        UnitTargetLocations[i] = FVector::ZeroVector;
     }
     
     // ==================================================================
-    // 4. High LOD 처리 (기존 로직 유지)
+    // 2. 모든 유닛을 순회하며 각 LOD 레벨에 맞는 슬롯 할당
     // ==================================================================
-    if (HighLOD_Indices.Num() > 0)
+    TArray<int32> MaxLOD_Indices, HighLOD_Indices, MediumLOD_Indices;
+    
+    // 거리 순 정렬을 위해 모든 유닛 인덱스를 미리 수집
+    TArray<int32> AllUnitIndices;
+    for(int32 i = 0; i < UnitActors.Num(); ++i) AllUnitIndices.Add(i);
+
+    // 플레이어와 가까운 순으로 유닛 정렬
+    AllUnitIndices.Sort([this, &PlayerLocation](const int32& A, const int32& B) {
+        return FVector::DistSquared(UnitLocations[A], PlayerLocation) < FVector::DistSquared(UnitLocations[B], PlayerLocation);
+    });
+
+    // 정렬된 유닛 순서대로 슬롯 할당
+    for (const int32 UnitIndex : AllUnitIndices)
     {
-        const TArray<FVector> HighLOD_Slots = CalculateCirclePositions(PlayerLocation, PressurerCircleRadius, LODBudget.HighLODCount);
-        if (HighLOD_Slots.Num() > 0)
+        if (!UnitLODComponents.IsValidIndex(UnitIndex) || !IsValid(UnitLODComponents[UnitIndex])) continue;
+        
+        EAILODLevel LODLevel = UnitLODComponents[UnitIndex]->GetCurrentLODLevel();
+
+        if (LODLevel == EAILODLevel::Max)
         {
-            for (int32 i = 0; i < HighLOD_Indices.Num(); ++i)
+            if (OccupiedAttackSlots.Num() < MaxLOD_Slots.Num())
             {
-                const int32 UnitIndex = HighLOD_Indices[i];
-                const int32 SlotIndex = i % HighLOD_Slots.Num();
+                const int32 SlotIndex = OccupiedAttackSlots.Num();
+                OccupiedAttackSlots.Add(SlotIndex, UnitIndex);
+                FVector Jitter = FVector(FMath::RandRange(-75.f, 75.f), FMath::RandRange(-75.f, 75.f), 0.f);
+                UnitTargetLocations[UnitIndex] = MaxLOD_Slots[SlotIndex] + Jitter;
+            }
+        }
+        else if (LODLevel == EAILODLevel::High)
+        {
+            if (OccupiedHighLODSlots.Num() < HighLOD_Slots.Num())
+            {
+                const int32 SlotIndex = OccupiedHighLODSlots.Num();
+                OccupiedHighLODSlots.Add(SlotIndex, UnitIndex);
                 UnitTargetLocations[UnitIndex] = HighLOD_Slots[SlotIndex];
             }
         }
-    }
-
-    // ==================================================================
-    // 5. Medium LOD 처리 (기존 로직 유지)
-    // ==================================================================
-    if (MediumLOD_Indices.Num() > 0)
-    {
-        const TArray<FVector> MediumLOD_Slots = CalculateCirclePositions(PlayerLocation, MediumCircleRadius, LODBudget.MediumLODCount);
-        if (MediumLOD_Slots.Num() > 0)
+        else if (LODLevel == EAILODLevel::Medium)
         {
-            for (int32 i = 0; i < MediumLOD_Indices.Num(); ++i)
+            if (OccupiedMediumLODSlots.Num() < MediumLOD_Slots.Num())
             {
-                const int32 UnitIndex = MediumLOD_Indices[i];
-                const int32 SlotIndex = i % MediumLOD_Slots.Num();
+                const int32 SlotIndex = OccupiedMediumLODSlots.Num();
+                OccupiedMediumLODSlots.Add(SlotIndex, UnitIndex);
                 UnitTargetLocations[UnitIndex] = MediumLOD_Slots[SlotIndex];
             }
         }
@@ -626,6 +589,11 @@ TArray<FVector> ASLBattleManager::CalculateCirclePositions(const FVector& Center
 
 bool ASLBattleManager::AreEnemies(const FGenericTeamId& me, const FGenericTeamId& target, const bool bIsPlayer) const
 {
+	if (bIsPlayerOnly && bIsPlayer)
+	{
+		return true;
+	}
+	
 	if (me == target)
 	{
 		return false;
