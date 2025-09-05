@@ -48,9 +48,9 @@ struct FWaveCompositionData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
 	int32 SpawnCount = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	FGenericTeamId TeamID;
+	FGenericTeamId TeamID = 2;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-	float AvoidanceWeight = 0.5f;
+	float AvoidanceWeight = 1.0f;
 };
 
 USTRUCT(BlueprintType)
