@@ -108,7 +108,7 @@ public:
 
 	// USLWaveSpawnerComponent를 정확한 타입으로 선언하고 생성합니다.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave Spawning")
-	TObjectPtr<USLWaveSpawnerComponent> WaveSpawnerComponent; 
+	TObjectPtr<USLWaveSpawnerComponent> WaveSpawnerComponent;
 
     void InitializeObjectPool(const TArray<FSimpleSpawnComposition>& AllCompositionsToPool);
     ACharacter* GetPooledUnit(TSubclassOf<ACharacter> UnitClass);
