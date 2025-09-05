@@ -43,9 +43,17 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	if (CachedMyCharacter)
 	{
 		if (CachedMyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || CachedMyCharacter->
-			IsInPrimaryState(TAG_AI_Dead)) return;
+			IsInPrimaryState(TAG_AI_Dead))
+			return;
 	}
 
+	if (IsValid(CachedMyCharacter->BattleManager) && CachedMyCharacter->BattleManager->IsBerserkMode())
+	{
+		SetBerserkMode(DeltaTime);
+		UpdateCurrentState(DeltaTime);
+		return;
+	}
+	
 	PerformEnemyDetection();
 
 	AActor* DetectedEnemy = LastDetectedEnemy.Get();
@@ -88,7 +96,7 @@ void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
 			}
 		}
 	}
-	
+
 	switch (CurrentState)
 	{
 	case EAIBattleState::Idle:
@@ -184,7 +192,7 @@ void USLAIStateComponent::Initialize()
 		CombatComponent = MyCharacter->AICombatComp;
 		CachedLODComponent = MyCharacter->AILODComp;
 	}
-	
+
 	SetComponentTickEnabled(true);
 }
 
@@ -255,7 +263,7 @@ void USLAIStateComponent::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
 				return;
 			}
 		}
-		
+
 		CurrentTargetPointIndex++;
 
 		float RandRequestRange = FMath::RandRange(0.5f, 1.0f);
@@ -320,6 +328,40 @@ void USLAIStateComponent::StartSupportMovement(AActor* TargetToSupport)
 		SetMovementTarget(SupportPosition);
 
 		LogStateModeStatus(FString::Printf(TEXT("지원 이동 시작 -> %s"), *TargetToSupport->GetName()));
+	}
+}
+
+void USLAIStateComponent::SetBerserkMode(const float DeltaTime)
+{
+	if (APawn* PlayerPawn = CachedMyCharacter->BattleManager->GetPrimaryTarget())
+	{
+		if (IsValid(PlayerPawn) && IsValid(CombatComponent))
+		{
+			// TODO::추후에 속도 감속 필요 지금은 버서크모드 켜는것만 사용
+			if (auto* MoveComp = Cast<ACharacter>(PlayerPawn)->GetCharacterMovement())
+			{
+				MoveComp->MaxWalkSpeed = 450.0f;
+			}
+			
+			CombatComponent->SafeLookAtTarget(PlayerPawn, DeltaTime);
+			CombatComponent->HandleEnemyDetection(PlayerPawn);
+
+			const float DistSq = FVector::DistSquared(GetOwner()->GetActorLocation(), PlayerPawn->GetActorLocation());
+			const float AttackRange = CombatComponent->AttackRange > 0.f ? CombatComponent->AttackRange : 150.f;
+			const float AttackRangeSq = FMath::Square(AttackRange);
+
+			if (DistSq > AttackRangeSq)
+			{
+				SetMovementTarget(PlayerPawn->GetActorLocation(), 100.f);
+			}
+			else
+			{
+				if (CurrentState != EAIBattleState::Attacking)
+				{
+					SetState(EAIBattleState::Attacking);
+				}
+			}
+		}
 	}
 }
 

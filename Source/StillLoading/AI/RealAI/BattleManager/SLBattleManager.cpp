@@ -131,7 +131,10 @@ void ASLBattleManager::BeginPlay()
 	Super::BeginPlay();
 
 	//TODO::추후에 가져오는 방식 변경 필요
-	PrimaryTarget = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (bIsPlayerOnly)
+	{
+		PrimaryTarget = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	}
 
 	UnitActors.Empty();
 	UnitLocations.Empty();

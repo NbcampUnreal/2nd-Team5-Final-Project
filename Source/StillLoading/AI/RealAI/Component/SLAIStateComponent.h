@@ -60,6 +60,10 @@ public:
     UFUNCTION()
     void StartSupportMovement(AActor* TargetToSupport);
 
+    // 버서크 모드 관련
+    UFUNCTION()
+    void SetBerserkMode(float DeltaTime);
+
     // 컴포넌트 참조 가져오기
     UFUNCTION(BlueprintPure, Category = "AI|Components")
     USLAICombatComponent* GetCombatComponent() const { return CombatComponent; }

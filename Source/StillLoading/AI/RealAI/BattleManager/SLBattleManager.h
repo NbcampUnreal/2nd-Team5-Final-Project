@@ -136,6 +136,14 @@ public:
 	TArray<FBattleUnitInfo> GetUnitsOfTeam(const FGenericTeamId& TeamId);
 	UFUNCTION(BlueprintPure, Category = "Battle Management|Units")
 	TArray<FBattleUnitInfo> GetEnemiesOfTeam(const FGenericTeamId& TeamId);
+
+	// 버서크 모드 관련
+	UFUNCTION(BlueprintPure, Category = "Battle Management")
+	APawn* GetPrimaryTarget() const { return PrimaryTarget.Get(); }
+	UFUNCTION(BlueprintPure, Category = "Battle Management")
+	bool IsBerserkMode() const { return bIsBerserkMode; }
+	UFUNCTION(BlueprintCallable, Category = "Battle Management")
+	void SetBerserkMode() { bIsBerserkMode = true; }
 	
 	// 전투 Permission 관리
 	UFUNCTION(BlueprintCallable, Category = "Battle Management|Permissions")
@@ -172,6 +180,8 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	int32 MaxEngagingUnitsPerTarget = 3;
+	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
+	bool bIsBerserkMode = false;
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
 	bool bIsPlayerOnly = true;
 	UPROPERTY(EditAnywhere, Category = "Battle Management|Permissions")
