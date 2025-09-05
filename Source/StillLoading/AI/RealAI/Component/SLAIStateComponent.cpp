@@ -53,7 +53,7 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		UpdateCurrentState(DeltaTime);
 		return;
 	}
-	
+
 	PerformEnemyDetection();
 
 	AActor* DetectedEnemy = LastDetectedEnemy.Get();
@@ -338,11 +338,19 @@ void USLAIStateComponent::SetBerserkMode(const float DeltaTime)
 		if (IsValid(PlayerPawn) && IsValid(CombatComponent))
 		{
 			// TODO::추후에 속도 감속 필요 지금은 버서크모드 켜는것만 사용
-			if (auto* MoveComp = Cast<ACharacter>(PlayerPawn)->GetCharacterMovement())
+			if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
 			{
-				MoveComp->MaxWalkSpeed = 450.0f;
+				if (auto* MoveComp = Character->GetCharacterMovement())
+				{
+					if (auto* CharacterMoveComp = Cast<ACharacter>(PlayerPawn)->GetCharacterMovement())
+					{
+						USkeletalMeshComponent* MeshComp = Character->GetMesh();
+						MeshComp->GlobalAnimRateScale = 1.5;
+						MoveComp->MaxWalkSpeed = CharacterMoveComp->MaxWalkSpeed + 50.0f;
+					}
+				}
 			}
-			
+
 			CombatComponent->SafeLookAtTarget(PlayerPawn, DeltaTime);
 			CombatComponent->HandleEnemyDetection(PlayerPawn);
 
