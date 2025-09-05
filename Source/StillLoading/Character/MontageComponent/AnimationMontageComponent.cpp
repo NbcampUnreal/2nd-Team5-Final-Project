@@ -156,7 +156,7 @@ void UAnimationMontageComponent::Play2DAttackMontage(FName Section)
 
 void UAnimationMontageComponent::PlayAIAttackMontage(FName Section)
 {
-	StopAIMovement();
+	//StopAIMovement();
 	
 	if (MontageData)
 		PlayMontage(MontageData->AIAttackMontage, Section);
