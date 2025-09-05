@@ -50,7 +50,8 @@ void USLAIAttributeComponent::SetAIStat(EAIChapterType NewChapterType, EAIUnitTy
 
 	if (NewUnitType == EAIUnitType::Ranger)
 	{
-		AttackRange = 600.f;
+		AttackRange = 450.f;
+		AvailDistance = 800.0f;
 	}
 
     FString UnitTypeString = UnitTypeEnum->GetNameByValue(static_cast<int64>(NewUnitType)).ToString();

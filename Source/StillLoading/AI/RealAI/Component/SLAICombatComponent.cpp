@@ -7,6 +7,7 @@
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -33,9 +34,9 @@ void USLAICombatComponent::BeginPlay()
 
 	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 	{
-		CachedMyCharacter = MyCharacter;
 		if (MyCharacter)
 		{
+			CachedMyCharacter = MyCharacter;
 			CachedAIController = Cast<AAIController>(MyCharacter->GetController());
 		}
 	}
@@ -44,8 +45,9 @@ void USLAICombatComponent::BeginPlay()
 void USLAICombatComponent::SafeLookAtTarget(AActor* Target, float DeltaTime)
 {
 	if (CachedMyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage)
-			|| CachedMyCharacter->IsInPrimaryState(TAG_AI_Dead)) return;
-	
+		|| CachedMyCharacter->IsInPrimaryState(TAG_AI_Dead))
+		return;
+
 	if (!Target || !CachedMyCharacter) return;
 
 	const FVector ToTarget = Target->GetActorLocation() - CachedMyCharacter->GetActorLocation();
@@ -82,6 +84,13 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 	}
 
 	const float Distance = FVector::Dist(GetOwner()->GetActorLocation(), CurrentTarget.TargetActor->GetActorLocation());
+
+	float AttackRange = 150.0f;
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
+	{
+		AttackRange = CachedMyCharacter->AIAttributeComp->GetAttackRange();
+	}
+
 	if (Distance > AttackRange)
 	{
 		if (StateComponent && !bIsOrbiting && !bIsRetreating)
@@ -89,7 +98,8 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 			if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 			{
 				if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->
-					IsInPrimaryState(TAG_AI_Dead)) return;
+					IsInPrimaryState(TAG_AI_Dead))
+					return;
 			}
 
 			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), 50);
@@ -109,65 +119,66 @@ void USLAICombatComponent::UpdateSupporting(float DeltaTime)
 // StateComponent 에서 실행
 AActor* USLAICombatComponent::FindEnemyInDetectionRange()
 {
-    if (IsValid(CurrentTarget.TargetActor))
-    {
-       const float CurrentTime = GetWorld()->GetTimeSeconds();
-       if (CurrentTime - TargetFoundTime < TargetAvailTime)
-       {
-          return CurrentTarget.TargetActor;
-       }
-    }
+	if (IsValid(CurrentTarget.TargetActor))
+	{
+		const float CurrentTime = GetWorld()->GetTimeSeconds();
+		if (CurrentTime - TargetFoundTime < TargetAvailTime)
+		{
+			return CurrentTarget.TargetActor;
+		}
+	}
 
-    if (!CachedMyCharacter) return nullptr;
+	if (!CachedMyCharacter) return nullptr;
 
-    ASLBattleManager* BattleManager = CachedMyCharacter->BattleManager.Get();
-    if (!IsValid(BattleManager))
-    {
-       AActor* FoundActor = UGameplayStatics::GetActorOfClass(GetWorld(), ASLBattleManager::StaticClass());
-       BattleManager = Cast<ASLBattleManager>(FoundActor);
-       if (IsValid(BattleManager))
-       {
-          CachedMyCharacter->BattleManager = BattleManager;
-       }
-       else
-       {
-          return nullptr;
-       }
-    }
-	
-    AActor* FoundEnemy = nullptr;
+	ASLBattleManager* BattleManager = CachedMyCharacter->BattleManager.Get();
+	if (!IsValid(BattleManager))
+	{
+		AActor* FoundActor = UGameplayStatics::GetActorOfClass(GetWorld(), ASLBattleManager::StaticClass());
+		BattleManager = Cast<ASLBattleManager>(FoundActor);
+		if (IsValid(BattleManager))
+		{
+			CachedMyCharacter->BattleManager = BattleManager;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
 
-    if (BattleManager->PlayerOnly())
-    {
-        APawn* PlayerPawn = BattleManager->GetPrimaryTarget();
-        if (IsValid(PlayerPawn))
-        {
-            const float DistSq = FVector::DistSquared(GetOwner()->GetActorLocation(), PlayerPawn->GetActorLocation());
-            if (DistSq <= FMath::Square(DetectionRange))
-            {
-                FoundEnemy = PlayerPawn;
-            }
-        }
-    }
-    else
-    {
-        const int32* MyIndexPtr = BattleManager->GetUnitIndexMap().Find(GetOwner());
-        if (MyIndexPtr)
-        {
-            const int32 EnemyIndex = BattleManager->FindNearestEnemy(*MyIndexPtr, DetectionRange);
-            if (BattleManager->GetUnitActors().IsValidIndex(EnemyIndex))
-            {
-                FoundEnemy = BattleManager->GetUnitActors()[EnemyIndex];
-            }
-        }
-    }
+	AActor* FoundEnemy = nullptr;
+	if (BattleManager->PlayerOnly())
+	{
+		APawn* PlayerPawn = BattleManager->GetPrimaryTarget();
+		if (IsValid(PlayerPawn))
+		{
+			FVector MyLocation = CachedMyCharacter->GetActorLocation();
+			FVector PlayerLocation = PlayerPawn->GetActorLocation();
 
-    if (IsValid(FoundEnemy))
-    {
-       TargetFoundTime = GetWorld()->GetTimeSeconds();
-    }
+			const float DistSq = FVector::DistSquared(MyLocation, PlayerLocation);
+			if (DistSq <= FMath::Square(DetectionRange))
+			{
+				FoundEnemy = PlayerPawn;
+			}
+		}
+	}
+	else
+	{
+		if (const int32* MyIndexPtr = BattleManager->GetUnitIndexMap().Find(GetOwner()))
+		{
+			const int32 EnemyIndex = BattleManager->FindNearestEnemy(*MyIndexPtr, DetectionRange);
+			if (BattleManager->GetUnitActors().IsValidIndex(EnemyIndex))
+			{
+				FoundEnemy = BattleManager->GetUnitActors()[EnemyIndex];
+			}
+		}
+	}
 
-    return FoundEnemy;
+	if (IsValid(FoundEnemy))
+	{
+		TargetFoundTime = GetWorld()->GetTimeSeconds();
+	}
+
+	return FoundEnemy;
 }
 
 // StateComponent 에서 실행
@@ -253,7 +264,7 @@ void USLAICombatComponent::UpdateFakeMovement(const FVector& TargetLocation, flo
 	const FVector CurrentLocation = OwnerActor->GetActorLocation();
 	const FVector Direction = (TargetLocation - CurrentLocation).GetSafeNormal();
 
-	const float FakeMovementSpeed = 150.0f; 
+	const float FakeMovementSpeed = 150.0f;
 	OwnerActor->SetActorLocation(CurrentLocation + Direction * FakeMovementSpeed * DeltaTime);
 
 	const FRotator TargetRotation = Direction.Rotation();
@@ -266,7 +277,7 @@ void USLAICombatComponent::UpdateFakeMovement(float DeltaTime)
 	{
 		return;
 	}
-	
+
 	UpdateFakeMovement(CurrentTarget.TargetActor->GetActorLocation(), DeltaTime);
 }
 
@@ -305,12 +316,9 @@ bool USLAICombatComponent::CanAttack() const
 	}
 
 	float AvailDistance = 150.0f;
-	if (IsValid(CachedMyCharacter))
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
 	{
-		if (CachedMyCharacter->AIAttributeComp->AIUnitType == EAIUnitType::Ranger)
-		{
-			AvailDistance = 500.0f;
-		}
+		AvailDistance = CachedMyCharacter->AIAttributeComp->GetAbleDistance();
 	}
 
 	float Distance = FVector::Dist(GetOwner()->GetActorLocation(), CurrentTarget.TargetActor->GetActorLocation());
@@ -323,12 +331,15 @@ void USLAICombatComponent::PerformAttack(float DeltaTime)
 	LogCombatModeStatus(FString::Printf(TEXT("%s 공격!"), *CurrentTarget.TargetActor->GetName()));
 
 	SafeLookAtTarget(CurrentTarget.TargetActor, DeltaTime);
-	if (IsValid(CachedMyCharacter)) 
+	if (IsValid(CachedMyCharacter))
 	{
 		CachedMyCharacter->PlayAttackAnim();
 	}
 
-	TryScheduleRetreat();
+	if (FMath::FRand() < 0.5f)
+	{
+		TryScheduleRetreat();
+	}
 }
 
 void USLAICombatComponent::StartRetreating()
@@ -411,11 +422,11 @@ void USLAICombatComponent::RetreatFromTarget()
 
 	if (bFoundPoint)
 	{
-		//DrawDebugSphere(GetWorld(), NavigableRetreatLocation.Location, 50.f, 12, FColor::Green, false, 3.0f);
+		DrawDebugSphere(GetWorld(), NavigableRetreatLocation.Location, 50.f, 12, FColor::Green, false, 3.0f);
 
 		if (auto* MoveComp = Cast<ACharacter>(MyActor)->GetCharacterMovement())
 		{
-			MoveComp->MaxWalkSpeed = 300.0f;
+			MoveComp->MaxWalkSpeed = 250.0f;
 		}
 
 		MyController->SetFocus(CurrentTarget.TargetActor);
@@ -550,16 +561,21 @@ void USLAICombatComponent::StopRetreating()
 
 void USLAICombatComponent::TryScheduleRetreat()
 {
-	ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
-	if (!MyCharacter) return;
+	if (!IsValid(CachedMyCharacter) && !IsValid(CachedMyCharacter->AIAttributeComp)) return;
 
-	if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage))
+	float ReScheduleRate = 0.2f;
+	if (CachedMyCharacter->AIAttributeComp->AIUnitType == EAIUnitType::Ranger)
+	{
+		ReScheduleRate = 1.0f;
+	}
+
+	if (CachedMyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage))
 	{
 		GetWorld()->GetTimerManager().SetTimer(
 			BeginRetreatTimerHandle,
 			this,
 			&USLAICombatComponent::TryScheduleRetreat,
-			0.2f,
+			ReScheduleRate,
 			false
 		);
 	}

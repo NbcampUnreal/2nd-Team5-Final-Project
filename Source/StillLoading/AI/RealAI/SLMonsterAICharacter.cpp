@@ -27,7 +27,7 @@ ASLMonsterAICharacter::ASLMonsterAICharacter()
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = ASLMonsterAIController::StaticClass();
-	
+
 	SpawnTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("SpawnTimeline"));
 
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ASLMonsterAICharacter::OnHitByCharacter);
@@ -170,7 +170,7 @@ void ASLMonsterAICharacter::ToggleWeaponState(const bool bIsVisible)
 	{
 		Sword->SetActorHiddenInGame(bShouldBeHidden);
 		Sword->SetActorEnableCollision(bIsVisible ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
-		
+
 		if (UPrimitiveComponent* WeaponMesh = Cast<UPrimitiveComponent>(Sword->GetRootComponent()))
 		{
 			WeaponMesh->SetSimulatePhysics(false);
@@ -181,7 +181,7 @@ void ASLMonsterAICharacter::ToggleWeaponState(const bool bIsVisible)
 	{
 		Shield->SetActorHiddenInGame(bShouldBeHidden);
 		Shield->SetActorEnableCollision(bIsVisible ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
-		
+
 		if (UPrimitiveComponent* WeaponMesh = Cast<UPrimitiveComponent>(Shield->GetRootComponent()))
 		{
 			WeaponMesh->SetSimulatePhysics(false);
@@ -247,7 +247,7 @@ void ASLMonsterAICharacter::OnHitByCharacter(UPrimitiveComponent* HitComp, AActo
 {
 	//if (OtherActor && OtherActor->IsA(ASLMonsterAICharacter::StaticClass())
 	//	|| OtherActor->IsA(ASLPlayerCharacter::StaticClass()))
-	
+
 	if (OtherActor->IsA(ASLPlayerCharacter::StaticClass()))
 	{
 		if (!bRecentlyPushed)
@@ -353,7 +353,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 		return;
 	}
 	*/
-	
+
 	AnimationComponent->StopAllMontages(0.2f);
 	AICombatComp->StopRetreating();
 	AICombatComp->StartRandomTurn();
@@ -388,7 +388,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 			AIController->SetControlRotation(FRotator(0.f, NewRotation.Yaw, 0.f));
 		}
 	}
-	
+
 	RotateToHitCauser(Causer);
 	//ChangeMeshTemporarily();
 	StartFlyingState();
@@ -504,7 +504,7 @@ void ASLMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage
 		//Dead(LastAttacker, true);
 		return;
 	}
-	
+
 	StopFlyingState();
 }
 
@@ -519,6 +519,33 @@ void ASLMonsterAICharacter::ActivateMovementComponent()
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->Activate();
+	}
+}
+
+void ASLMonsterAICharacter::CorrectActorLocationPostAttack()
+{
+	const UWorld* World = GetWorld();
+	if (!World) return;
+
+	const FVector CurrentLocation = GetActorLocation();
+	const FVector Start = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z + 50.f);
+	const FVector End = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 500.f);
+
+	FHitResult HitResult;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	if (World->LineTraceSingleByChannel(HitResult, Start, End, ECC_WorldStatic, Params))
+	{
+		const float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+		FVector CorrectedLocation = HitResult.Location + FVector(0.f, 0.f, CapsuleHalfHeight);
+
+		SetActorLocation(CorrectedLocation, false, nullptr, ETeleportType::TeleportPhysics);
+		UE_LOG(LogTemp, Warning, TEXT("%s 위치 보정 완료: %s"), *GetName(), *CorrectedLocation.ToString());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s 위치 보정 실패: 아래에 바닥을 찾지 못했습니다."), *GetName());
 	}
 }
 
@@ -569,7 +596,7 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 		&ASLMonsterAICharacter::HandleAIPoolReturnOnDeath,
 		2.0f,
 		false
-		);
+	);
 }
 
 void ASLMonsterAICharacter::HandleAIPoolReturnOnDeath()
@@ -601,7 +628,7 @@ void ASLMonsterAICharacter::HandleAIPoolReturnOnDeath()
 	bIsHit = false;
 	bRecentlyPushed = false;
 	LastAttacker = nullptr;
-	
+
 	if (IsValid(BornSpawner))
 	{
 		BornSpawner->ReturnUnitToPool(this);

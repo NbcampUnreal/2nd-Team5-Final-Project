@@ -60,8 +60,8 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	else
 	{
 		PerformEnemyDetection();
-		AActor* DetectedEnemy = LastDetectedEnemy.Get();
-		if (IsValid(DetectedEnemy))
+ 		AActor* DetectedEnemy = LastDetectedEnemy.Get();
+  		if (IsValid(DetectedEnemy))
 		{
 			CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
 		}
@@ -212,6 +212,11 @@ void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, float Ava
 		return;
 	}
 
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
+	{
+		AvailRange = CachedMyCharacter->AIAttributeComp->GetAbleDistance();
+	}
+
 	MovementTargetLocation = NewTargetLocation;
 
 	if (IsValid(CachedAIController))
@@ -339,7 +344,11 @@ void USLAIStateComponent::SetBerserkMode(const float DeltaTime)
 			CombatComponent->HandleEnemyDetection(PlayerPawn);
 
 			const float DistSq = FVector::DistSquared(GetOwner()->GetActorLocation(), PlayerPawn->GetActorLocation());
-			const float AttackRange = CombatComponent->AttackRange > 0.f ? CombatComponent->AttackRange : 150.f;
+			float AttackRange = 150.f;
+			if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
+			{
+				AttackRange = CachedMyCharacter->AIAttributeComp->GetAttackRange();
+			}
 			const float AttackRangeSq = FMath::Square(AttackRange);
 
 			if (DistSq > AttackRangeSq)
@@ -361,12 +370,9 @@ FVector USLAIStateComponent::FindSupportPosition(const FVector& TargetLocation, 
 {
 	float AttackRange = 150.0f;
 
-	if (const ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
 	{
-		if (const USLAIAttributeComponent* AttributeComp = MyCharacter->AIAttributeComp)
-		{
-			AttackRange = AttributeComp->AttackRange;
-		}
+		AttackRange = CachedMyCharacter->AIAttributeComp->GetAttackRange();
 	}
 
 	for (int32 i = 0; i < 12; ++i)

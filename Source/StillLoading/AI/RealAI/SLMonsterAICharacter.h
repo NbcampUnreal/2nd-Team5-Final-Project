@@ -49,6 +49,7 @@ public:
 	void PlayETCAnim();
 	void PlayETCWaitAnim();
 	EHitAnimType GetLastAnimType() const { return LastAnimType; };
+	void CorrectActorLocationPostAttack();
 
 	UFUNCTION()
 	void Dead(const AActor* Attacker, bool bIsChangeMaterial);

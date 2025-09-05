@@ -32,9 +32,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Attributes")
 	EAIChapterType AIChapterType = EAIChapterType::None;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Attributes")
-	float AttackRange = 150.f;
+	UFUNCTION(BlueprintCallable)
+	float GetAttackRange() const { return AttackRange; }
+
+	UFUNCTION(BlueprintCallable)
+	float GetAbleDistance() const { return AvailDistance; }
 
 protected:
 	void ApplyRandomStatsToOwner(const FAIUnitStatsData& StatsData);
+
+	float AttackRange = 150.f;
+	float AvailDistance = 150.f;
 };

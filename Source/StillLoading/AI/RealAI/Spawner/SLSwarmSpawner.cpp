@@ -1,6 +1,7 @@
 #include "SLSwarmSpawner.h"
 
 #include "AIController.h"
+#include "NavigationSystem.h"
 #include "NiagaraFunctionLibrary.h"
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/SLMonsterAICharacterBase.h"
@@ -42,6 +43,8 @@ void ASLSwarmSpawner::SetCachedBattleManager(ASLBattleManager* NewBattleManager)
 void ASLSwarmSpawner::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ObjectPool.Empty();
 
 	if (IsValid(WaveSpawnerComponent))
 	{
@@ -481,7 +484,6 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 	if (MonsterAI)
 	{
 		MonsterAI->BornSpawner = this;
-		MonsterAI->AIAttributeComp->SetAIStat(EAIChapterType::Chapter4, EAIUnitType::Normal);
 	}
 
 	if (USLAIStateComponent* StateComp = SpawnedUnit->FindComponentByClass<USLAIStateComponent>())
@@ -519,8 +521,19 @@ ACharacter* ASLSwarmSpawner::SpawnAndConfigureUnit(TSubclassOf<ACharacter> UnitC
 
 FVector ASLSwarmSpawner::GetRandomSpawnLocation() const
 {
-	const FVector BoxExtent = SpawnBox->GetScaledBoxExtent();
 	const FVector Origin = GetActorLocation();
+	const float Radius = SpawnBox->GetScaledBoxExtent().X; // 박스 크기를 기반으로 탐색 반경 설정
+
+	if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld()))
+	{
+		FNavLocation RandomLocation;
+		if (NavSys->GetRandomReachablePointInRadius(Origin, Radius, RandomLocation))
+		{
+			return RandomLocation.Location;
+		}
+	}
+	
+	const FVector BoxExtent = SpawnBox->GetScaledBoxExtent();
 
 	const float X = FMath::RandRange(-BoxExtent.X, BoxExtent.X);
 	const float Y = FMath::RandRange(-BoxExtent.Y, BoxExtent.Y);

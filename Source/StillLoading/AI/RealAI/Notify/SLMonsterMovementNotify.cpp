@@ -52,6 +52,10 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 	case ECharacterMovementAction::CMA_EndRotate:
 		break;
 
+	case ECharacterMovementAction::CMA_CorrectLocation:
+		Character->CorrectActorLocationPostAttack();
+		break;
+
 	default:
 		break;
 	}
