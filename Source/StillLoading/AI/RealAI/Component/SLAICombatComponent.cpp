@@ -91,7 +91,7 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 		AttackRange = CachedMyCharacter->AIAttributeComp->GetAttackRange();
 	}
 
-	if (Distance > AttackRange)
+	if (Distance >= AttackRange)
 	{
 		if (StateComponent && !bIsOrbiting && !bIsRetreating)
 		{
@@ -430,7 +430,7 @@ void USLAICombatComponent::RetreatFromTarget()
 		}
 
 		MyController->SetFocus(CurrentTarget.TargetActor);
-		MyController->MoveToLocation(NavigableRetreatLocation.Location);
+		StateComponent->SetMovementTarget(NavigableRetreatLocation.Location, 50, true);
 	}
 	else
 	{
@@ -535,12 +535,7 @@ void USLAICombatComponent::UpdateOrbiting()
 	const FVector RotatedDirection = NormalizedDirection.RotateAngleAxis(AngleStep * OrbitDirection, FVector::UpVector);
 	const FVector NextOrbitPoint = TargetLocation + RotatedDirection.GetSafeNormal() * OrbitRadius;
 
-	MyController->MoveToLocation(
-		NextOrbitPoint,
-		-1.0f, // AcceptanceRadius: 목표에 얼마나 가까워져야 성공으로 간주할지 (-1은 기본값 사용)
-		true, // bStopOnOverlap
-		true // bUsePathfinding
-	);
+	StateComponent->SetMovementTarget(NextOrbitPoint, 50, true);
 }
 
 void USLAICombatComponent::StopRetreating()

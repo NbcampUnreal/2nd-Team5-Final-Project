@@ -53,15 +53,16 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		}
 	}
 
-	if (IsValid(CachedMyCharacter->BattleManager) && CachedMyCharacter->BattleManager->IsBerserkMode() || bIsBerserkMode)
+	if (IsValid(CachedMyCharacter->BattleManager) && CachedMyCharacter->BattleManager->IsBerserkMode() ||
+		bIsBerserkMode)
 	{
 		SetBerserkMode(DeltaTime);
 	}
 	else
 	{
 		PerformEnemyDetection();
- 		AActor* DetectedEnemy = LastDetectedEnemy.Get();
-  		if (IsValid(DetectedEnemy))
+		AActor* DetectedEnemy = LastDetectedEnemy.Get();
+		if (IsValid(DetectedEnemy))
 		{
 			CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
 		}
@@ -204,15 +205,21 @@ void USLAIStateComponent::DeactivateAndReset()
 	CurrentTargetPointIndex = 0;
 }
 
-void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, float AvailRange)
+void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, float AvailRange, bool bUseFixedRange)
 {
+	if (CachedMyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage)
+		|| CachedMyCharacter->IsInPrimaryState(TAG_AI_Dead))
+	{
+		return;
+	}
+
 	if (NewTargetLocation.IsNearlyZero(KINDA_SMALL_NUMBER))
 	{
 		LogStateModeStatus(TEXT("유효하지 않은 이동 목표"));
 		return;
 	}
 
-	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp) && !bUseFixedRange)
 	{
 		AvailRange = CachedMyCharacter->AIAttributeComp->GetAbleDistance();
 	}

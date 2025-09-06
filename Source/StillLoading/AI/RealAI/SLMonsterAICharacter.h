@@ -35,14 +35,14 @@ public:
 	void SpawnSpear();
 	UFUNCTION(BlueprintCallable)
 	void SpawnArrow();
+	
 	UFUNCTION()
-	void BeginSpawning(const FVector& FinalLocation, float RiseHeight = 300.f);
+	void ActivateMovementComponent();
+
 	UFUNCTION()
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
 	UFUNCTION()
 	void HandleHitNotify();
-	UFUNCTION()
-	void ActivateMovementComponent();
 	
 	// Anim
 	void PlayAttackAnim();
@@ -128,8 +128,6 @@ private:
 	UFUNCTION()
 	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType);
 	UFUNCTION()
-	void ChangeMeshTemporarily(float Rate = 0.3f);
-	UFUNCTION()
 	void ResetMaterial();
 	UFUNCTION()
 	void GetHitDirection(AActor* Causer);
@@ -151,7 +149,6 @@ private:
 	TObjectPtr<AActor> LastAttacker;
 
 	FTimerHandle PushResetHandle;
-	FTimerHandle MaterialResetTimerHandle;
 	FTimerHandle CollisionResetTimerHandle;
 	FTimerHandle DeadTimerHandle;
 	

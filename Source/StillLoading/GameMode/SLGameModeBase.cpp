@@ -10,6 +10,11 @@ ASLGameModeBase::ASLGameModeBase()
 
 void ASLGameModeBase::OnUpdatedObjectiveState(USLObjectiveBase* Objective, const ESLObjectiveState InState)
 {
+	if (!SLGameState)
+	{
+		return;
+	}
+	
 	TArray<TObjectPtr<USLObjectiveBase>>& ModifiedObjectives = SLGameState->GetModifedObjectives();
 	ModifiedObjectives.AddUnique(Objective);
 
