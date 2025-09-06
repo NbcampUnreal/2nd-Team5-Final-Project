@@ -121,6 +121,31 @@ void ASLMonsterAICharacter::PlayETCWaitAnim()
 	AnimationComponent->PlayAIETCMontage(*AttackMontageNames[RandIndex]);
 }
 
+void ASLMonsterAICharacter::BeginSpawning(const FVector& FinalLocation, const float RiseHeight)
+{
+	SpawnEndLocation = FinalLocation;
+	SpawnStartLocation = FinalLocation - FVector(0.f, 0.f, RiseHeight);
+
+	SetActorLocation(SpawnStartLocation);
+	AnimationComponent->PlayAIETCMontage("Spawn");
+
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		const float RandomMaxSpeed = FMath::FRandRange(200.f, 400.f);
+		MoveComp->MaxWalkSpeed = RandomMaxSpeed;
+	}
+
+	//SetActorEnableCollision(false);
+
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->SetMovementMode(MOVE_None);
+	}
+
+	ChangeMeshTemporarily(3);
+	SpawnTimeline->PlayFromStart();
+}
+
 void ASLMonsterAICharacter::UpdateSpawnMovement(float Alpha)
 {
 	const FVector NewLocation = FMath::Lerp(SpawnStartLocation, SpawnEndLocation, Alpha);
@@ -321,9 +346,13 @@ void ASLMonsterAICharacter::OnUnhoveredByCursor_Implementation(ASLBasePlayerCont
 void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                           EHitAnimType AnimType)
 {
-	if (IsInPrimaryState(TAG_AI_Dead)) return;
-	
 	LastAnimType = AnimType;
+	/*
+	if (LastAnimType == EHitAnimType::HAT_FallBack && !IsInPrimaryState(TAG_AI_Idle))
+	{
+		return;
+	}
+	*/
 
 	AnimationComponent->StopAllMontages(0.2f);
 	AICombatComp->StopRetreating();
@@ -338,11 +367,8 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 
 	if (CurrentHealth <= 0.f)
 	{
-		GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterDie, GetActorLocation());
-		SetPrimaryState(TAG_AI_Dead);
 		AnimationComponent->PlayAIHitMontage("Dead");
-		OnDeath();
-		Dead(LastAttacker, true);
+		Dead(Causer, true);
 		return;
 	}
 
@@ -364,6 +390,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 	}
 
 	RotateToHitCauser(Causer);
+	//ChangeMeshTemporarily();
 	StartFlyingState();
 	if (AICombatComp)
 	{
@@ -425,6 +452,32 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 	}
 }
 
+void ASLMonsterAICharacter::ChangeMeshTemporarily(const float Rate)
+{
+	if (!HitMaterial || !bOriginalMaterialsInitialized)
+		return;
+
+	USkeletalMeshComponent* MeshComp = GetMesh();
+
+	if (GetWorld()->GetTimerManager().IsTimerActive(MaterialResetTimerHandle))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
+	}
+
+	for (int32 i = 0; i < OriginalMaterials.Num(); ++i)
+	{
+		MeshComp->SetMaterial(i, HitMaterial);
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(
+		MaterialResetTimerHandle,
+		this,
+		&ASLMonsterAICharacter::ResetMaterial,
+		Rate,
+		false
+	);
+}
+
 void ASLMonsterAICharacter::ResetMaterial()
 {
 	USkeletalMeshComponent* MeshComp = GetMesh();
@@ -445,6 +498,7 @@ void ASLMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage
 	case EAttackAnimType::AAT_FinalAttackB:
 	case EAttackAnimType::AAT_FinalAttackC:
 	case EAttackAnimType::AAT_Dead:
+		GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterDie, GetActorLocation());
 		break;
 	case EAttackAnimType::AAT_Airborn:
 		//Dead(LastAttacker, true);
@@ -497,8 +551,17 @@ void ASLMonsterAICharacter::CorrectActorLocationPostAttack()
 
 void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
+	SetPrimaryState(TAG_AI_Dead);
+	OnDeath();
+	ToggleWeaponState(false);
+
 	if (DeathMaterial && bIsChangeMaterial)
 	{
+		if (GetWorld()->GetTimerManager().IsTimerActive(MaterialResetTimerHandle))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
+		}
+
 		GetMesh()->SetMaterial(0, DeathMaterial);
 	}
 
@@ -531,14 +594,40 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 		DeadTimerHandle,
 		this,
 		&ASLMonsterAICharacter::HandleAIPoolReturnOnDeath,
-		4.0f,
+		2.0f,
 		false
 	);
 }
 
 void ASLMonsterAICharacter::HandleAIPoolReturnOnDeath()
 {
+	CurrentHealth = MaxHealth;
+	SetPrimaryState(TAG_AI_Idle);
+	OnMonsterDied.Broadcast(this);
+
+	if (AnimationComponent)
+	{
+		AnimationComponent->StopAllMontages(0.0f);
+	}
+
+	if (bOriginalMaterialsInitialized)
+	{
+		USkeletalMeshComponent* MeshComp = GetMesh();
+		for (int32 i = 0; i < OriginalMaterials.Num(); ++i)
+		{
+			MeshComp->SetMaterial(i, OriginalMaterials[i]);
+		}
+	}
+
+	ToggleWeaponState(true);
+
+	GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(DeadTimerHandle);
+
+	bIsHit = false;
+	bRecentlyPushed = false;
+	LastAttacker = nullptr;
 
 	if (IsValid(BornSpawner))
 	{
