@@ -1,31 +1,28 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// SLSplineTrack.h
 #pragma once
-
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "SLSplineTrack.generated.h"
 
 class USplineComponent;
-class ULevelSequence;
+class ALevelSequenceActor;
 
 UCLASS()
 class STILLLOADING_API ASLSplineTrack : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+public:
 	ASLSplineTrack();
 
 	UFUNCTION(BlueprintCallable, Category="Track")
 	USplineComponent* GetSplineComp() { return SplineComp; }
 
 	UFUNCTION(BlueprintCallable, Category="Track")
-	ASLSplineTrack* GetNextTrack() { return NextTrack; }
+	ASLSplineTrack* GetNextTrack()    { return NextTrack; }
 
 	UFUNCTION(BlueprintCallable, Category="Track")
-	ULevelSequence* GetLevelSequence() { return LevelSequence; }
+	ALevelSequenceActor* GetLevelSequenceActor(){ return LevelSequenceActor; }
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Track")
 	TObjectPtr<USplineComponent> SplineComp;
@@ -34,5 +31,5 @@ protected:
 	TObjectPtr<ASLSplineTrack> NextTrack = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Track")
-	TObjectPtr<ULevelSequence> LevelSequence = nullptr;
+	TObjectPtr<ALevelSequenceActor> LevelSequenceActor = nullptr;
 };

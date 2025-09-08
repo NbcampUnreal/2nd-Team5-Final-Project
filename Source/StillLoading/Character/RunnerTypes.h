@@ -15,13 +15,16 @@ enum class EHurdleState : uint8
 };
 
 UENUM(BlueprintType)
-enum class ERunnerAction : uint8
+enum class EQTERating : uint8
 {
 	None,
-	Jump,
-	Attack,
-	Slide
+	Perfect,
+	Good,
+	Early,
+	WrongKey,
+	Miss
 };
+
 
 UENUM(BlueprintType)
 enum class ERunnerMontageSection : uint8
@@ -36,7 +39,9 @@ enum class ERunnerMontageSection : uint8
 	Slide_Mid,
 	Slide_Long,
 
-	Attack_Center
+	Attack_Center,
+	Attack_Right,
+	Attack_Left
 };
 
 FORCEINLINE FName GetMontageSectionName(ERunnerMontageSection Section)
@@ -50,6 +55,8 @@ FORCEINLINE FName GetMontageSectionName(ERunnerMontageSection Section)
 		case ERunnerMontageSection::Slide_Mid: return TEXT("Slide_Mid");
 		case ERunnerMontageSection::Slide_Long: return TEXT("Slide_Long");
 		case ERunnerMontageSection::Attack_Center: return TEXT("Attack_Center");
+		case ERunnerMontageSection::Attack_Left: return TEXT("Attack_Left");
+		case ERunnerMontageSection::Attack_Right: return TEXT("Attack_Right");
 		default: return TEXT("None");
 	}
 }
