@@ -8,6 +8,7 @@
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/SLMonsterAICharacterBase.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
+#include "AI/RealAI/Spawner/SLSwarmSpawner.h"
 #include "Character/DataAsset/AttackDataAsset.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -256,7 +257,8 @@ void USLAIStateComponent::RequestNextPatrolPointAfterDelay()
 				return;
 			}
 		}
-        
+
+		if (CachedMyCharacter->BornSpawner->PatrolPoints.Num() == 0) return;
 		CachedMyCharacter->BattleManager->RequestNextPatrolPointForUnit(CachedMyCharacter);
 	}
 }

@@ -97,10 +97,9 @@ void ASLSwarmSpawner::ReturnAllActiveUnitsToPool()
 
 FVector ASLSwarmSpawner::GetNextTargetPointLocation(AActor* Unit, int32& CurrentTargetIndex)
 {
-	UE_LOG(LogTemp, Error, TEXT("타겟 인덱스 %d"), CurrentTargetIndex);
-	
 	if (PatrolPoints.Num() == 0)
 	{
+		//TODO::탐색 종료 로직 추가 필요
 		UE_LOG(LogTemp, Warning, TEXT("'%s' 스포너에 순찰 지점(PatrolPoints)이 등록되지 않았습니다."), *GetName());
 		return GetActorLocation();
 	}
@@ -120,8 +119,6 @@ FVector ASLSwarmSpawner::GetNextTargetPointLocation(AActor* Unit, int32& Current
 	{
 		StateComp->SetCurrentTargetIndex(CurrentTargetIndex);
 	}
-
-	UE_LOG(LogTemp, Error, TEXT("다음 타겟 인덱스 %d"), CurrentTargetIndex);
 
 	return Location;
 }

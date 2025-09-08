@@ -327,6 +327,7 @@ void ASLBattleManager::OnSpawnerUnitSpawnedHandler(AActor* SpawnedUnit, ASLSwarm
 	ACharacter* SpawnedCharacter = Cast<ACharacter>(SpawnedUnit);
 	if (IsValid(SpawnedCharacter))
 	{
+		if (SourceSpawner->PatrolPoints.Num() == 0) return;
 		RequestNextPatrolPointForUnit(SpawnedCharacter);
 	}
 }
