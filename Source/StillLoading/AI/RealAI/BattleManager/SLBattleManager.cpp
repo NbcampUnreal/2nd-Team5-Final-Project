@@ -212,6 +212,34 @@ void ASLBattleManager::RegisterPlayerUnit(const AController* PlayerController)
 	}
 }
 
+void ASLBattleManager::RequestNextPatrolPointForUnit(AActor* Unit)
+{
+	if (!IsValid(Unit)) return;
+
+	const int32* UnitIndexPtr = UnitIndexMap.Find(Unit);
+	if (!UnitIndexPtr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BattleManager: 미등록 유닛 '%s'의 순찰 지점 요청을 처리할 수 없습니다."), *Unit->GetName());
+		return;
+	}
+
+	const int32 UnitIndex = *UnitIndexPtr;
+	USLAIStateComponent* StateComp = Unit->FindComponentByClass<USLAIStateComponent>();
+	ASLSwarmSpawner* SourceSpawner = UnitSourceSpawners[UnitIndex];
+
+	if (IsValid(StateComp) && IsValid(SourceSpawner))
+	{
+		int32 TargetIndex = StateComp->GetCurrentTargetPoint();
+		const FVector NextLocation = SourceSpawner->GetNextTargetPointLocation(Unit, TargetIndex);
+
+		if (!NextLocation.IsNearlyZero())
+		{
+			StateComp->SetMovementTarget(NextLocation, true);
+			UE_LOG(LogTemp, Log, TEXT("BattleManager: 유닛 '%s'에게 다음 순찰 지점(%d)으로 이동 명령."), *Unit->GetName(), TargetIndex);
+		}
+	}
+}
+
 int32 ASLBattleManager::FindNearestEnemy(int32 MyIndex, float InRange) const
 {
 	if (!UnitActors.IsValidIndex(MyIndex)) return INDEX_NONE;
@@ -299,12 +327,7 @@ void ASLBattleManager::OnSpawnerUnitSpawnedHandler(AActor* SpawnedUnit, ASLSwarm
 	ACharacter* SpawnedCharacter = Cast<ACharacter>(SpawnedUnit);
 	if (IsValid(SpawnedCharacter))
 	{
-		if (USLAIStateComponent* WarComp = SpawnedCharacter->FindComponentByClass<USLAIStateComponent>())
-		{
-			WarComp->ActivateAndMoveToInitialTarget(0);
-			UE_LOG(LogTemp, Log, TEXT("SLBattleManager: 스폰된 유닛 '%s' 초기 타겟 포인트 0번으로 이동 시작."),
-			       *SpawnedCharacter->GetName());
-		}
+		RequestNextPatrolPointForUnit(SpawnedCharacter);
 	}
 }
 

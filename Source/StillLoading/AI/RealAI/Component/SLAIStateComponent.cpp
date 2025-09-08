@@ -8,7 +8,6 @@
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/SLMonsterAICharacterBase.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
-#include "AI/RealAI/Spawner/SLSwarmSpawner.h"
 #include "Character/DataAsset/AttackDataAsset.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -21,13 +20,11 @@ USLAIStateComponent::USLAIStateComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 	CurrentState = EAIBattleState::Idle;
-	CurrentTargetPointIndex = 0;
 }
 
 void USLAIStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	Initialize();
 }
 
 void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -180,12 +177,6 @@ void USLAIStateComponent::Initialize()
 	SetComponentTickEnabled(true);
 }
 
-void USLAIStateComponent::ActivateAndMoveToInitialTarget(int32 InitialTargetPointIndex)
-{
-	SetCurrentTargetPointIndex(InitialTargetPointIndex);
-	RequestNextTargetPoint();
-}
-
 void USLAIStateComponent::DeactivateAndReset()
 {
 	if (IsValid(CachedAIController))
@@ -201,10 +192,9 @@ void USLAIStateComponent::DeactivateAndReset()
 
 	SetState(EAIBattleState::Idle);
 	SetComponentTickEnabled(false);
-	CurrentTargetPointIndex = 0;
 }
 
-void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, float AvailRange)
+void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, bool bFixeRange, float AvailRange)
 {
 	if (NewTargetLocation.IsNearlyZero(KINDA_SMALL_NUMBER))
 	{
@@ -212,7 +202,7 @@ void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, float Ava
 		return;
 	}
 
-	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp) && !bFixeRange)
 	{
 		AvailRange = CachedMyCharacter->AIAttributeComp->GetAbleDistance();
 	}
@@ -244,59 +234,31 @@ void USLAIStateComponent::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
 {
 	if (Result.IsSuccess())
 	{
-		if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->BattleManager) && IsValid(CachedLODComponent))
-		{
-			if (CachedLODComponent->GetCurrentLODLevel() == EAILODLevel::Max)
-			{
-				SetState(EAIBattleState::Attacking);
-				return;
-			}
-		}
-
-		CurrentTargetPointIndex++;
-
-		float RandRequestRange = FMath::RandRange(0.5f, 1.0f);
-
 		GetWorld()->GetTimerManager().SetTimer(
-			MovementCompletionTimerHandle,
+			PatrolRequestTimerHandle,
 			this,
-			&USLAIStateComponent::RequestNextTargetPoint,
-			RandRequestRange,
+			&USLAIStateComponent::RequestNextPatrolPointAfterDelay,
+			FMath::RandRange(0.5f, 1.0f),
 			false
 		);
 	}
 }
 
-void USLAIStateComponent::RequestNextTargetPoint()
+void USLAIStateComponent::RequestNextPatrolPointAfterDelay()
 {
-	const ASLMonsterAICharacterBase* MyCharacter = Cast<ASLMonsterAICharacterBase>(GetOwner());
-	if (!MyCharacter) return;
-
-	if (IsValid(MyCharacter->BornSpawner))
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->BattleManager))
 	{
-		const FVector NextLocation = MyCharacter->BornSpawner->GetNextTargetPointLocation(CurrentTargetPointIndex);
-
-		if (!NextLocation.IsNearlyZero())
+		if (CachedLODComponent && CachedLODComponent->GetCurrentLODLevel() == EAILODLevel::Max)
 		{
-			FVector CurrentLocation = GetOwner()->GetActorLocation();
-			float DistanceToTarget = FVector::Dist(CurrentLocation, NextLocation);
-
-			if (DistanceToTarget > 300.0f)
+			if (!CachedMyCharacter->BattleManager->PlayerOnly())
 			{
-				SetMovementTarget(NextLocation);
+				SetState(EAIBattleState::Attacking);
+				return;
 			}
 		}
+        
+		CachedMyCharacter->BattleManager->RequestNextPatrolPointForUnit(CachedMyCharacter);
 	}
-	else
-	{
-		LogStateModeStatus(TEXT("BattleManager 또는 Spawner가 유효하지 않음"));
-		SetState(EAIBattleState::Idle);
-	}
-}
-
-void USLAIStateComponent::SetCurrentTargetPointIndex(int32 NewIndex)
-{
-	CurrentTargetPointIndex = NewIndex;
 }
 
 // 서포트 모드 관련
@@ -353,7 +315,7 @@ void USLAIStateComponent::SetBerserkMode(const float DeltaTime)
 
 			if (DistSq > AttackRangeSq)
 			{
-				SetMovementTarget(PlayerPawn->GetActorLocation(), 100.f);
+				SetMovementTarget(PlayerPawn->GetActorLocation(), false, 100.f);
 			}
 			else
 			{

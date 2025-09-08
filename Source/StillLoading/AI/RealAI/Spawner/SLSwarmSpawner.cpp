@@ -2,11 +2,9 @@
 
 #include "AIController.h"
 #include "NavigationSystem.h"
-#include "NiagaraFunctionLibrary.h"
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/SLMonsterAICharacterBase.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
-#include "AI/RealAI/Component/SLAIAttributeComponent.h"
 #include "AI/RealAI/Component/SLAIStateComponent.h"
 #include "AI/RealAI/Component/SLWaveSpawnerComponent.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
@@ -97,8 +95,10 @@ void ASLSwarmSpawner::ReturnAllActiveUnitsToPool()
 	UE_LOG(LogTemp, Log, TEXT("SwarmSpawner '%s': 모든 활성 유닛을 풀로 반환했습니다."), *GetName());
 }
 
-FVector ASLSwarmSpawner::GetNextTargetPointLocation(int32& CurrentTargetIndex) const
+FVector ASLSwarmSpawner::GetNextTargetPointLocation(AActor* Unit, int32& CurrentTargetIndex)
 {
+	UE_LOG(LogTemp, Error, TEXT("타겟 인덱스 %d"), CurrentTargetIndex);
+	
 	if (PatrolPoints.Num() == 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("'%s' 스포너에 순찰 지점(PatrolPoints)이 등록되지 않았습니다."), *GetName());
@@ -107,12 +107,21 @@ FVector ASLSwarmSpawner::GetNextTargetPointLocation(int32& CurrentTargetIndex) c
 
 	if (!PatrolPoints.IsValidIndex(CurrentTargetIndex) || !IsValid(PatrolPoints[CurrentTargetIndex]))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("'%s' 스포너의 순찰 지점 인덱스 %d가 유효하지 않습니다. 인덱스를 0으로 초기화합니다."), *GetName(), CurrentTargetIndex);
+		UE_LOG(LogTemp, Warning, TEXT("'%s' 스포너의 순찰 지점 인덱스 %d가 유효하지 않습니다. 인덱스를 0으로 초기화합니다."), *GetName(),
+		       CurrentTargetIndex);
 		CurrentTargetIndex = 0;
 	}
 
 	const FVector Location = PatrolPoints[CurrentTargetIndex]->GetActorLocation();
 	CurrentTargetIndex = (CurrentTargetIndex + 1) % PatrolPoints.Num();
+
+	USLAIStateComponent* StateComp = Unit->FindComponentByClass<USLAIStateComponent>();
+	if (IsValid(StateComp))
+	{
+		StateComp->SetCurrentTargetIndex(CurrentTargetIndex);
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("다음 타겟 인덱스 %d"), CurrentTargetIndex);
 
 	return Location;
 }
@@ -321,10 +330,10 @@ void ASLSwarmSpawner::ExpandPool(const TSubclassOf<ACharacter>& UnitClass, const
 
 		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, -10000);
 		ACharacter* NewUnit = World->SpawnActor<ACharacter>(
-		   UnitClass,
-		   SpawnLocation,
-		   FRotator::ZeroRotator,
-		   SpawnParams
+			UnitClass,
+			SpawnLocation,
+			FRotator::ZeroRotator,
+			SpawnParams
 		);
 
 		if (NewUnit)
@@ -338,7 +347,7 @@ void ASLSwarmSpawner::ExpandPool(const TSubclassOf<ACharacter>& UnitClass, const
 			{
 				Monster->ToggleWeaponState(false);
 			}
-          
+
 			NewUnit->SetActorHiddenInGame(true);
 			NewUnit->SetActorEnableCollision(false);
 			NewUnit->SetActorTickEnabled(false);
@@ -377,6 +386,9 @@ ACharacter* ASLSwarmSpawner::GetOrCreateAndPlaceUnit(TSubclassOf<ACharacter> Uni
 		return nullptr;
 	}
 
+	const ACharacter* DefaultCharacter = UnitClass->GetDefaultObject<ACharacter>();
+	const float CapsuleHalfHeight = DefaultCharacter ? DefaultCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 50.0f;
+
 	ACharacter* SpawnedUnit = GetPooledUnit(UnitClass);
 
 	if (!SpawnedUnit)
@@ -389,7 +401,8 @@ ACharacter* ASLSwarmSpawner::GetOrCreateAndPlaceUnit(TSubclassOf<ACharacter> Uni
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 		SpawnParams.bNoFail = true;
 
-		const FVector SpawnLocation = GetRandomSpawnLocation();
+		FVector SpawnLocation = GetRandomSpawnLocation();
+		SpawnLocation.Z += CapsuleHalfHeight;
 		const FRotator SpawnRotation = FRotator(0.f, FMath::RandRange(0.f, 360.f), 0.f);
 
 		SpawnedUnit = World->SpawnActor<ACharacter>(
@@ -407,10 +420,16 @@ ACharacter* ASLSwarmSpawner::GetOrCreateAndPlaceUnit(TSubclassOf<ACharacter> Uni
 	}
 	else
 	{
-		const FVector SpawnLocation = GetRandomSpawnLocation();
+		FVector SpawnLocation = GetRandomSpawnLocation();
+		SpawnLocation.Z += CapsuleHalfHeight;
 		const FRotator SpawnRotation = FRotator(0.f, FMath::RandRange(0.f, 360.f), 0.f);
 
-		SpawnedUnit->SetActorLocation(SpawnLocation);
+		SpawnedUnit->SetActorLocation(
+			SpawnLocation,
+			false,
+			nullptr,
+			ETeleportType::TeleportPhysics
+		);
 		SpawnedUnit->SetActorRotation(SpawnRotation);
 	}
 
@@ -445,14 +464,17 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 		MovementComp->SetMovementMode(EMovementMode::MOVE_Walking);
 		MovementComp->GravityScale = 1.f;
 		MovementComp->AvoidanceWeight = AvoidanceWeight;
+		MovementComp->AvoidanceWeight = AvoidanceWeight;
 	}
 
 	AController* CurrentController = SpawnedUnit->GetController();
 	AAIController* AIController = Cast<AAIController>(CurrentController);
 	ASLMonsterAICharacterBase* MonsterAI = Cast<ASLMonsterAICharacterBase>(SpawnedUnit);
 
-	if (!AIController || !AIController->IsA(ControllerClass) || !AIController->GetPawn() || AIController->GetPawn() !=
-		SpawnedUnit)
+	if (!AIController
+		|| !AIController->IsA(ControllerClass)
+		|| !AIController->GetPawn()
+		|| AIController->GetPawn() != SpawnedUnit)
 	{
 		if (CurrentController)
 		{
@@ -521,7 +543,7 @@ ACharacter* ASLSwarmSpawner::SpawnAndConfigureUnit(TSubclassOf<ACharacter> UnitC
 
 FVector ASLSwarmSpawner::GetRandomSpawnLocation() const
 {
-	const FVector Origin = GetActorLocation();
+	const FVector Origin = GetActorLocation() + FVector(0, 0, 50);
 	const float Radius = SpawnBox->GetScaledBoxExtent().X; // 박스 크기를 기반으로 탐색 반경 설정
 
 	if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld()))
@@ -532,13 +554,12 @@ FVector ASLSwarmSpawner::GetRandomSpawnLocation() const
 			return RandomLocation.Location;
 		}
 	}
-	
-	const FVector BoxExtent = SpawnBox->GetScaledBoxExtent();
 
+	FVector BoxExtent = SpawnBox->GetScaledBoxExtent();
 	const float X = FMath::RandRange(-BoxExtent.X, BoxExtent.X);
 	const float Y = FMath::RandRange(-BoxExtent.Y, BoxExtent.Y);
 
-	return Origin + FVector(X, Y, 0.f);
+	return Origin + FVector(X, Y, 100.f);
 }
 
 void ASLSwarmSpawner::OnUnitDestroyed(AActor* DestroyedActor)

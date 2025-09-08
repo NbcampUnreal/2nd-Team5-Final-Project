@@ -102,7 +102,7 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 					return;
 			}
 
-			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), 50);
+			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), false, 50);
 		}
 	}
 	else if (CanAttack())
@@ -299,10 +299,6 @@ void USLAICombatComponent::ClearTarget()
 {
 	SetTarget(nullptr);
 	GetWorld()->GetTimerManager().ClearTimer(TargetClearTimerHandle);
-	if (StateComponent)
-	{
-		StateComponent->RequestNextTargetPoint();
-	}
 }
 
 bool USLAICombatComponent::CanAttack() const
@@ -653,11 +649,6 @@ void USLAICombatComponent::ClearTargetInternal()
 	                                    TargetLostGracePeriod));
 
 	ClearTarget();
-
-	if (StateComponent)
-	{
-		StateComponent->RequestNextTargetPoint();
-	}
 }
 
 void USLAICombatComponent::LogCombatModeStatus(const FString& Message) const

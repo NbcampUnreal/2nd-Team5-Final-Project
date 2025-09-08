@@ -49,6 +49,7 @@ public:
 	int32 FindNearestEnemy(int32 MyIndex, float InRange) const;
 
 	void RegisterPlayerUnit(const AController* PlayerController);
+	void RequestNextPatrolPointForUnit(AActor* Unit);
 	
 	UFUNCTION(BlueprintCallable, Category = "Battle Management|Waves")
 	void StartNextGlobalWave();

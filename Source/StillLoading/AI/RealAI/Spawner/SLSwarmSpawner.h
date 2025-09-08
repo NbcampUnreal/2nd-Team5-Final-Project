@@ -79,7 +79,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Pooling")
 	void ReturnAllActiveUnitsToPool();
 	UFUNCTION(BlueprintCallable)
-	FVector GetNextTargetPointLocation(int32& CurrentTargetIndex) const;
+	FVector GetNextTargetPointLocation(AActor* Unit, int32& CurrentTargetIndex);
 	
     // ASLBattleManager가 이 스포너에게 웨이브 시작을 지시할 함수
     UFUNCTION(BlueprintCallable, Category = "Spawner|WaveControl")

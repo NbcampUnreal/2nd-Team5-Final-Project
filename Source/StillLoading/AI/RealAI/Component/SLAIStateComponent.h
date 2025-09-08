@@ -45,17 +45,14 @@ public:
     
     // 초기화 및 활성화
     void Initialize();
-    void ActivateAndMoveToInitialTarget(int32 InitialTargetPointIndex);
     void DeactivateAndReset();
+
+    void SetCurrentTargetIndex(int32 NewTargetIndex) { CurrentTargetPointIndex = NewTargetIndex; }
+    int32 GetCurrentTargetPoint() const { return CurrentTargetPointIndex; }
 
     // 이동 목표 설정
     UFUNCTION(BlueprintCallable, Category = "AI|Movement")
-    void SetMovementTarget(FVector NewTargetLocation, float AvailRange = 150.f);
-
-    // 순찰 관리
-    UFUNCTION(BlueprintCallable, Category = "AI|Movement")
-    void RequestNextTargetPoint();
-    void SetCurrentTargetPointIndex(int32 NewIndex);
+    void SetMovementTarget(FVector NewTargetLocation, bool bFixeRange = false, float AvailRange = 150.f);
 
     // 서포트 모드 관현
     UFUNCTION()
@@ -104,14 +101,14 @@ private:
     void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result);
     FTimerHandle MovementCompletionTimerHandle;
 
+    void RequestNextPatrolPointAfterDelay();
+    FTimerHandle PatrolRequestTimerHandle;
+
     // 컴포넌트 참조들
     UPROPERTY()
     TObjectPtr<USLAICombatComponent> CombatComponent;
     UPROPERTY()
     TObjectPtr<USLAILODComponent> CachedLODComponent;
-    
-    // 순찰 관련
-    int32 CurrentTargetPointIndex = 0;
 
     // 서포트 모드 관련
     FVector FindSupportPosition(const FVector& TargetLocation, const FVector& MyLocation) const;
@@ -125,4 +122,6 @@ private:
     UPROPERTY()
     bool bIsSupportMoving = false;
     bool bIsBerserkMode = false;
+
+    int32 CurrentTargetPointIndex = 0;
 };

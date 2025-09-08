@@ -41,6 +41,6 @@ public:
 protected:
 	void ApplyRandomStatsToOwner(const FAIUnitStatsData& StatsData);
 
-	float AttackRange = 150.f;
+	float AttackRange = 200.f;
 	float AvailDistance = 150.f;
 };
