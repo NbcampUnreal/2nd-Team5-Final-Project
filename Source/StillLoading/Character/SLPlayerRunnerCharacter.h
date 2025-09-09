@@ -75,7 +75,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Runner|Spline")
 	USplineComponent* GetTrackSpline() const { return CurrentTrack->GetSplineComp(); }
 
-	// ───────── Public API ─────────
 	UFUNCTION(BlueprintCallable, Category="Runner|Spline")
 	void SnapToNearestOnSpline();
 
@@ -94,7 +93,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Runner|QTE")
 	void QTE_End();
 
-	// 배치된 ALevelSequenceActor 사용
 	UFUNCTION(BlueprintCallable, Category="Runner|Sequence")
 	void PlayEntrySequence();
 
@@ -130,15 +128,11 @@ private:
 
 	void ExitRootMotionAction();
 
-	// 스냅 오버로드(보간 유무 선택)
 	void ApplyTransformAtDistance(float Distance, bool bForceSnap);
 	void ApplyRotationAtDistance(float Distance, bool bForceSnap);
-
-	// 기존 시그니처 유지용 래퍼
 	void ApplyTransformAtDistance(float Distance) { ApplyTransformAtDistance(Distance, false); }
 	void ApplyRotationAtDistance(float Distance)  { ApplyRotationAtDistance(Distance,  false); }
 
-	// ───────── Seq 콜백 ─────────
 	UFUNCTION()
 	void OnHurdleSequenceFinished();
 
@@ -151,14 +145,12 @@ private:
 	UFUNCTION()
 	void OnDeathSequenceFinished();
 
-	// ───────── Montage 콜백 ─────────
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	UFUNCTION()
 	void OnMontageBlendingOutStarted(UAnimMontage* Montage, bool bInterrupted);
 
-	// ───────── Util ─────────
 	bool IsHitMontage(const UAnimMontage* Montage) const;
 	bool IsUpperBodyMontage(const UAnimMontage* Montage) const;
 
@@ -174,7 +166,6 @@ private:
 	UFUNCTION()
 	void OnOverlapedHurdle(UPrimitiveComponent* Overlapped, AActor* Other, UPrimitiveComponent* OtherComp, int32 BodyIdx, bool bFromSweep, const FHitResult& Hit);
 
-	// ───────── 트랙 전환 ─────────
 	UFUNCTION()
 	void StartMergeToTrack(class ASLSplineTrack* NewTrack);
 
@@ -187,24 +178,21 @@ private:
 
 	void SwitchToTrackAtDistance(ASLSplineTrack* NewTrack, float StartDistance);
 
-	// 시퀀스 종료 후 복귀
-	void ResumeAfterSequenceNextTick(bool bPlayRunStart);
+	void ResumeAfterSequenceImmediate(bool bPlayRunStart);
 
-	// 시퀀스 재생 설정 적용(UE5.5: ForceKeepState 동기화)
-	void ApplySequencePlaybackSettings(ALevelSequenceActor* SeqActor, ULevelSequencePlayer* Player);
+	void ApplySequencePlaybackSettings_Restore(ALevelSequenceActor* SeqActor, ULevelSequencePlayer* Player);
 
-	// 시퀀스가 변경했을 수 있는 컴포넌트의 상대 트랜스폼을 게임플레이 기준으로 리셋
 	void ResetComponentsAfterSequence();
 
+	void AlignToSplineFromTransform(const FTransform& WorldTM);
+
 public:
-	// ───────── Components ─────────
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
 	TObjectPtr<USpringArmComponent> SpringArm;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
 	TObjectPtr<UCameraComponent> FollowCamera;
 
-	// ───────── Camera Presets ─────────
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
 	FRunnerCamPreset Cam_Default;
 
@@ -235,7 +223,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Camera")
 	TSubclassOf<UCameraShakeBase> AttackShakeClass;
 
-	// ───────── Spline/Track ─────────
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Spline")
 	float ForwardSpeed = 600.f;
 
@@ -254,7 +241,6 @@ public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
 	TObjectPtr<ASLSplineTrack> CurrentTrack = nullptr;
 
-	// ───────── Sequence ─────────
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Sequence")
 	TObjectPtr<ALevelSequenceActor> EntrySequenceActor;
 	
@@ -262,14 +248,12 @@ public:
 	TObjectPtr<ALevelSequenceActor> DeathSequenceActor;
 
 protected:
-	// ───────── Internal Comps ─────────
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Components")
 	TObjectPtr<UBoxComponent> BoxComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Components")
 	TObjectPtr<UDynamicIMCComponent> DynamicIMCComponent;
 
-	// ───────── Input/QTE ─────────
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Input")
 	FString InputKey;
 
@@ -288,7 +272,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Combat")
 	float IFrameDuration = 0.2f;
 
-	// Spline runtime
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
 	float SplineDistance = 0.f;
 
@@ -316,7 +299,6 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Runner|Spline")
 	TArray<float> PointDistances;
 
-	// Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
 	ECameraPreset ActivePreset = ECameraPreset::Default;
 
@@ -329,14 +311,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
 	float CamNoiseTime = 0.f;
 
-	// Track
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Track")
 	TObjectPtr<USplineComponent> TrackSpline;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Transition")
 	float TrackBlendDurationDefault = 0.6f;
 
-	// 위치/회전 블렌드
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Transition")
 	bool bTrackBlendActive = false;
 
@@ -355,7 +335,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Transition")
 	TObjectPtr<ASLSplineTrack> PendingTrack = nullptr;
 
-	// QTE
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|QTE")
 	float QTERemainPerfectThreshold = 0.05f;
 
@@ -395,7 +374,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|QTE")
 	ERunnerMontageSection QTEFailSection = ERunnerMontageSection::None;
 
-	// States
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|State")
 	bool bGameStarted = true;
 
@@ -405,14 +383,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|State")
 	bool bIsDead = false;
 
-	// Sequence handles (배치 액터 기반)
 	UPROPERTY(Transient)
 	TObjectPtr<ULevelSequencePlayer> LevelSequence = nullptr;
 
 	UPROPERTY(Transient)
 	TWeakObjectPtr<ALevelSequenceActor> ActivateSequenceActor;
 
-	// Merge runtime
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Runtime")
 	float SplineDistOnActionStart = 0.f;
 
@@ -437,14 +413,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Runtime")
 	float MergeFreeTravelDist = 0.f;
 
-	// ▶▶ 추가: 시퀀스/블렌드 간섭 방지 & 스냅
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|State")
-	bool bInSequenceOrBlend = false;
+	UPROPERTY(Transient)
+	FTransform LastSequenceWorldTransform;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|State")
-	bool bPostSequenceSnapPending = false;
+	bool bLastSeqTransformValid = false;
 
-	// ▶▶ 추가: 시퀀스가 바꿨을 수 있는 컴포넌트의 기준 상대값
 	UPROPERTY(Transient)
 	FTransform MeshDefaultRelative;
 
@@ -453,13 +427,6 @@ protected:
 
 	UPROPERTY(Transient)
 	FTransform CameraDefaultRelative;
-
-	// ▶▶ 전환 시퀀스 종료 후 같은 틱에 머지 시작 예약
-	UPROPERTY(Transient)
-	TWeakObjectPtr<ASLSplineTrack> MergeTrackAfterResume;
-
-	UPROPERTY(Transient)
-	bool bMergeAfterResume = false;
 
 private:
 	FTimerHandle ActionRootMotionTimer;
