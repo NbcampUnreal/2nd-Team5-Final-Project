@@ -17,10 +17,8 @@
 #include "Minigame/System/SLSplineTrack.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
-#include "MovieSceneSequencePlayer.h"
 #include "MovieSceneSequence.h"
 
-// ===================== ctor =====================
 ASLPlayerRunnerCharacter::ASLPlayerRunnerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -68,7 +66,6 @@ ASLPlayerRunnerCharacter::ASLPlayerRunnerCharacter()
 	CamCurrent = Cam_Default;
 }
 
-// ===================== BeginPlay =====================
 void ASLPlayerRunnerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -111,7 +108,6 @@ void ASLPlayerRunnerCharacter::BeginPlay()
 	ApplyTransformAtDistance(SplineDistance);
 	SetCameraPreset(ECameraPreset::Default, 0.f);
 
-	// ▶ 기준 상대트랜스폼 저장 (시퀀스 종료 후 리셋용)
 	if (USkeletalMeshComponent* M = GetMesh())
 	{
 		MeshDefaultRelative = M->GetRelativeTransform();
@@ -124,14 +120,12 @@ void ASLPlayerRunnerCharacter::BeginPlay()
 	{
 		CameraDefaultRelative = FollowCamera->GetRelativeTransform();
 	}
-
-	// Entry 자동 재생 (배치 액터 사용)
+	
 	if (EntrySequenceActor)
 	{
 		bGameStarted        = false;
 		bSplineDriveEnabled = false;
 		bPlayingSequence    = true;
-		bInSequenceOrBlend  = true;
 
 		if (UCharacterMovementComponent* Move = GetCharacterMovement())
 		{
@@ -152,24 +146,20 @@ void ASLPlayerRunnerCharacter::BeginPlay()
 	}
 }
 
-// ===================== Tick =====================
 void ASLPlayerRunnerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	// Real delta (QTE용)
 	const double Now = FPlatformTime::Seconds();
 	const float RealDelta = static_cast<float>(Now - RealPrev);
 	RealPrev = Now;
 
-	// 사망 시 카메라만
 	if (bIsDead)
 	{
 		ApplyCamera(DeltaSeconds);
 		return;
 	}
 
-	// QTE 윈도우 갱신
 	if (bQTEActive)
 	{
 		QTEElapsedSeconds += RealDelta;
@@ -183,7 +173,6 @@ void ASLPlayerRunnerCharacter::Tick(float DeltaSeconds)
 		}
 	}
 
-	// 1) 머지 우선 처리
 	if (bMergingToTrack)
 	{
 		TickMergeToTrack(DeltaSeconds);
@@ -191,7 +180,6 @@ void ASLPlayerRunnerCharacter::Tick(float DeltaSeconds)
 		return;
 	}
 
-	// 2) 트랙 블렌드 중에는 블렌드만
 	if (bTrackBlendActive)
 	{
 		TrackBlendAlpha = FMath::Clamp(
@@ -225,14 +213,15 @@ void ASLPlayerRunnerCharacter::Tick(float DeltaSeconds)
 		return;
 	}
 
-	// 3) 시퀀스 재생/정리 중엔 위치/회전 비간섭 (카메라만)
-	if (bPlayingSequence || bInSequenceOrBlend)
+	if (bPlayingSequence)
 	{
+		LastSequenceWorldTransform = GetActorTransform();
+		bLastSeqTransformValid = true;
+
 		ApplyCamera(DeltaSeconds);
 		return;
 	}
 
-	// 4) 풀바디 몽타주면 일시 정지
 	if (USLRunnerAnimInstance* Anim = GetRunnerAnim())
 	{
 		const bool bFullBodyActive =
@@ -246,26 +235,19 @@ void ASLPlayerRunnerCharacter::Tick(float DeltaSeconds)
 		}
 	}
 
-	// 5) 스플라인 주행/회전
 	if (TrackSpline && bSplineDriveEnabled && !bGoalReached && bGameStarted)
 	{
 		AdvanceAlongSegment(DeltaSeconds);
-
-		// 시퀀스 종료 직후 첫 프레임은 보간 없이 텔레포트 스냅
-		const bool bForceSnapThisFrame = bPostSequenceSnapPending;
-		ApplyTransformAtDistance(SplineDistance, bForceSnapThisFrame);
-		bPostSequenceSnapPending = false;
+		ApplyTransformAtDistance(SplineDistance);
 	}
 	else if (TrackSpline && !bSplineDriveEnabled && !bGoalReached)
 	{
 		ApplyRotationAtDistance(SplineDistance, /*bForceSnap=*/false);
 	}
 
-	// 6) 카메라
 	ApplyCamera(DeltaSeconds);
 }
 
-// ===================== Spline helpers =====================
 void ASLPlayerRunnerCharacter::BuildPointDistances()
 {
 	PointDistances.Reset();
@@ -347,7 +329,6 @@ void ASLPlayerRunnerCharacter::AdvanceAlongSegment(float DeltaSeconds)
 		}
 	}
 
-	// 안전망: 끝점 근접시 강제 도달
 	constexpr float HardReachTolerance = 5.f;
 	if (!bGoalReached && (GoalDistance - SplineDistance) <= HardReachTolerance)
 	{
@@ -360,7 +341,6 @@ void ASLPlayerRunnerCharacter::ReachGoal()
 {
 	if (CurrentTrack && CurrentTrack->GetNextTrack() != nullptr)
 	{
-		// 더 이상 주행 재진입 못하게 먼저 멈춤
 		bSplineDriveEnabled = false;
 		bGoalReached        = true;
 
@@ -390,7 +370,6 @@ void ASLPlayerRunnerCharacter::SnapToNearestOnSpline()
 	SplineDistance = TrackSpline->GetDistanceAlongSplineAtSplineInputKey(Key);
 }
 
-// ===================== Hurdle =====================
 void ASLPlayerRunnerCharacter::HurdleSuccess(EHurdleState ObState, ERunnerMontageSection Section)
 {
 	float Duration = 0.5f;
@@ -409,7 +388,6 @@ void ASLPlayerRunnerCharacter::HurdleSuccess(EHurdleState ObState, ERunnerMontag
 		}
 		else if (ObState == EHurdleState::Attack)
 		{
-			// Attack은 루트 모션 사용 안 함(요청사항 유지)
 			SetCameraPreset(ECameraPreset::Attack, 0.35f);
 			StartShake(AttackShakeClass, 0.8f);
 		}
@@ -442,7 +420,6 @@ void ASLPlayerRunnerCharacter::HurdleFail(EHurdleState ObState, ERunnerMontageSe
 	StartIFrame(IFrameDuration);
 }
 
-// ===================== QTE =====================
 void ASLPlayerRunnerCharacter::QTE_Begin(const FString& ExpectedKey, float WindowSeconds, EHurdleState State, ERunnerMontageSection SuccessSection, ERunnerMontageSection FailSection)
 {
 	bQTEActive = true;
@@ -569,7 +546,6 @@ void ASLPlayerRunnerCharacter::OnOverlapedHurdle(UPrimitiveComponent* Overlapped
 	bWaitingResult = false;
 }
 
-// ===================== Death =====================
 void ASLPlayerRunnerCharacter::OnDie()
 {
 	if (bIsDead) return;
@@ -578,7 +554,6 @@ void ASLPlayerRunnerCharacter::OnDie()
 	bGameStarted        = false;
 	bSplineDriveEnabled = false;
 	bPlayingSequence    = false;
-	bInSequenceOrBlend  = false;
 	bWaitingResult      = false;
 	bQTEActive          = false;
 	bInputLatched       = false;
@@ -614,7 +589,6 @@ void ASLPlayerRunnerCharacter::OnDie()
 void ASLPlayerRunnerCharacter::PlayDeathSequence()
 {
 	bPlayingSequence = true;
-	bInSequenceOrBlend = true;
 	checkf(DeathSequenceActor, TEXT("[Runner] DeathSequenceActor is null"));
 	ActivateSequenceActor = DeathSequenceActor;
 
@@ -623,11 +597,10 @@ void ASLPlayerRunnerCharacter::PlayDeathSequence()
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Runner] Death LevelSequencePlayer invalid"));
 		bPlayingSequence = false;
-		bInSequenceOrBlend = false;
 		return;
 	}
 
-	ApplySequencePlaybackSettings(DeathSequenceActor.Get(), LevelSequence);
+	ApplySequencePlaybackSettings_Restore(DeathSequenceActor.Get(), LevelSequence);
 
 	LevelSequence->OnFinished.RemoveAll(this);
 	LevelSequence->OnFinished.AddDynamic(this, &ASLPlayerRunnerCharacter::OnDeathSequenceFinished);
@@ -641,17 +614,15 @@ void ASLPlayerRunnerCharacter::OnDeathSequenceFinished()
 	if (LevelSequence)
 	{
 		LevelSequence->OnFinished.RemoveAll(this);
+		LevelSequence->Stop();         
 		LevelSequence = nullptr;
 	}
 	ActivateSequenceActor = nullptr;
 
-	bPlayingSequence    = false;
-	bInSequenceOrBlend  = false;
 	bSplineDriveEnabled = false;
 	bGameStarted        = false;
 }
 
-// ===================== Anim helpers =====================
 USLRunnerAnimInstance* ASLPlayerRunnerCharacter::GetRunnerAnim() const
 {
 	return GetMesh() ? Cast<USLRunnerAnimInstance>(GetMesh()->GetAnimInstance()) : nullptr;
@@ -695,7 +666,6 @@ void ASLPlayerRunnerCharacter::ExitRootMotionAction()
 		const float Key = TrackSpline->FindInputKeyClosestToWorldLocation(GetActorLocation());
 		float Dist = TrackSpline->GetDistanceAlongSplineAtSplineInputKey(Key);
 
-		// 뒤로 스냅 방지 + 끝점 근접시 강제 도달
 		Dist = FMath::Max(Dist, SplineDistOnActionStart);
 		constexpr float MergeTriggerTolerance = 120.f;
 		if (GoalDistance - Dist <= MergeTriggerTolerance)
@@ -712,7 +682,6 @@ void ASLPlayerRunnerCharacter::ExitRootMotionAction()
 	GetWorldTimerManager().ClearTimer(ActionRootMotionTimer);
 }
 
-// ===================== Transform/Camera =====================
 void ASLPlayerRunnerCharacter::ApplyTransformAtDistance(float Distance, bool bForceSnap)
 {
 	if (!TrackSpline) return;
@@ -827,7 +796,6 @@ void ASLPlayerRunnerCharacter::StartShake(TSubclassOf<UCameraShakeBase> ShakeCla
 	}
 }
 
-// ===================== Merge/Blend =====================
 void ASLPlayerRunnerCharacter::StartMergeToTrack(ASLSplineTrack* NewTrack)
 {
 	if (!NewTrack || !NewTrack->GetSplineComp()) return;
@@ -901,7 +869,6 @@ float ASLPlayerRunnerCharacter::EvalMergeWeight(float Alpha) const
 	return FMath::InterpEaseInOut(0.f, 1.f, Alpha, 2.0f);
 }
 
-// ===================== Track blend (optional path) =====================
 void ASLPlayerRunnerCharacter::StartTrackBlend(ASLSplineTrack* NewTrack, float Duration)
 {
 	if (!NewTrack || !NewTrack->GetSplineComp()) return;
@@ -927,20 +894,19 @@ void ASLPlayerRunnerCharacter::StartTrackBlend(ASLSplineTrack* NewTrack, float D
 	}
 }
 
-// ===================== Sequence (배치 액터) =====================
-void ASLPlayerRunnerCharacter::ApplySequencePlaybackSettings(ALevelSequenceActor* SeqActor, ULevelSequencePlayer* Player)
+void ASLPlayerRunnerCharacter::ApplySequencePlaybackSettings_Restore(ALevelSequenceActor* SeqActor, ULevelSequencePlayer* Player)
 {
 	if (SeqActor)
 	{
 		SeqActor->PlaybackSettings.FinishCompletionStateOverride =
-			EMovieSceneCompletionModeOverride::ForceKeepState;
+			EMovieSceneCompletionModeOverride::ForceRestoreState;
 	}
 	if (Player)
 	{
-		FMovieSceneSequencePlaybackSettings Settings =
+		FMovieSceneSequencePlaybackSettings S =
 			SeqActor ? SeqActor->PlaybackSettings : FMovieSceneSequencePlaybackSettings{};
-		Settings.FinishCompletionStateOverride = EMovieSceneCompletionModeOverride::ForceKeepState;
-		Player->SetPlaybackSettings(Settings);
+		S.FinishCompletionStateOverride = EMovieSceneCompletionModeOverride::ForceRestoreState;
+		Player->SetPlaybackSettings(S);
 	}
 }
 
@@ -960,10 +926,20 @@ void ASLPlayerRunnerCharacter::ResetComponentsAfterSequence()
 	}
 }
 
+void ASLPlayerRunnerCharacter::AlignToSplineFromTransform(const FTransform& WorldTM)
+{
+	if (!TrackSpline) return;
+
+	const float Key  = TrackSpline->FindInputKeyClosestToWorldLocation(WorldTM.GetLocation());
+	const float Dist = TrackSpline->GetDistanceAlongSplineAtSplineInputKey(Key);
+
+	MapDistanceToSegment(Dist);
+	ApplyTransformAtDistance(SplineDistance, /*bForceSnap=*/true);
+}
+
 void ASLPlayerRunnerCharacter::PlayEntrySequence()
 {
 	bPlayingSequence = true;
-	bInSequenceOrBlend = true;
 
 	ActivateSequenceActor = EntrySequenceActor;
 	LevelSequence = ActivateSequenceActor.IsValid() ? ActivateSequenceActor->GetSequencePlayer() : nullptr;
@@ -971,12 +947,11 @@ void ASLPlayerRunnerCharacter::PlayEntrySequence()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Runner] Entry Seq invalid. Resume immediately."));
 		bPlayingSequence = false;
-		bInSequenceOrBlend = false;
-		ResumeAfterSequenceNextTick(true);
+		ResumeAfterSequenceImmediate(true);
 		return;
 	}
 
-	ApplySequencePlaybackSettings(ActivateSequenceActor.Get(), LevelSequence);
+	ApplySequencePlaybackSettings_Restore(ActivateSequenceActor.Get(), LevelSequence);
 
 	LevelSequence->OnFinished.RemoveAll(this);
 	LevelSequence->OnFinished.AddDynamic(this, &ASLPlayerRunnerCharacter::OnEntrySequenceFinished);
@@ -990,33 +965,34 @@ void ASLPlayerRunnerCharacter::OnEntrySequenceFinished()
 	if (LevelSequence)
 	{
 		LevelSequence->OnFinished.RemoveAll(this);
+		LevelSequence->Stop();
 		LevelSequence = nullptr;
 	}
 	ActivateSequenceActor = nullptr;
 
-	ResetComponentsAfterSequence();
-	bPostSequenceSnapPending = true;
+	if (bLastSeqTransformValid) AlignToSplineFromTransform(LastSequenceWorldTransform);
+	else                        AlignToSplineFromTransform(GetActorTransform());
 
-	ResumeAfterSequenceNextTick(/*bPlayRunStart=*/true);
+	ResetComponentsAfterSequence();
+
+	ResumeAfterSequenceImmediate(true);
 }
 
 void ASLPlayerRunnerCharacter::PlayHurdleSequence(ALevelSequenceActor* SequenceActor)
 {
 	checkf(SequenceActor, TEXT("ASLPlayerRunnerCharacter Missing Sequence"));
 	bPlayingSequence = true;
-	bInSequenceOrBlend = true;
 
 	ULevelSequencePlayer* Player = SequenceActor->GetSequencePlayer();
 	if (!SequenceActor->GetSequence() || !Player)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Runner] Hurdle Seq invalid. Fallback to resume."));
 		bPlayingSequence = false;
-		bInSequenceOrBlend = false;
-		ResumeAfterSequenceNextTick(/*bPlayRunStart=*/true);
+		ResumeAfterSequenceImmediate(true);
 		return;
 	}
 
-	ApplySequencePlaybackSettings(SequenceActor, Player);
+	ApplySequencePlaybackSettings_Restore(SequenceActor, Player);
 
 	if (UCharacterMovementComponent* Move = GetCharacterMovement())
 	{
@@ -1043,31 +1019,30 @@ void ASLPlayerRunnerCharacter::OnHurdleSequenceFinished()
 	if (LevelSequence)
 	{
 		LevelSequence->OnFinished.RemoveAll(this);
+		LevelSequence->Stop();
 		LevelSequence = nullptr;
 	}
 	ActivateSequenceActor = nullptr;
+	
+	if (bLastSeqTransformValid) AlignToSplineFromTransform(LastSequenceWorldTransform);
+	else                        AlignToSplineFromTransform(GetActorTransform());
 
 	ResetComponentsAfterSequence();
-	bPostSequenceSnapPending = true;
 
-	ResumeAfterSequenceNextTick(/*bPlayRunStart=*/true);
+	ResumeAfterSequenceImmediate(true);
 }
-
 void ASLPlayerRunnerCharacter::PlayTransitionTrackSequence(ALevelSequenceActor* SequenceActor)
 {
 	checkf(SequenceActor, TEXT("ASLPlayerRunnerCharacter Missing Sequence"));
 
-	// 이미 재생 중이면 무시
 	if (bPlayingSequence) return;
 
 	bPlayingSequence   = true;
-	bInSequenceOrBlend = true;
 
 	if (!SequenceActor->GetSequence())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Runner] Transition SeqActor has no sequence asset. Fallback to merge."));
-		bPlayingSequence   = false;
-		bInSequenceOrBlend = false;
+		bPlayingSequence = false;
 
 		if (ensure(CurrentTrack) && ensure(CurrentTrack->GetNextTrack()))
 		{
@@ -1080,8 +1055,7 @@ void ASLPlayerRunnerCharacter::PlayTransitionTrackSequence(ALevelSequenceActor* 
 	if (!Player)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Runner] Transition SeqActor has no SequencePlayer. Fallback to merge."));
-		bPlayingSequence   = false;
-		bInSequenceOrBlend = false;
+		bPlayingSequence = false;
 
 		if (ensure(CurrentTrack) && ensure(CurrentTrack->GetNextTrack()))
 		{
@@ -1090,7 +1064,7 @@ void ASLPlayerRunnerCharacter::PlayTransitionTrackSequence(ALevelSequenceActor* 
 		return;
 	}
 
-	ApplySequencePlaybackSettings(SequenceActor, Player);
+	ApplySequencePlaybackSettings_Restore(SequenceActor, Player);
 
 	if (UCharacterMovementComponent* Move = GetCharacterMovement())
 	{
@@ -1113,21 +1087,24 @@ void ASLPlayerRunnerCharacter::OnTransitionSequenceFinished()
 	if (LevelSequence)
 	{
 		LevelSequence->OnFinished.RemoveAll(this);
+		LevelSequence->Stop();
 		LevelSequence = nullptr;
 	}
 	ActivateSequenceActor = nullptr;
 
+	if (bLastSeqTransformValid) AlignToSplineFromTransform(LastSequenceWorldTransform);
+	else                        AlignToSplineFromTransform(GetActorTransform());
+
 	ResetComponentsAfterSequence();
-	bPostSequenceSnapPending = true;
 
-	// 재개 후 같은 프레임에 머지 시작 예약
-	MergeTrackAfterResume = (CurrentTrack ? CurrentTrack->GetNextTrack() : nullptr);
-	bMergeAfterResume     = MergeTrackAfterResume.IsValid();
+	if (ensure(CurrentTrack) && ensure(CurrentTrack->GetNextTrack()))
+	{
+		SwitchToTrackAtDistance(CurrentTrack->GetNextTrack(), PendingSplineDistance);
+	}
 
-	ResumeAfterSequenceNextTick(/*bPlayRunStart=*/true);
+	ResumeAfterSequenceImmediate(true);
 }
 
-// ===================== Montage callbacks =====================
 void ASLPlayerRunnerCharacter::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (!Montage) return;
@@ -1177,8 +1154,7 @@ bool ASLPlayerRunnerCharacter::IsUpperBodyMontage(const UAnimMontage* Montage) c
 	return false;
 }
 
-// ===================== Resume after seq =====================
-void ASLPlayerRunnerCharacter::ResumeAfterSequenceNextTick(bool bPlayRunStart)
+void ASLPlayerRunnerCharacter::ResumeAfterSequenceImmediate(bool bPlayRunStart)
 {
 	if (USkeletalMeshComponent* Skel = GetMesh())
 	{
@@ -1191,43 +1167,25 @@ void ASLPlayerRunnerCharacter::ResumeAfterSequenceNextTick(bool bPlayRunStart)
 		}
 	}
 
-	GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, bPlayRunStart]()
+	if (USLRunnerAnimInstance* RunAnim = GetRunnerAnim())
 	{
-		if (USLRunnerAnimInstance* RunAnim = GetRunnerAnim())
+		RunAnim->bIsPlayingSequence = false;
+		if (bPlayRunStart)
 		{
-			RunAnim->bIsPlayingSequence = false;
-			if (bPlayRunStart)
-			{
-				RunAnim->PlayRunStart();
-			}
+			RunAnim->PlayRunStart();
 		}
+	}
 
-		if (UCharacterMovementComponent* Move = GetCharacterMovement())
-		{
-			Move->SetMovementMode(MOVE_Walking);
-			Move->StopMovementImmediately();
-		}
+	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+	{
+		Move->SetMovementMode(MOVE_Walking);
+		Move->StopMovementImmediately();
+	}
 
-		// 다음 프레임에 스플라인 정렬 1회 텔레포트는 Tick에서 처리(bPostSequenceSnapPending)
-		bPlayingSequence    = false;
-		bInSequenceOrBlend  = false;
-		bGoalReached        = false;
-		bSplineDriveEnabled = true;
-		bGameStarted        = true;
+	bPlayingSequence    = false;
+	bGoalReached        = false;
+	bSplineDriveEnabled = true;
+	bGameStarted        = true;
 
-		// 전환 예약이 있으면 같은 프레임에 바로 머지 시작
-		if (bMergeAfterResume && MergeTrackAfterResume.IsValid())
-		{
-			StartMergeToTrack(MergeTrackAfterResume.Get());
-			bMergeAfterResume     = false;
-			MergeTrackAfterResume = nullptr;
-		}
-
-		if (LevelSequence)
-		{
-			LevelSequence->OnFinished.RemoveAll(this);
-			LevelSequence = nullptr;
-		}
-		ActivateSequenceActor = nullptr;
-	}));
+	bLastSeqTransformValid = false;
 }

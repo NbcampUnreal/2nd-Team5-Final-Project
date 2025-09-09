@@ -53,9 +53,8 @@ void USLRunnerAnimInstance::PlayMatchedMontage(EHurdleState StateMatched, ERunne
 		}
 		else if (bPlayingA2 && AttackMontage_2)
 		{
-			// Attack2 중 다시 입력이면 Attack2 리스타트(필요 시 A1로 토글해도 됨)
 			Montage_Stop(0.06f, AttackMontage_2);
-			M = AttackMontage_2;
+			M = AttackMontage_1;
 		}
 		else
 		{
