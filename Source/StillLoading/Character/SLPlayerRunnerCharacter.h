@@ -1,10 +1,14 @@
 #pragma once
 
+#include "UI/Struct/SLInGameDelegateBuffers.h"
 #include "Character/RunnerTypes.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Minigame/System/SLSplineTrack.h"
 #include "SLPlayerRunnerCharacter.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerDeath);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerSusccess);
 
 class ULevelSequencePlayer;
 class UDynamicIMCComponent;
@@ -18,6 +22,7 @@ class UCameraShakeBase;
 class ASLSplineTrack;
 class ALevelSequenceActor;
 struct FInputActionValue;
+struct FSLPlayerHpDelegateBuffer;
 enum class EInputActionType : uint8;
 
 UENUM(BlueprintType)
@@ -98,7 +103,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Runner|Sequence")
 	void PlayDeathSequence();
-
+	
 	UFUNCTION(BlueprintCallable, Category="Runner|Sequence")
 	void PlayHurdleSequence(ALevelSequenceActor* SequenceActor);
 
@@ -109,9 +114,12 @@ protected:
 	UFUNCTION()
 	void OnActionTriggeredCallback(const EInputActionType ActionType, const FInputActionValue InputValue);
 
-	UFUNCTION(BlueprintImplementableEvent, Category="Runner|State")
+	UFUNCTION(BlueprintCallable, Category="Runner|State")
 	void ApplyDamage();
 
+	UFUNCTION(BlueprintImplementableEvent, Category="Runner|State")
+	void OnHitVFX();
+	
 	UFUNCTION(BlueprintCallable, Category="Runner|State")
 	void OnDie();
 
@@ -247,6 +255,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Runner|Sequence")
 	TObjectPtr<ALevelSequenceActor> DeathSequenceActor;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnPlayerDeath OnPlayerDeath;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPlayerSusccess OnPlayerSusccess;
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Components")
 	TObjectPtr<UBoxComponent> BoxComp;
@@ -428,13 +441,15 @@ protected:
 	UPROPERTY(Transient)
 	FTransform CameraDefaultRelative;
 
+
 private:
 	FTimerHandle ActionRootMotionTimer;
 	FTimerHandle CamPresetTimer;
-	FTimerHandle InputTimerHandle;
-	FTimerHandle StateTimerHandle;
-	FTimerHandle RecoveryTimerHandle;
+	FTimerHandle RecoveryHpTimerHandle;
 	FTimerHandle IFrameTimerHandle;
 
+	
+	UPROPERTY()
+	FSLPlayerHpDelegateBuffer HPDelegate;
 	double RealPrev = 0.0;
 };

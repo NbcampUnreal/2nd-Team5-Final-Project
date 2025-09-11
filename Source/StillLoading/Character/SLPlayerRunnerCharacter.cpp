@@ -17,7 +17,10 @@
 #include "Minigame/System/SLSplineTrack.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
-#include "MovieSceneSequence.h"
+#include "Objective/SLObjectiveBase.h"
+#include "Objective/SLObjectiveSubsystem.h"
+#include "UI/HUD/SLInGameHUD.h"
+
 
 ASLPlayerRunnerCharacter::ASLPlayerRunnerCharacter()
 {
@@ -356,6 +359,7 @@ void ASLPlayerRunnerCharacter::ReachGoal()
 	}
 
 	if (bGoalReached) return;
+	OnPlayerSusccess.Broadcast();
 	bGoalReached = true;
 	bSplineDriveEnabled = false;
 	SplineDistance = GoalDistance;
@@ -416,6 +420,7 @@ void ASLPlayerRunnerCharacter::HurdleFail(EHurdleState ObState, ERunnerMontageSe
 			StartShake(AttackShakeClass, 0.8f);
 		}
 	}
+	OnHitVFX();
 	ApplyDamage();
 	StartIFrame(IFrameDuration);
 }
@@ -514,6 +519,33 @@ void ASLPlayerRunnerCharacter::OnActionTriggeredCallback(const EInputActionType 
 	}
 }
 
+void ASLPlayerRunnerCharacter::ApplyDamage()
+{
+	CurrentHealth--;
+	if (CurrentHealth <= 0)
+	{
+		OnDie();
+		return;
+	}
+	
+	if (ASLInGameHUD* InGameHUD = Cast<ASLInGameHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
+	{
+		InGameHUD->ApplyPlayerHp(HPDelegate);
+		InGameHUD->ApplyHitEffect((HPDelegate));
+	}
+	HPDelegate.OnPlayerHpChanged.Broadcast(MaxHealth, CurrentHealth);
+	
+	GetWorldTimerManager().SetTimer(RecoveryHpTimerHandle,
+		[this]
+		{
+			CurrentHealth = MaxHealth;
+			HPDelegate.OnPlayerHpChanged.Broadcast(MaxHealth, CurrentHealth);
+	
+		},
+		RecoveryTime,
+		false);
+}
+
 void ASLPlayerRunnerCharacter::OnOverlapedHurdle(UPrimitiveComponent* Overlapped, AActor* Other, UPrimitiveComponent* OtherComp, int32 BodyIdx, bool bFromSweep, const FHitResult& Hit)
 {
 	if (!Other || !Other->ActorHasTag(TEXT("Hurdle")) || !bWaitingResult) return;
@@ -550,7 +582,9 @@ void ASLPlayerRunnerCharacter::OnDie()
 {
 	if (bIsDead) return;
 	bIsDead = true;
-
+	
+	OnPlayerDeath.Broadcast();
+	
 	bGameStarted        = false;
 	bSplineDriveEnabled = false;
 	bPlayingSequence    = false;
@@ -1143,7 +1177,7 @@ bool ASLPlayerRunnerCharacter::IsUpperBodyMontage(const UAnimMontage* Montage) c
 {
 	if (!Montage) return false;
 
-	static const FName SLOT_UpperBody(TEXT("UpperBody"));
+	static const FName SLOT_UpperBody = (TEXT("UpperBody"));
 	for (const FSlotAnimationTrack& Track : Montage->SlotAnimTracks)
 	{
 		if (Track.SlotName == SLOT_UpperBody)
