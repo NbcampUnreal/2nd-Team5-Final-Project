@@ -119,8 +119,6 @@ void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 	
 	if (Stimulus.WasSuccessfullySensed() && Attitude == ETeamAttitude::Hostile)
 	{
-		UE_LOG(LogAITargeting, Log, TEXT("[%s] Target Detected: %s (Distance: %.1f, Attitude: Hostile)"), 
-			*GetName(), *Actor->GetName(), FVector::Dist(GetPawn()->GetActorLocation(), Actor->GetActorLocation()));
 		
 		// 타겟 정보 추가 또는 업데이트
 		AddOrUpdateTarget(Actor);
@@ -132,8 +130,8 @@ void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 			{
 				float OldThreatLevel = TargetInfo->ThreatLevel;
 				TargetInfo->ThreatLevel *= DamageThreatMultiplier;
-				UE_LOG(LogAITargeting, Log, TEXT("[%s] Damage from %s - Threat Level: %.2f -> %.2f"), 
-					*GetName(), *Actor->GetName(), OldThreatLevel, TargetInfo->ThreatLevel);
+				/*UE_LOG(LogAITargeting, Log, TEXT("[%s] Damage from %s - Threat Level: %.2f -> %.2f"), 
+					*GetName(), *Actor->GetName(), OldThreatLevel, TargetInfo->ThreatLevel);*/
 			}
 		}
 		
@@ -142,7 +140,7 @@ void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 	}
 	else if (!Stimulus.WasSuccessfullySensed() && Attitude == ETeamAttitude::Hostile)
 	{
-		UE_LOG(LogAITargeting, Log, TEXT("[%s] Target Lost: %s"), *GetName(), *Actor->GetName());
+		//UE_LOG(LogAITargeting, Log, TEXT("[%s] Target Lost: %s"), *GetName(), *Actor->GetName());
 		
 		// 시야에서 사라진 적 처리
 		if (FTargetInfo* TargetInfo = PotentialTargets.Find(Actor))
@@ -154,7 +152,7 @@ void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 
 void ASLBaseAIController::OnTargetPerceptionForgotten(AActor* Actor)
 {
-	UE_LOG(LogAITargeting, Log, TEXT("[%s] Target Forgotten: %s"), *GetName(), *Actor->GetName());
+	//UE_LOG(LogAITargeting, Log, TEXT("[%s] Target Forgotten: %s"), *GetName(), *Actor->GetName());
 	
 	RemoveTarget(Actor);
 	
@@ -216,7 +214,7 @@ void ASLBaseAIController::UpdateTargetEvaluation()
 	// 오래된 타겟 제거
 	for (AActor* Target : TargetsToRemove)
 	{
-		UE_LOG(LogAITargeting, Log, TEXT("[%s] Removing Old Target: %s"), *GetName(), *Target->GetName());
+		//UE_LOG(LogAITargeting, Log, TEXT("[%s] Removing Old Target: %s"), *GetName(), *Target->GetName());
 		PotentialTargets.Remove(Target);
 	}
 	
