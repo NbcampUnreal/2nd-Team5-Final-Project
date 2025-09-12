@@ -7,7 +7,6 @@
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -85,7 +84,7 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 
 	const float Distance = FVector::Dist(GetOwner()->GetActorLocation(), CurrentTarget.TargetActor->GetActorLocation());
 
-	float AttackRange = 150.0f;
+	float AttackRange = 200.0f;
 	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
 	{
 		AttackRange = CachedMyCharacter->AIAttributeComp->GetAttackRange();
@@ -254,33 +253,6 @@ void USLAICombatComponent::HandleNoEnemyDetected()
 	}
 }
 
-void USLAICombatComponent::UpdateFakeMovement(const FVector& TargetLocation, float DeltaTime)
-{
-	AActor* OwnerActor = GetOwner();
-	if (!OwnerActor) return;
-
-	if (TargetLocation.IsNearlyZero()) return;
-
-	const FVector CurrentLocation = OwnerActor->GetActorLocation();
-	const FVector Direction = (TargetLocation - CurrentLocation).GetSafeNormal();
-
-	const float FakeMovementSpeed = 150.0f;
-	OwnerActor->SetActorLocation(CurrentLocation + Direction * FakeMovementSpeed * DeltaTime);
-
-	const FRotator TargetRotation = Direction.Rotation();
-	OwnerActor->SetActorRotation(FRotator(0, TargetRotation.Yaw, 0));
-}
-
-void USLAICombatComponent::UpdateFakeMovement(float DeltaTime)
-{
-	if (!IsValid(CurrentTarget.TargetActor))
-	{
-		return;
-	}
-
-	UpdateFakeMovement(CurrentTarget.TargetActor->GetActorLocation(), DeltaTime);
-}
-
 void USLAICombatComponent::SetTarget(AActor* NewTarget)
 {
 	if (CurrentTarget.TargetActor != NewTarget)
@@ -418,7 +390,7 @@ void USLAICombatComponent::RetreatFromTarget()
 
 	if (bFoundPoint)
 	{
-		DrawDebugSphere(GetWorld(), NavigableRetreatLocation.Location, 50.f, 12, FColor::Green, false, 3.0f);
+		//DrawDebugSphere(GetWorld(), NavigableRetreatLocation.Location, 50.f, 12, FColor::Green, false, 3.0f);
 
 		if (auto* MoveComp = Cast<ACharacter>(MyActor)->GetCharacterMovement())
 		{

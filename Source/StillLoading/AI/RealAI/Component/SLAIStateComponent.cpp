@@ -51,18 +51,29 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		}
 	}
 
-	if (IsValid(CachedMyCharacter->BattleManager) && CachedMyCharacter->BattleManager->IsBerserkMode() || bIsBerserkMode)
+	bool bShouldBeInBerserk = false;
+	if (IsValid(CachedMyCharacter->BattleManager))
 	{
-		SetBerserkMode(DeltaTime);
+		bShouldBeInBerserk = CachedMyCharacter->BattleManager->PlayerOnly() &&
+								   (CachedMyCharacter->BattleManager->IsBerserkMode() || bIsBerserkMode);
+
+		if (USLAIAttributeComponent* AttributeComp = CachedMyCharacter->AIAttributeComp)
+		{
+			if (AttributeComp->IsBerserkModeActive() != bShouldBeInBerserk)
+			{
+				AttributeComp->ToggleBerserkMode(bShouldBeInBerserk);
+			}
+		}
+	}
+
+	if (bShouldBeInBerserk)
+	{
+		UpdateBerserkMode(DeltaTime);
 	}
 	else
 	{
 		PerformEnemyDetection();
  		AActor* DetectedEnemy = LastDetectedEnemy.Get();
-  		if (IsValid(DetectedEnemy))
-		{
-			CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
-		}
 		CombatComponent->HandleEnemyDetection(DetectedEnemy);
 	}
 
@@ -85,21 +96,12 @@ void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
 		break;
 	case EAIBattleState::Moving:
 		break;
-
 	case EAIBattleState::Attacking:
 		if (CombatComponent)
 		{
 			CombatComponent->UpdateAttacking(DeltaTime);
 		}
 		break;
-
-	case EAIBattleState::FakeMoving:
-		if (CombatComponent)
-		{
-			CombatComponent->UpdateFakeMovement(DeltaTime);
-		}
-		break;
-
 	default:
 		LogStateModeStatus(TEXT("알 수 없는 AI 상태"));
 		break;
@@ -284,26 +286,12 @@ void USLAIStateComponent::StartSupportMovement(AActor* TargetToSupport)
 	}
 }
 
-void USLAIStateComponent::SetBerserkMode(const float DeltaTime)
+void USLAIStateComponent::UpdateBerserkMode(const float DeltaTime)
 {
 	if (APawn* PlayerPawn = CachedMyCharacter->BattleManager->GetPrimaryTarget())
 	{
 		if (IsValid(PlayerPawn) && IsValid(CombatComponent))
 		{
-			// TODO::추후에 속도 감속 필요 지금은 버서크모드 켜는것만 사용
-			if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
-			{
-				if (auto* MoveComp = Character->GetCharacterMovement())
-				{
-					if (auto* CharacterMoveComp = Cast<ACharacter>(PlayerPawn)->GetCharacterMovement())
-					{
-						USkeletalMeshComponent* MeshComp = Character->GetMesh();
-						MeshComp->GlobalAnimRateScale = 1.5;
-						MoveComp->MaxWalkSpeed = CharacterMoveComp->MaxWalkSpeed + 50.0f;
-					}
-				}
-			}
-
 			CombatComponent->SafeLookAtTarget(PlayerPawn, DeltaTime);
 			CombatComponent->HandleEnemyDetection(PlayerPawn);
 

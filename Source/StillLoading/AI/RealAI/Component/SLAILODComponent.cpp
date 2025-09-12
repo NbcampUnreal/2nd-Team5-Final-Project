@@ -17,6 +17,19 @@ void USLAILODComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+FString USLAILODComponent::LODLevelToString(EAILODLevel Level)
+{
+	switch (Level)
+	{
+	case EAILODLevel::Max:    return TEXT("Max");
+	case EAILODLevel::High:   return TEXT("High");
+	case EAILODLevel::Medium: return TEXT("Medium");
+	case EAILODLevel::Low:    return TEXT("Low");
+	case EAILODLevel::Culled: return TEXT("Culled");
+	default:                  return TEXT("Unknown");
+	}
+}
+
 EAILODLevel USLAILODComponent::CalculateLODLevel(float MaxDetailDistance, float HighDetailDistance, float MediumDetailDistance, float LowDetailDistance) const
 {
 	const ASLMonsterAICharacter* OwnerCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
@@ -62,15 +75,12 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 {
     ASLMonsterAICharacter* OwnerCharacter = Cast<ASLMonsterAICharacter>(GetOwner());
     if (!OwnerCharacter) return;
-
-	/*
+	
     if (CurrentLODLevel == NewLevel)
     {
         return;
     }
-    */
-
-    const EAILODLevel OldLODLevel = CurrentLODLevel;
+	
     CurrentLODLevel = NewLevel;
 
     USLAIStateComponent* CurrentStateComponent = OwnerCharacter->AIStateComp;
@@ -98,15 +108,11 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
         MovementComponent->SetComponentTickEnabled(true);
         MovementComponent->SetAvoidanceEnabled(true);
-    	//MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
         Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
         if (CurrentStateComponent)
         {
-            if (CurrentStateComponent->GetCurrentState() == EAIBattleState::FakeMoving)
-            {
-                CurrentStateComponent->SetState(EAIBattleState::Idle);
-            }
+        	CurrentStateComponent->SetState(EAIBattleState::Idle);
             CurrentStateComponent->SetComponentTickEnabled(true);
             GetWorld()->GetTimerManager().UnPauseTimer(CurrentStateComponent->DetectionTimerHandle);
         }
@@ -114,12 +120,12 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
         if (CurrentLODLevel == EAILODLevel::Max)
         {
             Mesh->SetCastShadow(true);
-            if (CurrentStateComponent) CurrentStateComponent->SetComponentTickInterval(0.5f);
+            if (CurrentStateComponent) CurrentStateComponent->SetComponentTickInterval(0.1f);
         }
         else
         {
             Mesh->SetCastShadow(false);
-            if (CurrentStateComponent) CurrentStateComponent->SetComponentTickInterval(0.8f);
+            if (CurrentStateComponent) CurrentStateComponent->SetComponentTickInterval(0.2f);
         }
         break;
 
@@ -128,28 +134,27 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
     	OwnerCharacter->ToggleWeaponState(true);
     	OwnerCharacter->ActivateMovementComponent();
         
-        OwnerCharacter->SetActorTickEnabled(false);
-        if (Controller) Controller->SetActorTickEnabled(false);
+    	OwnerCharacter->SetActorTickEnabled(false);
+    	if (Controller) Controller->SetActorTickEnabled(false);
        
-        Mesh->SetComponentTickEnabled(false);
-        Mesh->SetCastShadow(false);
-        Mesh->SetVisibility(true);
-        Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+    	Mesh->SetComponentTickEnabled(false);
+    	Mesh->SetCastShadow(false);
+    	Mesh->SetVisibility(true);
+    	Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 
-        MovementComponent->SetComponentTickEnabled(false);
-        MovementComponent->Deactivate();
-    	//MovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
-        Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    	MovementComponent->SetComponentTickEnabled(false);
 
-        if (CurrentStateComponent)
-        {
-            CurrentStateComponent->SetComponentTickEnabled(true);
-            CurrentStateComponent->SetComponentTickInterval(0.5f);
-            CurrentStateComponent->SetState(EAIBattleState::FakeMoving);
-            GetWorld()->GetTimerManager().PauseTimer(CurrentStateComponent->DetectionTimerHandle);
-        }
+    	Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+    	if (CurrentStateComponent)
+    	{
+    		CurrentStateComponent->SetComponentTickEnabled(true);
+    		CurrentStateComponent->SetComponentTickInterval(1.0f);
+    		CurrentStateComponent->SetState(EAIBattleState::Idle);
+
+    		GetWorld()->GetTimerManager().PauseTimer(CurrentStateComponent->DetectionTimerHandle);
+    	}
         break;
-
     case EAILODLevel::Low:
     case EAILODLevel::Culled:
     	OwnerCharacter->SetActorHiddenInGame(true);

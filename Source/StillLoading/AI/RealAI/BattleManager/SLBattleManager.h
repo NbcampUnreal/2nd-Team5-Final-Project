@@ -94,7 +94,7 @@ protected:
 	TArray<FVector> CalculateCirclePositions(const FVector& Center, float Radius, int32 NumSlots) const;
 
 	// --- 스포너 관리 ---
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Battle Management|Spawners")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Battle Management|Spawners")
 	TArray<ASLSwarmSpawner*> ManagedSpawners;
 
 	// --- 유닛 관리 DOD ---
@@ -159,9 +159,6 @@ public:
 	// AI가 교전을 중단할 때 호출하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Battle Management|Permissions")
 	void ReleaseEngagementPermission(AActor* ReleasingUnit, AActor* TargetActor);
-	// 특정 타겟에 대한 교전 상황 조회
-	UFUNCTION(BlueprintCallable, Category = "Battle Management|Permissions")
-	int32 GetCurrentEngagementCount(AActor* TargetActor) const;
 	// 유닛이 파괴되거나 비활성화될 때 호출
 	UFUNCTION(BlueprintCallable, Category = "Battle Management|Permissions")
 	void OnUnitDestroyed(AActor* DestroyedUnit);
@@ -176,6 +173,7 @@ private:
 	TArray<AActor*> FindTargetsWithOpenSlots();
 	UFUNCTION()
 	void AssignSupportingAIToTarget(int32 SupportingAIIndex, AActor* Target);
+	int32 GetCurrentEngagementCount(AActor* TargetActor) const;
 
 	FBattleUnitInfo GetUnitInfoByIndex(int32 Index) const;
 

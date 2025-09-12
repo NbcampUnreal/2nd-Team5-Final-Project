@@ -55,6 +55,8 @@ public:
 	void Dead(const AActor* Attacker, bool bIsChangeMaterial);
 	UFUNCTION()
 	void HandleAIPoolReturnOnDeath();
+	UFUNCTION(BlueprintCallable)
+	void OnDeathMontageEnded();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "On Death")
 	void OnDeath();

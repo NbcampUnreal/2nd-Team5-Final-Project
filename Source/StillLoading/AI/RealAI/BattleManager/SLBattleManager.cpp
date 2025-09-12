@@ -82,8 +82,6 @@ void ASLBattleManager::EndBattle_Implementation(bool bPlayerWon)
 	}
 
 	UnitActors.Empty();
-
-	UnitActors.Empty();
 	UnitLocations.Empty();
 	UnitTeamIDs.Empty();
 	UnitSourceSpawners.Empty();
@@ -166,7 +164,7 @@ void ASLBattleManager::Tick(float DeltaSeconds)
 		UpdateAILODs();
 	}
 
-	if (bIsPlayerOnly)
+	if (bIsPlayerOnly && bUseLODSystem)
 	{
 		UpdateEncounterPositions();
 	}
@@ -184,8 +182,6 @@ void ASLBattleManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			Spawner->OnUnitReturnedToPool.RemoveDynamic(this, &ASLBattleManager::OnSpawnerUnitReturnedToPoolHandler);
 			Spawner->OnUnitActuallyDestroyed.RemoveDynamic(
 				this, &ASLBattleManager::OnSpawnerUnitActuallyDestroyedHandler);
-			Spawner->OnWaveCompletedBySpawner.RemoveDynamic(this, &ASLBattleManager::HandleWaveCompleted);
-			Spawner->OnAllWavesCompletedBySpawner.RemoveDynamic(this, &ASLBattleManager::HandleAllWavesCompleted);
 		}
 	}
 
@@ -292,8 +288,6 @@ void ASLBattleManager::BindToSpawnerEvents()
 		if (IsValid(Spawner))
 		{
 			Spawner->SetCachedBattleManager(this);
-			Spawner->OnWaveCompletedBySpawner.AddDynamic(this, &ASLBattleManager::HandleWaveCompleted);
-			Spawner->OnAllWavesCompletedBySpawner.AddDynamic(this, &ASLBattleManager::HandleAllWavesCompleted);
 			Spawner->OnUnitSpawned.AddDynamic(this, &ASLBattleManager::OnSpawnerUnitSpawnedHandler);
 			Spawner->OnUnitReturnedToPool.AddDynamic(this, &ASLBattleManager::OnSpawnerUnitReturnedToPoolHandler);
 			Spawner->OnUnitActuallyDestroyed.AddDynamic(this, &ASLBattleManager::OnSpawnerUnitActuallyDestroyedHandler);
@@ -356,12 +350,18 @@ void ASLBattleManager::OnSpawnerUnitActuallyDestroyedHandler(AActor* DestroyedAc
 // Unit
 void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawner* SourceSpawner)
 {
-	if (!IsValid(Actor) || UnitIndexMap.Contains(Actor))
+	if (!IsValid(Actor))
 	{
-		if (Actor) UE_LOG(LogTemp, Warning, TEXT("유닛 %s는 이미 등록되어 있습니다."), *Actor->GetName());
+		UE_LOG(LogTemp, Error, TEXT("RegisterUnit 실패: 유효하지 않은 액터가 전달되었습니다."));
 		return;
 	}
 
+	if (UnitIndexMap.Contains(Actor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RegisterUnit 경고: 유닛 %s는 이미 등록되어 있습니다. 등록을 건너뜁니다."), *Actor->GetName());
+		return;
+	}
+    
 	FGenericTeamId TeamId = FGenericTeamId::NoTeam;
 	if (APawn* Pawn = Cast<APawn>(Actor))
 	{
@@ -376,12 +376,12 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 	}
 
 	const int32 NewIndex = UnitActors.Num();
-	
+    
 	if (bIsPlayer)
 	{
 		PlayerUnitIndex = NewIndex;
 	}
-	
+    
 	UnitActors.Add(Actor);
 	UnitLocations.Add(Actor->GetActorLocation());
 	UnitTeamIDs.Add(TeamId);
@@ -394,56 +394,64 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 	UnitIndexMap.Add(Actor, NewIndex);
 	TeamUnitIndices.FindOrAdd(TeamId).Indices.Add(NewIndex);
 
-	UE_LOG(LogTemp, Log, TEXT("배틀매니저: 유닛 등록됨: %s (팀: %d, 스포너: %s)"),
-		  *Actor->GetName(),
-		  TeamId.GetId(),
-		  IsValid(SourceSpawner) ? *SourceSpawner->GetName() : TEXT("없음"));
+	UE_LOG(LogTemp, Log, TEXT("배틀매니저: 유닛 등록 성공: %s (팀: %d)"), *Actor->GetName(), TeamId.GetId());
 }
 
 void ASLBattleManager::UnregisterUnit(AActor* Actor)
 {
-	if (!IsValid(Actor)) return;
+    if (!IsValid(Actor)) return;
 
-	OnUnitDestroyed(Actor);
+    if (!UnitIndexMap.Contains(Actor))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("UnregisterUnit 경고: %s는 등록되지 않은 유닛입니다."), *Actor->GetName());
+        return;
+    }
 
-	const int32* IndexPtr = UnitIndexMap.Find(Actor);
-	if (!IndexPtr) return;
+    OnUnitDestroyed(Actor);
 
-	const int32 IndexToRemove = *IndexPtr;
-	const int32 LastIndex = UnitActors.Num() - 1;
-
-	const FGenericTeamId TeamIdOfRemovedUnit = UnitTeamIDs[IndexToRemove];
-	if (FTeamIndicesArrayWrapper* Wrapper = TeamUnitIndices.Find(TeamIdOfRemovedUnit))
-	{
-		Wrapper->Indices.Remove(IndexToRemove);
-	}
+    const int32 IndexToRemove = UnitIndexMap.FindAndRemoveChecked(Actor);
+    const int32 LastIndex = UnitActors.Num() - 1;
     
-	if (IndexToRemove < LastIndex)
-	{
-		const FGenericTeamId TeamIdOfSwappedUnit = UnitTeamIDs[LastIndex];
-		if (FTeamIndicesArrayWrapper* Wrapper = TeamUnitIndices.Find(TeamIdOfSwappedUnit))
-		{
-			Wrapper->Indices.Remove(LastIndex);
-			Wrapper->Indices.Add(IndexToRemove);
-		}
-	}
+    ASLSwarmSpawner* SourceSpawner = UnitSourceSpawners[IndexToRemove];
 
-	UnitActors.RemoveAtSwap(IndexToRemove);
-	UnitLocations.RemoveAtSwap(IndexToRemove);
-	UnitTeamIDs.RemoveAtSwap(IndexToRemove);
-	UnitSourceSpawners.RemoveAtSwap(IndexToRemove);
-	UnitLODComponents.RemoveAtSwap(IndexToRemove);
-	UnitCombatComponents.RemoveAtSwap(IndexToRemove);
-	UnitTargetLocations.RemoveAtSwap(IndexToRemove);
-	UnitEngagedTargetIndices.RemoveAtSwap(IndexToRemove);
+    const FGenericTeamId TeamIdOfRemovedUnit = UnitTeamIDs[IndexToRemove];
+    if (FTeamIndicesArrayWrapper* Wrapper = TeamUnitIndices.Find(TeamIdOfRemovedUnit))
+    {
+       Wrapper->Indices.Remove(IndexToRemove);
+    }
+    
+    if (IndexToRemove < LastIndex)
+    {
+       const FGenericTeamId TeamIdOfSwappedUnit = UnitTeamIDs[LastIndex];
+       if (FTeamIndicesArrayWrapper* Wrapper = TeamUnitIndices.Find(TeamIdOfSwappedUnit))
+       {
+          Wrapper->Indices.Remove(LastIndex);
+          Wrapper->Indices.Add(IndexToRemove);
+       }
+    }
 
-	if (IndexToRemove < LastIndex)
-	{
-		AActor* SwappedActor = UnitActors[IndexToRemove];
-		UnitIndexMap.Add(SwappedActor, IndexToRemove);
-	}
+    UnitActors.RemoveAtSwap(IndexToRemove);
+    UnitLocations.RemoveAtSwap(IndexToRemove);
+    UnitTeamIDs.RemoveAtSwap(IndexToRemove);
+    UnitSourceSpawners.RemoveAtSwap(IndexToRemove);
+    UnitLODComponents.RemoveAtSwap(IndexToRemove);
+    UnitCombatComponents.RemoveAtSwap(IndexToRemove);
+    UnitTargetLocations.RemoveAtSwap(IndexToRemove);
+    UnitEngagedTargetIndices.RemoveAtSwap(IndexToRemove);
 
-	UnitIndexMap.Remove(Actor);
+    if (IndexToRemove < LastIndex)
+    {
+       AActor* SwappedActor = UnitActors[IndexToRemove];
+       UnitIndexMap.Add(SwappedActor, IndexToRemove);
+    }
+
+    if (IsValid(SourceSpawner))
+    {
+       if (ACharacter* CharacterToReady = Cast<ACharacter>(Actor))
+       {
+          SourceSpawner->MarkUnitAsReady(CharacterToReady);
+       }
+    }
 }
 
 void ASLBattleManager::UpdateAILODs()
@@ -460,9 +468,10 @@ void ASLBattleManager::UpdateAILODs()
 
     for (int32 i = 0; i < NumUnits; ++i)
     {
-        const float DistanceSquared = FVector::DistSquared(UnitLocations[i], PlayerLocation);
+    	if (!IsValid(UnitActors[i])) continue;
+    	const float DistanceSquared = FVector::DistSquared(UnitActors[i]->GetActorLocation(), PlayerLocation);
+        
         EAILODLevel IdealLevel;
-
         if (DistanceSquared <= FMath::Square(LODDistances.MaxDetailDistance)) IdealLevel = EAILODLevel::Max;
         else if (DistanceSquared <= FMath::Square(LODDistances.HighDetailDistance)) IdealLevel = EAILODLevel::High;
         else if (DistanceSquared <= FMath::Square(LODDistances.MediumDetailDistance)) IdealLevel = EAILODLevel::Medium;
@@ -484,7 +493,11 @@ void ASLBattleManager::UpdateAILODs()
 
         HighCostIndices.Sort([&](const int32& A, const int32& B)
         {
-            return FVector::DistSquared(UnitLocations[A], PlayerLocation) < FVector::DistSquared(UnitLocations[B], PlayerLocation);
+        	if (!UnitActors.IsValidIndex(A) || !UnitActors.IsValidIndex(B) || !IsValid(UnitActors[A]) || !IsValid(UnitActors[B]))
+        	{
+				return false;
+			}
+			return FVector::DistSquared(UnitActors[A]->GetActorLocation(), PlayerLocation) < FVector::DistSquared(UnitActors[B]->GetActorLocation(), PlayerLocation);
         });
     	
         for (int32 i = HighCostBudget; i < HighCostIndices.Num(); ++i)
@@ -512,6 +525,33 @@ void ASLBattleManager::UpdateAILODs()
         if (UnitLODComponents.IsValidIndex(i) && IsValid(UnitLODComponents[i]))
         {
             UnitLODComponents[i]->SetLODLevel(FinalLODs[i]);
+
+        	// Debug
+        	/*
+        	FString UnitName = UnitActors[i]->GetName();
+        	FString LODString = USLAILODComponent::LODLevelToString(FinalLODs[i]);
+        	FColor DebugColor = FColor::White;
+
+        	switch (FinalLODs[i])
+        	{
+        	case EAILODLevel::Max:    DebugColor = FColor::Red; break;
+        	case EAILODLevel::High:   DebugColor = FColor::Yellow; break;
+        	case EAILODLevel::Medium: DebugColor = FColor::Green; break;
+        	case EAILODLevel::Low:    DebugColor = FColor::Cyan; break;
+        	case EAILODLevel::Culled: DebugColor = FColor::Black; break;
+        	}
+
+        	DrawDebugString(
+				GetWorld(),
+				UnitActors[i]->GetActorLocation() + FVector(0, 0, 100.f),
+				LODString,
+				nullptr,
+				DebugColor,
+				0.0f,
+				true
+			);
+			*/
+        	// Debug
         }
     }
 }

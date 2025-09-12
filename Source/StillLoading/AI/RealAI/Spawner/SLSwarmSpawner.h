@@ -21,6 +21,14 @@ struct FQueuedSpawnRequest
 	int32 Count;
 };
 
+UENUM(BlueprintType)
+enum class EUnitPoolState : uint8
+{
+	Ready,
+	InUse,
+	PendingReturn
+};
+
 USTRUCT()
 struct FPooledUnit
 {
@@ -32,6 +40,8 @@ struct FPooledUnit
 	TSubclassOf<ACharacter> UnitClass;
 	UPROPERTY()
 	bool bInUse = false;
+	UPROPERTY()
+	EUnitPoolState State = EUnitPoolState::Ready;
 };
 
 struct FAsyncSpawnRequest
@@ -52,9 +62,6 @@ struct FSimpleSpawnComposition
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	int32 SpawnCount = 1;
 };
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWaveCompletedBySpawner, int32, WaveNumber, ASLSwarmSpawner*, CompletedSpawner);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAllWavesCompletedBySpawner, ASLSwarmSpawner*, CompletedSpawner);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitSpawned, AActor*, SpawnedUnit, ASLSwarmSpawner*, SourceSpawner);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitReturnedToPool, AActor*, ReturnedUnit, ASLSwarmSpawner*, SourceSpawner);
@@ -80,6 +87,7 @@ public:
 	void ReturnAllActiveUnitsToPool();
 	UFUNCTION(BlueprintCallable)
 	FVector GetNextTargetPointLocation(AActor* Unit, int32& CurrentTargetIndex);
+	void MarkUnitAsReady(ACharacter* Unit);
 	
     // ASLBattleManager가 이 스포너에게 웨이브 시작을 지시할 함수
     UFUNCTION(BlueprintCallable, Category = "Spawner|WaveControl")
@@ -87,12 +95,6 @@ public:
     // ASLBattleManager가 이 스포너에게 웨이브 스폰 중지를 지시할 함수
     UFUNCTION(BlueprintCallable, Category = "Spawner|WaveControl")
     void StopWaveSpawning();
-
-    // ASLBattleManager에게 웨이브 완료를 알릴 델리게이트
-    UPROPERTY(BlueprintAssignable, Category = "Spawner|Events")
-    FOnWaveCompletedBySpawner OnWaveCompletedBySpawner;
-    UPROPERTY(BlueprintAssignable, Category = "Spawner|Events")
-    FOnAllWavesCompletedBySpawner OnAllWavesCompletedBySpawner;
 
     // ASwarmSpawner의 유닛 스폰/반환/파괴 이벤트 (ASLBattleManager가 리슨)
     UPROPERTY(BlueprintAssignable, Category = "Spawner|Events")
@@ -116,7 +118,7 @@ public:
     void ExpandPool(const TSubclassOf<ACharacter>& UnitClass, const int32 Count);
     void CleanupPool();
 
-    ACharacter* GetOrCreateAndPlaceUnit(TSubclassOf<ACharacter> UnitClass);
+    ACharacter* GetOrCreateAndPlaceUnit(const TSubclassOf<ACharacter>& UnitClass);
     void ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSubclassOf<AAIController> ControllerClass, FGenericTeamId TeamID, float AvoidanceWeight);
     UFUNCTION(BlueprintCallable, Category = "Spawner|Spawn")
     ACharacter* SpawnAndConfigureUnit(TSubclassOf<ACharacter> UnitClass, TSubclassOf<AAIController> ControllerClass, FGenericTeamId TeamID, float AvoidanceWeight);
@@ -132,11 +134,6 @@ public:
     void SetCachedBattleManager(class ASLBattleManager* NewBattleManager);
 	
 protected:
-    UFUNCTION()
-    void HandleInternalWaveCompleted(int32 WaveNumber, USLWaveSpawnerComponent* CompletedComp);
-    UFUNCTION()
-    void HandleInternalAllWavesCompleted(USLWaveSpawnerComponent* CompletedComp);
-
 	// 오브젝트 풀링 관련 UPROPERTY
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ObjectPool")
 	int32 InitialPoolSize = 50;

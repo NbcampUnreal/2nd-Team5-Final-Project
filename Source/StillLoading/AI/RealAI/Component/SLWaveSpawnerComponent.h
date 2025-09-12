@@ -40,10 +40,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Wave Spawning")
 	void StopWaveSpawning();
 
-	// 현재 웨이브 스폰이 활성화되어 있는지 확인
-	UFUNCTION(BlueprintPure, Category = "Wave Spawning")
-	bool IsWaveSpawningActive() const;
-
 	// 무한 스폰
 	UFUNCTION(BlueprintCallable)
 	bool IsInfiniteRespawnMode() const { return bEnableInfiniteRespawn; }
@@ -57,22 +53,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Infinite Respawn", meta = (EditCondition = "bEnableInfiniteRespawn"))
 	float RespawnDelay = 5.0f;
 
-	// 웨이브 완료 시 호출될 델리게이트 (ASwarmSpawner가 리슨)
-	UPROPERTY(BlueprintAssignable, Category = "Wave Spawning|Events")
-	FOnWaveCompleted OnWaveCompleted;
-	UPROPERTY(BlueprintAssignable, Category = "Wave Spawning|Events")
-	FOnAllWavesCompleted OnAllWavesCompleted;
-
 protected:
 	// 내부 스폰 로직 (웨이브 데이터 기반)
 	void StartCurrentWaveSpawning();
-	void FinishCurrentWave();
 
 	UPROPERTY(Transient)
 	TObjectPtr<ASLSwarmSpawner> CachedOwnerSpawner;
 
 	int32 CurrentWaveIndex; // 현재 진행 중인 웨이브의 인덱스
-	bool bIsSpawningActive; // 스폰 활성화 상태
 
 	FTimerHandle WaveSpawnTimerHandle; // 웨이브 스폰 타이머 핸들
 

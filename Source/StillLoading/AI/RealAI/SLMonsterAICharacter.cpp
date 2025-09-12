@@ -23,7 +23,6 @@ ASLMonsterAICharacter::ASLMonsterAICharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
-	GetCharacterMovement()->MaxWalkSpeed = 300;
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = ASLMonsterAIController::StaticClass();
@@ -346,6 +345,7 @@ void ASLMonsterAICharacter::OnUnhoveredByCursor_Implementation(ASLBasePlayerCont
 void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                           EHitAnimType AnimType)
 {
+	if (IsInPrimaryState(TAG_AI_Dead)) return;
 	LastAnimType = AnimType;
 	/*
 	if (LastAnimType == EHitAnimType::HAT_FallBack && !IsInPrimaryState(TAG_AI_Idle))
@@ -572,10 +572,6 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 		AICon->ToggleLockOnWidget(false);
 	}
 
-	// 콜리전 비활성화
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	// BattleComponent에 전달
 	if (Attacker)
 	{
@@ -589,20 +585,19 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 			}
 		}
 	}
+}
 
-	GetWorld()->GetTimerManager().SetTimer(
-		DeadTimerHandle,
-		this,
-		&ASLMonsterAICharacter::HandleAIPoolReturnOnDeath,
-		2.0f,
-		false
-	);
+void ASLMonsterAICharacter::OnDeathMontageEnded()
+{
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	HandleAIPoolReturnOnDeath();
 }
 
 void ASLMonsterAICharacter::HandleAIPoolReturnOnDeath()
 {
 	CurrentHealth = MaxHealth;
-	SetPrimaryState(TAG_AI_Idle);
 	OnMonsterDied.Broadcast(this);
 
 	if (AnimationComponent)
@@ -619,7 +614,7 @@ void ASLMonsterAICharacter::HandleAIPoolReturnOnDeath()
 		}
 	}
 
-	ToggleWeaponState(true);
+	ToggleWeaponState(false);
 
 	GetWorld()->GetTimerManager().ClearTimer(MaterialResetTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(CollisionResetTimerHandle);
@@ -637,7 +632,7 @@ void ASLMonsterAICharacter::HandleAIPoolReturnOnDeath()
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AI 유닛 '%s': BornSpawner를 찾을 수 없어 액터를 파괴합니다."), *GetName());
-		SetLifeSpan(2.f);
+		SetLifeSpan(0.5f);
 	}
 }
 

@@ -44,23 +44,17 @@ void ASLSwarmSpawner::BeginPlay()
 
 	ObjectPool.Empty();
 
-	if (IsValid(WaveSpawnerComponent))
+	if (IsValid(WaveSpawnerComponent) && GetWorld() && GetWorld()->IsGameWorld())
 	{
-		WaveSpawnerComponent->OnWaveCompleted.AddDynamic(this, &ASLSwarmSpawner::HandleInternalWaveCompleted);
-		WaveSpawnerComponent->OnAllWavesCompleted.AddDynamic(this, &ASLSwarmSpawner::HandleInternalAllWavesCompleted);
+		InitializeObjectPool(WaveSpawnerComponent->GetAllWaveCompositions());
 
-		if (GetWorld() && GetWorld()->IsGameWorld())
-		{
-			InitializeObjectPool(WaveSpawnerComponent->GetAllWaveCompositions());
-
-			GetWorld()->GetTimerManager().SetTimer(
-				PoolExpansionTimer,
-				this,
-				&ASLSwarmSpawner::ExpandPoolIncrementally,
-				0.05f,
-				true
-			);
-		}
+		GetWorld()->GetTimerManager().SetTimer(
+			PoolExpansionTimer,
+			this,
+			&ASLSwarmSpawner::ExpandPoolIncrementally,
+			0.05f,
+			true
+		);
 	}
 }
 
@@ -69,13 +63,6 @@ void ASLSwarmSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
 		CleanupPool();
-	}
-
-	if (IsValid(WaveSpawnerComponent))
-	{
-		WaveSpawnerComponent->OnWaveCompleted.RemoveDynamic(this, &ASLSwarmSpawner::HandleInternalWaveCompleted);
-		WaveSpawnerComponent->OnAllWavesCompleted.
-		                      RemoveDynamic(this, &ASLSwarmSpawner::HandleInternalAllWavesCompleted);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -123,6 +110,29 @@ FVector ASLSwarmSpawner::GetNextTargetPointLocation(AActor* Unit, int32& Current
 	return Location;
 }
 
+void ASLSwarmSpawner::MarkUnitAsReady(ACharacter* Unit)
+{
+	if (!IsValid(Unit)) return;
+
+	for (FPooledUnit& PoolEntry : ObjectPool)
+	{
+		if (PoolEntry.Character == Unit)
+		{
+			if (PoolEntry.State == EUnitPoolState::PendingReturn)
+			{
+				PoolEntry.State = EUnitPoolState::Ready;
+				UE_LOG(LogTemp, Log, TEXT("SwarmSpawner: 유닛 '%s'가 풀에서 'Ready' 상태로 전환됨."), *Unit->GetName());
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("SwarmSpawner: 'PendingReturn' 상태가 아닌 유닛('%s')에 대해 MarkUnitAsReady가 호출됨!"), *Unit->GetName());
+			}
+			
+			return;
+		}
+	}
+}
+
 bool ASLSwarmSpawner::StartWave(int32 WaveIndex)
 {
 	if (IsValid(WaveSpawnerComponent))
@@ -140,16 +150,6 @@ void ASLSwarmSpawner::StopWaveSpawning()
 	}
 
 	ReturnAllActiveUnitsToPool();
-}
-
-void ASLSwarmSpawner::HandleInternalWaveCompleted(int32 WaveNumber, USLWaveSpawnerComponent* CompletedComp)
-{
-	OnWaveCompletedBySpawner.Broadcast(WaveNumber, this);
-}
-
-void ASLSwarmSpawner::HandleInternalAllWavesCompleted(USLWaveSpawnerComponent* CompletedComp)
-{
-	OnAllWavesCompletedBySpawner.Broadcast(this);
 }
 
 void ASLSwarmSpawner::ExpandPoolIncrementally()
@@ -236,7 +236,10 @@ ACharacter* ASLSwarmSpawner::GetPooledUnit(TSubclassOf<ACharacter> UnitClass)
 {
 	for (FPooledUnit& PoolEntry : ObjectPool)
 	{
-		if (!PoolEntry.bInUse && PoolEntry.UnitClass == UnitClass && IsValid(PoolEntry.Character))
+		if (PoolEntry.State == EUnitPoolState::Ready
+			&& !PoolEntry.bInUse
+			&& PoolEntry.UnitClass == UnitClass
+			&& IsValid(PoolEntry.Character))
 		{
 			PoolEntry.bInUse = true;
 			PoolEntry.Character->SetActorHiddenInGame(false);
@@ -251,7 +254,10 @@ ACharacter* ASLSwarmSpawner::GetPooledUnit(TSubclassOf<ACharacter> UnitClass)
 
 		for (FPooledUnit& PoolEntry : ObjectPool)
 		{
-			if (!PoolEntry.bInUse && PoolEntry.UnitClass == UnitClass && IsValid(PoolEntry.Character))
+			if (PoolEntry.State == EUnitPoolState::Ready
+				&& !PoolEntry.bInUse
+				&& PoolEntry.UnitClass == UnitClass
+				&& IsValid(PoolEntry.Character))
 			{
 				PoolEntry.bInUse = true;
 				PoolEntry.Character->SetActorHiddenInGame(false);
@@ -273,10 +279,12 @@ void ASLSwarmSpawner::ReturnUnitToPool(ACharacter* Unit)
 		if (PoolEntry.Character == Unit)
 		{
 			PoolEntry.bInUse = false;
+			PoolEntry.State = EUnitPoolState::PendingReturn;
 
 			if (USLAIStateComponent* StateComp = Unit->FindComponentByClass<USLAIStateComponent>())
 			{
 				StateComp->DeactivateAndReset();
+				StateComp->SetSingleBerserkMode(false);
 			}
 
 			Unit->SetActorHiddenInGame(true);
@@ -339,6 +347,7 @@ void ASLSwarmSpawner::ExpandPool(const TSubclassOf<ACharacter>& UnitClass, const
 			NewEntry.Character = NewUnit;
 			NewEntry.bInUse = false;
 			NewEntry.UnitClass = UnitClass;
+			NewEntry.State = EUnitPoolState::Ready;
 
 			if (ASLMonsterAICharacter* Monster = Cast<ASLMonsterAICharacter>(NewUnit))
 			{
@@ -375,7 +384,7 @@ void ASLSwarmSpawner::CleanupPool()
 	UE_LOG(LogTemp, Log, TEXT("SwarmSpawner: 풀 정리 완료."));
 }
 
-ACharacter* ASLSwarmSpawner::GetOrCreateAndPlaceUnit(TSubclassOf<ACharacter> UnitClass)
+ACharacter* ASLSwarmSpawner::GetOrCreateAndPlaceUnit(const TSubclassOf<ACharacter>& UnitClass)
 {
 	if (!UnitClass)
 	{
@@ -444,13 +453,24 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 {
 	if (!IsValid(SpawnedUnit)) return;
 
+	SpawnedUnit->SetActorHiddenInGame(false);
+	SpawnedUnit->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	SpawnedUnit->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+	if (UCharacterMovementComponent* MovementComp = SpawnedUnit->GetCharacterMovement())
+	{
+		MovementComp->Activate();
+		MovementComp->SetMovementMode(EMovementMode::MOVE_Walking);
+		MovementComp->GravityScale = 1.f;
+		MovementComp->Velocity = FVector::ZeroVector;
+		MovementComp->AvoidanceWeight = AvoidanceWeight;
+	}
+
 	if (ASLMonsterAICharacter* MonsterAI = Cast<ASLMonsterAICharacter>(SpawnedUnit))
 	{
 		if (MonsterAI->IsInPrimaryState(TAG_AI_Dead))
 		{
 			MonsterAI->SetPrimaryState(TAG_AI_Idle);
-			MonsterAI->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			MonsterAI->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			MonsterAI->ToggleWeaponState(true);
 		}
 	}
@@ -515,9 +535,10 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 		MovementComp->AvoidanceWeight = AvoidanceWeight;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("스폰 및 설정된 유닛: %s, 팀: %d"),
+	UE_LOG(LogTemp, Log, TEXT("스폰 및 설정된 유닛: %s, 팀: %d, 위치: %s"),
 	       *SpawnedUnit->GetName(),
-	       TeamID.GetId());
+	       TeamID.GetId(),
+	       *SpawnedUnit->GetActorLocation().ToString());
 }
 
 ACharacter* ASLSwarmSpawner::SpawnAndConfigureUnit(TSubclassOf<ACharacter> UnitClass,
@@ -550,13 +571,29 @@ FVector ASLSwarmSpawner::GetRandomSpawnLocation() const
 		{
 			return RandomLocation.Location;
 		}
+		else 
+		{
+			UE_LOG(LogTemp, Error, TEXT("GetRandomReachablePointInRadius failed. Spawner: %s, Origin: %s, Radius: %f. Using fallback logic."), *GetName(), *Origin.ToString(), Radius);
+		}
 	}
 
 	FVector BoxExtent = SpawnBox->GetScaledBoxExtent();
-	const float X = FMath::RandRange(-BoxExtent.X, BoxExtent.X);
-	const float Y = FMath::RandRange(-BoxExtent.Y, BoxExtent.Y);
+	const float RandX = FMath::RandRange(-BoxExtent.X, BoxExtent.X);
+	const float RandY = FMath::RandRange(-BoxExtent.Y, BoxExtent.Y);
 
-	return Origin + FVector(X, Y, 100.f);
+	FVector StartTrace = Origin + FVector(RandX, RandY, 500.f); 
+	FVector EndTrace = Origin + FVector(RandX, RandY, -500.f);
+
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_Visibility, QueryParams))
+	{
+		return HitResult.Location;
+	}
+
+	return Origin;
 }
 
 void ASLSwarmSpawner::OnUnitDestroyed(AActor* DestroyedActor)
