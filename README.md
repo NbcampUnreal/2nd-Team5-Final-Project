@@ -28,6 +28,7 @@
 | **조진서** | 디자이너, 프로그래밍 | Gimmick, LevelDesign |
 | **최은정** | 디자이너, 애니메이션 | Effect, LevelDesign, UI |
 | **최재욱** | 기획, 디자이너, 프로그래밍 | Cinematic, Gimmick, Objective, SubSystem, UI |
+| **조시연** | 디자이너, 애니메이션 | Animation, Modeling |
 
 ## 🛠️ 핵심 기술 시스템
 
