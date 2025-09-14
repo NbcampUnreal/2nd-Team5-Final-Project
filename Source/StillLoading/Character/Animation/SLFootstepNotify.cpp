@@ -128,7 +128,7 @@ void USLFootstepNotify::EmitFootstepNoiseEvent(const FVector& Location, USkeleta
 	{
 	case EFootstepSoundLevel::Quiet:
 		Loudness = 0.5f;  
-		Range = 600.0f;  
+		Range = 400.0f;  
 		break;
 	case EFootstepSoundLevel::Normal:
 		Loudness = 1.0f;  
