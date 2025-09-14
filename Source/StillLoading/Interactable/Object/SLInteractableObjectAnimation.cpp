@@ -35,11 +35,17 @@ void ASLInteractableObjectAnimation::OnInteracted(const ASLPlayerCharacterBase* 
 		UE_LOG(LogTemp, Warning, TEXT("Character is not valid"));
 		return;
 	}
-	
+
 	ASLPlayerCharacterBase* MutableCharacter = const_cast<ASLPlayerCharacterBase*>(InCharacter);
+	
+	if (!CanInteractWithCurrentSection(MutableCharacter))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannot interact - not in Idle section"));
+		return;
+	}
+	
 	CachedCharacter = MutableCharacter;
 	
-	// 숨기 인터페이스 체크
 	if (!MutableCharacter->GetClass()->ImplementsInterface(USLHideableInterface::StaticClass()))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Character does not implement ISLHideableInterface"));
@@ -58,6 +64,38 @@ void ASLInteractableObjectAnimation::OnInteracted(const ASLPlayerCharacterBase* 
 		ISLHideableInterface::Execute_SetHidingState(MutableCharacter, false);
 		bIsPlayerHiding = false;
 	}
+}
+
+bool ASLInteractableObjectAnimation::CanInteractWithCurrentSection(ASLPlayerCharacterBase* InCharacter)
+{
+	if (!IsValid(InCharacter))
+		return false;
+
+	USkeletalMeshComponent* MeshComp = InCharacter->GetMesh();
+	if (!IsValid(MeshComp))
+		return true; 
+
+	UAnimInstance* AnimInstance = MeshComp->GetAnimInstance();
+	if (!IsValid(AnimInstance))
+		return true;
+
+	if (IsValid(EnterMontage) && AnimInstance->Montage_IsPlaying(EnterMontage))
+	{
+		FName CurrentSection = AnimInstance->Montage_GetCurrentSection(EnterMontage);
+		UE_LOG(LogTemp, Log, TEXT("Current Enter Section: %s"), *CurrentSection.ToString());
+		
+		return CurrentSection == FName("Idle");
+	}
+	
+	if (IsValid(ExitMontage) && AnimInstance->Montage_IsPlaying(ExitMontage))
+	{
+		FName CurrentSection = AnimInstance->Montage_GetCurrentSection(ExitMontage);
+		UE_LOG(LogTemp, Log, TEXT("Current Exit Section: %s"), *CurrentSection.ToString());
+		
+		return CurrentSection == FName("Idle");
+	}
+	
+	return true;
 }
 
 void ASLInteractableObjectAnimation::ExecuteEnterAnimation(ASLPlayerCharacterBase* InCharacter)
@@ -88,6 +126,7 @@ void ASLInteractableObjectAnimation::ExecuteEnterAnimation(ASLPlayerCharacterBas
 			{
 				AnimInstance->OnMontageEnded.AddDynamic(this, &ASLInteractableObjectAnimation::OnEnterMontageEnded);
 				AnimInstance->Montage_Play(EnterMontage);
+				UE_LOG(LogTemp, Log, TEXT("Started Enter Montage from Default section"));
 			}
 		}
 	}
@@ -97,7 +136,7 @@ void ASLInteractableObjectAnimation::ExecuteExitAnimation(ASLPlayerCharacterBase
 {
 	if (!IsValid(InCharacter))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Character or ExitTransformArrow is not valid"));
+		UE_LOG(LogTemp, Warning, TEXT("Character is not valid"));
 		return;
 	}
 
@@ -111,14 +150,19 @@ void ASLInteractableObjectAnimation::ExecuteExitAnimation(ASLPlayerCharacterBase
 			UAnimInstance* AnimInstance = MeshComp->GetAnimInstance();
 			if (IsValid(AnimInstance))
 			{
+				if (IsValid(EnterMontage) && AnimInstance->Montage_IsPlaying(EnterMontage))
+				{
+					AnimInstance->Montage_Stop(0.2f, EnterMontage);
+				}
+				
 				AnimInstance->OnMontageEnded.AddDynamic(this, &ASLInteractableObjectAnimation::OnExitMontageEnded);
 				AnimInstance->Montage_Play(ExitMontage);
+				UE_LOG(LogTemp, Log, TEXT("Started Exit Montage"));
 			}
 		}
 	}
 	else
 	{
-		// 몽타주가 없으면 즉시 콜리전 복구
 		InCharacter->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
 		if (InCharacter->StimuliSource)
 		{
@@ -136,7 +180,6 @@ void ASLInteractableObjectAnimation::OnEnterMontageEnded(UAnimMontage* Montage, 
 
 	if (Montage == EnterMontage)
 	{
-		// 들어가는 애니메이션이 끝나면 AI 감지 비활성화는 이미 인터페이스에서 처리됨
 
 		USkeletalMeshComponent* MeshComp = CachedCharacter->GetMesh();
 		if (IsValid(MeshComp))
@@ -159,7 +202,6 @@ void ASLInteractableObjectAnimation::OnExitMontageEnded(UAnimMontage* Montage, b
 
 	if (Montage == ExitMontage)
 	{
-		// 나가는 애니메이션이 끝나면 콜리전 복구
 		CachedCharacter->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
 		if (CachedCharacter->StimuliSource)
 		{
