@@ -38,8 +38,10 @@ void UMovementHandlerComponent::BeginPlay()
 		DesiredArmLength = DefaultArmLength;
 
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
-		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
-		OwnerCharacter->GetCharacterMovement()->MaxAcceleration = 8192.0f;
+		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+		//OwnerCharacter->GetCharacterMovement()->MaxAcceleration = 8192.0f;
+		OwnerCharacter->GetCharacterMovement()->MaxAcceleration = 1500.0f;
+		OwnerCharacter->GetCharacterMovement()->BrakingDecelerationWalking = 1024.0f;
 
 		DefaultGravityScale = OwnerCharacter->GetCharacterMovement()->GravityScale;
 		DefaultBrakingDecelerationFalling = OwnerCharacter->GetCharacterMovement()->BrakingDecelerationFalling;

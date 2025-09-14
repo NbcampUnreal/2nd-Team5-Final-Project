@@ -80,12 +80,6 @@ protected:
 	UFUNCTION()
 	void OnSpawnerUnitActuallyDestroyedHandler(AActor* DestroyedActor);
 
-	// --- 웨이브 컴포넌트 델리게이트 핸들러 ---
-	UFUNCTION()
-	void HandleWaveCompleted(int32 WaveNumber, ASLSwarmSpawner* CompletedSpawner);
-	UFUNCTION()
-	void HandleAllWavesCompleted(ASLSwarmSpawner* CompletedSpawner);
-
 	// LOD 관리
 	void UpdateAILODs();
 

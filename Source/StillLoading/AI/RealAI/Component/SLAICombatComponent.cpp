@@ -296,7 +296,7 @@ bool USLAICombatComponent::CanAttack() const
 void USLAICombatComponent::PerformAttack(float DeltaTime)
 {
 	LastAttackTime = GetWorld()->GetTimeSeconds();
-	LogCombatModeStatus(FString::Printf(TEXT("%s 공격!"), *CurrentTarget.TargetActor->GetName()));
+	//LogCombatModeStatus(FString::Printf(TEXT("%s 공격!"), *CurrentTarget.TargetActor->GetName()));
 
 	SafeLookAtTarget(CurrentTarget.TargetActor, DeltaTime);
 	if (IsValid(CachedMyCharacter))

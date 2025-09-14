@@ -750,8 +750,8 @@ void ASLBattleManager::StartNextGlobalWave()
 		return;
 	}
 
-	CurrentGlobalWaveNumber++; // 다음 전역 웨이브 번호 증가
-	SpawnerWaveCompletionStatus.Empty(); // 다음 웨이브를 위해 상태 초기화
+	CurrentGlobalWaveNumber++;
+	SpawnerWaveCompletionStatus.Empty();
 
 	UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 다음 전역 웨이브 (%d) 시작을 지시합니다."), CurrentGlobalWaveNumber);
 
@@ -797,23 +797,6 @@ TArray<FBattleUnitInfo> ASLBattleManager::GetUnitsSpawnedBySpawner(ASLSwarmSpawn
 	return Result;
 }
 
-void ASLBattleManager::HandleWaveCompleted(int32 WaveNumber, ASLSwarmSpawner* CompletedSpawner)
-{
-	if (SpawnerWaveCompletionStatus.Contains(CompletedSpawner))
-	{
-		SpawnerWaveCompletionStatus[CompletedSpawner] = true;
-	}
-}
-
-void ASLBattleManager::HandleAllWavesCompleted(ASLSwarmSpawner* CompletedSpawner)
-{
-	if (SpawnerWaveCompletionStatus.Contains(CompletedSpawner))
-	{
-		SpawnerWaveCompletionStatus[CompletedSpawner] = true;
-		UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 스포너 '%s'가 자신에게 할당된 모든 웨이브를 완료했습니다."),
-		       *CompletedSpawner->GetName());
-	}
-}
 // Engage System
 bool ASLBattleManager::RequestEngagementPermission(AActor* RequestingUnit, AActor* TargetActor)
 {
