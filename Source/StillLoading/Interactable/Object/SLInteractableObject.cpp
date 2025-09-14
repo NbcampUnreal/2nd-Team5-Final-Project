@@ -48,6 +48,7 @@ USLTalkHandlerBase* ASLInteractableObject::GetCurrentTalkHandler()
 void ASLInteractableObject::OnInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType)
 {
 	Super::OnInteracted(InCharacter, InTriggerType);
+	OnBlueprintInteracted(InCharacter, InTriggerType);
 	StartTalk();
 }
 
