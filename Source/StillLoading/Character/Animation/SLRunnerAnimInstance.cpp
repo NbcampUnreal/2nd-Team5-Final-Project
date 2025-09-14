@@ -4,7 +4,7 @@
 #include "TimerManager.h"
 #include "Animation/AnimMontage.h"
 
-static const FName SLOT_UpperBody(TEXT("UpperBody"));
+const FName SLOT_UpperBody(TEXT("UpperBody"));
 
 void USLRunnerAnimInstance::PlayRunStart()
 {
