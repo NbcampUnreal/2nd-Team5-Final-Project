@@ -1177,7 +1177,6 @@ bool ASLPlayerRunnerCharacter::IsUpperBodyMontage(const UAnimMontage* Montage) c
 {
 	if (!Montage) return false;
 
-	const FName SLOT_UpperBody = (TEXT("UpperBody"));
 	for (const FSlotAnimationTrack& Track : Montage->SlotAnimTracks)
 	{
 		if (Track.SlotName == SLOT_UpperBody)
