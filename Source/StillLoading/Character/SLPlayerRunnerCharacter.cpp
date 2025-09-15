@@ -1203,10 +1203,6 @@ void ASLPlayerRunnerCharacter::ResumeAfterSequenceImmediate(bool bPlayRunStart)
 	if (USLRunnerAnimInstance* RunAnim = GetRunnerAnim())
 	{
 		RunAnim->bIsPlayingSequence = false;
-		if (bPlayRunStart)
-		{
-			RunAnim->PlayRunStart();
-		}
 	}
 
 	if (UCharacterMovementComponent* Move = GetCharacterMovement())
