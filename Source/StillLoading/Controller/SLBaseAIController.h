@@ -58,7 +58,9 @@ public:
     
 	UFUNCTION(BlueprintCallable, Category = "AI|Player Detection") 
 	ASLPlayerCharacter* GetPlayerCharacter() const;
-	
+
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	virtual void SetAITeamId(const FGenericTeamId& NewTeamID);
 protected:
 	UFUNCTION()
 	virtual void OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
@@ -68,9 +70,6 @@ protected:
 	
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void BeginPlay() override;
-
-	UFUNCTION(BlueprintCallable, Category = "AI")
-	virtual void SetAITeamId(const FGenericTeamId& NewTeamID);
 
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	void UpdateTargetEvaluation();
@@ -121,31 +120,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "AI|Targeting")
 	float DamageThreatMultiplier;
 
+	UPROPERTY()
+	TObjectPtr<AActor> CurrentBestTarget;
 private:
-	/**
-	 * @brief AI가 인식한 잠재적인 타겟들을 저장하는 맵입니다.
-	 *        키는 타겟으로 인식된 액터(AActor), 값은 해당 타겟에 대한 정보(FTargetInfo)입니다.
-	 *
-	 * - FTargetInfo 구조체:
-	 *   - Actor: 타겟 액터의 약한 참조 포인터(TWeakObjectPtr).
-	 *   - Distance: AI와 타겟 간의 거리(float).
-	 *   - ThreatLevel: AI가 해당 타겟에 대해 평가한 위협도(float).
-	 *   - LastSeenTime: 타겟이 마지막으로 시야에 포착된 시간(float).
-	 *
-	 * @details
-	 * 1. 타겟이 인식되거나 사라질 때마다 업데이트됩니다.
-	 * 2. UpdateTargetEvaluation과 같은 함수에서 가장 적합한 타겟을 결정하기 위해 사용됩니다.
-	 * 3. 사망한 타겟이나 너무 오래된 정보를 가진 타겟은 CleanupDeadTargets나 UpdateTargetEvaluation 호출 시 제거됩니다.
-	 *
-	 * @see AddOrUpdateTarget
-	 * @see UpdateTargetEvaluation
-	 * @see CleanupDeadTargets
-	 */
+
 	UPROPERTY()
 	TMap<TObjectPtr<AActor>, FTargetInfo> PotentialTargets;
 	UPROPERTY()
 	float LastTargetEvaluationTime;
 	
-	UPROPERTY()
-	TObjectPtr<AActor> CurrentBestTarget;
+	
 };
