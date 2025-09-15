@@ -4,6 +4,7 @@
 #include "AI/RealAI/Data/EAIUnitType.h"
 #include "AI/RealAI/Data/FAIUnitStatsData.h"
 #include "Components/ActorComponent.h"
+#include "SaveLoad/SLSaveDataStructs.h"
 #include "SLAIAttributeComponent.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -22,7 +23,12 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable, Category = "AI Attributes")
 	void SetAIStat(EAIChapterType NewChapterType, EAIUnitType NewUnitType);
-	
+
+	UFUNCTION(BlueprintCallable, Category = "AI Attributes")
+	void ToggleBerserkMode(bool bEnable);
+
+	bool IsBerserkModeActive() const { return bIsBerserkModeActive; }
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Attributes")
 	TObjectPtr<UDataTable> AIStatsDataTable;
 
@@ -41,6 +47,25 @@ public:
 protected:
 	void ApplyRandomStatsToOwner(const FAIUnitStatsData& StatsData);
 
-	float AttackRange = 150.f;
+	float AttackRange = 200.f;
 	float AvailDistance = 150.f;
+	float AnimRateScale = 1.0f;
+	float OriginalMaxWalkSpeed = 0.f;
+
+private:
+	/**
+	* EAIChapterType을 ESLChapterType으로 변환합니다.
+	* @param AIType 변환할 EAIChapterType 값
+	* @return 매핑되는 ESLChapterType 값
+	*/
+	ESLChapterType ConvertToESLChapterType(EAIChapterType AIType);
+
+	/**
+	* ESLChapterType을 EAIChapterType으로 변환합니다.
+	* @param SLType 변환할 ESLChapterType 값
+	* @return 매핑되는 EAIChapterType 값
+	*/
+	EAIChapterType ConvertToEAIChapterType(ESLChapterType SLType);
+
+	bool bIsBerserkModeActive = false;
 };

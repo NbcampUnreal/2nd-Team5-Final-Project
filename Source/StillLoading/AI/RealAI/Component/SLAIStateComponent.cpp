@@ -21,13 +21,11 @@ USLAIStateComponent::USLAIStateComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 	CurrentState = EAIBattleState::Idle;
-	CurrentTargetPointIndex = 0;
 }
 
 void USLAIStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	Initialize();
 }
 
 void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -53,18 +51,29 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		}
 	}
 
-	if (IsValid(CachedMyCharacter->BattleManager) && CachedMyCharacter->BattleManager->IsBerserkMode() || bIsBerserkMode)
+	bool bShouldBeInBerserk = false;
+	if (IsValid(CachedMyCharacter->BattleManager))
 	{
-		SetBerserkMode(DeltaTime);
+		bShouldBeInBerserk = CachedMyCharacter->BattleManager->PlayerOnly() &&
+								   (CachedMyCharacter->BattleManager->IsBerserkMode() || bIsBerserkMode);
+
+		if (USLAIAttributeComponent* AttributeComp = CachedMyCharacter->AIAttributeComp)
+		{
+			if (AttributeComp->IsBerserkModeActive() != bShouldBeInBerserk)
+			{
+				AttributeComp->ToggleBerserkMode(bShouldBeInBerserk);
+			}
+		}
+	}
+
+	if (bShouldBeInBerserk)
+	{
+		UpdateBerserkMode(DeltaTime);
 	}
 	else
 	{
 		PerformEnemyDetection();
  		AActor* DetectedEnemy = LastDetectedEnemy.Get();
-  		if (IsValid(DetectedEnemy))
-		{
-			CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
-		}
 		CombatComponent->HandleEnemyDetection(DetectedEnemy);
 	}
 
@@ -87,21 +96,12 @@ void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
 		break;
 	case EAIBattleState::Moving:
 		break;
-
 	case EAIBattleState::Attacking:
 		if (CombatComponent)
 		{
 			CombatComponent->UpdateAttacking(DeltaTime);
 		}
 		break;
-
-	case EAIBattleState::FakeMoving:
-		if (CombatComponent)
-		{
-			CombatComponent->UpdateFakeMovement(DeltaTime);
-		}
-		break;
-
 	default:
 		LogStateModeStatus(TEXT("알 수 없는 AI 상태"));
 		break;
@@ -180,12 +180,6 @@ void USLAIStateComponent::Initialize()
 	SetComponentTickEnabled(true);
 }
 
-void USLAIStateComponent::ActivateAndMoveToInitialTarget(int32 InitialTargetPointIndex)
-{
-	SetCurrentTargetPointIndex(InitialTargetPointIndex);
-	RequestNextTargetPoint();
-}
-
 void USLAIStateComponent::DeactivateAndReset()
 {
 	if (IsValid(CachedAIController))
@@ -201,10 +195,9 @@ void USLAIStateComponent::DeactivateAndReset()
 
 	SetState(EAIBattleState::Idle);
 	SetComponentTickEnabled(false);
-	CurrentTargetPointIndex = 0;
 }
 
-void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, float AvailRange)
+void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, bool bFixeRange, float AvailRange)
 {
 	if (NewTargetLocation.IsNearlyZero(KINDA_SMALL_NUMBER))
 	{
@@ -212,7 +205,7 @@ void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, float Ava
 		return;
 	}
 
-	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp) && !bFixeRange)
 	{
 		AvailRange = CachedMyCharacter->AIAttributeComp->GetAbleDistance();
 	}
@@ -244,59 +237,32 @@ void USLAIStateComponent::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
 {
 	if (Result.IsSuccess())
 	{
-		if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->BattleManager) && IsValid(CachedLODComponent))
+		GetWorld()->GetTimerManager().SetTimer(
+			PatrolRequestTimerHandle,
+			this,
+			&USLAIStateComponent::RequestNextPatrolPointAfterDelay,
+			FMath::RandRange(0.5f, 1.0f),
+			false
+		);
+	}
+}
+
+void USLAIStateComponent::RequestNextPatrolPointAfterDelay()
+{
+	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->BattleManager))
+	{
+		if (CachedLODComponent && CachedLODComponent->GetCurrentLODLevel() == EAILODLevel::Max)
 		{
-			if (CachedLODComponent->GetCurrentLODLevel() == EAILODLevel::Max)
+			if (!CachedMyCharacter->BattleManager->PlayerOnly())
 			{
 				SetState(EAIBattleState::Attacking);
 				return;
 			}
 		}
 
-		CurrentTargetPointIndex++;
-
-		float RandRequestRange = FMath::RandRange(0.5f, 1.0f);
-
-		GetWorld()->GetTimerManager().SetTimer(
-			MovementCompletionTimerHandle,
-			this,
-			&USLAIStateComponent::RequestNextTargetPoint,
-			RandRequestRange,
-			false
-		);
+		if (CachedMyCharacter->BornSpawner->PatrolPoints.Num() == 0) return;
+		CachedMyCharacter->BattleManager->RequestNextPatrolPointForUnit(CachedMyCharacter);
 	}
-}
-
-void USLAIStateComponent::RequestNextTargetPoint()
-{
-	const ASLMonsterAICharacterBase* MyCharacter = Cast<ASLMonsterAICharacterBase>(GetOwner());
-	if (!MyCharacter) return;
-
-	if (IsValid(MyCharacter->BornSpawner))
-	{
-		const FVector NextLocation = MyCharacter->BornSpawner->GetNextTargetPointLocation(CurrentTargetPointIndex);
-
-		if (!NextLocation.IsNearlyZero())
-		{
-			FVector CurrentLocation = GetOwner()->GetActorLocation();
-			float DistanceToTarget = FVector::Dist(CurrentLocation, NextLocation);
-
-			if (DistanceToTarget > 300.0f)
-			{
-				SetMovementTarget(NextLocation);
-			}
-		}
-	}
-	else
-	{
-		LogStateModeStatus(TEXT("BattleManager 또는 Spawner가 유효하지 않음"));
-		SetState(EAIBattleState::Idle);
-	}
-}
-
-void USLAIStateComponent::SetCurrentTargetPointIndex(int32 NewIndex)
-{
-	CurrentTargetPointIndex = NewIndex;
 }
 
 // 서포트 모드 관련
@@ -320,26 +286,12 @@ void USLAIStateComponent::StartSupportMovement(AActor* TargetToSupport)
 	}
 }
 
-void USLAIStateComponent::SetBerserkMode(const float DeltaTime)
+void USLAIStateComponent::UpdateBerserkMode(const float DeltaTime)
 {
 	if (APawn* PlayerPawn = CachedMyCharacter->BattleManager->GetPrimaryTarget())
 	{
 		if (IsValid(PlayerPawn) && IsValid(CombatComponent))
 		{
-			// TODO::추후에 속도 감속 필요 지금은 버서크모드 켜는것만 사용
-			if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
-			{
-				if (auto* MoveComp = Character->GetCharacterMovement())
-				{
-					if (auto* CharacterMoveComp = Cast<ACharacter>(PlayerPawn)->GetCharacterMovement())
-					{
-						USkeletalMeshComponent* MeshComp = Character->GetMesh();
-						MeshComp->GlobalAnimRateScale = 1.5;
-						MoveComp->MaxWalkSpeed = CharacterMoveComp->MaxWalkSpeed + 50.0f;
-					}
-				}
-			}
-
 			CombatComponent->SafeLookAtTarget(PlayerPawn, DeltaTime);
 			CombatComponent->HandleEnemyDetection(PlayerPawn);
 
@@ -353,7 +305,7 @@ void USLAIStateComponent::SetBerserkMode(const float DeltaTime)
 
 			if (DistSq > AttackRangeSq)
 			{
-				SetMovementTarget(PlayerPawn->GetActorLocation(), 100.f);
+				SetMovementTarget(PlayerPawn->GetActorLocation(), false, 100.f);
 			}
 			else
 			{

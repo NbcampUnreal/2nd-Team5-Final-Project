@@ -7,7 +7,6 @@
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "AI/RealAI/BattleManager/SLBattleManager.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -85,7 +84,7 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 
 	const float Distance = FVector::Dist(GetOwner()->GetActorLocation(), CurrentTarget.TargetActor->GetActorLocation());
 
-	float AttackRange = 150.0f;
+	float AttackRange = 200.0f;
 	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
 	{
 		AttackRange = CachedMyCharacter->AIAttributeComp->GetAttackRange();
@@ -102,7 +101,7 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 					return;
 			}
 
-			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), 50);
+			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), false, 50);
 		}
 	}
 	else if (CanAttack())
@@ -254,33 +253,6 @@ void USLAICombatComponent::HandleNoEnemyDetected()
 	}
 }
 
-void USLAICombatComponent::UpdateFakeMovement(const FVector& TargetLocation, float DeltaTime)
-{
-	AActor* OwnerActor = GetOwner();
-	if (!OwnerActor) return;
-
-	if (TargetLocation.IsNearlyZero()) return;
-
-	const FVector CurrentLocation = OwnerActor->GetActorLocation();
-	const FVector Direction = (TargetLocation - CurrentLocation).GetSafeNormal();
-
-	const float FakeMovementSpeed = 150.0f;
-	OwnerActor->SetActorLocation(CurrentLocation + Direction * FakeMovementSpeed * DeltaTime);
-
-	const FRotator TargetRotation = Direction.Rotation();
-	OwnerActor->SetActorRotation(FRotator(0, TargetRotation.Yaw, 0));
-}
-
-void USLAICombatComponent::UpdateFakeMovement(float DeltaTime)
-{
-	if (!IsValid(CurrentTarget.TargetActor))
-	{
-		return;
-	}
-
-	UpdateFakeMovement(CurrentTarget.TargetActor->GetActorLocation(), DeltaTime);
-}
-
 void USLAICombatComponent::SetTarget(AActor* NewTarget)
 {
 	if (CurrentTarget.TargetActor != NewTarget)
@@ -299,10 +271,6 @@ void USLAICombatComponent::ClearTarget()
 {
 	SetTarget(nullptr);
 	GetWorld()->GetTimerManager().ClearTimer(TargetClearTimerHandle);
-	if (StateComponent)
-	{
-		StateComponent->RequestNextTargetPoint();
-	}
 }
 
 bool USLAICombatComponent::CanAttack() const
@@ -328,7 +296,7 @@ bool USLAICombatComponent::CanAttack() const
 void USLAICombatComponent::PerformAttack(float DeltaTime)
 {
 	LastAttackTime = GetWorld()->GetTimeSeconds();
-	LogCombatModeStatus(FString::Printf(TEXT("%s 공격!"), *CurrentTarget.TargetActor->GetName()));
+	//LogCombatModeStatus(FString::Printf(TEXT("%s 공격!"), *CurrentTarget.TargetActor->GetName()));
 
 	SafeLookAtTarget(CurrentTarget.TargetActor, DeltaTime);
 	if (IsValid(CachedMyCharacter))
@@ -422,7 +390,7 @@ void USLAICombatComponent::RetreatFromTarget()
 
 	if (bFoundPoint)
 	{
-		DrawDebugSphere(GetWorld(), NavigableRetreatLocation.Location, 50.f, 12, FColor::Green, false, 3.0f);
+		//DrawDebugSphere(GetWorld(), NavigableRetreatLocation.Location, 50.f, 12, FColor::Green, false, 3.0f);
 
 		if (auto* MoveComp = Cast<ACharacter>(MyActor)->GetCharacterMovement())
 		{
@@ -653,11 +621,6 @@ void USLAICombatComponent::ClearTargetInternal()
 	                                    TargetLostGracePeriod));
 
 	ClearTarget();
-
-	if (StateComponent)
-	{
-		StateComponent->RequestNextTargetPoint();
-	}
 }
 
 void USLAICombatComponent::LogCombatModeStatus(const FString& Message) const

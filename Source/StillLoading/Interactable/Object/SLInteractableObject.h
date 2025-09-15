@@ -25,6 +25,8 @@ public:
 	void SetCurrentTalkHandler(USLTalkHandlerBase* TalkHandler);
 	UFUNCTION(BlueprintCallable, Category = "InteractableObject")
 	USLTalkHandlerBase* GetCurrentTalkHandler();
+	UFUNCTION(BlueprintImplementableEvent, Category = "InteractableObject")
+	void OnBlueprintInteracted(const ASLPlayerCharacterBase* InCharacter, ESLReactiveTriggerType InTriggerType);
 	
 protected:
 	virtual void BeginPlay() override;

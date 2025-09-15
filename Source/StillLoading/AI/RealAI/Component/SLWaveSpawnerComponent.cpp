@@ -6,7 +6,6 @@ USLWaveSpawnerComponent::USLWaveSpawnerComponent()
 {
     PrimaryComponentTick.bCanEverTick = false; 
     CurrentWaveIndex = -1;
-    bIsSpawningActive = false;
 }
 
 void USLWaveSpawnerComponent::BeginPlay()
@@ -63,21 +62,13 @@ bool USLWaveSpawnerComponent::StartWaveByIndex(int32 WaveIndex)
         }
         
         CurrentWaveIndex = 0;
-        bIsSpawningActive = true;
         InitializeInfiniteRespawnMode();
         return true;
-    }
-
-    if (bIsSpawningActive && CurrentWaveIndex == WaveIndex)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("웨이브 %d는 이미 진행 중입니다."), WaveIndex);
-        return false;
     }
 
     if (Waves.IsValidIndex(WaveIndex))
     {
         CurrentWaveIndex = WaveIndex;
-        bIsSpawningActive = true;
         StartCurrentWaveSpawning();
         UE_LOG(LogTemp, Log, TEXT("USLWaveSpawnerComponent '%s': 웨이브 %d 시작 지시 받음."), *GetName(), WaveIndex);
         return true;
@@ -89,17 +80,12 @@ bool USLWaveSpawnerComponent::StartWaveByIndex(int32 WaveIndex)
 
 void USLWaveSpawnerComponent::StartCurrentWaveSpawning()
 {
-    if (!Waves.IsValidIndex(CurrentWaveIndex) || !IsValid(CachedOwnerSpawner))
-    {
-        FinishCurrentWave();
-        return;
-    }
+    if (!Waves.IsValidIndex(CurrentWaveIndex) || !IsValid(CachedOwnerSpawner)) return;
 
     const FWaveData& CurrentWaveData = Waves[CurrentWaveIndex];
     if (CurrentWaveData.WaveCompositions.Num() == 0)
     {
         UE_LOG(LogTemp, Warning, TEXT("USLWaveSpawnerComponent '%s': 웨이브 %d에 스폰할 유닛이 없습니다. 다음 웨이브로 넘어갑니다."), *GetName(), CurrentWaveIndex);
-        FinishCurrentWave();
         return;
     }
 
@@ -113,20 +99,6 @@ void USLWaveSpawnerComponent::StartCurrentWaveSpawning()
                 Composition.TeamID,
                 Composition.AvoidanceWeight)) {}
         }
-    }
-
-    OnWaveCompleted.Broadcast(CurrentWaveIndex, this);
-
-    FinishCurrentWave();
-}
-
-void USLWaveSpawnerComponent::FinishCurrentWave()
-{
-    bIsSpawningActive = false;
-    
-    if (CurrentWaveIndex + 1 >= Waves.Num())
-    {
-        OnAllWavesCompleted.Broadcast(this);
     }
 }
 
@@ -243,7 +215,6 @@ void USLWaveSpawnerComponent::RespawnUnit(TSubclassOf<ACharacter> UnitClass, con
 
 void USLWaveSpawnerComponent::StopWaveSpawning()
 {
-    bIsSpawningActive = false;
     if (GetWorld())
     {
         GetWorld()->GetTimerManager().ClearTimer(WaveSpawnTimerHandle);
@@ -258,9 +229,4 @@ void USLWaveSpawnerComponent::StopWaveSpawning()
     }
     
     UE_LOG(LogTemp, Log, TEXT("USLWaveSpawnerComponent '%s': 스폰 강제 중지."), *GetName());
-}
-
-bool USLWaveSpawnerComponent::IsWaveSpawningActive() const
-{
-    return bIsSpawningActive;
 }

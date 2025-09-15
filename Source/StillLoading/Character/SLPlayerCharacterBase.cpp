@@ -30,23 +30,6 @@ ASLPlayerCharacterBase::ASLPlayerCharacterBase()
 			IMCComp->OnActionStarted.AddDynamic(BufferComp, &UInputBufferComponent::OnIMCActionStarted);
 		}
 	}
-
-	ASLBattleManager* BattleManager = nullptr;
-
-	if (!BattleManager)
-	{
-		BattleManager = Cast<ASLBattleManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASLBattleManager::StaticClass()));
-	}
-
-	if (BattleManager)
-	{
-		BattleManager->RegisterUnit(this, true, nullptr);
-		UE_LOG(LogTemp, Log, TEXT("AI 유닛 '%s': BattleManager에 성공적으로 등록됨."), *GetName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AI 유닛 '%s': BattleManager를 찾을 수 없어 등록에 실패했습니다."), *GetName());
-	}
 }
 
 FGenericTeamId ASLPlayerCharacterBase::GetGenericTeamId() const

@@ -100,11 +100,11 @@ struct FLODDistanceSettings
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings")
-	float MaxDetailDistance = 1500.f;
+	float MaxDetailDistance = 2000.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings")
-	float HighDetailDistance = 2000.f;
+	float HighDetailDistance = 3000.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings")
-	float MediumDetailDistance = 3000.f;
+	float MediumDetailDistance = 4000.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI LOD Settings")
-	float LowDetailDistance = 4000.f;
+	float LowDetailDistance = 4200.f;
 };
