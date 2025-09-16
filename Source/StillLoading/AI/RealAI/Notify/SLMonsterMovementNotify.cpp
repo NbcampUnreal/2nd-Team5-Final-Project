@@ -1,7 +1,6 @@
 #include "SLMonsterMovementNotify.h"
 
-#include "AI/RealAI/MonsterAICharacter.h"
-#include "AI/RealAI/Boid/SwarmManager.h"
+#include "AI/RealAI/SLMonsterAICharacter.h"
 #include "Character/SLPlayerCharacter.h"
 
 void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -11,7 +10,7 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 
 	if (!MeshComp) return;
 
-	AMonsterAICharacter* Character = Cast<AMonsterAICharacter>(MeshComp->GetOwner());
+	ASLMonsterAICharacter* Character = Cast<ASLMonsterAICharacter>(MeshComp->GetOwner());
 	if (!Character) return;
 
 	FVector LaunchVelocity = FVector::ZeroVector;
@@ -48,35 +47,13 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 		break;
 
 	case ECharacterMovementAction::CMA_RotateFaceToTarget:
-		{
-			ASwarmAgent* Agent = Cast<ASwarmAgent>(MeshComp->GetOwner());
-			if (!Agent) return;
-
-			AActor* Target = Agent->MySwarmManager->CurrentSquadTarget;
-			if (!Target) return;
-
-			FVector StartLocation = Agent->GetActorLocation();
-			FVector TargetLocation = Target->GetActorLocation();
-			FVector Direction = (TargetLocation - StartLocation).GetSafeNormal();
-
-			Direction.Z = 0.0f;
-
-			FRotator TargetRotation = Direction.Rotation();
-
-			Agent->SetActorRotation(TargetRotation);
-			break;
-		}
+		break;
 
 	case ECharacterMovementAction::CMA_EndRotate:
-		{
-			if (AActor* OwnerActor = MeshComp->GetOwner())
-			{
-				if (ASwarmAgent* Agent = Cast<ASwarmAgent>(OwnerActor))
-				{
-					Agent->StopSpinning();
-				}
-			}
-		}
+		break;
+
+	case ECharacterMovementAction::CMA_CorrectLocation:
+		Character->CorrectActorLocationPostAttack();
 		break;
 
 	default:

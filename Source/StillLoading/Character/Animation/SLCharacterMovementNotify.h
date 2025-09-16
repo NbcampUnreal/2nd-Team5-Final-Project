@@ -21,6 +21,7 @@ enum class ECharacterMovementAction : uint8
 	CMA_EndRotate			UMETA(DisplayName = "End Rotate"),
 	CMA_SpawnDagger			UMETA(DisplayName = "Spawn Dagger"),
 	CMA_SpawnSword			UMETA(DisplayName = "Spawn Sword"),
+	CMA_CorrectLocation		UMETA(DisplayName = "Correct Location"),
 };
 
 UCLASS()

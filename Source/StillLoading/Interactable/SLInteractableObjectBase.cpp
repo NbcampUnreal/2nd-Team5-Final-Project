@@ -33,12 +33,12 @@ void ASLInteractableObjectBase::TriggerReact(ASLPlayerCharacterBase* InCharacter
 
 void ASLInteractableObjectBase::OnDetected_Implementation()
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnDetected"));
+	//UE_LOG(LogTemp, Warning, TEXT("OnDetected"));
 }
 
 void ASLInteractableObjectBase::OnUndetected_Implementation()
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnUndetected"));
+	//UE_LOG(LogTemp, Warning, TEXT("OnUndetected"));
 }
 
 void ASLInteractableObjectBase::BeginPlay()

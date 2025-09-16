@@ -59,6 +59,13 @@
 			"Enabled": true
 		},
 		{
+			"Name": "ChaosClothEditor",
+			"Enabled": true
+		},
+		{
+			"Name": "AnimationBudgetAllocator",
+      "Enabled": true
+		},
 			"Name": "ChaosVehiclesPlugin",
 			"Enabled": true
 		},

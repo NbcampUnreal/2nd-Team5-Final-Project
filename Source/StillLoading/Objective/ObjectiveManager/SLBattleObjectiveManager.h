@@ -6,6 +6,8 @@
 #include "Objective/SLObjectiveManagerBase.h"
 #include "SLBattleObjectiveManager.generated.h"
 
+class ASLBattleManager;
+
 UCLASS()
 class STILLLOADING_API ASLBattleObjectiveManager : public ASLObjectiveManagerBase
 {
@@ -22,4 +24,10 @@ protected:
 	void ActivateHitEffectUI();
 
 	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintCallable)
+	void BindBattleManager();
+
+	UPROPERTY(BlueprintReadOnly)
+	ASLBattleManager* BattleManager = nullptr;
 };

@@ -3,7 +3,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "MotionWarpingComponent.h"
 #include "NiagaraFunctionLibrary.h"
-#include "AI/RealAI/MonsterAICharacter.h"
+#include "AI/RealAI/SLMonsterAICharacter.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/CombatHandlerComponent/CombatHandlerComponent.h"
@@ -88,7 +88,7 @@ void UBattleComponent::ReceiveHitResult(float DamageAmount, AActor* DamageCauser
 
 		OnCharacterHited.Broadcast(DamageCauser, GetDamageByType(AnimType), HitResult, ConvertAttackAnimType(AnimType));
 
-		if (OwnerActor->IsA(AMonsterAICharacter::StaticClass())
+		if (OwnerActor->IsA(ASLMonsterAICharacter::StaticClass())
 			|| OwnerActor->IsA(ASLAIBaseCharacter::StaticClass()))
 		{
 			if (HitEffectData)

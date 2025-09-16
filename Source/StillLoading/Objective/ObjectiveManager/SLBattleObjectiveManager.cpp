@@ -2,7 +2,10 @@
 
 
 #include "Objective/ObjectiveManager/SLBattleObjectiveManager.h"
+
+#include "AI/RealAI/BattleManager/SLBattleManager.h"
 #include "Character/PlayerState/SLBattlePlayerState.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/HUD/SLInGameHUD.h"
 #include "Objective/SLObjectiveHandlerBase.h"
 
@@ -66,4 +69,13 @@ void ASLBattleObjectiveManager::BeginPlay()
 	ObjectiveHandler->OnObjectiveInProgressedDelegate.AddDynamic(this, &ThisClass::ActivateBattleUI);
 	ObjectiveHandler->OnObjectiveCompletedDelegate.AddDynamic(this, &ThisClass::DeactivateBattleUI);
 	ObjectiveHandler->OnObjectiveFailedDelegate.AddDynamic(this, &ThisClass::DeactivateBattleUI);
+}
+
+void ASLBattleObjectiveManager::BindBattleManager()
+{
+	if (!IsValid(BattleManager))
+	{
+		AActor* BattleManagerActor = UGameplayStatics::GetActorOfClass(GetWorld(), ASLBattleManager::StaticClass());
+		BattleManager = Cast<ASLBattleManager>(BattleManagerActor);
+	}
 }
