@@ -31,5 +31,5 @@ void USLIntroWidget::OnEndedOpenAnim()
 
 void USLIntroWidget::OnEndedCloseAnim()
 {
-	MoveToLevelByType(ESLLevelNameType::ELN_MainTitle, false);
+	MoveToMainTitleLevel(false);
 }
