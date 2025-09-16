@@ -64,6 +64,13 @@
 		},
 		{
 			"Name": "AnimationBudgetAllocator",
+      "Enabled": true
+		},
+			"Name": "ChaosVehiclesPlugin",
+			"Enabled": true
+		},
+		{
+			"Name": "ChaosModularVehicle",
 			"Enabled": true
 		}
 	]
