@@ -10,6 +10,7 @@ enum class ESLLevelNameType : uint8
 {
 	ELN_None = 0,
 	ELN_Intro,
+	ELN_MainTitle,
 	ELN_Title,
 	ELN_MapList,
 	ELN_Mini1,
@@ -31,7 +32,8 @@ enum class ESLChapterType : uint8
 	EC_Chapter1,
 	EC_Chapter2,
 	EC_Chapter3,
-	EC_Chapter4
+	EC_Chapter4,
+	EC_Main
 };
 
 UCLASS()

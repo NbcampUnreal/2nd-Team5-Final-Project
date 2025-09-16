@@ -27,6 +27,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "LevelTransfer")
 	void OpenLevelByNameType(ESLLevelNameType LevelNameType, bool bIsFadeOut = true, const FString Option = "");
+
+	UFUNCTION(BlueprintCallable, Category = "LevelTransfer")
+	void MoveToMainTitle(bool bIsFadeOut = true);
 	
 	void PostFadeOut();
 

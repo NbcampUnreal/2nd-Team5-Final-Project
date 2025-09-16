@@ -40,8 +40,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 
-	void SetChapterToUI(ESLChapterType ChapterType);
+	UFUNCTION(BlueprintCallable)
 	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
+
+	void SetChapterToUI(ESLChapterType ChapterType);
 	void RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveAllAdditveWidget();
 
