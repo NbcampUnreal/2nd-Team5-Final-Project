@@ -33,10 +33,19 @@ public:
 	void OnEnemyCleared();
 
 	UFUNCTION(BlueprintCallable)
-	void OnTrigger();
+	void BeginOverlapPlayer();
+
+	UFUNCTION(BlueprintCallable)
+	void EndOverlapPlayer();
 
 	UFUNCTION()
-	void Move();
+	void Move(float DeltaTime);
+
+	UFUNCTION()
+	void Deceleration(float DeltaTime);
+
+	UFUNCTION()
+	void Accelerate(float DeltaTime);
 
 	UPROPERTY(EditAnywhere, Category = "Spline")
 	TObjectPtr<AActor> TargetSplineActor;
@@ -44,17 +53,40 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Spline")
 	TObjectPtr<USplineComponent> TargetSpline;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float AutoSpeed = 100.0f;
+	UPROPERTY()
+	FTimerHandle SpeedTimerHandle;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float DefaultSpeed = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float MaxSpeed = 600.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float IncreasePerSecond = 30.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float InterpSpeed = 5.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float CurrentSpeed;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float TargetSpeed;
+
+	UPROPERTY(VisibleAnywhere, Category = "Movement")
+	bool bDeceleration = false;
+
 
 private:
+
 	UPROPERTY(VisibleAnywhere, Category = "AI")
-	bool bShouldMove = true;
+	bool bShouldMove = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "AI")
 	float CurrentDistance = 0.f;
 
 	UPROPERTY(VisibleAnywhere, Category = "AI")
-	int32 OverlapPawnCount = 0;
+	int32 OverlapEnemyCount = 0;
 
 };

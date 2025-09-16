@@ -7,7 +7,7 @@
 // Sets default values
 ASLHorse::ASLHorse()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 }
@@ -23,7 +23,7 @@ void ASLHorse::BeginPlay()
 		UE_LOG(LogTemp, Log, TEXT("Spline Points: %d"), TargetSpline->GetNumberOfSplinePoints());
 	}
 
-	GetCharacterMovement()->MaxWalkSpeed = AutoSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
 }
 
 // Called every frame
@@ -31,11 +31,12 @@ void ASLHorse::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	Move();
+	Move(DeltaTime);
 }
 
-void ASLHorse::Move()
+void ASLHorse::Move(float DeltaTime)
 {
+
 	if (!bShouldMove)
 	{
 		return;
@@ -51,34 +52,75 @@ void ASLHorse::Move()
 		FVector SplineDir = TargetSpline->GetDirectionAtDistanceAlongSpline(CurrentDistance, ESplineCoordinateSpace::World);
 		FRotator Rotation = TargetSpline->GetRotationAtDistanceAlongSpline(CurrentDistance, ESplineCoordinateSpace::World);
 
+		if (!bDeceleration)
+		{
+			Accelerate(DeltaTime);
+		}
+
+		else
+		{
+			Deceleration(DeltaTime);
+		}
+
 		AddMovementInput(SplineDir, 1.0f);
 		SetActorRotation(Rotation);
 	}
+
 }
 
 
 void ASLHorse::OnEnemyDetected()
 {
-	OverlapPawnCount++;
-	bShouldMove = false;
-
+	OverlapEnemyCount++;
+	bDeceleration = true;
 }
 
 void ASLHorse::OnEnemyCleared()
 {
-	OverlapPawnCount = FMath::Max(OverlapPawnCount - 1, 0);
-	if (OverlapPawnCount == 0)
+	OverlapEnemyCount = FMath::Max(OverlapEnemyCount - 1, 0);
+	if (OverlapEnemyCount == 0)
 	{
 		bShouldMove = true;
-
+		bDeceleration = false;
 	}
 }
 
-void ASLHorse::OnTrigger()
+void ASLHorse::BeginOverlapPlayer()
 {
-	bShouldMove = true;
+	if (OverlapEnemyCount > 0)
+	{
+		return;
+	}
 
+	bShouldMove = true;
+	bDeceleration = false;
 }
+
+void ASLHorse::EndOverlapPlayer()
+{
+	bDeceleration = true;
+}
+
+void ASLHorse::Accelerate(float DeltaTime)
+{
+	TargetSpeed = FMath::Clamp(TargetSpeed + IncreasePerSecond * DeltaTime, DefaultSpeed, MaxSpeed);
+	CurrentSpeed = FMath::FInterpTo(CurrentSpeed, TargetSpeed, DeltaTime, InterpSpeed);
+	GetCharacterMovement()->MaxWalkSpeed = CurrentSpeed;
+}
+
+
+void ASLHorse::Deceleration(float DeltaTime)
+{
+	TargetSpeed = FMath::Clamp(TargetSpeed - IncreasePerSecond * 4.0f * DeltaTime, DefaultSpeed, MaxSpeed);
+	CurrentSpeed = FMath::FInterpTo(CurrentSpeed, TargetSpeed, DeltaTime, InterpSpeed);
+	GetCharacterMovement()->MaxWalkSpeed = CurrentSpeed;
+
+	if (CurrentSpeed <= DefaultSpeed)
+	{
+		bShouldMove = false;
+	}
+}
+
 
 
 
