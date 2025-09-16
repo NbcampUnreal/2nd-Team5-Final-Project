@@ -389,7 +389,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 		}
 	}
 
-	RotateToHitCauser(Causer);
+	//RotateToHitCauser(Causer);
 	//ChangeMeshTemporarily();
 	StartFlyingState();
 	if (AICombatComp)

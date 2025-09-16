@@ -124,10 +124,10 @@ protected:
 private:
 	UFUNCTION()
 	void AttachItemToHand(AActor* ItemActor, FName SocketName) const;
-	UFUNCTION()
+	UFUNCTION() // 케릭터와 콜리전 충돌
 	void OnHitByCharacter(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 						  FVector NormalImpulse, const FHitResult& Hit);
-	UFUNCTION()
+	UFUNCTION() // 일반 피격
 	void OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult, EHitAnimType AnimType);
 	UFUNCTION()
 	void ChangeMeshTemporarily(float Rate = 0.3f);

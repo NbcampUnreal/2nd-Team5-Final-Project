@@ -74,6 +74,7 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	{
 		PerformEnemyDetection();
  		AActor* DetectedEnemy = LastDetectedEnemy.Get();
+		CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
 		CombatComponent->HandleEnemyDetection(DetectedEnemy);
 	}
 
@@ -305,7 +306,7 @@ void USLAIStateComponent::UpdateBerserkMode(const float DeltaTime)
 
 			if (DistSq > AttackRangeSq)
 			{
-				SetMovementTarget(PlayerPawn->GetActorLocation(), false, 100.f);
+				SetMovementTarget(PlayerPawn->GetActorLocation(), true, 100.f);
 			}
 			else
 			{

@@ -47,7 +47,7 @@ public:
 protected:
 	void ApplyRandomStatsToOwner(const FAIUnitStatsData& StatsData);
 
-	float AttackRange = 200.f;
+	float AttackRange = 150.f;
 	float AvailDistance = 150.f;
 	float AnimRateScale = 1.0f;
 	float OriginalMaxWalkSpeed = 0.f;

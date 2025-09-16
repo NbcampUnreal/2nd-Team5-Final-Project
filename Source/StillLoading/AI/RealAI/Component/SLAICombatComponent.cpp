@@ -47,6 +47,7 @@ void USLAICombatComponent::SafeLookAtTarget(AActor* Target, float DeltaTime)
 		|| CachedMyCharacter->IsInPrimaryState(TAG_AI_Dead))
 		return;
 
+	if (bIsOrbiting || bIsRetreating) return;
 	if (!Target || !CachedMyCharacter) return;
 
 	const FVector ToTarget = Target->GetActorLocation() - CachedMyCharacter->GetActorLocation();
@@ -84,7 +85,7 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 
 	const float Distance = FVector::Dist(GetOwner()->GetActorLocation(), CurrentTarget.TargetActor->GetActorLocation());
 
-	float AttackRange = 200.0f;
+	float AttackRange = 150.0f;
 	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
 	{
 		AttackRange = CachedMyCharacter->AIAttributeComp->GetAttackRange();
@@ -101,12 +102,15 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 					return;
 			}
 
-			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), false, 50);
+			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), true, 100);
 		}
 	}
-	else if (CanAttack())
+	else
 	{
-		PerformAttack(DeltaTime);
+		if (CanAttack())
+		{
+			PerformAttack(DeltaTime);
+		}
 	}
 }
 
@@ -298,7 +302,6 @@ void USLAICombatComponent::PerformAttack(float DeltaTime)
 	LastAttackTime = GetWorld()->GetTimeSeconds();
 	//LogCombatModeStatus(FString::Printf(TEXT("%s 공격!"), *CurrentTarget.TargetActor->GetName()));
 
-	SafeLookAtTarget(CurrentTarget.TargetActor, DeltaTime);
 	if (IsValid(CachedMyCharacter))
 	{
 		CachedMyCharacter->PlayAttackAnim();
