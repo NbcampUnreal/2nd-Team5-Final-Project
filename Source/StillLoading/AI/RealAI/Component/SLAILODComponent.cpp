@@ -173,6 +173,7 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
 
         if (CurrentStateComponent)
         {
+        	CurrentStateComponent->SetState(EAIBattleState::Idle);
             CurrentStateComponent->SetComponentTickEnabled(false);
             GetWorld()->GetTimerManager().PauseTimer(CurrentStateComponent->DetectionTimerHandle);
         }
