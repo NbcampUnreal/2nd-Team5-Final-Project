@@ -7,10 +7,11 @@
 #include "Components/WidgetSwitcher.h"
 #include "UI/SLUISubsystem.h"
 #include "UI/Widget/SLButtonWidget.h"
-#include "UI/Widget/AdditiveWidget/SubWidget/SLKeySettingWidget.h"
-#include "UI/Widget/AdditiveWidget/SubWidget/SLLanguageSettingWidget.h"
-#include "UI/Widget/AdditiveWidget/SubWidget/SLGraphicSettingWidget.h"
-#include "UI/Widget/AdditiveWidget/SubWidget/SLSoundSettingWidget.h"
+//#include "UI/Widget/AdditiveWidget/SubWidget/SLKeySettingWidget.h"
+//#include "UI/Widget/AdditiveWidget/SubWidget/SLLanguageSettingWidget.h"
+//#include "UI/Widget/AdditiveWidget/SubWidget/SLGraphicSettingWidget.h"
+//#include "UI/Widget/AdditiveWidget/SubWidget/SLSoundSettingWidget.h"
+#include "UI/Widget/AdditiveWidget/SubWidget/SLOptionSubBase.h"
 #include "Animation/WidgetAnimation.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
@@ -32,6 +33,7 @@ const FName USLOptionWidget::RestartButtonIndex = "RestartButton";
 const FName USLOptionWidget::MoveToTitleButtonIndex = "MoveToTitleButton";
 const FName USLOptionWidget::CloseButtonIndex = "CloseButton";
 const FName USLOptionWidget::SettingResetButtonIndex = "SettingResetButton";
+const FName USLOptionWidget::SaveLoadButtonIndex = "SaveLoadButton";
 
 void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -47,8 +49,9 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	GraphicSetBt->InitButton();
 	SoundSetBt->InitButton();
 	KeySettingButton->InitButton();
+	SaveLoadButton->InitButton();
 
-	RestartButton->InitButton();
+	//RestartButton->InitButton();
 	MoveToTitleButton->InitButton();
 	CloseButton->InitButton();
 	SettingResetButton->InitButton();
@@ -57,8 +60,9 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	GraphicSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedGraphicSetting);
 	SoundSetBt->OnClicked.AddDynamic(this, &ThisClass::OnClickedSoundSetting);
 	KeySettingButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedKeySetting);
+	SaveLoadButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedSaveLoad);
 
-	RestartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedRestart);
+	//RestartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedRestart);
 	MoveToTitleButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedMoveToTitle);
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::CloseWidget);
 	SettingResetButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedSettingReset);
@@ -67,6 +71,7 @@ void USLOptionWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	GraphicSettingWidget->InitWidget(NewUISubsystem);
 	SoundSettingWidget->InitWidget(NewUISubsystem);
 	KeySettingWidget->InitWidget(NewUISubsystem);
+	SaveLoadWidget->InitWidget(NewUISubsystem);
 }
 
 void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
@@ -90,6 +95,7 @@ void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 	GraphicSettingWidget->ActivateWidget(WidgetActivateBuffer);
 	SoundSettingWidget->ActivateWidget(WidgetActivateBuffer);
 	KeySettingWidget->ActivateWidget(WidgetActivateBuffer);
+	SaveLoadWidget->ActivateWidget(WidgetActivateBuffer);
 
 	PlayUISound(ESLUISoundType::EUS_Open);
 
@@ -98,12 +104,12 @@ void USLOptionWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 	if (LevelTransferSubsystem->GetCurrentLevelType() == ESLLevelNameType::ELN_MainTitle)
 	{
 		MoveToTitleButton->SetVisibility(ESlateVisibility::Collapsed);
-		RestartButton->SetVisibility(ESlateVisibility::Collapsed);
+		//RestartButton->SetVisibility(ESlateVisibility::Collapsed);
 	}
 	else
 	{
 		MoveToTitleButton->SetVisibility(ESlateVisibility::Visible);
-		RestartButton->SetVisibility(ESlateVisibility::Visible);
+		//RestartButton->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
@@ -115,6 +121,7 @@ void USLOptionWidget::DeactivateWidget()
 	GraphicSettingWidget->DeactivateWidget();
 	SoundSettingWidget->DeactivateWidget();
 	KeySettingWidget->DeactivateWidget();
+	SaveLoadWidget->DeactivateWidget();
 
 	if (IsValid(CloseAnim))
 	{
@@ -126,6 +133,11 @@ void USLOptionWidget::DeactivateWidget()
 	}
 
 	PlayUISound(ESLUISoundType::EUS_Close);
+}
+
+void USLOptionWidget::ShowSaveLoadUI()
+{
+	LayerSwitcher->SetActiveWidgetIndex(4);
 }
 
 void USLOptionWidget::ApplyTextData()
@@ -155,8 +167,9 @@ void USLOptionWidget::ApplyTextData()
 	GraphicSetBt->SetButtonText(OptionTextMap[GraphicSettingIndex]);
 	SoundSetBt->SetButtonText(OptionTextMap[SoundSettingIndex]);
 	KeySettingButton->SetButtonText(OptionTextMap[KeySettingButtonIndex]);
+	SaveLoadButton->SetButtonText(OptionTextMap[SaveLoadButtonIndex]);
 
-	RestartButton->SetButtonText(OptionTextMap[RestartButtonIndex]);
+	//RestartButton->SetButtonText(OptionTextMap[RestartButtonIndex]);
 	MoveToTitleButton->SetButtonText(OptionTextMap[MoveToTitleButtonIndex]);
 	CloseButton->SetButtonText(OptionTextMap[CloseButtonIndex]);
 	SettingResetButton->SetButtonText(OptionTextMap[SettingResetButtonIndex]);
@@ -214,6 +227,12 @@ void USLOptionWidget::OnClickedKeySetting()
 	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
+void USLOptionWidget::OnClickedSaveLoad()
+{
+	ShowSaveLoadUI();
+	PlayUISound(ESLUISoundType::EUS_Click);
+}
+
 void USLOptionWidget::OnClickedMoveToTitle()
 {
 	PlayUISound(ESLUISoundType::EUS_Click);
@@ -231,21 +250,21 @@ void USLOptionWidget::OnClickedMoveToTitle()
 	//LevelTransferSubsystem->OpenLevelByNameType(ESLLevelNameType::ELN_Title);
 }
 
-void USLOptionWidget::OnClickedRestart()
-{
-	PlayUISound(ESLUISoundType::EUS_Click);
-
-	ASLGameModeBase* GM = Cast<ASLGameModeBase>(GetWorld()->GetAuthGameMode());
-
-	if (IsValid(GM))
-	{
-		GM->ResetModifiedObjectives();
-	}
-
-	CheckValidOfLevelTransferSubsystem();
-	ESLLevelNameType CurrentLevelType = LevelTransferSubsystem->GetCurrentLevelType();
-	LevelTransferSubsystem->OpenLevelByNameType(CurrentLevelType);
-}
+//void USLOptionWidget::OnClickedRestart()
+//{
+//	PlayUISound(ESLUISoundType::EUS_Click);
+//
+//	ASLGameModeBase* GM = Cast<ASLGameModeBase>(GetWorld()->GetAuthGameMode());
+//
+//	if (IsValid(GM))
+//	{
+//		GM->ResetModifiedObjectives();
+//	}
+//
+//	CheckValidOfLevelTransferSubsystem();
+//	ESLLevelNameType CurrentLevelType = LevelTransferSubsystem->GetCurrentLevelType();
+//	LevelTransferSubsystem->OpenLevelByNameType(CurrentLevelType);
+//}
 
 void USLOptionWidget::OnClickedSettingReset()
 {
@@ -259,6 +278,7 @@ void USLOptionWidget::OnClickedSettingReset()
 		GraphicSettingWidget->OnUpdatedSettingValue();
 		SoundSettingWidget->OnUpdatedSettingValue();
 		KeySettingWidget->OnUpdatedSettingValue();
+		SaveLoadWidget->OnUpdatedSettingValue();
 	}
 }
 

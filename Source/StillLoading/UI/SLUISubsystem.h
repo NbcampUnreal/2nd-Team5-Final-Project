@@ -43,6 +43,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetLevelInputMode(ESLInputModeType InputModeType, bool bIsVisibleMouseCursor);
 
+	void ActivateSaveLoadWidget();
 	void SetChapterToUI(ESLChapterType ChapterType);
 	void RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType WidgetType);
 	void RemoveAllAdditveWidget();

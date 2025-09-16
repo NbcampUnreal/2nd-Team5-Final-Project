@@ -101,6 +101,9 @@ bool USLMainTitleWidget::ApplyOtherImage()
 
 void USLMainTitleWidget::OnClickedStartButton()
 {
+	CheckValidOfUISubsystem();
+	UISubsystem->ActivateSaveLoadWidget();
+	PlayUISound(ESLUISoundType::EUS_Click);
 }
 
 void USLMainTitleWidget::OnClickedOptionButton()
