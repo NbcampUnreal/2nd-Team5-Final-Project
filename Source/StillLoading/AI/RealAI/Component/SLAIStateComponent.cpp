@@ -74,7 +74,6 @@ void USLAIStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	{
 		PerformEnemyDetection();
  		AActor* DetectedEnemy = LastDetectedEnemy.Get();
-		CombatComponent->SafeLookAtTarget(DetectedEnemy, DeltaTime);
 		CombatComponent->HandleEnemyDetection(DetectedEnemy);
 	}
 
@@ -89,7 +88,7 @@ void USLAIStateComponent::PerformEnemyDetection()
 	}
 }
 
-void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
+void USLAIStateComponent::UpdateCurrentState(const float DeltaTime) const
 {
 	switch (CurrentState)
 	{
@@ -100,6 +99,7 @@ void USLAIStateComponent::UpdateCurrentState(float DeltaTime)
 	case EAIBattleState::Attacking:
 		if (CombatComponent)
 		{
+			CombatComponent->SafeLookAtTarget(LastDetectedEnemy.Get(), DeltaTime);
 			CombatComponent->UpdateAttacking(DeltaTime);
 		}
 		break;

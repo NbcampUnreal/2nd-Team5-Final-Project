@@ -114,11 +114,6 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 	}
 }
 
-void USLAICombatComponent::UpdateSupporting(float DeltaTime)
-{
-	bIsSupporting = true;
-}
-
 // StateComponent 에서 실행
 AActor* USLAICombatComponent::FindEnemyInDetectionRange()
 {
@@ -257,6 +252,11 @@ void USLAICombatComponent::HandleNoEnemyDetected()
 	}
 }
 
+void USLAICombatComponent::UpdateSupporting(float DeltaTime)
+{
+	bIsSupporting = true;
+}
+
 void USLAICombatComponent::SetTarget(AActor* NewTarget)
 {
 	if (CurrentTarget.TargetActor != NewTarget)
@@ -320,6 +320,12 @@ void USLAICombatComponent::StartRetreating()
 		if (StateComponent && IsValid(StateComponent->CachedAIController))
 		{
 			StateComponent->CachedAIController->StopMovement();
+		}
+
+		if (IsValid(CachedMyCharacter))
+		{
+			CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+			CachedMyCharacter->bUseControllerRotationYaw = true;
 		}
 
 		bIsRetreating = true;
@@ -417,6 +423,13 @@ void USLAICombatComponent::StartRandomTurn()
 
 	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 	{
+		MyCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+		MyCharacter->bUseControllerRotationYaw = true;
+		if (IsValid(CachedAIController) && IsValid(CurrentTarget.TargetActor))
+		{
+			CachedAIController->SetFocus(CurrentTarget.TargetActor);
+		}
+		
 		if (UCharacterMovementComponent* MoveComp = MyCharacter->GetCharacterMovement())
 		{
 			MoveComp->MaxWalkSpeed = 300.0f;
@@ -451,6 +464,13 @@ void USLAICombatComponent::FinishRandomTurn()
 
 	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 	{
+		if (IsValid(CachedAIController))
+		{
+			CachedAIController->ClearFocus(EAIFocusPriority::Gameplay);
+		}
+		MyCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
+		MyCharacter->bUseControllerRotationYaw = false;
+		
 		if (UCharacterMovementComponent* MoveComp = MyCharacter->GetCharacterMovement())
 		{
 			MoveComp->MaxWalkSpeed = OriginalSpeed;
@@ -521,9 +541,17 @@ void USLAICombatComponent::StopRetreating()
 
 	StartRandomTurn();
 
-	if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+	AAIController* MyController = CachedAIController.Get();
+	if (IsValid(MyController))
 	{
-		if (UCharacterMovementComponent* MoveComp = MyCharacter->GetCharacterMovement())
+		MyController->ClearFocus(EAIFocusPriority::Gameplay);
+	}
+	
+	if (IsValid(CachedMyCharacter))
+	{
+		CachedMyCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
+		CachedMyCharacter->bUseControllerRotationYaw = false;
+		if (UCharacterMovementComponent* MoveComp = CachedMyCharacter->GetCharacterMovement())
 		{
 			MoveComp->MaxWalkSpeed = OriginalSpeed;
 		}

@@ -94,7 +94,7 @@ private:
     
     // 상태 관리
     void OnEnterState(EAIBattleState NewState);
-    void UpdateCurrentState(float DeltaTime);
+    void UpdateCurrentState(float DeltaTime) const;
     
     // 이동 완료 콜백
     void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result);
