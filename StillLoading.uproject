@@ -64,8 +64,9 @@
 		},
 		{
 			"Name": "AnimationBudgetAllocator",
-      "Enabled": true
+			"Enabled": true
 		},
+		{
 			"Name": "ChaosVehiclesPlugin",
 			"Enabled": true
 		},
