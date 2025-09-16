@@ -53,4 +53,8 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<ASLPlayerCharacterBase> CachedCharacter;
+
+	// 현재 상호작용 가능한지 체크하는 함수
+	UFUNCTION()
+	bool CanInteractWithCurrentSection(ASLPlayerCharacterBase* InCharacter);
 };
