@@ -11,7 +11,6 @@ ASLDeveloperBossPhase4::ASLDeveloperBossPhase4()
     PrimaryActorTick.bCanEverTick = false;
     
     PhaseType = EDeveloperBossPhase::Phase4_Platformer;
-    FallingFloor = nullptr;
     CurrentSequencePlayer = nullptr;
     bIsAutoWallAttackActive = false;
     bWaitingForCinematic = false;
@@ -38,10 +37,6 @@ void ASLDeveloperBossPhase4::EndPlay(const EEndPlayReason::Type EndPlayReason)
     
     StopAutoWallAttack();
     
-    if (IsValid(FallingFloor))
-    {
-        FallingFloor->OnFloorCollapseCompleted.RemoveAll(this);
-    }
     
     Super::EndPlay(EndPlayReason);
 }
@@ -75,10 +70,6 @@ void ASLDeveloperBossPhase4::EndPhase()
     
     StopAutoWallAttack();
     
-    if (IsValid(FallingFloor))
-    {
-        FallingFloor->ResetFloor();
-    }
     
     Super::EndPhase();
 }
@@ -93,7 +84,6 @@ void ASLDeveloperBossPhase4::SetConfig(const FSLPhase4Config& InConfig)
     Config = InConfig;
     
     UE_LOG(LogTemp, Warning, TEXT("Phase4 Config Set:"));
-    UE_LOG(LogTemp, Warning, TEXT("  - FloorCollapseDelay: %f"), Config.FloorCollapseDelay);
     UE_LOG(LogTemp, Warning, TEXT("  - AutoWallAttackInterval: %f"), Config.AutoWallAttackInterval);
     UE_LOG(LogTemp, Warning, TEXT("  - InitialWallAttackDelay: %f"), Config.InitialWallAttackDelay);
     UE_LOG(LogTemp, Warning, TEXT("  - Cinematics: %d"), Config.Cinematics.Num());
@@ -108,37 +98,6 @@ void ASLDeveloperBossPhase4::SetConfig(const FSLPhase4Config& InConfig)
         {
             UE_LOG(LogTemp, Error, TEXT("  - Cinematic[%d]: NULL"), i);
         }
-    }
-}
-
-void ASLDeveloperBossPhase4::TriggerFloorCollapse()
-{
-    if (!bIsPhaseActive)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase 4 not active! Call StartPhase() first"));
-        return;
-    }
-    
-    if (!IsValid(FallingFloor))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase4FallingFloor not assigned"));
-        return;
-    }
-    
-    if (Config.FloorCollapseDelay > 0.0f)
-    {
-        FTimerHandle Phase4DelayTimer;
-        GetWorld()->GetTimerManager().SetTimer(
-            Phase4DelayTimer,
-            this,
-            &ASLDeveloperBossPhase4::StartFloorCollapse,
-            Config.FloorCollapseDelay,
-            false
-        );
-    }
-    else
-    {
-        StartFloorCollapse();
     }
 }
 
@@ -179,29 +138,6 @@ void ASLDeveloperBossPhase4::StopAutoWallAttack()
     }
 }
 
-void ASLDeveloperBossPhase4::ResetFloor()
-{
-    if (IsValid(FallingFloor))
-    {
-        FallingFloor->ResetFloor();
-    }
-}
-
-void ASLDeveloperBossPhase4::SetFallingFloor(ASLPhase4FallingFloor* InFallingFloor)
-{
-    if (IsValid(FallingFloor))
-    {
-        FallingFloor->OnFloorCollapseCompleted.RemoveAll(this);
-    }
-    
-    FallingFloor = InFallingFloor;
-    
-    if (IsValid(FallingFloor))
-    {
-        FallingFloor->OnFloorCollapseCompleted.AddDynamic(this, &ASLDeveloperBossPhase4::HandleFloorCollapseCompleted);
-    }
-}
-
 void ASLDeveloperBossPhase4::SetAvailableWalls(const TArray<ASLLaunchableWall*>& InWalls)
 {
     AvailableWalls.Empty();
@@ -212,17 +148,6 @@ void ASLDeveloperBossPhase4::SetAvailableWalls(const TArray<ASLLaunchableWall*>&
             AvailableWalls.Add(Wall);
         }
     }
-}
-
-void ASLDeveloperBossPhase4::StartFloorCollapse()
-{
-    if (!IsValid(FallingFloor) || !bIsPhaseActive)
-    {
-        return;
-    }
-    
-    UE_LOG(LogTemp, Display, TEXT("Phase 4: Starting floor collapse"));
-    FallingFloor->StartFloorCollapse();
 }
 
 void ASLDeveloperBossPhase4::PlayStartCinematic()
@@ -312,11 +237,16 @@ void ASLDeveloperBossPhase4::OnCinematicFinished()
 
 void ASLDeveloperBossPhase4::StartPhaseAfterCinematic()
 {
-    UE_LOG(LogTemp, Warning, TEXT(" Phase4: Starting gameplay after start cinematic"));
+    UE_LOG(LogTemp, Warning, TEXT("Phase4: Starting gameplay after start cinematic"));
     UE_LOG(LogTemp, Display, TEXT("️ Phase 4 Platformer Started"));
     
-    // 시네마틱 완료 후 바닥 붕괴 시작
-    TriggerFloorCollapse();
+    // 시네마틱에서 바닥 붕괴가 처리되었으므로 바로 벽 공격 시작
+    UE_LOG(LogTemp, Display, TEXT("Phase 4: Floor collapse handled by cinematic - Starting auto wall attacks"));
+    StartAutoWallAttack();
+    
+    // 페이즈 완료 처리
+    bIsCompleted = true;
+    CheckPhaseCompletion();
 }
 
 void ASLDeveloperBossPhase4::OnPhaseStarted()
@@ -327,23 +257,6 @@ void ASLDeveloperBossPhase4::OnPhaseStarted()
 void ASLDeveloperBossPhase4::OnPhaseEnded()
 {
     UE_LOG(LogTemp, Display, TEXT("Phase 4 Platformer Completed"));
-}
-
-void ASLDeveloperBossPhase4::HandleFloorCollapseCompleted()
-{
-    if (!bIsPhaseActive)
-    {
-        return;
-    }
-    
-    UE_LOG(LogTemp, Display, TEXT("Phase 4: Floor collapse completed - Starting auto wall attacks"));
-    
-    // 자동 벽 공격 시작
-    StartAutoWallAttack();
-    
-    // 페이즈 완료 처리 (라인 시스템을 통해)
-    bIsCompleted = true;
-    CheckPhaseCompletion();
 }
 
 void ASLDeveloperBossPhase4::OnAutoWallAttackTimer()

@@ -31,13 +31,7 @@ public:
     void SetConfig(const FSLPhase1Config& InConfig);
     
     UFUNCTION(BlueprintCallable, Category = "Phase1")
-    void SpawnNextBoss();
-    
-    UFUNCTION(BlueprintCallable, Category = "Phase1")
-    void PlayStartCinematic();
-    
-    UFUNCTION(BlueprintCallable, Category = "Phase1")
-    void PlayBossCinematic(int32 BossIndex);
+    ASLAIBaseCharacter* SpawnNextBoss();
     
     UFUNCTION(BlueprintCallable, Category = "Phase1")
     int32 GetBossesRemaining() const;

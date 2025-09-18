@@ -23,7 +23,6 @@ FSLPhase3Config::FSLPhase3Config()
 
 FSLPhase4Config::FSLPhase4Config()
 {
-	FloorCollapseDelay = 1.0f;
 	AutoWallAttackInterval = 4.0f;
 	InitialWallAttackDelay = 2.0f;
 }

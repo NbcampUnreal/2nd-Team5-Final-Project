@@ -76,7 +76,6 @@ ASLDeveloperBoss::ASLDeveloperBoss()
 
     // Level Actor References
     Phase2RoomSpace = nullptr;
-    Phase4FallingFloor = nullptr;
 
     // Pending Line Activation
     PendingLineActivation.PhaseIndex = -1;
@@ -784,12 +783,13 @@ int32 ASLDeveloperBoss::GetPhase1BossesRemaining() const
     return 0;
 }
 
-void ASLDeveloperBoss::SpawnNextPhase1Boss()
+ASLAIBaseCharacter* ASLDeveloperBoss::SpawnNextPhase1Boss()
 {
     if (IsValid(Phase1Actor))
     {
-        Phase1Actor->SpawnNextBoss();
+        return Phase1Actor->SpawnNextBoss();
     }
+    return nullptr;
 }
 
 void ASLDeveloperBoss::StartPhase3AutoWallAttack()
@@ -815,30 +815,6 @@ bool ASLDeveloperBoss::IsPhase3AutoWallAttackActive() const
         return Phase3Actor->IsAutoWallAttackActive();
     }
     return false;
-}
-
-void ASLDeveloperBoss::StartPhase4FloorCollapse()
-{
-    if (IsValid(Phase4Actor))
-    {
-        Phase4Actor->StartFloorCollapse();
-    }
-}
-
-void ASLDeveloperBoss::ResetPhase4Floor()
-{
-    if (IsValid(Phase4Actor))
-    {
-        Phase4Actor->ResetFloor();
-    }
-}
-
-void ASLDeveloperBoss::TriggerPhase4FloorCollapse()
-{
-    if (IsValid(Phase4Actor))
-    {
-        Phase4Actor->TriggerFloorCollapse();
-    }
 }
 
 void ASLDeveloperBoss::HandlePhaseCompleted()
@@ -1122,16 +1098,6 @@ void ASLDeveloperBoss::SetupPhase4Actor(ASLDeveloperBossPhase4* PhaseActor, cons
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     
     PhaseActor->SetConfig(Config);
-    
-    if (IsValid(Phase4FallingFloor))
-    {
-        PhaseActor->SetFallingFloor(Phase4FallingFloor);
-        UE_LOG(LogTemp, Display, TEXT("Phase4: Falling Floor assigned - %s"), *Phase4FallingFloor->GetName());
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase4: No Falling Floor assigned"));
-    }
     
     SetupPhase4Walls(PhaseActor);
     
