@@ -127,6 +127,7 @@ void USL25DMovementHandlerComponent::OnActionStarted_Implementation(EInputAction
 		//BeginBuff();
 		break;
 	case EInputActionType::EIAT_Attack:
+		// TODO::함수 분리 예정
 		// 패링 진입
 		{
 			const float CurrentTime = GetWorld()->GetTimeSeconds();
@@ -782,31 +783,6 @@ void USL25DMovementHandlerComponent::OnAttackStageFinished(const ECharacterMonta
 
 	switch (AttackStage)
 	{
-	case ECharacterMontageState::ECS_Idle:
-		break;
-	case ECharacterMontageState::ECS_Falling:
-		break;
-	case ECharacterMontageState::ECS_Dodging:
-		break;
-	case ECharacterMontageState::ECS_Dead:
-		break;
-	case ECharacterMontageState::ECS_InputLocked:
-		break;
-	case ECharacterMontageState::ECS_Hit_Weak:
-		break;
-	case ECharacterMontageState::ECS_Hit_Medium:
-		break;
-	case ECharacterMontageState::ECS_Hit_Area:
-		break;
-	case ECharacterMontageState::ECS_Hit_Airborne:
-		break;
-	case ECharacterMontageState::ECS_Hit_Falling:
-		break;
-	case ECharacterMontageState::ECS_Hit_Groggy:
-		break;
-	case ECharacterMontageState::ECS_Hit_Knockback:
-		//OwnerCharacter->GetCharacterMovement()->StopMovementImmediately();
-		break;
 	case ECharacterMontageState::ECS_Attack_Basic1:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_Basic1);
 		break;
@@ -834,26 +810,8 @@ void USL25DMovementHandlerComponent::OnAttackStageFinished(const ECharacterMonta
 	case ECharacterMontageState::ECS_Attack_ExecutionC:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Attack_ExecutionC);
 		break;
-	case ECharacterMontageState::ECS_Defense_Block:
-		break;
-	case ECharacterMontageState::ECS_Defense_Block_Break:
-		break;
 	case ECharacterMontageState::ECS_Defense_Parry:
 		OwnerCharacter->RemoveSecondaryState(TAG_Character_Defense_Parry);
-		break;
-	case ECharacterMontageState::ECS_Cinematic:
-		break;
-	case ECharacterMontageState::ECS_Moving:
-		break;
-	case ECharacterMontageState::ECS_Jumping:
-		break;
-	case ECharacterMontageState::ECS_Charge_Basic:
-		break;
-	case ECharacterMontageState::ECS_Charge_Special:
-		break;
-	case ECharacterMontageState::ECS_Attack_Begin:
-		break;
-	case ECharacterMontageState::ECS_Attack_BeginAir:
 		break;
 	case ECharacterMontageState::ECS_Buff:
 		CachedCombatComponent->SetEmpoweredCombatMode(10);

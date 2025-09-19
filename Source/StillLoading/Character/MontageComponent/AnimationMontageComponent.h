@@ -80,6 +80,8 @@ private:
 	void OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
 	UFUNCTION()
 	bool IsMontagePlayingHelper(const UAnimMontage* Montage) const;
+	UFUNCTION()
+	void StopAIMovement() const;
 
 	UPROPERTY()
 	TObjectPtr<ACharacter> OwnerCharacter;

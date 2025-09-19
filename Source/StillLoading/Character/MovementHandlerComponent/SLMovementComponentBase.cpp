@@ -31,7 +31,6 @@ void USLMovementComponentBase::BeginPlay()
 	}
 
 	OwnerCharacter = Cast<ASLPlayerCharacter>(GetOwner());
-
 	if (OwnerCharacter)
 	{
 		CachedMontageComponent = OwnerCharacter->FindComponentByClass<UAnimationMontageComponent>();
@@ -123,11 +122,11 @@ void USLMovementComponentBase::DanceTime() const
 
 void USLMovementComponentBase::OnActionTriggered_Implementation(EInputActionType ActionType, FInputActionValue Value)
 {
-	
+	//TODO::추가사항 생기면 추가
 }
 
 void USLMovementComponentBase::OnActionStarted_Implementation(EInputActionType ActionType)
-{
+	{
 	switch (ActionType)
 	{
 	case EInputActionType::EIAT_PresentGoal:
@@ -142,15 +141,13 @@ void USLMovementComponentBase::OnActionStarted_Implementation(EInputActionType A
 	case EInputActionType::EIAT_Special:
 		DanceTime();
 		break;
-
-	default:
-		break;
+	default: break;
 	}
 }
 
 void USLMovementComponentBase::OnActionCompleted_Implementation(EInputActionType ActionType)
 {
-	
+	//TODO::추가사항 생기면 추가
 }
 
 void USLMovementComponentBase::OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult,

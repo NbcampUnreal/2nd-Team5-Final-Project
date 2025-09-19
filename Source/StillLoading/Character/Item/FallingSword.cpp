@@ -1,7 +1,7 @@
 #include "FallingSword.h"
 
 #include "NiagaraFunctionLibrary.h"
-#include "AI/RealAI/MonsterAICharacter.h"
+#include "AI/RealAI/SLMonsterAICharacter.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "Character/BattleComponent/BattleComponent.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
@@ -141,7 +141,7 @@ void AFallingSword::ApplySweepDamage()
 	{
 		if (AActor* HitActor = Hit.GetActor())
 		{
-			if (HitActor->IsA(AMonsterAICharacter::StaticClass()) || HitActor->IsA(ASLAIBaseCharacter::StaticClass()))
+			if (HitActor->IsA(ASLMonsterAICharacter::StaticClass()) || HitActor->IsA(ASLAIBaseCharacter::StaticClass()))
 			{
 				if (UBattleComponent* BattleComp = HitActor->FindComponentByClass<UBattleComponent>())
 				{

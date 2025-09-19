@@ -34,6 +34,12 @@ void USLLevelTransferSubsystem::OpenLevelByNameType(ESLLevelNameType LevelNameTy
 	UISubsystem->ActivateFade(false, true);
 }
 
+void USLLevelTransferSubsystem::MoveToMainTitle(bool bIsFadeOut)
+{
+	SetCurrentChapter(ESLChapterType::EC_Main);
+	OpenLevelByNameType(ESLLevelNameType::ELN_MainTitle, bIsFadeOut);
+}
+
 void USLLevelTransferSubsystem::PostFadeOut()
 {
 	DeactiveHudWidget();

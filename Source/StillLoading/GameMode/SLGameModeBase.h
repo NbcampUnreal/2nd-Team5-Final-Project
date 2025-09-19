@@ -7,6 +7,7 @@
 #include "Objective/SLObjectiveBase.h"
 #include "SLGameModeBase.generated.h"
 
+class ASLSwarmSpawner;
 class ASLGameStateBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInProgressObjectiveAdded, USLObjectiveBase*, Objective);

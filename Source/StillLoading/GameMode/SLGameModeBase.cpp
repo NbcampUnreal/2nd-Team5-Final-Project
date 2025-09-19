@@ -1,10 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "SLGameModeBase.h"
 
 #include "GameState/SLGameStateBase.h"
-#include "Kismet/GameplayStatics.h"
 #include "Objective/SLObjectiveBase.h"
 
 ASLGameModeBase::ASLGameModeBase()

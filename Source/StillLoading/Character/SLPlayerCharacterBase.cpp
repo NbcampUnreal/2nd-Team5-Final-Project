@@ -1,8 +1,10 @@
 #include "SLPlayerCharacterBase.h"
 
+#include "AI/RealAI/BattleManager/SLBattleManager.h"
 #include "Buffer/InputBufferComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 
@@ -43,7 +45,6 @@ FGenericTeamId ASLPlayerCharacterBase::GetGenericTeamId() const
 void ASLPlayerCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ASLPlayerCharacterBase::Tick(float DeltaTime)

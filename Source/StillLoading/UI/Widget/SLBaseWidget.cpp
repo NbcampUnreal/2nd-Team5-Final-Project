@@ -331,6 +331,14 @@ void USLBaseWidget::MoveToLevelByType(ESLLevelNameType LevelType, bool bIsFade)
 	LevelSubsystem->OpenLevelByNameType(LevelType, bIsFade);
 }
 
+void USLBaseWidget::MoveToMainTitleLevel(bool bIsFade)
+{
+	USLLevelTransferSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelSubsystem), TEXT("Level Subsystem is invalid"));
+
+	LevelSubsystem->MoveToMainTitle(bIsFade);
+}
+
 void USLBaseWidget::CheckValidOfUISubsystem()
 {
 	if (IsValid(UISubsystem))

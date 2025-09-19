@@ -29,8 +29,6 @@ void USLSkillComponent::ActiveSpawnSkill(ASLPlayerCharacter* Character)
 void USLSkillComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	SpawnerInstance = GetWorld()->SpawnActor<AMonsterSpawner>(AMonsterSpawner::StaticClass(), GetOwner()->GetActorLocation(), GetOwner()->GetActorRotation());
 }
 
 void USLSkillComponent::ActivateSkill(EActiveSkillType SkillType)

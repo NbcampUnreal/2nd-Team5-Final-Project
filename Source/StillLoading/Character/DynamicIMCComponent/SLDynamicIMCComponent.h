@@ -39,7 +39,7 @@ struct FInputBindingData
 	EInputActionType ActionType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UInputAction* Action;
+	TObjectPtr<UInputAction> Action;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInputTriggered, EInputActionType, ActionType, FInputActionValue, InputValue);

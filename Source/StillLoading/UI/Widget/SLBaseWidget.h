@@ -63,6 +63,7 @@ protected:
 	
 	void PlayUISound(ESLUISoundType SoundType);
 	void MoveToLevelByType(ESLLevelNameType LevelType, bool bIsFade = true);
+	void MoveToMainTitleLevel(bool bIsFade = true);
 
 	void CheckValidOfUISubsystem();
 	void CheckValidOfTextPoolSubsystem();

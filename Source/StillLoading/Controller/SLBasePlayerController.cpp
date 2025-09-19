@@ -1,9 +1,11 @@
 #include "SLBasePlayerController.h"
 
+#include "AI/RealAI/BattleManager/SLBattleManager.h"
 #include "Blueprint/UserWidget.h"
 #include "Character/SLPlayerCharacter.h"
 #include "Character/BattleComponent/SLTargetableInterface.h"
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/HUD/SLInGameHUD.h"
 
 ASLBasePlayerController::ASLBasePlayerController()
@@ -43,6 +45,22 @@ void ASLBasePlayerController::OnPossess(APawn* InPawn)
 	BindIMC(InPawn);
 
 	GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::ShowInGameUI);
+
+	ASLBattleManager* BattleManager = nullptr;
+	if (!BattleManager)
+	{
+		BattleManager = Cast<ASLBattleManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASLBattleManager::StaticClass()));
+	}
+
+	if (BattleManager)
+	{
+		BattleManager->RegisterPlayerUnit(this);
+		UE_LOG(LogTemp, Log, TEXT("AI 유닛 '%s': BattleManager에 성공적으로 등록됨."), *GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AI 유닛 '%s': BattleManager를 찾을 수 없어 등록에 실패했습니다."), *GetName());
+	}
 }
 
 void ASLBasePlayerController::OnUnPossess()

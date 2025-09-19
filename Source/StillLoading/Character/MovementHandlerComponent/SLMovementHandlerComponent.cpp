@@ -3,8 +3,8 @@
 #include "MotionWarpingComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
-#include "AI/RealAI/MonsterAICharacter.h"
-#include "AI/RealAI/Controller/MonsterAIController.h"
+#include "AI/RealAI/SLMonsterAICharacter.h"
+#include "AI/RealAI/Controller/SLMonsterAIController.h"
 #include "Character/SLAIBaseCharacter.h"
 #include "Character/SLPlayerCharacterBase.h"
 #include "Character/SLPlayerCharacter.h"
@@ -38,8 +38,10 @@ void UMovementHandlerComponent::BeginPlay()
 		DesiredArmLength = DefaultArmLength;
 
 		OwnerCharacter->GetCharacterMovement()->JumpZVelocity = 500.f;
-		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 700.0f;
-		OwnerCharacter->GetCharacterMovement()->MaxAcceleration = 8192.0f;
+		OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+		//OwnerCharacter->GetCharacterMovement()->MaxAcceleration = 8192.0f;
+		OwnerCharacter->GetCharacterMovement()->MaxAcceleration = 1500.0f;
+		OwnerCharacter->GetCharacterMovement()->BrakingDecelerationWalking = 1024.0f;
 
 		DefaultGravityScale = OwnerCharacter->GetCharacterMovement()->GravityScale;
 		DefaultBrakingDecelerationFalling = OwnerCharacter->GetCharacterMovement()->BrakingDecelerationFalling;
@@ -179,13 +181,13 @@ void UMovementHandlerComponent::OnActionStarted_Implementation(EInputActionType 
 			BufferComp->OnIMCActionStarted(ActionType);
 		}
 		break;
-	case EInputActionType::EIAT_Interaction:
-		break;
 	case EInputActionType::EIAT_Walk:
 		DodgeLoco();
 		break;
 	case EInputActionType::EIAT_LockObject:
 		ToggleLockState();
+		break;
+	case EInputActionType::EIAT_Interaction:
 		break;
 	case EInputActionType::EIAT_ChangeView:
 		SetViewMode(!bActivateTPSView);
@@ -212,12 +214,12 @@ void UMovementHandlerComponent::OnActionCompleted_Implementation(EInputActionTyp
 	case EInputActionType::EIAT_MoveDown:
 	case EInputActionType::EIAT_MoveLeft:
 	case EInputActionType::EIAT_MoveRight:
+	case EInputActionType::EIAT_Interaction:
 		break;
 	case EInputActionType::EIAT_Walk:
 		break;
 	case EInputActionType::EIAT_Jump:
 		break;
-	case EInputActionType::EIAT_Interaction:
 	case EInputActionType::EIAT_Attack:
 		break;
 	case EInputActionType::EIAT_PointMove:
@@ -236,7 +238,7 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 {
 	if (!OwnerCharacter->HasSecondaryState(TAG_Character_PrepareLockOn)) return;
 
-	if (DetectedActor->IsA(AMonsterAICharacter::StaticClass())
+	if (DetectedActor->IsA(ASLMonsterAICharacter::StaticClass())
 		|| DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
 	{
 		if (const ASLAIBaseCharacter* DetectedActorTemp = Cast<ASLAIBaseCharacter>(DetectedActor))
@@ -260,7 +262,7 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 
 			if (const APawn* Pawn = Cast<APawn>(DetectedActor))
 			{
-				if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+				if (ASLMonsterAIController* AIController = Cast<ASLMonsterAIController>(Pawn->GetController()))
 				{
 					AIController->ToggleLockOnWidget(true);
 				}
@@ -710,7 +712,7 @@ void UMovementHandlerComponent::SetViewMode(bool bIsTPS)
     {
         OwnerCharacter->bUseControllerRotationYaw = true;
         OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
-        //OwnerCharacter->CameraBoom->bUsePawnControlRotation = true;
+        OwnerCharacter->CameraBoom->bUsePawnControlRotation = true;
 
     	OwnerCharacter->CameraBoom->SetRelativeLocation(FVector(85.f, 60.f, 60.f));
     	OwnerCharacter->CameraBoom->SetRelativeRotation(FRotator(0.f, -30.f, 0.f));
@@ -1111,7 +1113,7 @@ void UMovementHandlerComponent::ToggleLockState()
 		OwnerCharacter->DisableLockOnMode();
 		if (const APawn* Pawn = Cast<APawn>(CameraFocusTarget))
 		{
-			if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+			if (ASLMonsterAIController* AIController = Cast<ASLMonsterAIController>(Pawn->GetController()))
 			{
 				AIController->ToggleLockOnWidget(false);
 			}
@@ -1129,7 +1131,7 @@ void UMovementHandlerComponent::DisableLock()
 {
 	if (const APawn* Pawn = Cast<APawn>(CameraFocusTarget))
 	{
-		if (AMonsterAIController* AIController = Cast<AMonsterAIController>(Pawn->GetController()))
+		if (ASLMonsterAIController* AIController = Cast<ASLMonsterAIController>(Pawn->GetController()))
 		{
 			AIController->ToggleLockOnWidget(false);
 		}
