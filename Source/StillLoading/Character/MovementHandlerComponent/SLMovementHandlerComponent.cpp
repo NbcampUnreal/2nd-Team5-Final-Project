@@ -1017,6 +1017,7 @@ void UMovementHandlerComponent::DodgeLoco()
 		return;
 	}
 
+	CachedMontageComponent->StopAllMontages(0.2f);
 	ToggleCameraZoom(false);
 
 	FVector DesiredDodgeDirection;
