@@ -522,6 +522,7 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 
 	if (MonsterAI)
 	{
+		MonsterAI->SetGenericTeamId(TeamID);
 		MonsterAI->BornSpawner = this;
 	}
 

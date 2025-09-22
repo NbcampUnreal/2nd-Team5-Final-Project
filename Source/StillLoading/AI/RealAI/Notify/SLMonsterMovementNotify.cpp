@@ -2,6 +2,7 @@
 
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "Character/SLPlayerCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                                       const FAnimNotifyEventReference& EventReference)
@@ -19,7 +20,12 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 	{
 	case ECharacterMovementAction::CMA_LaunchUp:
 		LaunchVelocity = FVector::UpVector * LaunchPower;
-		Character->LaunchCharacter(LaunchVelocity, true, false);
+		Character->LaunchCharacter(LaunchVelocity, true, true);
+
+		if (UCharacterMovementComponent* MoveComp = Character->GetCharacterMovement())
+		{
+			MoveComp->GravityScale = 0.9f;
+		}
 		break;
 
 	case ECharacterMovementAction::CMA_LaunchBack:

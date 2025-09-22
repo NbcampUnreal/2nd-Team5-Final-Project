@@ -238,16 +238,20 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 {
 	if (!OwnerCharacter->HasSecondaryState(TAG_Character_PrepareLockOn)) return;
 
-	if (DetectedActor->IsA(ASLMonsterAICharacter::StaticClass())
-		|| DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
+	if (DetectedActor->IsA(ASLMonsterAICharacter::StaticClass()) || DetectedActor->IsA(ASLAIBaseCharacter::StaticClass()))
 	{
-		if (const ASLAIBaseCharacter* DetectedActorTemp = Cast<ASLAIBaseCharacter>(DetectedActor))
+		if (const ASLMonsterAICharacter* MonsterAI = Cast<ASLMonsterAICharacter>(DetectedActor))
 		{
-			if (const IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(
-				DetectedActorTemp->GetController()))
+			if (const IGenericTeamAgentInterface* PlayerController = Cast<IGenericTeamAgentInterface>(OwnerCharacter->GetController()))
 			{
-				if (const ASLBasePlayerController* PlayerController = Cast<ASLBasePlayerController>(
-					OwnerCharacter->GetController()))
+				if (MonsterAI->GetGenericTeamId() == PlayerController->GetGenericTeamId()) return;
+			}
+		}
+		else if (const ASLAIBaseCharacter* BaseAI = Cast<ASLAIBaseCharacter>(DetectedActor))
+		{
+			if (const IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(BaseAI->GetController()))
+			{
+				if (const IGenericTeamAgentInterface* PlayerController = Cast<IGenericTeamAgentInterface>(OwnerCharacter->GetController()))
 				{
 					if (TeamAgentInterface->GetGenericTeamId() == PlayerController->GetGenericTeamId()) return;
 				}
@@ -268,32 +272,6 @@ void UMovementHandlerComponent::OnRadarDetectedActor(AActor* DetectedActor, floa
 				}
 			}
 		}
-
-		/*
-		const FVector Start = OwnerCharacter->GetActorLocation();
-		const FVector End = DetectedActor->GetActorLocation();
-
-		FHitResult HitResult;
-		const FCollisionQueryParams TraceParams(SCENE_QUERY_STAT(RadarLineTrace), true, OwnerCharacter);
-
-		const bool bHit = GetWorld()->LineTraceSingleByChannel(
-			HitResult,
-			Start,
-			End,
-			ECC_Visibility,
-			TraceParams
-		);
-
-		if (bHit)
-		{
-			if (OwnerCharacter->HasSecondaryState(TAG_Character_LockOn)) return;
-			
-			DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.5f, 0, 1.0f);
-			AActor* HitActor = HitResult.GetActor();
-			CameraFocusTarget = HitActor;
-			OwnerCharacter->EnableLockOnMode();
-		}
-		*/
 	}
 }
 

@@ -136,8 +136,6 @@ public:
 	bool AreEnemies(const FGenericTeamId& me, const FGenericTeamId& target, const bool bIsPlayer) const;
 	UFUNCTION(BlueprintPure, Category = "Battle Management|Units")
 	TArray<FBattleUnitInfo> GetUnitsOfTeam(const FGenericTeamId& TeamId);
-	UFUNCTION(BlueprintPure, Category = "Battle Management|Units")
-	TArray<FBattleUnitInfo> GetEnemiesOfTeam(const FGenericTeamId& TeamId);
 
 	// 버서크 모드 관련
 	UFUNCTION(BlueprintPure, Category = "Battle Management")

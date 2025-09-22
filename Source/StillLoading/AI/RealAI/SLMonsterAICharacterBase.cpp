@@ -21,11 +21,19 @@ ASLMonsterAICharacterBase::ASLMonsterAICharacterBase()
 	BattleComponent = CreateDefaultSubobject<UBattleComponent>(TEXT("BattleComponent"));
 }
 
+void ASLMonsterAICharacterBase::SetGenericTeamId(const FGenericTeamId& NewTeamID)
+{
+	this->TeamId = NewTeamID;
+}
+
+FGenericTeamId ASLMonsterAICharacterBase::GetGenericTeamId() const
+{
+	return this->TeamId;
+}
+
 void ASLMonsterAICharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	
 }
 
 void ASLMonsterAICharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
