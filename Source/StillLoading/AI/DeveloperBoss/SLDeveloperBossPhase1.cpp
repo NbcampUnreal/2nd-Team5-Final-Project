@@ -419,6 +419,8 @@ void ASLDeveloperBossPhase1::PlayCinematicForBossDeath(int32 DeadBossIndex)
         
         FMovieSceneSequencePlaybackSettings PlaybackSettings;
         PlaybackSettings.bHideHud = false;
+        PlaybackSettings.bDisableLookAtInput = false;
+        PlaybackSettings.bDisableMovementInput = false;
         PlaybackSettings.FinishCompletionStateOverride = EMovieSceneCompletionModeOverride::ForceKeepState;
 
         

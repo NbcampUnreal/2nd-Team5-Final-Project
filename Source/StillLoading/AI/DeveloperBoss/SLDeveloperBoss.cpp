@@ -819,12 +819,18 @@ bool ASLDeveloperBoss::IsPhase3AutoWallAttackActive() const
 
 void ASLDeveloperBoss::HandlePhaseCompleted()
 {
+    UE_LOG(LogTemp, Error, TEXT("Boss: HandlePhaseCompleted called"));
+    
     if (!IsValid(CurrentPhaseActor))
     {
+        UE_LOG(LogTemp, Error, TEXT("Boss: No valid current phase actor"));
         return;
     }
     
     int32 CompletedPhaseIndex = CurrentPhaseActor->GetPhaseIndex();
+    UE_LOG(LogTemp, Error, TEXT("Boss: Phase %d completed, starting Phase %d"), 
+           CompletedPhaseIndex, CompletedPhaseIndex + 1);
+    
     OnPhaseCompleted.Broadcast(CompletedPhaseIndex);
     
     // 다음 페이즈로 진행
