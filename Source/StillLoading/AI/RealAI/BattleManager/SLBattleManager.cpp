@@ -713,19 +713,6 @@ FBattleUnitInfo ASLBattleManager::GetUnitInfoByIndex(int32 Index) const
 	return Info;
 }
 
-TArray<FBattleUnitInfo> ASLBattleManager::GetEnemiesOfTeam(const FGenericTeamId& TeamId)
-{
-	TArray<FBattleUnitInfo> Result;
-	for (int32 i = 0; i < UnitActors.Num(); ++i)
-	{
-		if (AreEnemies(TeamId, UnitTeamIDs[i], false))
-		{
-			Result.Add(GetUnitInfoByIndex(i));
-		}
-	}
-	return Result;
-}
-
 void ASLBattleManager::StartNextGlobalWave()
 {
 	if (ManagedSpawners.Num() == 0)

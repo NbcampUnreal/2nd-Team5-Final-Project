@@ -27,6 +27,9 @@ class STILLLOADING_API ASLMonsterAICharacterBase : public ACharacter , public IS
 public:
 	ASLMonsterAICharacterBase();
 
+	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void SetPrimaryState(const FGameplayTag NewState);
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
@@ -64,4 +67,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StateTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team")
+	FGenericTeamId TeamId;
 };

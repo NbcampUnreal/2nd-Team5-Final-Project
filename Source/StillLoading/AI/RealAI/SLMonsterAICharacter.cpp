@@ -324,6 +324,11 @@ void ASLMonsterAICharacter::Landed(const FHitResult& Hit)
 	Super::Landed(Hit);
 
 	StopFlyingState();
+
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->GravityScale = 1.0f;
+	}
 }
 
 void ASLMonsterAICharacter::OnHoveredByCursor_Implementation(ASLBasePlayerController* InstigatingController)
