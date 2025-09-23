@@ -43,8 +43,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAILODComponent> AILODComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
-	TObjectPtr<USLAIPushComponent> AIPushComp;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAIAttributeComponent> AIAttributeComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cached")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
