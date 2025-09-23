@@ -256,7 +256,7 @@ void ASLMonsterAICharacter::OnHitByCharacter(UPrimitiveComponent* HitComp, AActo
 			PushDirection.Z = 0.0f;
 			PushDirection.Normalize();
 
-			LaunchCharacter(PushDirection * 300.0f, true, false);
+			LaunchCharacter(PushDirection * 100.0f, true, true);
 
 			GetWorld()->GetTimerManager().SetTimer(PushResetHandle, this, &ASLMonsterAICharacter::ResetPushFlag, 0.5f,
 			                                       false);
@@ -350,7 +350,7 @@ void ASLMonsterAICharacter::OnUnhoveredByCursor_Implementation(ASLBasePlayerCont
 void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                           EHitAnimType AnimType)
 {
-	if (IsInPrimaryState(TAG_AI_Dead)) return;
+	if (IsInPrimaryState(TAG_AI_Dead) || bIsDead) return;
 	LastAnimType = AnimType;
 	
 	AnimationComponent->StopAllMontages(0.2f);
@@ -365,28 +365,10 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 
 	if (CurrentHealth <= 0.f)
 	{
+		bIsDead = true;
 		SetPrimaryState(TAG_AI_Dead);
-		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		AnimationComponent->PlayAIHitMontage("Dead");
-		
-		if (GetCharacterMovement() && GetCharacterMovement()->IsFalling())
-		{
-			TWeakObjectPtr<const AActor> WeakCauser = Causer;
-			GetWorld()->GetTimerManager().SetTimer(
-				DeadTimerHandle,
-				[this, WeakCauser]()
-				{
-					Dead(WeakCauser.Get(), true);
-				},
-				1.0f,
-				false
-			);
-		}
-		else
-		{
-			Dead(Causer, true);
-		}
-		
+		Dead(Causer, true);
 		return;
 	}
 
@@ -431,7 +413,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 			
 			if (!GetCharacterMovement()->IsFalling())
 			{
-				LaunchCharacter(KnockbackDir * KnockbackPower, true, false);
+				LaunchCharacter(KnockbackDir * KnockbackPower, true, true);
 			}
 
 			SetPrimaryState(TAG_AI_Idle);
@@ -569,6 +551,8 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 	OnDeath();
 	ToggleWeaponState(false);
 
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+
 	if (DeathMaterial && bIsChangeMaterial)
 	{
 		if (GetWorld()->GetTimerManager().IsTimerActive(MaterialResetTimerHandle))
@@ -582,7 +566,7 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 	if (ASLMonsterAIController* AICon = Cast<ASLMonsterAIController>(GetController()))
 	{
 		AICon->StopMovement();
-		AICon->UnPossess();
+		//AICon->UnPossess();
 		AICon->ToggleLockOnWidget(false);
 	}
 

@@ -53,11 +53,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<ASLBattleManager> BattleManager;
 
-	UPROPERTY()
 	float MaxHealth;
-	
-	UPROPERTY()
 	float CurrentHealth;
+	bool bIsDead = false;
 
 protected:
 	virtual void BeginPlay() override;

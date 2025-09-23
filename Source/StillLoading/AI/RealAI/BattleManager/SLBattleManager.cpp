@@ -149,6 +149,13 @@ void ASLBattleManager::BeginPlay()
 
 	TeamUnitIndices.Reserve(1000); // 미리 공간 확보 O(1) 버킷 할당
 
+	PrimaryTarget = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (IsValid(PrimaryTarget.Get()))
+	{
+		RegisterUnit(PrimaryTarget.Get(), true, nullptr);
+		UE_LOG(LogTemp, Log, TEXT("BattleManager: BeginPlay에서 플레이어 등록 완료."));
+	}
+
 	BindToSpawnerEvents();
 	InitializeAISupportingMode();
 }
@@ -380,6 +387,7 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 	if (bIsPlayer)
 	{
 		PlayerUnitIndex = NewIndex;
+		TeamId = 0;
 	}
     
 	UnitActors.Add(Actor);

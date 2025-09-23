@@ -125,9 +125,11 @@ void ASLSwarmSpawner::MarkUnitAsReady(ACharacter* Unit)
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("SwarmSpawner: 'PendingReturn' 상태가 아닌 유닛('%s')에 대해 MarkUnitAsReady가 호출됨!"), *Unit->GetName());
+				UE_LOG(LogTemp, Warning,
+				       TEXT("SwarmSpawner: 'PendingReturn' 상태가 아닌 유닛('%s')에 대해 MarkUnitAsReady가 호출됨!"),
+				       *Unit->GetName());
 			}
-			
+
 			return;
 		}
 	}
@@ -393,7 +395,9 @@ ACharacter* ASLSwarmSpawner::GetOrCreateAndPlaceUnit(const TSubclassOf<ACharacte
 	}
 
 	const ACharacter* DefaultCharacter = UnitClass->GetDefaultObject<ACharacter>();
-	const float CapsuleHalfHeight = DefaultCharacter ? DefaultCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 50.0f;
+	const float CapsuleHalfHeight = DefaultCharacter
+		                                ? DefaultCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()
+		                                : 50.0f;
 
 	ACharacter* SpawnedUnit = GetPooledUnit(UnitClass);
 
@@ -453,9 +457,10 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 {
 	if (!IsValid(SpawnedUnit)) return;
 
+	SpawnedUnit->SetActorTickEnabled(true);
 	SpawnedUnit->SetActorHiddenInGame(false);
 	SpawnedUnit->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	SpawnedUnit->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	//SpawnedUnit->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	if (UCharacterMovementComponent* MovementComp = SpawnedUnit->GetCharacterMovement())
 	{
@@ -468,25 +473,15 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 
 	if (ASLMonsterAICharacter* MonsterAI = Cast<ASLMonsterAICharacter>(SpawnedUnit))
 	{
-		if (MonsterAI->IsInPrimaryState(TAG_AI_Dead))
-		{
-			MonsterAI->SetPrimaryState(TAG_AI_Idle);
-			MonsterAI->ToggleWeaponState(true);
-		}
-	}
-
-	if (UCharacterMovementComponent* MovementComp = SpawnedUnit->GetCharacterMovement())
-	{
-		MovementComp->Activate();
-		MovementComp->SetMovementMode(EMovementMode::MOVE_Walking);
-		MovementComp->GravityScale = 1.f;
-		MovementComp->AvoidanceWeight = AvoidanceWeight;
-		MovementComp->AvoidanceWeight = AvoidanceWeight;
+		MonsterAI->SetPrimaryState(TAG_AI_Idle);
+		MonsterAI->ToggleWeaponState(true);
+		MonsterAI->bIsDead = false;
+		MonsterAI->CurrentHealth = MonsterAI->MaxHealth;
 	}
 
 	AController* CurrentController = SpawnedUnit->GetController();
 	AAIController* AIController = Cast<AAIController>(CurrentController);
-	ASLMonsterAICharacterBase* MonsterAI = Cast<ASLMonsterAICharacterBase>(SpawnedUnit);
+	ASLMonsterAICharacterBase* MonsterAI_Base = Cast<ASLMonsterAICharacterBase>(SpawnedUnit); // 변수명 변경
 
 	if (!AIController
 		|| !AIController->IsA(ControllerClass)
@@ -514,16 +509,17 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 
 	if (AIController)
 	{
+		AIController->SetActorTickEnabled(true);
 		if (IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(AIController))
 		{
 			TeamAgent->SetGenericTeamId(TeamID);
 		}
 	}
 
-	if (MonsterAI)
+	if (MonsterAI_Base)
 	{
-		MonsterAI->SetGenericTeamId(TeamID);
-		MonsterAI->BornSpawner = this;
+		MonsterAI_Base->SetGenericTeamId(TeamID);
+		MonsterAI_Base->BornSpawner = this;
 	}
 
 	if (USLAIStateComponent* StateComp = SpawnedUnit->FindComponentByClass<USLAIStateComponent>())
@@ -572,9 +568,12 @@ FVector ASLSwarmSpawner::GetRandomSpawnLocation() const
 		{
 			return RandomLocation.Location;
 		}
-		else 
+		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("GetRandomReachablePointInRadius failed. Spawner: %s, Origin: %s, Radius: %f. Using fallback logic."), *GetName(), *Origin.ToString(), Radius);
+			UE_LOG(LogTemp, Error,
+			       TEXT(
+				       "GetRandomReachablePointInRadius failed. Spawner: %s, Origin: %s, Radius: %f. Using fallback logic."
+			       ), *GetName(), *Origin.ToString(), Radius);
 		}
 	}
 
@@ -582,7 +581,7 @@ FVector ASLSwarmSpawner::GetRandomSpawnLocation() const
 	const float RandX = FMath::RandRange(-BoxExtent.X, BoxExtent.X);
 	const float RandY = FMath::RandRange(-BoxExtent.Y, BoxExtent.Y);
 
-	FVector StartTrace = Origin + FVector(RandX, RandY, 500.f); 
+	FVector StartTrace = Origin + FVector(RandX, RandY, 500.f);
 	FVector EndTrace = Origin + FVector(RandX, RandY, -500.f);
 
 	FHitResult HitResult;

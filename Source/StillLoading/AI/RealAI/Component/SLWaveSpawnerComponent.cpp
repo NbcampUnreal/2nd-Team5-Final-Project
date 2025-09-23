@@ -168,17 +168,6 @@ void USLWaveSpawnerComponent::OnUnitReturnedToPool(TSubclassOf<ACharacter> UnitC
     if (int32* CurrentCount = CurrentUnitCounts.Find(UnitClass))
     {
         *CurrentCount = FMath::Max(0, *CurrentCount - 1);
-        
-        FTimerHandle RespawnHandle;
-        GetWorld()->GetTimerManager().SetTimer(
-            RespawnHandle,
-            [this, UnitClass]()
-            {
-                ImmediateRespawnFromPool(UnitClass);
-            },
-            RespawnDelay,
-            false
-        );
     }
 }
 
