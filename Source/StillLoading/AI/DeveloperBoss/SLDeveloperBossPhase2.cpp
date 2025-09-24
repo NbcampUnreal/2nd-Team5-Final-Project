@@ -48,8 +48,12 @@ void ASLDeveloperBossPhase2::StartPhase()
 {
     Super::StartPhase();
     
+    UE_LOG(LogTemp, Error, TEXT("Phase2: StartPhase called, RoomSpace valid: %s"), 
+           IsValid(RoomSpace) ? TEXT("YES") : TEXT("NO"));
+    
     if (!IsValid(RoomSpace))
     {
+        UE_LOG(LogTemp, Error, TEXT("Phase2: No RoomSpace, completing immediately"));
         bIsCompleted = true;
         CheckPhaseCompletion();
         return;
@@ -58,8 +62,7 @@ void ASLDeveloperBossPhase2::StartPhase()
     bIsCompleted = false;
     bWaitingForCinematic = false;
 
-    
-    // Phase2 시작 시네마틱 재생
+    UE_LOG(LogTemp, Error, TEXT("Phase2: Playing start cinematic"));
     PlayCinematic(EPhase2CinematicType::Start);
 }
 
@@ -131,6 +134,21 @@ void ASLDeveloperBossPhase2::OnPhaseEnded()
 {
 }
 
+void ASLDeveloperBossPhase2::HandleLineDestroyed(int32 LineIndex)
+{
+    Super::HandleLineDestroyed(LineIndex);
+    if (!bIsPhaseActive || bWaitingForCinematic)
+    {
+        return;
+    }
+    
+    UE_LOG(LogTemp, Error, TEXT("Phase2: Line destroyed, completing phase"));
+    
+    // 선이 파괴되면 Phase2 완료
+    bIsCompleted = true;
+    CheckPhaseCompletion();
+}
+
 void ASLDeveloperBossPhase2::HandleRoomEscape(ASLDeveloperRoomSpace* Room)
 {
     if (!bIsPhaseActive || Room != RoomSpace || bWaitingForCinematic)
@@ -184,14 +202,9 @@ void ASLDeveloperBossPhase2::PlayCinematic(EPhase2CinematicType CinematicType)
 
 void ASLDeveloperBossPhase2::OnCinematicFinished()
 {
-    
+    UE_LOG(LogTemp, Error, TEXT("Phase2: OnCinematicFinished - CurrentCinematicType=%d"), 
+           static_cast<int32>(CurrentCinematicType));
     bWaitingForCinematic = false;
-    
-    // 타임아웃 타이머 클리어
-    if (IsValid(GetWorld()) && CinematicTimeoutTimer.IsValid())
-    {
-        GetWorld()->GetTimerManager().ClearTimer(CinematicTimeoutTimer);
-    }
     
     if (CurrentSequencePlayer)
     {
@@ -208,8 +221,8 @@ void ASLDeveloperBossPhase2::OnCinematicFinished()
         
     case EPhase2CinematicType::Escape:
         // 탈출 시네마틱 완료 후 Phase2 완료
-        bIsCompleted = true;
-        CheckPhaseCompletion();
+        //bIsCompleted = true;
+        //CheckPhaseCompletion();
         break;
     }
 }

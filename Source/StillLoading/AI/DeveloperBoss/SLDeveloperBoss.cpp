@@ -141,21 +141,6 @@ void ASLDeveloperBoss::InitializeBossFight()
 
 void ASLDeveloperBoss::StartPhase(EDeveloperBossPhase PhaseType)
 {
-    // 현재 페이즈 검증
-    if (CurrentPhaseActor && CurrentPhaseActor->IsPhaseActive())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot start phase %d - Current phase %d is still active"), 
-               static_cast<int32>(PhaseType), static_cast<int32>(CurrentPhase));
-        return;
-    }
-    
-    // 유효한 페이즈 타입 검증
-    if (!IsValidPhaseType(PhaseType))
-    {
-        UE_LOG(LogTemp, Error, TEXT("Invalid phase type: %d"), static_cast<int32>(PhaseType));
-        return;
-    }
-    
     // 이전 페이즈 정리
     if (CurrentPhaseActor && CurrentPhaseActor->IsPhaseActive())
     {
