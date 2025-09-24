@@ -27,6 +27,9 @@ class STILLLOADING_API ASLMonsterAICharacterBase : public ACharacter , public IS
 public:
 	ASLMonsterAICharacterBase();
 
+	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
 	void SetPrimaryState(const FGameplayTag NewState);
 	UFUNCTION(BlueprintCallable, Category = "State Tags")
@@ -40,8 +43,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAILODComponent> AILODComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
-	TObjectPtr<USLAIPushComponent> AIPushComp;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAIAttributeComponent> AIAttributeComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cached")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
@@ -52,11 +53,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<ASLBattleManager> BattleManager;
 
-	UPROPERTY()
 	float MaxHealth;
-	
-	UPROPERTY()
 	float CurrentHealth;
+	bool bIsDead = false;
 
 protected:
 	virtual void BeginPlay() override;
@@ -64,4 +63,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State Tags")
 	FGameplayTagContainer StateTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team")
+	FGenericTeamId TeamId;
 };

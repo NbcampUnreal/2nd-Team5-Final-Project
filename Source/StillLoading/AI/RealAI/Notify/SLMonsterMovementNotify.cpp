@@ -2,6 +2,7 @@
 
 #include "AI/RealAI/SLMonsterAICharacter.h"
 #include "Character/SLPlayerCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                                       const FAnimNotifyEventReference& EventReference)

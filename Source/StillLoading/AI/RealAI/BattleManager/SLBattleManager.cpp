@@ -149,6 +149,13 @@ void ASLBattleManager::BeginPlay()
 
 	TeamUnitIndices.Reserve(1000); // 미리 공간 확보 O(1) 버킷 할당
 
+	PrimaryTarget = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (IsValid(PrimaryTarget.Get()))
+	{
+		RegisterUnit(PrimaryTarget.Get(), true, nullptr);
+		UE_LOG(LogTemp, Log, TEXT("BattleManager: BeginPlay에서 플레이어 등록 완료."));
+	}
+
 	BindToSpawnerEvents();
 	InitializeAISupportingMode();
 }
@@ -380,6 +387,7 @@ void ASLBattleManager::RegisterUnit(AActor* Actor, bool bIsPlayer, ASLSwarmSpawn
 	if (bIsPlayer)
 	{
 		PlayerUnitIndex = NewIndex;
+		TeamId = 0;
 	}
     
 	UnitActors.Add(Actor);
@@ -711,19 +719,6 @@ FBattleUnitInfo ASLBattleManager::GetUnitInfoByIndex(int32 Index) const
 		}
 	}
 	return Info;
-}
-
-TArray<FBattleUnitInfo> ASLBattleManager::GetEnemiesOfTeam(const FGenericTeamId& TeamId)
-{
-	TArray<FBattleUnitInfo> Result;
-	for (int32 i = 0; i < UnitActors.Num(); ++i)
-	{
-		if (AreEnemies(TeamId, UnitTeamIDs[i], false))
-		{
-			Result.Add(GetUnitInfoByIndex(i));
-		}
-	}
-	return Result;
 }
 
 void ASLBattleManager::StartNextGlobalWave()

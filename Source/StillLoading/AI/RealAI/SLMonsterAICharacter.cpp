@@ -256,7 +256,7 @@ void ASLMonsterAICharacter::OnHitByCharacter(UPrimitiveComponent* HitComp, AActo
 			PushDirection.Z = 0.0f;
 			PushDirection.Normalize();
 
-			LaunchCharacter(PushDirection * 300.0f, true, true);
+			LaunchCharacter(PushDirection * 100.0f, true, true);
 
 			GetWorld()->GetTimerManager().SetTimer(PushResetHandle, this, &ASLMonsterAICharacter::ResetPushFlag, 0.5f,
 			                                       false);
@@ -324,6 +324,11 @@ void ASLMonsterAICharacter::Landed(const FHitResult& Hit)
 	Super::Landed(Hit);
 
 	StopFlyingState();
+
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->GravityScale = 1.0f;
+	}
 }
 
 void ASLMonsterAICharacter::OnHoveredByCursor_Implementation(ASLBasePlayerController* InstigatingController)
@@ -345,20 +350,13 @@ void ASLMonsterAICharacter::OnUnhoveredByCursor_Implementation(ASLBasePlayerCont
 void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FHitResult& HitResult,
                                           EHitAnimType AnimType)
 {
-	if (IsInPrimaryState(TAG_AI_Dead)) return;
+	if (IsInPrimaryState(TAG_AI_Dead) || bIsDead) return;
 	LastAnimType = AnimType;
-	/*
-	if (LastAnimType == EHitAnimType::HAT_FallBack && !IsInPrimaryState(TAG_AI_Idle))
-	{
-		return;
-	}
-	*/
-
+	
 	AnimationComponent->StopAllMontages(0.2f);
 	AICombatComp->StopRetreating();
-	AICombatComp->StartRandomTurn();
+	AICombatComp->FinishRandomTurn();
 	AIStateComp->SetSingleBerserkMode(true);
-	//GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
 
 	LastAttacker = Causer;
 	CurrentHealth -= Damage;
@@ -367,6 +365,8 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 
 	if (CurrentHealth <= 0.f)
 	{
+		bIsDead = true;
+		SetPrimaryState(TAG_AI_Dead);
 		AnimationComponent->PlayAIHitMontage("Dead");
 		Dead(Causer, true);
 		return;
@@ -409,14 +409,11 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 			KnockbackDir.Z = 0;
 			KnockbackDir.Normalize();
 
-			const float GroundDistance = GetCharacterMovement()->CurrentFloor.FloorDist;
-			if (GetCharacterMovement()->IsFalling() && GroundDistance > 20.0f)
+			constexpr float KnockbackPower = 500.f;
+			
+			if (!GetCharacterMovement()->IsFalling())
 			{
-				LaunchCharacter(KnockbackDir * 1200, true, false);
-			}
-			else
-			{
-				LaunchCharacter(KnockbackDir * 1200, true, false);
+				LaunchCharacter(KnockbackDir * KnockbackPower, true, true);
 			}
 
 			SetPrimaryState(TAG_AI_Idle);
@@ -551,9 +548,10 @@ void ASLMonsterAICharacter::CorrectActorLocationPostAttack()
 
 void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
-	SetPrimaryState(TAG_AI_Dead);
 	OnDeath();
 	ToggleWeaponState(false);
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
 	if (DeathMaterial && bIsChangeMaterial)
 	{
@@ -568,7 +566,7 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 	if (ASLMonsterAIController* AICon = Cast<ASLMonsterAIController>(GetController()))
 	{
 		AICon->StopMovement();
-		AICon->UnPossess();
+		//AICon->UnPossess();
 		AICon->ToggleLockOnWidget(false);
 	}
 
@@ -589,9 +587,6 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 
 void ASLMonsterAICharacter::OnDeathMontageEnded()
 {
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	HandleAIPoolReturnOnDeath();
 }
 
