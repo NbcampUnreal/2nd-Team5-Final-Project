@@ -104,12 +104,12 @@ void USLAIAttributeComponent::ToggleBerserkMode(bool bEnable)
 	{
 		OriginalMaxWalkSpeed = MoveComp->MaxWalkSpeed;
 
-		MeshComp->GlobalAnimRateScale = 1.5f;
+		MeshComp->GlobalAnimRateScale = 1.8f;
 		MoveComp->MaxWalkSpeed = 750.0f;
 	}
 	else
 	{
-		MeshComp->GlobalAnimRateScale = 1.0f;
+		MeshComp->GlobalAnimRateScale = 1.5f;
 		MoveComp->MaxWalkSpeed = OriginalMaxWalkSpeed;
 	}
 }
