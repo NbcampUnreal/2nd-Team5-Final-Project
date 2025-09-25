@@ -177,8 +177,8 @@ void ASLDeveloperBossPhase2::PlayCinematic(EPhase2CinematicType CinematicType)
     FMovieSceneSequencePlaybackSettings PlaybackSettings;
     PlaybackSettings.bHideHud = false;
     PlaybackSettings.FinishCompletionStateOverride = EMovieSceneCompletionModeOverride::ForceKeepState;
-    PlaybackSettings.bDisableLookAtInput = false;
-    PlaybackSettings.bDisableMovementInput = false;
+    PlaybackSettings.bDisableLookAtInput = true;
+    PlaybackSettings.bDisableMovementInput = true;
     
     ALevelSequenceActor* SequenceActor = nullptr;
     CurrentSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(

@@ -83,22 +83,6 @@ void ASLDeveloperBossPhase4::SetConfig(const FSLPhase4Config& InConfig)
 {
     Config = InConfig;
     
-    UE_LOG(LogTemp, Warning, TEXT("Phase4 Config Set:"));
-    UE_LOG(LogTemp, Warning, TEXT("  - AutoWallAttackInterval: %f"), Config.AutoWallAttackInterval);
-    UE_LOG(LogTemp, Warning, TEXT("  - InitialWallAttackDelay: %f"), Config.InitialWallAttackDelay);
-    UE_LOG(LogTemp, Warning, TEXT("  - Cinematics: %d"), Config.Cinematics.Num());
-    
-    for (int32 i = 0; i < Config.Cinematics.Num(); i++)
-    {
-        if (IsValid(Config.Cinematics[i]))
-        {
-            UE_LOG(LogTemp, Warning, TEXT("  - Cinematic[%d]: %s"), i, *Config.Cinematics[i]->GetName());
-        }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("  - Cinematic[%d]: NULL"), i);
-        }
-    }
 }
 
 void ASLDeveloperBossPhase4::StartAutoWallAttack()
@@ -152,7 +136,6 @@ void ASLDeveloperBossPhase4::SetAvailableWalls(const TArray<ASLLaunchableWall*>&
 
 void ASLDeveloperBossPhase4::PlayStartCinematic()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Phase4: Playing start cinematic"));
     
     int32 CinematicIndex = 0; // 시작 시네마틱
     
@@ -163,18 +146,16 @@ void ASLDeveloperBossPhase4::PlayStartCinematic()
         return;
     }
     
-    if (!IsValid(Config.Cinematics[CinematicIndex]))
-    {
-        UE_LOG(LogTemp, Error, TEXT(" Phase4: Cinematic is null at index: %d"), CinematicIndex);
-        StartPhaseAfterCinematic();
-        return;
-    }
-    
     UE_LOG(LogTemp, Display, TEXT("Phase4: Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
     
     bWaitingForCinematic = true;
     
     FMovieSceneSequencePlaybackSettings PlaybackSettings;
+    PlaybackSettings.bHideHud = false;
+    PlaybackSettings.FinishCompletionStateOverride = EMovieSceneCompletionModeOverride::ForceKeepState;
+    PlaybackSettings.bDisableLookAtInput = true;
+    PlaybackSettings.bDisableMovementInput = true;
+    
     ALevelSequenceActor* SequenceActor = nullptr;
     CurrentSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
         GetWorld(),
@@ -185,10 +166,8 @@ void ASLDeveloperBossPhase4::PlayStartCinematic()
     
     if (CurrentSequencePlayer)
     {
-        UE_LOG(LogTemp, Display, TEXT("Phase4: SequencePlayer created successfully"));
         CurrentSequencePlayer->OnFinished.AddDynamic(this, &ASLDeveloperBossPhase4::OnCinematicFinished);
         CurrentSequencePlayer->Play();
-        UE_LOG(LogTemp, Display, TEXT("Phase4: Cinematic play started"));
         
         // 타임아웃 설정
         if (IsValid(GetWorld()))
@@ -301,8 +280,6 @@ void ASLDeveloperBossPhase4::LaunchWallWithLines()
     
     if (IsValid(TargetWall))
     {
-        UE_LOG(LogTemp, Display, TEXT("Phase4: Launching wall with immediate line activation: %s"), 
-               *TargetWall->GetName());
         
         // 벽 발사
         TargetWall->LaunchWallToPlayer();

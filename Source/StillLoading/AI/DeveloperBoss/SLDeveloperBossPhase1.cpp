@@ -99,18 +99,6 @@ bool ASLDeveloperBossPhase1::IsPhaseCompleted() const
 void ASLDeveloperBossPhase1::SetConfig(const FSLPhase1Config& InConfig)
 {
     Config = InConfig;
-    
-    for (int32 i = 0; i < Config.Cinematics.Num(); i++)
-    {
-        if (IsValid(Config.Cinematics[i]))
-        {
-            UE_LOG(LogTemp, Warning, TEXT("  - Cinematic[%d]: %s"), i, *Config.Cinematics[i]->GetName());
-        }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("  - Cinematic[%d]: NULL"), i);
-        }
-    }
 }
 
 void ASLDeveloperBossPhase1::HandleBossDeath(ASLAIBaseCharacter* DeadBoss)
@@ -256,7 +244,6 @@ void ASLDeveloperBossPhase1::RegisterBossEvents(ASLAIBaseCharacter* Boss)
         return;
     }
     
-    UE_LOG(LogTemp, Warning, TEXT("Registering events for boss: %s"), *Boss->GetName());
     
     // 중복 바인딩 방지
     Boss->OnCharacterDeath.RemoveAll(this);
@@ -388,8 +375,8 @@ void ASLDeveloperBossPhase1::PlayCinematicForLineDestroy(int32 DestroyedLineCoun
     FMovieSceneSequencePlaybackSettings PlaybackSettings;
     PlaybackSettings.bHideHud = false;
     PlaybackSettings.FinishCompletionStateOverride = EMovieSceneCompletionModeOverride::ForceKeepState;
-    PlaybackSettings.bDisableLookAtInput = false;
-    PlaybackSettings.bDisableMovementInput = false;
+    PlaybackSettings.bDisableLookAtInput = true;
+    PlaybackSettings.bDisableMovementInput = true;
     
     ALevelSequenceActor* SequenceActor = nullptr;
     
@@ -419,8 +406,8 @@ void ASLDeveloperBossPhase1::PlayCinematicForBossDeath(int32 DeadBossIndex)
         
         FMovieSceneSequencePlaybackSettings PlaybackSettings;
         PlaybackSettings.bHideHud = false;
-        PlaybackSettings.bDisableLookAtInput = false;
-        PlaybackSettings.bDisableMovementInput = false;
+        PlaybackSettings.bDisableLookAtInput = true;
+        PlaybackSettings.bDisableMovementInput = true;
         PlaybackSettings.FinishCompletionStateOverride = EMovieSceneCompletionModeOverride::ForceKeepState;
 
         
