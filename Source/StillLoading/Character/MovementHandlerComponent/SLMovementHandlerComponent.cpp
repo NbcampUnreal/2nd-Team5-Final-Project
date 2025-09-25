@@ -732,6 +732,10 @@ bool UMovementHandlerComponent::ParryCheck()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Parring!!!"));
 
+		OwnerCharacter->ClearStateTags({TAG_Character_Movement_Dodge}, {
+									   TAG_Character_LockOn, TAG_Character_PrepareLockOn, TAG_Character_Invulnerable,
+									   TAG_Character_Empowered});
+
 		if (!CachedCombatComponent->IsEmpowered())
 		{
 			OwnerCharacter->ClearAllStateTags();

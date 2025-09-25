@@ -43,8 +43,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAILODComponent> AILODComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
-	TObjectPtr<USLAIPushComponent> AIPushComp;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<USLAIAttributeComponent> AIAttributeComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cached")
 	TObjectPtr<UAnimationMontageComponent> AnimationComponent;
@@ -55,11 +53,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cached")
 	TObjectPtr<ASLBattleManager> BattleManager;
 
-	UPROPERTY()
 	float MaxHealth;
-	
-	UPROPERTY()
 	float CurrentHealth;
+	bool bIsDead = false;
 
 protected:
 	virtual void BeginPlay() override;

@@ -80,6 +80,11 @@ void USLAILODComponent::SetLODLevel(EAILODLevel NewLevel)
     {
         return;
     }
+
+	if (OwnerCharacter->bIsDead)
+	{
+		CurrentLODLevel = EAILODLevel::Culled;
+	}
 	
     CurrentLODLevel = NewLevel;
 

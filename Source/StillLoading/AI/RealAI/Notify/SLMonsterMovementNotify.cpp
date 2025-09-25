@@ -20,12 +20,7 @@ void USLMonsterMovementNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 	{
 	case ECharacterMovementAction::CMA_LaunchUp:
 		LaunchVelocity = FVector::UpVector * LaunchPower;
-		Character->LaunchCharacter(LaunchVelocity, true, true);
-
-		if (UCharacterMovementComponent* MoveComp = Character->GetCharacterMovement())
-		{
-			MoveComp->GravityScale = 0.9f;
-		}
+		Character->LaunchCharacter(LaunchVelocity, true, false);
 		break;
 
 	case ECharacterMovementAction::CMA_LaunchBack:
