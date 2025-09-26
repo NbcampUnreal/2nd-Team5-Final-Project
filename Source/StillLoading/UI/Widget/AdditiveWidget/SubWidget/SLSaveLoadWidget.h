@@ -9,6 +9,8 @@
 class UButton;
 class UTextBlock;
 class UImage;
+class UCanvasPanel;
+class USLSaveSlotWidget;
 
 UCLASS()
 class STILLLOADING_API USLSaveLoadWidget : public USLOptionSubBase
@@ -22,5 +24,43 @@ public:
 
 protected:
 	virtual void ApplyTextData() override;
+
+private:
+	UFUNCTION()
+	void OnClickedSlot(int32 Number);
+
+	UFUNCTION()
+	void OnSaveClicked();
+
+	UFUNCTION()
+	void OnLoadClicked();
+
+	UFUNCTION()
+	void OnCancleClicked();
+
+	void UpdateSlotData(int32 SlotNum);
+
+private:
+	UPROPERTY()
+	TArray<TObjectPtr<USLSaveSlotWidget>> Slots;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> LoadButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> SaveButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UButton> CancleButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> PopBoxImg = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> NotiText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UCanvasPanel> NotiBox = nullptr;
 	
+	int32 SelectedSlot = 0;
 };
