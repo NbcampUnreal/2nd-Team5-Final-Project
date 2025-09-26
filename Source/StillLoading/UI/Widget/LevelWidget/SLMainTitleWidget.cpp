@@ -8,10 +8,12 @@
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "UI/Widget/SLWidgetPrivateDataAsset.h"
+#include "SaveLoad/SLSaveGameSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
 
 const FName USLMainTitleWidget::StartButtonIndex = "StartButton";
+const FName USLMainTitleWidget::LoadButtonIndex = "ContinueButton";
 const FName USLMainTitleWidget::OptionButtonIndex = "OptionButton";
 const FName USLMainTitleWidget::QuitButtonIndex = "QuitButton";
 
@@ -23,10 +25,12 @@ void USLMainTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	Super::InitWidget(NewUISubsystem);
 
 	StartButton->InitButton();
+	LoadButton->InitButton();
 	OptionButton->InitButton();
 	QuitButton->InitButton();
 
 	StartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedStartButton);
+	LoadButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedLoadButton);
 	OptionButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedOptionButton);
 	QuitButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuitButton);
 }
@@ -72,6 +76,7 @@ void USLMainTitleWidget::ApplyTextData()
 	}
 
 	StartButton->SetButtonText(TitleTextMap[StartButtonIndex]);
+	LoadButton->SetButtonText(TitleTextMap[LoadButtonIndex]);
 	OptionButton->SetButtonText(TitleTextMap[OptionButtonIndex]);
 	QuitButton->SetButtonText(TitleTextMap[QuitButtonIndex]);
 }
@@ -100,6 +105,17 @@ bool USLMainTitleWidget::ApplyOtherImage()
 }
 
 void USLMainTitleWidget::OnClickedStartButton()
+{
+	PlayUISound(ESLUISoundType::EUS_Click);
+
+	USLSaveGameSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
+	checkf(IsValid(SaveGameSubsystem), TEXT("Save Game Subsystem is invalid"));
+
+	SaveGameSubsystem->ResetGameData();
+	MoveToLevelByType(ESLLevelNameType::ELN_Title);
+}
+
+void USLMainTitleWidget::OnClickedLoadButton()
 {
 	CheckValidOfUISubsystem();
 	UISubsystem->ActivateSaveLoadWidget();
