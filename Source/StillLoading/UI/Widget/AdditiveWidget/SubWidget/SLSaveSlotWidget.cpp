@@ -39,11 +39,20 @@ void USLSaveSlotWidget::UpdateTextFont(const FSlateFontInfo& FontInfo, float Fon
 	}
 }
 
-void USLSaveSlotWidget::SetEmptyMode(bool bIsEmpty)
+void USLSaveSlotWidget::SetEmptyMode(bool bIsEmpty, bool bIsLoad)
 {
 	if (bIsEmpty)
 	{
 		EmptyCover->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+		if (bIsLoad)
+		{
+			SlotButton->SetIsEnabled(false);
+		}
+		else
+		{
+			SlotButton->SetIsEnabled(true);
+		}
 	}
 	else
 	{
@@ -83,20 +92,21 @@ void USLSaveSlotWidget::SetMapName(const FText& Name)
 
 void USLSaveSlotWidget::SetPlayTime(const float TimeValue)
 {
-	int Seconds = (int32)TimeValue % 60;
-	int Mins = TimeValue / 60;
-	int Hours = Mins / 60;
+	int32 Seconds = (int32)TimeValue % 60;
+	int32 Mins = (int32)(TimeValue / 60);
+	int32 Hours = Mins / 60;
+	Mins %= 60;
 
 	PlayTime->SetText(FText::FromString(FString::Printf(TEXT("%02d : %02d : %02d"), Hours, Mins, Seconds)));
 }
 
 void USLSaveSlotWidget::SetSaveTime(const FDateTime& TimeValue)
 {
-	int Year = TimeValue.GetYear();
-	int Month = TimeValue.GetMonth();
-	int Day = TimeValue.GetDay();
-	int Hours = TimeValue.GetHour();
-	int Mins = TimeValue.GetMinute();
+	int32 Year = TimeValue.GetYear();
+	int32 Month = TimeValue.GetMonth();
+	int32 Day = TimeValue.GetDay();
+	int32 Hours = TimeValue.GetHour();
+	int32 Mins = TimeValue.GetMinute();
 
 	SaveTime->SetText(FText::FromString(FString::Printf(TEXT("%d.%02d.%02d _ %02d : %02d"), Year, Month, Day, Hours, Mins)));
 }

@@ -5,6 +5,7 @@
 #include "Blueprint/WidgetTree.h"
 #include "UI/Widget/AdditiveWidget/SubWidget/SLSaveSlotWidget.h"
 #include "SaveLoad/SLSaveGameSubsystem.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
 
 void USLSaveLoadWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -36,6 +37,12 @@ void USLSaveLoadWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActi
 {
 	Super::ActivateWidget(WidgetActivateBuffer);
 
+	USLLevelTransferSubsystem* LevelSub = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelSub), TEXT("Level Transfer Subsystem is invalid"));
+
+	if (LevelSub->GetCurrentLevelType() == ESLLevelNameType::ELN_MainTitle) bIsMainTitle = true;
+	else bIsMainTitle = false;
+
 	OnUpdatedSettingValue();
 }
 
@@ -57,20 +64,41 @@ void USLSaveLoadWidget::ApplyTextData()
 void USLSaveLoadWidget::OnClickedSlot(int32 Number)
 {
 	SelectedSlot = Number;
-
-	// 팝업 출력. 메인 타이틀이면 Load, 그 외는 Save.
+	
+	if (bIsMainTitle)
+	{
+		OnLoadClicked();
+	}
+	else
+	{
+		OnSaveClicked();
+	}
+	
+	SelectedSlot = 0;
 }
 
 void USLSaveLoadWidget::OnSaveClicked()
 {
 	USLSaveGameSubsystem* SaveGameSub = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
 	checkf(IsValid(SaveGameSub), TEXT("Save Game Subsystem is invalid"));
+
+	SaveGameSub->SaveGameDataByIndex(SelectedSlot - 1);
+	UpdateSlotData(SelectedSlot - 1);
 }
 
 void USLSaveLoadWidget::OnLoadClicked()
 {
 	USLSaveGameSubsystem* SaveGameSub = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
 	checkf(IsValid(SaveGameSub), TEXT("Save Game Subsystem is invalid"));
+
+	SaveGameSub->ResetGameData();
+	const FSlotSaveData SaveData = SaveGameSub->LoadGameDataByIndex(SelectedSlot - 1);
+
+	USLLevelTransferSubsystem* LevelSub = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelSub), TEXT("Level Transfer Subsystem is invalid"));
+
+	LevelSub->SetCurrentChapter(SaveData.ChapterSaveData);
+	LevelSub->OpenLevelByNameType(SaveData.LevelSaveData);
 }
 
 void USLSaveLoadWidget::OnCancleClicked()
@@ -99,7 +127,7 @@ void USLSaveLoadWidget::UpdateSlotData(int32 SlotNum)
 
 	if (SlotData.PlayTimeInSeconds == 0.0f)
 	{
-		SaveSlot->SetEmptyMode(true);
+		SaveSlot->SetEmptyMode(true, bIsMainTitle);
 		return;
 	}
 
@@ -127,5 +155,5 @@ void USLSaveLoadWidget::UpdateSlotData(int32 SlotNum)
 	SaveSlot->SetPlayTime(SlotData.PlayTimeInSeconds);
 	SaveSlot->SetSaveTime(SlotData.SaveTime);
 
-	SaveSlot->SetEmptyMode(false);
+	SaveSlot->SetEmptyMode(false, false);
 }

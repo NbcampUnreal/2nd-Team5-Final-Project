@@ -270,6 +270,10 @@ void USLBaseWidget::ApplyButtonRetainer(USLButtonWidget* ButtonWidget)
 			ButtonWidget->SetNiagaraWidget(Niagara);
 		}
 	}
+	else
+	{
+		ButtonWidget->SetNiagaraWidget(nullptr);
+	}
 }
 
 void USLBaseWidget::ApplyButtonNiagara(USLButtonWidget* ButtonWidget)
@@ -283,6 +287,10 @@ void USLBaseWidget::ApplyButtonNiagara(USLButtonWidget* ButtonWidget)
 		{
 			ButtonWidget->SetRetainerMat(EffectMat);
 		}
+	}
+	else
+	{
+		ButtonWidget->SetRetainerMat(nullptr);
 	}
 }
 
