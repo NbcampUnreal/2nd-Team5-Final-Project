@@ -53,6 +53,10 @@ void USLButtonWidget::SetRetainerMat(UMaterialInterface* NewMaterial)
 	{
 		RetainerBox->SetEffectMaterial(NewMaterial);
 	}
+	else
+	{
+		RetainerBox->SetEffectMaterial(nullptr);
+	}
 }
 
 void USLButtonWidget::SetNiagaraWidget(UNiagaraSystem* NewNiagara)
@@ -61,6 +65,12 @@ void USLButtonWidget::SetNiagaraWidget(UNiagaraSystem* NewNiagara)
 	{
 		NiagaraWidget->UpdateNiagaraSystemReference(NewNiagara);
 		bIsContainNiagara = true;
+		NiagaraWidget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	else
+	{
+		NiagaraWidget->UpdateNiagaraSystemReference(nullptr);
+		bIsContainNiagara = false;
 		NiagaraWidget->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }

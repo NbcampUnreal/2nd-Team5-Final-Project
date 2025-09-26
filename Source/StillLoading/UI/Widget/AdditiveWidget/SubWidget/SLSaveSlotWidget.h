@@ -22,7 +22,7 @@ public:
 	void InitWidget(int32 Number);
 	void UpdateTextFont(const FSlateFontInfo& FontInfo, float FontOffset);
 
-	void SetEmptyMode(bool bIsEmpty);
+	void SetEmptyMode(bool bIsEmpty, bool bIsLoad);
 	void SetSlotImage(UObject* ImageObj);
 	void SetMapImage(UObject* ImageObj);
 	void SetChapterNumber(const FText& Chapter);

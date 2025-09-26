@@ -61,7 +61,8 @@ void USLSaveGameSubsystem::ResetGameData()
     CurrentGameSaveData = NewObject<USLSaveGame>();
     LoadObjectiveDefaultData();
     SendChapterData();
-    UGameplayStatics::SaveGameToSlot(CurrentGameSaveData, CurrentGameSlotName, 0);
+    StartSaveLoadTime = FPlatformTime::Seconds();
+    //UGameplayStatics::SaveGameToSlot(CurrentGameSaveData, CurrentGameSlotName, 0);
 }
 
 void USLSaveGameSubsystem::LoadSettingData()
@@ -232,7 +233,7 @@ void USLSaveGameSubsystem::SaveSlotData()
     CurrentGameSaveData->SlotSaveData.LevelSaveData = LevelSubsystem->GetCurrentLevelType();
     
     const float DurationTime = FPlatformTime::Seconds() - StartSaveLoadTime;
-    CurrentGameSaveData->SlotSaveData.PlayTimeInSeconds = DurationTime;
+    CurrentGameSaveData->SlotSaveData.PlayTimeInSeconds += DurationTime;
     CurrentGameSaveData->SlotSaveData.SaveTime = FDateTime::Now();
 }
 
