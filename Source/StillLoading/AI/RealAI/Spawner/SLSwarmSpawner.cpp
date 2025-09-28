@@ -388,68 +388,62 @@ void ASLSwarmSpawner::CleanupPool()
 
 ACharacter* ASLSwarmSpawner::GetOrCreateAndPlaceUnit(const TSubclassOf<ACharacter>& UnitClass)
 {
-	if (!UnitClass)
-	{
-		UE_LOG(LogTemp, Error, TEXT("SwarmSpawner: GetOrCreateAndPlaceUnit에 유효하지 않은 UnitClass가 전달되었습니다."));
-		return nullptr;
-	}
+    if (!UnitClass)
+    {
+       UE_LOG(LogTemp, Error, TEXT("SwarmSpawner: GetOrCreateAndPlaceUnit에 유효하지 않은 UnitClass가 전달되었습니다."));
+       return nullptr;
+    }
 
-	const ACharacter* DefaultCharacter = UnitClass->GetDefaultObject<ACharacter>();
-	const float CapsuleHalfHeight = DefaultCharacter
-		                                ? DefaultCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()
-		                                : 50.0f;
+    const ACharacter* DefaultCharacter = UnitClass->GetDefaultObject<ACharacter>();
+    const float CapsuleHalfHeight = DefaultCharacter
+                                       ? DefaultCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()
+                                       : 90.f;
 
-	ACharacter* SpawnedUnit = GetPooledUnit(UnitClass);
+    ACharacter* SpawnedUnit = GetPooledUnit(UnitClass);
 
-	if (!SpawnedUnit)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("SwarmSpawner: 풀에서 유닛을 가져오지 못하여 새로 스폰 시도: %s"), *UnitClass->GetName());
-		UWorld* World = GetWorld();
-		if (!World) return nullptr;
+    if (!SpawnedUnit)
+    {
+       UWorld* World = GetWorld();
+       if (!World) return nullptr;
+       FActorSpawnParameters SpawnParams;
+       SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+       SpawnParams.bNoFail = true;
+       SpawnedUnit = World->SpawnActor<ACharacter>(UnitClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+       if (!SpawnedUnit)
+       {
+          UE_LOG(LogTemp, Error, TEXT("SwarmSpawner: 풀 대체 스폰 실패: %s"), *UnitClass->GetName());
+          return nullptr;
+       }
+    }
 
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		SpawnParams.bNoFail = true;
+    const FVector StartLocation = GetRandomSpawnLocation();
+    const float TraceDistance = 5000.f;
+    const FVector EndLocation = StartLocation - FVector(0.f, 0.f, TraceDistance);
+    FHitResult HitResult;
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this);
+    QueryParams.AddIgnoredActor(SpawnedUnit);
 
-		FVector SpawnLocation = GetRandomSpawnLocation();
-		SpawnLocation.Z += CapsuleHalfHeight;
-		const FRotator SpawnRotation = FRotator(0.f, FMath::RandRange(0.f, 360.f), 0.f);
+    FVector FinalSpawnLocation = StartLocation;
 
-		SpawnedUnit = World->SpawnActor<ACharacter>(
-			UnitClass,
-			SpawnLocation,
-			SpawnRotation,
-			SpawnParams
-		);
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, QueryParams))
+    {
+        FinalSpawnLocation = HitResult.Location + FVector(0.f, 0.f, CapsuleHalfHeight);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Spawner '%s': 스폰 지점 아래에서 바닥을 찾지 못했습니다."), *GetName());
+    }
 
-		if (!SpawnedUnit)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SwarmSpawner: 풀 대체 스폰 실패: %s"), *UnitClass->GetName());
-			return nullptr;
-		}
-	}
-	else
-	{
-		FVector SpawnLocation = GetRandomSpawnLocation();
-		SpawnLocation.Z += CapsuleHalfHeight;
-		const FRotator SpawnRotation = FRotator(0.f, FMath::RandRange(0.f, 360.f), 0.f);
+    const FRotator SpawnRotation = FRotator(0.f, FMath::RandRange(0.f, 360.f), 0.f);
+    SpawnedUnit->SetActorLocationAndRotation(FinalSpawnLocation, SpawnRotation, false, nullptr, ETeleportType::TeleportPhysics);
+    
+    if (ASLMonsterAICharacter* MonsterAI = Cast<ASLMonsterAICharacter>(SpawnedUnit))
+    {
+       MonsterAI->ToggleWeaponState(true);
+    }
 
-		SpawnedUnit->SetActorLocation(
-			SpawnLocation,
-			false,
-			nullptr,
-			ETeleportType::TeleportPhysics
-		);
-		SpawnedUnit->SetActorRotation(SpawnRotation);
-	}
-
-	// 무기 보임
-	if (ASLMonsterAICharacter* MonsterAI = Cast<ASLMonsterAICharacter>(SpawnedUnit))
-	{
-		MonsterAI->ToggleWeaponState(true);
-	}
-
-	return SpawnedUnit;
+    return SpawnedUnit;
 }
 
 void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSubclassOf<AAIController> ControllerClass,
@@ -459,13 +453,13 @@ void ASLSwarmSpawner::ConfigureSpawnedUnitInternal(ACharacter* SpawnedUnit, TSub
 
 	SpawnedUnit->SetActorTickEnabled(true);
 	SpawnedUnit->SetActorHiddenInGame(false);
-	SpawnedUnit->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	SpawnedUnit->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	//SpawnedUnit->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	if (UCharacterMovementComponent* MovementComp = SpawnedUnit->GetCharacterMovement())
 	{
 		MovementComp->Activate();
-		MovementComp->SetMovementMode(EMovementMode::MOVE_Walking);
+		MovementComp->SetMovementMode(EMovementMode::MOVE_Falling);
 		MovementComp->GravityScale = 1.f;
 		MovementComp->Velocity = FVector::ZeroVector;
 		MovementComp->AvoidanceWeight = AvoidanceWeight;
@@ -558,42 +552,25 @@ ACharacter* ASLSwarmSpawner::SpawnAndConfigureUnit(TSubclassOf<ACharacter> UnitC
 
 FVector ASLSwarmSpawner::GetRandomSpawnLocation() const
 {
-	const FVector Origin = GetActorLocation() + FVector(0, 0, 50);
-	const float Radius = SpawnBox->GetScaledBoxExtent().X; // 박스 크기를 기반으로 탐색 반경 설정
-
-	if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld()))
+	if (!IsValid(SpawnBox))
 	{
-		FNavLocation RandomLocation;
-		if (NavSys->GetRandomReachablePointInRadius(Origin, Radius, RandomLocation))
-		{
-			return RandomLocation.Location;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error,
-			       TEXT(
-				       "GetRandomReachablePointInRadius failed. Spawner: %s, Origin: %s, Radius: %f. Using fallback logic."
-			       ), *GetName(), *Origin.ToString(), Radius);
-		}
+		UE_LOG(LogTemp, Warning, TEXT("GetRandomSpawnLocation: SpawnBox is not valid. Returning Actor's location."));
+		return GetActorLocation();
 	}
 
-	FVector BoxExtent = SpawnBox->GetScaledBoxExtent();
-	const float RandX = FMath::RandRange(-BoxExtent.X, BoxExtent.X);
-	const float RandY = FMath::RandRange(-BoxExtent.Y, BoxExtent.Y);
+	const FVector BoxOrigin = SpawnBox->GetComponentLocation();
+	const FVector BoxExtent = SpawnBox->GetScaledBoxExtent();
 
-	FVector StartTrace = Origin + FVector(RandX, RandY, 500.f);
-	FVector EndTrace = Origin + FVector(RandX, RandY, -500.f);
+	const float RandomX = FMath::RandRange(-BoxExtent.X, BoxExtent.X);
+	const float RandomY = FMath::RandRange(-BoxExtent.Y, BoxExtent.Y);
 
-	FHitResult HitResult;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
+	const FVector RandomLocation = FVector(
+		BoxOrigin.X + RandomX,
+		BoxOrigin.Y + RandomY,
+		BoxOrigin.Z - BoxExtent.Z
+	);
 
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_Visibility, QueryParams))
-	{
-		return HitResult.Location;
-	}
-
-	return Origin;
+	return RandomLocation;
 }
 
 void ASLSwarmSpawner::OnUnitDestroyed(AActor* DestroyedActor)
