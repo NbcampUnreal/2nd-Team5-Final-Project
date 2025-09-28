@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SLCheatManager.h"
@@ -87,5 +87,15 @@ void USLCheatManager::ShowTitleHUD(bool bFlag)
 	else if(HUD && bFlag)
 	{
 		HUD->NotifyTalkEnded();
+	}
+}
+
+void USLCheatManager::ShowLevelWidget(bool bFlag)
+{
+	ASLBaseHUD* HUD = Cast<ASLBaseHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+
+	if (IsValid(HUD))
+	{
+		HUD->HideLevelWidget(!bFlag);
 	}
 }

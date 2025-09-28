@@ -60,14 +60,10 @@ void USLSaveSlotWidget::SetEmptyMode(bool bIsEmpty, bool bIsLoad)
 	}
 }
 
-void USLSaveSlotWidget::SetSlotImage(UObject* ImageObj)
+void USLSaveSlotWidget::SetSlotImage(FSlateBrush& SlateBrush)
 {
-	if (IsValid(ImageObj))
-	{
-		FSlateBrush SlateBrush;
-		SlateBrush.SetResourceObject(ImageObj);
-		SlotImg->SetBrush(SlateBrush);
-	}
+	SlotImg->SetBrush(SlateBrush);
+	EmptyImg->SetBrush(SlateBrush);
 }
 
 void USLSaveSlotWidget::SetMapImage(UObject* ImageObj)

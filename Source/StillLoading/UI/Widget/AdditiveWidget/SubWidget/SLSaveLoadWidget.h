@@ -11,6 +11,7 @@ class UTextBlock;
 class UImage;
 class UCanvasPanel;
 class USLSaveSlotWidget;
+class USLSaveSlotPrivateDataAsset;
 
 UCLASS()
 class STILLLOADING_API USLSaveLoadWidget : public USLOptionSubBase
@@ -23,7 +24,10 @@ public:
 	virtual void OnUpdatedSettingValue() override;
 
 protected:
+	virtual void ApplyFontData() override;
 	virtual void ApplyTextData() override;
+	virtual bool ApplySlotImage(FSlateBrush& SlateBrush) override;
+	virtual bool ApplySavePopImage(FSlateBrush& SlateBrush) override;
 
 private:
 	UFUNCTION()
@@ -39,6 +43,10 @@ private:
 	void OnCancleClicked();
 
 	void UpdateSlotData(int32 SlotNum);
+
+public:
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<USLSaveSlotPrivateDataAsset> SlotDataAsset = nullptr;
 
 private:
 	UPROPERTY()

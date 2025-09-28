@@ -8,7 +8,9 @@
 #include "SubSystem/SLLevelTransferSubsystem.h"
 #include "UI/SLUISubsystem.h"
 #include "Components/CanvasPanel.h"
+#include "Components/Image.h"
 #include "UI/Widget/SLButtonWidget.h"
+#include "UI/Widget/SLWidgetPrivateDataAsset.h"
 
 void USLSaveLoadWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -70,9 +72,46 @@ void USLSaveLoadWidget::OnUpdatedSettingValue()
 	}
 }
 
+void USLSaveLoadWidget::ApplyFontData()
+{
+	Super::ApplyFontData();
+
+	for (USLSaveSlotWidget* SlotWidget : Slots)
+	{
+		SlotWidget->UpdateTextFont(FontInfo, FontOffset);
+	}
+}
+
 void USLSaveLoadWidget::ApplyTextData()
 {
 	Super::ApplyTextData();
+}
+
+bool USLSaveLoadWidget::ApplySlotImage(FSlateBrush& SlateBrush)
+{
+	if (!Super::ApplySlotImage(SlateBrush))
+	{
+		return false;
+	}
+
+	for (USLSaveSlotWidget* SlotWidget : Slots)
+	{
+		SlotWidget->SetSlotImage(SlateBrush);
+	}
+
+	return true;
+}
+
+bool USLSaveLoadWidget::ApplySavePopImage(FSlateBrush& SlateBrush)
+{
+	if (!Super::ApplySavePopImage(SlateBrush))
+	{
+		return false;
+	}
+
+	PopBoxImg->SetBrush(SlateBrush);
+
+	return true;;
 }
 
 void USLSaveLoadWidget::OnClickedSlot(int32 Number)
@@ -169,7 +208,13 @@ void USLSaveLoadWidget::UpdateSlotData(int32 SlotNum)
 	}
 
 	SaveSlot->SetMapName(LevelText);
-	//Slot->SetMapImage();
+	
+	TSoftObjectPtr<UObject> MapImg = SlotDataAsset->GetLevelImg(SlotData.ChapterSaveData, SlotData.LevelSaveData);
+
+	if (!MapImg.IsNull())
+	{
+		SaveSlot->SetMapImage(MapImg.LoadSynchronous());
+	}
 
 	SaveSlot->SetPlayTime(SlotData.PlayTimeInSeconds);
 	SaveSlot->SetSaveTime(SlotData.SaveTime);

@@ -22,6 +22,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OnPause();
 
+	virtual void HideLevelWidget(bool bIsHide);
+
 	void OnUnpause();
 	void DeactiveLevelWidget();
 

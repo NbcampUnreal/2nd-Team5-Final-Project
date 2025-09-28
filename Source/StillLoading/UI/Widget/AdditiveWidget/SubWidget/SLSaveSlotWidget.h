@@ -23,7 +23,7 @@ public:
 	void UpdateTextFont(const FSlateFontInfo& FontInfo, float FontOffset);
 
 	void SetEmptyMode(bool bIsEmpty, bool bIsLoad);
-	void SetSlotImage(UObject* ImageObj);
+	void SetSlotImage(FSlateBrush& SlateBrush);
 	void SetMapImage(UObject* ImageObj);
 	void SetChapterNumber(const FText& Chapter);
 	void SetMapName(const FText& Name);
@@ -47,6 +47,9 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> SlotImg = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> EmptyImg = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> MapImg = nullptr;
