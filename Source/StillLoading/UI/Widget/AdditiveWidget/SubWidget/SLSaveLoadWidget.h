@@ -44,20 +44,20 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<USLSaveSlotWidget>> Slots;
 
-	//UPROPERTY(Meta = (BindWidget))
-	//TObjectPtr<UButton> AgreeButton = nullptr;
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> AgreeButton = nullptr;
 
-	//UPROPERTY(Meta = (BindWidget))
-	//TObjectPtr<UButton> CancleButton = nullptr;
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> CancleButton = nullptr;
 
-	//UPROPERTY(Meta = (BindWidget))
-	//TObjectPtr<UImage> PopBoxImg = nullptr;
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UImage> PopBoxImg = nullptr;
 
-	//UPROPERTY(Meta = (BindWidget))
-	//TObjectPtr<UTextBlock> NotiText = nullptr;
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> NotiText = nullptr;
 
-	//UPROPERTY(Meta = (BindWidget))
-	//TObjectPtr<UCanvasPanel> NotiBox = nullptr;
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UCanvasPanel> NotiBox = nullptr;
 
 	int32 SelectedSlot = 0;
 	bool bIsMainTitle = true;

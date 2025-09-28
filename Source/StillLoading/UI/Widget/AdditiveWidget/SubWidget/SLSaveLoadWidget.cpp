@@ -6,10 +6,22 @@
 #include "UI/Widget/AdditiveWidget/SubWidget/SLSaveSlotWidget.h"
 #include "SaveLoad/SLSaveGameSubsystem.h"
 #include "SubSystem/SLLevelTransferSubsystem.h"
+#include "UI/SLUISubsystem.h"
+#include "Components/CanvasPanel.h"
+#include "UI/Widget/SLButtonWidget.h"
 
 void USLSaveLoadWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
 	Super::InitWidget(NewUISubsystem);
+
+	AgreeButton->InitButton();
+	CancleButton->InitButton();
+
+	AgreeButton->OnClicked.AddDynamic(this, &ThisClass::OnSaveClicked);
+	CancleButton->OnClicked.AddDynamic(this, &ThisClass::OnCancleClicked);
+
+	AgreeButton->SetButtonText(FText::FromString(FString::Printf(TEXT("Yes"))));
+	CancleButton->SetButtonText(FText::FromString(FString::Printf(TEXT("No"))));
 
 	TArray<UWidget*> FoundWidgets;
 	WidgetTree->GetAllWidgets(FoundWidgets);
@@ -43,6 +55,8 @@ void USLSaveLoadWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActi
 	if (LevelSub->GetCurrentLevelType() == ESLLevelNameType::ELN_MainTitle) bIsMainTitle = true;
 	else bIsMainTitle = false;
 
+	OnCancleClicked();
+
 	OnUpdatedSettingValue();
 }
 
@@ -71,10 +85,8 @@ void USLSaveLoadWidget::OnClickedSlot(int32 Number)
 	}
 	else
 	{
-		OnSaveClicked();
+		NotiBox->SetVisibility(ESlateVisibility::Visible);
 	}
-	
-	SelectedSlot = 0;
 }
 
 void USLSaveLoadWidget::OnSaveClicked()
@@ -84,20 +96,27 @@ void USLSaveLoadWidget::OnSaveClicked()
 
 	SaveGameSub->SaveGameDataByIndex(SelectedSlot - 1);
 	UpdateSlotData(SelectedSlot - 1);
+
+	OnCancleClicked();
 }
 
 void USLSaveLoadWidget::OnLoadClicked()
 {
+	CheckValidOfUISubsystem();
+	UISubsystem->RemoveCurrentAdditiveWidget(ESLAdditiveWidgetType::EAW_OptionWidget);
+
 	USLSaveGameSubsystem* SaveGameSub = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
 	checkf(IsValid(SaveGameSub), TEXT("Save Game Subsystem is invalid"));
 
-	SaveGameSub->ResetGameData();
+	//SaveGameSub->ResetGameData();
 	const FSlotSaveData SaveData = SaveGameSub->LoadGameDataByIndex(SelectedSlot - 1);
+	SaveGameSub->LoadGameData();
+	SelectedSlot = 0;
 
 	USLLevelTransferSubsystem* LevelSub = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
 	checkf(IsValid(LevelSub), TEXT("Level Transfer Subsystem is invalid"));
 
-	LevelSub->SetCurrentChapter(SaveData.ChapterSaveData);
+	//LevelSub->SetCurrentChapter(SaveData.ChapterSaveData);
 	LevelSub->OpenLevelByNameType(SaveData.LevelSaveData);
 }
 
@@ -105,7 +124,7 @@ void USLSaveLoadWidget::OnCancleClicked()
 {
 	SelectedSlot = 0;
 
-	// 팝업 제거
+	NotiBox->SetVisibility(ESlateVisibility::Collapsed);
 }
 
 void USLSaveLoadWidget::UpdateSlotData(int32 SlotNum)
