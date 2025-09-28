@@ -39,3 +39,15 @@ const TMap<ESLOptionPrivateImageType, TObjectPtr<UObject>>& USLOptionPrivateData
 {
 	return OptionImageMap;
 }
+
+const TSoftObjectPtr<UObject> USLSaveSlotPrivateDataAsset::GetLevelImg(ESLChapterType ChapterType, ESLLevelNameType LevelType) const
+{
+	if (ChapterLevelImgMap.Contains(ChapterType))
+	{
+		if (ChapterLevelImgMap[ChapterType].LevelImgMap.Contains(LevelType))
+		{
+			return ChapterLevelImgMap[ChapterType].LevelImgMap[LevelType];
+		}
+	}
+	return nullptr;
+}

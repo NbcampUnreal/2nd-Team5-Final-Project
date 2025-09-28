@@ -24,6 +24,8 @@ protected:
 	virtual bool ApplyListBackImage(FSlateBrush& SlateBrush);
 	virtual bool ApplyLeftArrowImage(FButtonStyle& ButtonStyle);
 	virtual bool ApplyRightArrowImage(FButtonStyle& ButtonStyle);
+	virtual bool ApplySlotImage(FSlateBrush& SlateBrush);
+	virtual bool ApplySavePopImage(FSlateBrush& SlateBrush);
 
 	bool ApplyOptionButtonImage(FButtonStyle& ButtonStyle, ESLOptionPrivateImageType ButtonType);
 

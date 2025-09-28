@@ -28,7 +28,7 @@ UENUM(BlueprintType)
 enum class ESLChapterType : uint8
 {
 	EC_None = 0 UMETA(DisplayName = "---"),
-	EC_Chapter0 UMETA(DispalyName = "Intro"),
+	EC_Chapter0 UMETA(DisplayName = "Intro"),
 	EC_Chapter1 UMETA(DisplayName = "Chapter 1"),
 	EC_Chapter2 UMETA(DisplayName = "Chapter 2"),
 	EC_Chapter3 UMETA(DisplayName = "Chapter 3"),
