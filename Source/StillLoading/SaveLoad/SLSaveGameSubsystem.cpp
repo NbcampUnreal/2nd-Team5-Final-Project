@@ -58,6 +58,7 @@ void USLSaveGameSubsystem::LoadGameData()
 
 void USLSaveGameSubsystem::ResetGameData()
 {
+    CurrentGameSlotName = "";
     CurrentGameSaveData = NewObject<USLSaveGame>();
     LoadObjectiveDefaultData();
     SendChapterData();

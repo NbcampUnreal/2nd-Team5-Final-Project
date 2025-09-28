@@ -64,8 +64,8 @@ private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLButtonWidget> StartButton = nullptr;
 
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLButtonWidget> ContinueButton = nullptr;
+	//UPROPERTY(Meta = (BindWidget))
+	//TObjectPtr<USLButtonWidget> ContinueButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLButtonWidget> OptionButton = nullptr;
