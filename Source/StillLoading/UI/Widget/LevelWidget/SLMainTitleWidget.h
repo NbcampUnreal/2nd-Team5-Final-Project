@@ -27,6 +27,9 @@ private:
 	void OnClickedStartButton();
 
 	UFUNCTION()
+	void OnClickedLoadButton();
+
+	UFUNCTION()
 	void OnClickedOptionButton();
 
 	UFUNCTION()
@@ -35,6 +38,9 @@ private:
 private:
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLButtonWidget> StartButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> LoadButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLButtonWidget> OptionButton = nullptr;
@@ -52,6 +58,7 @@ private:
 	TMap<ESLTitlePrivateImageType, TObjectPtr<UObject>> PrivateImageMap;
 
 	static const FName StartButtonIndex;
+	static const FName LoadButtonIndex;
 	static const FName OptionButtonIndex;
 	static const FName QuitButtonIndex;
 };

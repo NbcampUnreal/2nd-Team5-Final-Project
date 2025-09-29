@@ -19,12 +19,12 @@ void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     Collection.InitializeDependency<USLObjectiveSubsystem>();
     Super::Initialize(Collection);
 
+    CheckSaveData();
     LoadSettingData();
     
-#if WITH_EDITOR
-    CurrentGameSlotName = GameSaveSlotList[0];
-    LoadGameData();
-#endif
+    CurrentGameSlotName = "";
+    CurrentGameSaveData = NewObject<USLSaveGame>();
+    LoadObjectiveDefaultData();
 }
 
 void USLSaveGameSubsystem::Deinitialize()
@@ -54,18 +54,16 @@ void USLSaveGameSubsystem::LoadGameData()
         SendChapterData();
         SendObjectiveData();
     }
-    else
-    {
-        ResetGameData();
-    }
 }
 
 void USLSaveGameSubsystem::ResetGameData()
 {
+    CurrentGameSlotName = "";
     CurrentGameSaveData = NewObject<USLSaveGame>();
     LoadObjectiveDefaultData();
     SendChapterData();
-    UGameplayStatics::SaveGameToSlot(CurrentGameSaveData, CurrentGameSlotName, 0);
+    StartSaveLoadTime = FPlatformTime::Seconds();
+    //UGameplayStatics::SaveGameToSlot(CurrentGameSaveData, CurrentGameSlotName, 0);
 }
 
 void USLSaveGameSubsystem::LoadSettingData()
@@ -104,8 +102,6 @@ void USLSaveGameSubsystem::SaveGameDataByIndex(const int Index)
     SaveObjectiveData();
     SaveSlotData();
     
-    CurrentGameSaveData->SlotSaveData.SaveTime = FDateTime::Now();
-    
     UGameplayStatics::SaveGameToSlot(CurrentGameSaveData, GameSaveSlotList[Index], 0);
 }
 
@@ -115,9 +111,10 @@ const FSlotSaveData& USLSaveGameSubsystem::LoadGameDataByIndex(const int Index)
     
     CurrentGameSlotName = GameSaveSlotList[Index];
     
-    StartSaveLoadTime = FPlatformTime::Seconds();
     USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(CurrentGameSlotName, 0);
+    
     CurrentGameSaveData = Cast<USLSaveGame>(Loaded);
+    StartSaveLoadTime = FPlatformTime::Seconds() - CurrentGameSaveData->SlotSaveData.PlayTimeInSeconds;
     
     return CurrentGameSaveData->SlotSaveData;
 }
@@ -130,6 +127,19 @@ void USLSaveGameSubsystem::OnSelectedNewGame()
 bool USLSaveGameSubsystem::GetIsExistSaveData() const
 {
     return bIsExistSaveData;
+}
+
+void USLSaveGameSubsystem::CheckSaveData()
+{
+    for (int32 Index = 0; Index < GameSaveSlotList.Num(); Index++)
+    {
+        if (!UGameplayStatics::DoesSaveGameExist(GameSaveSlotList[Index], 0))
+        {
+            CurrentGameSaveData = NewObject<USLSaveGame>();
+            LoadObjectiveDefaultData();
+            UGameplayStatics::SaveGameToSlot(CurrentGameSaveData, GameSaveSlotList[Index], 0);
+        }
+    }
 }
 
 void USLSaveGameSubsystem::LoadObjectiveDefaultData()

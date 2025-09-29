@@ -5,6 +5,7 @@
 #include "UI/SLUISettings.h"
 #include "UI/Widget/AdditiveWidget/SLAdditiveWidget.h"
 #include "UI/Widget/AdditiveWidget/SLStoryWidget.h"
+#include "UI/Widget/AdditiveWidget/SLOptionWidget.h"
 #include "UI/HUD/SLInGameHUD.h"
 
 void USLUISubsystem::SetInputModeAndCursor(bool bIsRemove)
@@ -76,6 +77,17 @@ void USLUISubsystem::ActivateOption()
 {
 	CheckValidOfOptiondDataAsset();
 	AddAdditiveWidget(ESLAdditiveWidgetType::EAW_OptionWidget);
+}
+
+void USLUISubsystem::ActivateSaveLoadWidget()
+{
+	ActivateOption();
+	USLOptionWidget* OptionWidget = Cast<USLOptionWidget>(AdditiveWidgetMap[ESLAdditiveWidgetType::EAW_OptionWidget]);
+
+	if (IsValid(OptionWidget))
+	{
+		OptionWidget->ShowSaveLoadUI();
+	}
 }
 
 void USLUISubsystem::ActivateFade(bool bIsFadeIn, bool bIsMoveLevel)

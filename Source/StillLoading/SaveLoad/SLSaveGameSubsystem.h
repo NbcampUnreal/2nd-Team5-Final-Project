@@ -46,6 +46,7 @@ public:
     bool GetIsExistSaveData() const;
 
 private:
+    void CheckSaveData();
     void LoadObjectiveDefaultData();
     
     void SaveChapterData();

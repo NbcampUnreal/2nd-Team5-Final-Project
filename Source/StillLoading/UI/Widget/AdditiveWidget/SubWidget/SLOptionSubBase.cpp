@@ -31,6 +31,8 @@ bool USLOptionSubBase::ApplyOtherImage()
 	ApplyListBackImage(SlateBrush);
 	ApplyLeftArrowImage(ButtonStyle);
 	ApplyRightArrowImage(ButtonStyle);
+	ApplySlotImage(SlateBrush);
+	ApplySavePopImage(SlateBrush);
 
 	return true;
 }
@@ -142,5 +144,27 @@ bool USLOptionSubBase::ApplyRightArrowImage(FButtonStyle& ButtonStyle)
 		return true;
 	}
 
+	return false;
+}
+
+bool USLOptionSubBase::ApplySlotImage(FSlateBrush& SlateBrush)
+{
+	if (PrivateImageMap.Contains(ESLOptionPrivateImageType::EOPI_Slot) &&
+		IsValid(PrivateImageMap[ESLOptionPrivateImageType::EOPI_Slot]))
+	{
+		SlateBrush.SetResourceObject(PrivateImageMap[ESLOptionPrivateImageType::EOPI_Slot]);
+		return true;
+	}
+	return false;
+}
+
+bool USLOptionSubBase::ApplySavePopImage(FSlateBrush& SlateBrush)
+{
+	if (PrivateImageMap.Contains(ESLOptionPrivateImageType::EOPI_SavePop) &&
+		IsValid(PrivateImageMap[ESLOptionPrivateImageType::EOPI_SavePop]))
+	{
+		SlateBrush.SetResourceObject(PrivateImageMap[ESLOptionPrivateImageType::EOPI_SavePop]);
+		return true;
+	}
 	return false;
 }

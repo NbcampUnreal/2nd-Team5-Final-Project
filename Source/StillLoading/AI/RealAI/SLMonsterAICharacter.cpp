@@ -68,7 +68,7 @@ void ASLMonsterAICharacter::BeginPlay()
 
 		bOriginalMaterialsInitialized = true;
 	}
-
+/*
 	if (SpawnMovementCurve)
 	{
 		FOnTimelineFloat InterpFunction;
@@ -80,7 +80,7 @@ void ASLMonsterAICharacter::BeginPlay()
 		SpawnTimeline->AddInterpFloat(SpawnMovementCurve, InterpFunction);
 		SpawnTimeline->SetTimelineFinishedFunc(TimelineFinishedFunction);
 	}
-
+*/
 	SetPrimaryState(TAG_AI_Idle);
 }
 
@@ -118,47 +118,6 @@ void ASLMonsterAICharacter::PlayETCWaitAnim()
 	TArray<FString> AttackMontageNames = {"WaitA", "WaitB", "WaitC", "WaitD"};
 	const int32 RandIndex = FMath::RandRange(0, AttackMontageNames.Num() - 1);
 	AnimationComponent->PlayAIETCMontage(*AttackMontageNames[RandIndex]);
-}
-
-void ASLMonsterAICharacter::BeginSpawning(const FVector& FinalLocation, const float RiseHeight)
-{
-	SpawnEndLocation = FinalLocation;
-	SpawnStartLocation = FinalLocation - FVector(0.f, 0.f, RiseHeight);
-
-	SetActorLocation(SpawnStartLocation);
-	AnimationComponent->PlayAIETCMontage("Spawn");
-
-	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-	{
-		const float RandomMaxSpeed = FMath::FRandRange(200.f, 400.f);
-		MoveComp->MaxWalkSpeed = RandomMaxSpeed;
-	}
-
-	//SetActorEnableCollision(false);
-
-	if (GetCharacterMovement())
-	{
-		GetCharacterMovement()->SetMovementMode(MOVE_None);
-	}
-
-	ChangeMeshTemporarily(3);
-	SpawnTimeline->PlayFromStart();
-}
-
-void ASLMonsterAICharacter::UpdateSpawnMovement(float Alpha)
-{
-	const FVector NewLocation = FMath::Lerp(SpawnStartLocation, SpawnEndLocation, Alpha);
-	SetActorLocation(NewLocation);
-}
-
-void ASLMonsterAICharacter::OnSpawnMovementFinished() const
-{
-	//SetActorEnableCollision(true);
-
-	if (GetCharacterMovement())
-	{
-		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	}
 }
 
 void ASLMonsterAICharacter::ToggleWeaponState(const bool bIsVisible)

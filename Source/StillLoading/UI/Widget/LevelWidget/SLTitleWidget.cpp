@@ -30,14 +30,14 @@ void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 	Super::InitWidget(NewUISubsystem);
 
 	StartButton->InitButton();
-	ContinueButton->InitButton();
+	//ContinueButton->InitButton();
 	OptionButton->InitButton();
 	QuitButton->InitButton();
 	AgreeButton->InitButton();
 	CancleButton->InitButton();
 
-	StartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedNewGameButton);
-	ContinueButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedContinueButton);
+	StartButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedContinueButton);
+	//ContinueButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedContinueButton);
 	OptionButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedOptionButton);
 	QuitButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedQuitButton);
 	AgreeButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedStartButton);
@@ -45,14 +45,14 @@ void USLTitleWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 	CheckValidOfSaveGameSubsystem();
 	
-	if (SaveGameSubsystem->GetIsExistSaveData())
+	/*if (SaveGameSubsystem->GetIsExistSaveData())
 	{
 		ContinueButton->SetIsEnabled(true);
 	}
 	else
 	{
 		ContinueButton->SetIsEnabled(false);
-	}
+	}*/
 
 	QuestionPanel->SetVisibility(ESlateVisibility::Collapsed);
 	AgreeButton->SetButtonText(FText::FromString(FString::Printf(TEXT("Yes"))));
@@ -102,7 +102,7 @@ void USLTitleWidget::ApplyTextData()
 
 	TitleText->SetText(TitleTextMap[TitleTextIndex]);
 	StartButton->SetButtonText(TitleTextMap[StartButtonIndex]);
-	ContinueButton->SetButtonText(TitleTextMap[ContinueButtonIndex]);
+	//ContinueButton->SetButtonText(TitleTextMap[ContinueButtonIndex]);
 	OptionButton->SetButtonText(TitleTextMap[OptionButtonIndex]);
 	QuitButton->SetButtonText(TitleTextMap[QuitButtonIndex]);
 	QuestionText->SetText(TitleTextMap[QuestionTextIndex]);

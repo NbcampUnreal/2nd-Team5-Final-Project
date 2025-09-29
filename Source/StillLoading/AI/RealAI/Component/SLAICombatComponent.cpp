@@ -64,16 +64,16 @@ void USLAICombatComponent::SafeLookAtTarget(AActor* Target, float DeltaTime)
 
 void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 {
+	if (!StateComponent)
+	{
+		return;
+	}
+
 	if (!IsValid(CurrentTarget.TargetActor))
 	{
-		if (StateComponent && IsValid(StateComponent->CachedAIController))
+		if (IsValid(StateComponent->CachedAIController))
 		{
 			StateComponent->CachedAIController->ClearFocus(EAIFocusPriority::Gameplay);
-		}
-
-		if (StateComponent)
-		{
-			StateComponent->SetState(EAIBattleState::Idle);
 		}
 		return;
 	}
@@ -82,9 +82,8 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 	{
 		return;
 	}
-
-	const float Distance = FVector::Dist(GetOwner()->GetActorLocation(), CurrentTarget.TargetActor->GetActorLocation());
-
+	
+	const float Distance = GetDistanceFromTarget(CurrentTarget.TargetActor->GetActorLocation());
 	float AttackRange = 150.0f;
 	if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
 	{
@@ -93,17 +92,15 @@ void USLAICombatComponent::UpdateAttacking(float DeltaTime)
 
 	if (Distance > AttackRange)
 	{
-		if (StateComponent && !bIsOrbiting && !bIsRetreating)
+		if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
 		{
-			if (ASLMonsterAICharacter* MyCharacter = Cast<ASLMonsterAICharacter>(GetOwner()))
+			if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->IsInPrimaryState(TAG_AI_Dead))
 			{
-				if (MyCharacter->IsInPrimaryState(TAG_AI_IsPlayingMontage) || MyCharacter->
-					IsInPrimaryState(TAG_AI_Dead))
-					return;
+				return;
 			}
-
-			StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), true, 100);
 		}
+
+		StateComponent->SetMovementTarget(CurrentTarget.TargetActor->GetActorLocation(), true, 100.f);
 	}
 	else
 	{
@@ -252,6 +249,20 @@ void USLAICombatComponent::HandleNoEnemyDetected()
 	}
 }
 
+float USLAICombatComponent::GetDistanceFromTarget(const FVector Target)
+{
+	const AActor* OwnerActor = GetOwner();
+
+	if (!OwnerActor)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GetDistanceFromTarget: OwnerActor is not valid!"));
+		return FLT_MAX;
+	}
+
+	const FVector OwnerLocation = OwnerActor->GetActorLocation();
+	return FVector::Dist(OwnerLocation, Target);
+}
+
 void USLAICombatComponent::UpdateSupporting(float DeltaTime)
 {
 	bIsSupporting = true;
@@ -277,7 +288,7 @@ void USLAICombatComponent::ClearTarget()
 	GetWorld()->GetTimerManager().ClearTimer(TargetClearTimerHandle);
 }
 
-bool USLAICombatComponent::CanAttack() const
+bool USLAICombatComponent::CanAttack()
 {
 	if (!IsValid(CurrentTarget.TargetActor)) return false;
 
@@ -292,8 +303,7 @@ bool USLAICombatComponent::CanAttack() const
 	{
 		AvailDistance = CachedMyCharacter->AIAttributeComp->GetAbleDistance();
 	}
-
-	float Distance = FVector::Dist(GetOwner()->GetActorLocation(), CurrentTarget.TargetActor->GetActorLocation());
+	float Distance = GetDistanceFromTarget(CurrentTarget.TargetActor->GetActorLocation());
 	return Distance <= AvailDistance;
 }
 

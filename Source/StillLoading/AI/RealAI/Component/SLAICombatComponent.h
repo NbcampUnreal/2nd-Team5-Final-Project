@@ -46,6 +46,8 @@ public:
     void HandleEnemyDetection(AActor* DetectedEnemy);
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
     void HandleNoEnemyDetected();
+    UFUNCTION(BlueprintCallable, Category = "AI|Combat")
+    float GetDistanceFromTarget(FVector Target);
 
     // 서포트 모드 관련
     void UpdateSupporting(float DeltaTime);
@@ -77,7 +79,7 @@ public:
 
     // 공격 관리
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
-    bool CanAttack() const;
+    bool CanAttack();
     UFUNCTION(BlueprintCallable, Category = "AI|Combat")
     void PerformAttack(float DeltaTime);
     void UpdateAttacking(float DeltaTime);
