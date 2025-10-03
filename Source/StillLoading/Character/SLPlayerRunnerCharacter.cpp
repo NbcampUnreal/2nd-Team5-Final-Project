@@ -453,7 +453,7 @@ void ASLPlayerRunnerCharacter::QTE_End()
 	QTEFailSection    = ERunnerMontageSection::None;
 }
 
-void ASLPlayerRunnerCharacter::OnActionTriggeredCallback(const EInputActionType ActionType, const FInputActionValue /*InputValue*/)
+void ASLPlayerRunnerCharacter::OnActionTriggeredCallback(const EInputActionType ActionType, const FInputActionValue InputValue)
 {
 	if (!bGameStarted || bPlayingSequence || bIsDead)
 	{
@@ -684,6 +684,8 @@ void ASLPlayerRunnerCharacter::EnterRootMotionAction(float ExpectedDuration)
 	Move->SetMovementMode(MOVE_Flying);
 	Move->GravityScale = 0.f;
 
+	RootMotionCamDepth = FMath::Max(0, RootMotionCamDepth) + 1;
+	
 	GetWorldTimerManager().SetTimer(
 		ActionRootMotionTimer, this, &ASLPlayerRunnerCharacter::ExitRootMotionAction,
 		ExpectedDuration, false);
@@ -711,6 +713,15 @@ void ASLPlayerRunnerCharacter::ExitRootMotionAction()
 		bSplineDriveEnabled = !bGoalReached;
 	}
 
+	RootMotionCamDepth = FMath::Max(0, RootMotionCamDepth - 1);
+
+
+	if (RootMotionCamDepth <= 0 && !IsCamHoldActive() && ActivePreset != ECameraPreset::Default)
+	{
+		ActivePreset = ECameraPreset::Default;
+		CamTarget = Cam_Default;
+	}
+	
 	InputKey = "";
 	InputTime = 0.f;
 	GetWorldTimerManager().ClearTimer(ActionRootMotionTimer);
@@ -764,7 +775,7 @@ void ASLPlayerRunnerCharacter::SwitchToTrackAtDistance(ASLSplineTrack* NewTrack,
 	const float Clamped   = FMath::Clamp(StartDistance, 0.f, SplineLen);
 
 	MapDistanceToSegment(Clamped);
-	ApplyTransformAtDistance(SplineDistance, /*bForceSnap=*/true);
+	ApplyTransformAtDistance(SplineDistance, true);
 }
 
 void ASLPlayerRunnerCharacter::SetCameraPreset(ECameraPreset Preset, float HoldTime)
@@ -782,19 +793,26 @@ void ASLPlayerRunnerCharacter::SetCameraPreset(ECameraPreset Preset, float HoldT
 	default:                     CamTarget = Cam_Default; break;
 	}
 
-	GetWorldTimerManager().ClearTimer(CamPresetTimer);
-	if (HoldTime > 0.f)
+	if (HoldTime > 0.f && GetWorld())
 	{
-		GetWorldTimerManager().SetTimer(CamPresetTimer, [this]()
-		{
-			ActivePreset = ECameraPreset::Default;
-			CamTarget = Cam_Default;
-		}, HoldTime, false);
+		const float Now = GetWorld()->GetTimeSeconds();
+		CamHoldUntilTime = FMath::Max(CamHoldUntilTime, Now + HoldTime);
+		HeldPreset = Preset;
 	}
 }
 
 void ASLPlayerRunnerCharacter::ApplyCamera(float DeltaSeconds)
 {
+	if (!bPlayingSequence && !bIsDead && GetWorld())
+	{
+		const float Now = GetWorld()->GetTimeSeconds();
+		if (RootMotionCamDepth <= 0 && Now >= CamHoldUntilTime && ActivePreset != ECameraPreset::Default)
+		{
+			ActivePreset = ECameraPreset::Default;
+			CamTarget = Cam_Default;
+		}
+	}
+
 	CamCurrent.TargetArmLength = FMath::FInterpTo(CamCurrent.TargetArmLength, CamTarget.TargetArmLength, DeltaSeconds, CamTarget.BlendSpeed);
 	CamCurrent.SocketOffset    = FMath::VInterpTo(CamCurrent.SocketOffset,    CamTarget.SocketOffset,    DeltaSeconds, CamTarget.BlendSpeed);
 	CamCurrent.ArmRotation     = FMath::RInterpTo(CamCurrent.ArmRotation,     CamTarget.ArmRotation,     DeltaSeconds, CamTarget.BlendSpeed);
@@ -814,9 +832,9 @@ void ASLPlayerRunnerCharacter::ApplyCamera(float DeltaSeconds)
 	const float NX = FMath::PerlinNoise1D(CamNoiseTime);
 	const float NY = FMath::PerlinNoise1D(CamNoiseTime + 37.123f);
 	const FVector Noise = FVector(NX * CamCurrent.ShakeAmplitude * 2.f, NY * CamCurrent.ShakeAmplitude * 2.f, NX * CamCurrent.ShakeAmplitude * 0.8f);
-
 	SpringArm->SocketOffset = CamCurrent.SocketOffset + Noise;
 }
+
 
 void ASLPlayerRunnerCharacter::StartShake(TSubclassOf<UCameraShakeBase> ShakeClass, float Scale)
 {
@@ -1203,10 +1221,6 @@ void ASLPlayerRunnerCharacter::ResumeAfterSequenceImmediate(bool bPlayRunStart)
 	if (USLRunnerAnimInstance* RunAnim = GetRunnerAnim())
 	{
 		RunAnim->bIsPlayingSequence = false;
-		if (bPlayRunStart)
-		{
-			RunAnim->PlayRunStart();
-		}
 	}
 
 	if (UCharacterMovementComponent* Move = GetCharacterMovement())

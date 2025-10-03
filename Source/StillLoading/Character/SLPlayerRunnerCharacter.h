@@ -194,6 +194,10 @@ private:
 
 	void AlignToSplineFromTransform(const FTransform& WorldTM);
 
+	bool IsCamHoldActive() const
+	{
+		return GetWorld() && (GetWorld()->GetTimeSeconds() < CamHoldUntilTime);
+	}
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
 	TObjectPtr<USpringArmComponent> SpringArm;
@@ -440,6 +444,16 @@ protected:
 
 	UPROPERTY(Transient)
 	FTransform CameraDefaultRelative;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
+	float CamHoldUntilTime = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
+	ECameraPreset HeldPreset = ECameraPreset::Default;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Runner|Camera")
+	int32 RootMotionCamDepth = 0;
+
 
 
 private:
