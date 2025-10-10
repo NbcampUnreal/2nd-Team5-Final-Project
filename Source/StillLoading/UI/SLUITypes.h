@@ -14,7 +14,8 @@ enum class ESLAdditiveWidgetType : uint8
 	EAW_StoryWidget,
 	EAW_TalkWidget,
 	EAW_NotifyWidget,
-	EAW_CreditWidget
+	EAW_CreditWidget,
+	EAW_PauseWidget
 };
 
 UENUM(BlueprintType)
@@ -80,7 +81,9 @@ enum class ESLPublicWidgetImageType : uint8
 	EPWI_ButtonEffect,
 	EPWI_ButtonRetainer,
 	EPWI_Background,
-	EPWI_Fade
+	EPWI_Fade,
+	EPWI_PauseBack,
+	EPWI_Logo
 };
 
 UENUM(BlueprintType)

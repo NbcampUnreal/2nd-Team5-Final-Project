@@ -16,6 +16,12 @@ ASLRenderingManager::ASLRenderingManager()
 	InitComponents();
 }
 
+void ASLRenderingManager::EnablePixelArtShader(bool bFlag)
+{
+	CurrentRenderingType.bPixelArtFlag = bFlag;
+	UpdatePostProcessRenderingType();
+}
+
 void ASLRenderingManager::BeginPlay()
 {
 	Super::BeginPlay();

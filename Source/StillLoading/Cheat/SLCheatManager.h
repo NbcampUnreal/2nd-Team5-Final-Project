@@ -34,4 +34,7 @@ public:
 
 	UFUNCTION(exec)
 	void ShowLevelWidget(bool bFlag);
+
+	UFUNCTION(exec)
+	void SkipChapter();
 };

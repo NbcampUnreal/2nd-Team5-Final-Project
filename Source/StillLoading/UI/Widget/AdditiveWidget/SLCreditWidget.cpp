@@ -11,6 +11,9 @@
 #include "Components/VerticalBox.h"
 #include "Components/ScrollBox.h"
 #include "Components/Image.h"
+#include "SubSystem/SLDemoSubsystem.h"
+#include "Demo/SLScoreEncodingLibrary.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
 
 void USLCreditWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -23,7 +26,11 @@ void USLCreditWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 	CloseButton->InitButton();
 	CloseButton->OnClicked.AddDynamic(this, &ThisClass::OnClickedCloseButton);
-	CloseButton->SetButtonText(FText::FromString(FString::Printf(TEXT("확인"))));
+	CloseButton->SetButtonText(FText::FromString(FString::Printf(TEXT("타이틀로"))));
+
+	TimeTag->SetText(FText::FromString(FString::Printf(TEXT("플레이 타임"))));
+	CoinTag->SetText(FText::FromString(FString::Printf(TEXT("획득 코인"))));
+	CodeTag->SetText(FText::FromString(FString::Printf(TEXT("확인 코드"))));
 }
 
 void USLCreditWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
@@ -31,6 +38,21 @@ void USLCreditWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActiva
 	Super::ActivateWidget(WidgetActivateBuffer);
 
 	PlayAnimation(OpenAnim);
+
+	USLDemoSubsystem* DemoSub = GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+	checkf(IsValid(DemoSub), TEXT("Demo Sub is invalid"));
+
+	int32 CoinCount = DemoSub->GetCurrentCoin();
+	int32 PlayTime = DemoSub->GetCurrentTime();
+
+	int32 TimeSec = PlayTime % 60;
+	int32 TimeMin = PlayTime / 60;
+
+	FString EncodingString = USLScoreEncodingLibrary::EncodingScoreToBase36(PlayTime, CoinCount);
+
+	CoinText->SetText(FText::FromString(FString::Printf(TEXT("%d 개"), CoinCount)));
+	TimeText->SetText(FText::FromString(FString::Printf(TEXT("%02d : %02d"), TimeMin, TimeSec)));
+	CodeText->SetText(FText::FromString(EncodingString));
 
 	// TODO : Get Credit Text Pool From TextSubsystem. And Create CreditTextWidget - Create Count = Text Pool Size
 	/*for (int32 i = 0; i < 20; ++i)
@@ -75,7 +97,7 @@ bool USLCreditWidget::ApplyBackgroundImage(FSlateBrush& SlateBrush)
 		return false;
 	}
 
-	BackgroundImg->SetBrush(SlateBrush);
+	//BackgroundImg->SetBrush(SlateBrush);
 
 	return true;
 }
@@ -84,7 +106,11 @@ void USLCreditWidget::OnClickedCloseButton()
 {
 	PlayUISound(ESLUISoundType::EUS_Click);
 
-	USLSaveGameSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
+	/*USLSaveGameSubsystem* SaveGameSubsystem = GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>();
 	SaveGameSubsystem->ResetGameData();
-	MoveToLevelByType(ESLLevelNameType::ELN_Intro);
+	MoveToLevelByType(ESLLevelNameType::ELN_Intro);*/
+
+	USLLevelTransferSubsystem* LevelTransferSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelTransferSubsystem), TEXT("Level Transfer Subsystem is invalid"));
+	LevelTransferSubsystem->MoveToMainTitle();
 }

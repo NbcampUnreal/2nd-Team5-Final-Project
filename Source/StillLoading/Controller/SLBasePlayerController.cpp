@@ -7,6 +7,7 @@
 #include "Character/DynamicIMCComponent/SLDynamicIMCComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/HUD/SLInGameHUD.h"
+#include "SubSystem/SLDemoSubsystem.h"
 
 ASLBasePlayerController::ASLBasePlayerController()
 {
@@ -73,13 +74,18 @@ void ASLBasePlayerController::SetIgnoreMoveInput(bool bNewMoveInput)
 {
 	Super::SetIgnoreMoveInput(bNewMoveInput);
 
+	USLDemoSubsystem* DemoSub = GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+	checkf(IsValid(DemoSub), TEXT("DemoSub is invalid"));
+
 	if (bNewMoveInput)
 	{
+		DemoSub->PauseTimer(true);
 		HideInGameUI();
 	}
 	else
 	{
 		ShowInGameUI();
+		DemoSub->ContinueTimer();
 	}
 }
 
@@ -113,8 +119,7 @@ void ASLBasePlayerController::ShowInGameUI()
 
 	if (IsValid(HUD))
 	{
-		HUD->ApplyObjective();
-		HUD->SetVisibilityPlayerState(true);
+		HUD->ShowInGameWidget(true);
 	}
 }
 
@@ -124,8 +129,7 @@ void ASLBasePlayerController::HideInGameUI()
 
 	if (IsValid(HUD))
 	{
-		HUD->SetInvisibleObjectivve();
-		HUD->SetVisibilityPlayerState(false);
+		HUD->ShowInGameWidget(false);
 	}
 }
 

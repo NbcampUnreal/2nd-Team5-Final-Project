@@ -32,9 +32,9 @@ ASLStableMasterAIController::ASLStableMasterAIController()
 void ASLStableMasterAIController::Tick(float DeltaTime)
 {
     // 현재 타겟이 숨어있는 상태라면 부모 Tick 스킵
-    if (CurrentBestTarget && CurrentBestTarget->GetClass()->ImplementsInterface(USLHideableInterface::StaticClass()))
+    if (CurrentBestTarget.Get() && CurrentBestTarget->GetClass()->ImplementsInterface(USLHideableInterface::StaticClass()))
     {
-        bool bIsHiding = ISLHideableInterface::Execute_IsHiding(CurrentBestTarget);
+        bool bIsHiding = ISLHideableInterface::Execute_IsHiding(CurrentBestTarget.Get());
         if (bIsHiding)
         {
             return;

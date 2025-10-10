@@ -67,7 +67,7 @@ void ASLBattlePlayerState::IncreaseHealth(const float Amount)
 
 void ASLBattlePlayerState::DecreaseHealth(const float Amount)
 {
-	Health = FMath::Clamp(Health - Amount, 0.f, Health);
+	Health = FMath::Clamp(Health - Amount, 1.f, Health);
 	OnRep_Health();
 }
 

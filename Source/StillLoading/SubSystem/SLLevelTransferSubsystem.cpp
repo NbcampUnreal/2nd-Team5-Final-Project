@@ -9,6 +9,7 @@
 #include "UI/SLUISubsystem.h"
 #include "SubSystem/SLSoundSubsystem.h"
 #include "UI/HUD/SLBaseHUD.h"
+#include "SubSystem/SLDemoSubsystem.h"
 
 void USLLevelTransferSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -23,6 +24,12 @@ void USLLevelTransferSubsystem::OpenLevelByNameType(ESLLevelNameType LevelNameTy
 {
 	CurrentLevel = LevelNameType;
 	OptionString = Option;
+
+	USLDemoSubsystem* DemoSub = GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+	checkf(IsValid(DemoSub), TEXT("DemoSub is invalid"));
+
+	DemoSub->PauseTimer();
+	DemoSub->UpdateLastInfo();
 
 	if (!bIsFadeOut)
 	{
@@ -87,6 +94,14 @@ void USLLevelTransferSubsystem::PostOpenLevel(UWorld* LoadedWorld)
 	if (LevelSettings->LevelBgmMap.Contains(CurrentLevel))
 	{
 		SoundSubsystem->PlayBgmSound(LevelSettings->LevelBgmMap[CurrentLevel]);
+	}
+
+	USLDemoSubsystem* DemoSub = GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+	checkf(IsValid(DemoSub), TEXT("DemoSub is invalid"));
+
+	if (!DemoSub->GetIsCinePause())
+	{
+		DemoSub->ContinueTimer();
 	}
 }
 

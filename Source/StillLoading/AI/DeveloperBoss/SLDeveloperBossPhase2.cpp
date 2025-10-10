@@ -48,9 +48,12 @@ void ASLDeveloperBossPhase2::StartPhase()
 {
     Super::StartPhase();
     
+    UE_LOG(LogTemp, Error, TEXT("Phase2: StartPhase called, RoomSpace valid: %s"), 
+           IsValid(RoomSpace) ? TEXT("YES") : TEXT("NO"));
+    
     if (!IsValid(RoomSpace))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Phase2: No room space configured"));
+        UE_LOG(LogTemp, Error, TEXT("Phase2: No RoomSpace, completing immediately"));
         bIsCompleted = true;
         CheckPhaseCompletion();
         return;
@@ -59,9 +62,7 @@ void ASLDeveloperBossPhase2::StartPhase()
     bIsCompleted = false;
     bWaitingForCinematic = false;
 
-    UE_LOG(LogTemp, Warning, TEXT("Phase2: Starting with start cinematic"));
-    
-    // Phase2 시작 시네마틱 재생
+    UE_LOG(LogTemp, Error, TEXT("Phase2: Playing start cinematic"));
     PlayCinematic(EPhase2CinematicType::Start);
 }
 
@@ -103,23 +104,6 @@ bool ASLDeveloperBossPhase2::IsPhaseCompleted() const
 void ASLDeveloperBossPhase2::SetConfig(const FSLPhase2Config& InConfig)
 {
     Config = InConfig;
-    
-    UE_LOG(LogTemp, Warning, TEXT("Phase2 Config Set:"));
-    UE_LOG(LogTemp, Warning, TEXT("  - RoomActivationDelay: %f"), Config.RoomActivationDelay);
-    UE_LOG(LogTemp, Warning, TEXT("  - bAutoTeleportPlayer: %s"), Config.bAutoTeleportPlayer ? TEXT("true") : TEXT("false"));
-    UE_LOG(LogTemp, Warning, TEXT("  - Cinematics: %d"), Config.Cinematics.Num());
-    
-    for (int32 i = 0; i < Config.Cinematics.Num(); i++)
-    {
-        if (IsValid(Config.Cinematics[i]))
-        {
-            UE_LOG(LogTemp, Warning, TEXT("  - Cinematic[%d]: %s"), i, *Config.Cinematics[i]->GetName());
-        }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("  - Cinematic[%d]: NULL"), i);
-        }
-    }
 }
 
 void ASLDeveloperBossPhase2::SetRoomSpace(ASLDeveloperRoomSpace* InRoomSpace)
@@ -144,12 +128,25 @@ void ASLDeveloperBossPhase2::SetMouseActor(ASLMouseActor* InMouseActor)
 
 void ASLDeveloperBossPhase2::OnPhaseStarted()
 {
-    UE_LOG(LogTemp, Display, TEXT("Phase 2 Hack & Slash Started"));
 }
 
 void ASLDeveloperBossPhase2::OnPhaseEnded()
 {
-    UE_LOG(LogTemp, Display, TEXT("Phase 2 Hack & Slash Completed"));
+}
+
+void ASLDeveloperBossPhase2::HandleLineDestroyed(int32 LineIndex)
+{
+    Super::HandleLineDestroyed(LineIndex);
+    if (!bIsPhaseActive || bWaitingForCinematic)
+    {
+        return;
+    }
+    
+    UE_LOG(LogTemp, Error, TEXT("Phase2: Line destroyed, completing phase"));
+    
+    // 선이 파괴되면 Phase2 완료
+    bIsCompleted = true;
+    CheckPhaseCompletion();
 }
 
 void ASLDeveloperBossPhase2::HandleRoomEscape(ASLDeveloperRoomSpace* Room)
@@ -158,9 +155,6 @@ void ASLDeveloperBossPhase2::HandleRoomEscape(ASLDeveloperRoomSpace* Room)
     {
         return;
     }
-    
-    UE_LOG(LogTemp, Warning, TEXT("Phase2: Room escape detected"));
-    
     // 탈출벽 파괴 시 시네마틱 재생
     PlayCinematic(EPhase2CinematicType::Escape);
 }
@@ -171,26 +165,21 @@ void ASLDeveloperBossPhase2::PlayCinematic(EPhase2CinematicType CinematicType)
     
     int32 CinematicIndex = static_cast<int32>(CinematicType);
     
-    UE_LOG(LogTemp, Warning, TEXT("Phase2: Playing cinematic type: %d, index: %d"), 
-           static_cast<int32>(CinematicType), CinematicIndex);
     
     if (!Config.Cinematics.IsValidIndex(CinematicIndex))
     {
-        UE_LOG(LogTemp, Error, TEXT("Phase2: Invalid CinematicIndex: %d"), CinematicIndex);
         OnCinematicFinished(); // 시네마틱 없으면 바로 완료
-        return;
-    }
-    
-    if (!IsValid(Config.Cinematics[CinematicIndex]))
-    {
-        UE_LOG(LogTemp, Error, TEXT("Phase2: Cinematic is null at index: %d"), CinematicIndex);
-        OnCinematicFinished();
         return;
     }
     
     bWaitingForCinematic = true;
     
     FMovieSceneSequencePlaybackSettings PlaybackSettings;
+    PlaybackSettings.bHideHud = false;
+    PlaybackSettings.FinishCompletionStateOverride = EMovieSceneCompletionModeOverride::ForceKeepState;
+    PlaybackSettings.bDisableLookAtInput = true;
+    PlaybackSettings.bDisableMovementInput = true;
+    
     ALevelSequenceActor* SequenceActor = nullptr;
     CurrentSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
         GetWorld(),
@@ -201,48 +190,21 @@ void ASLDeveloperBossPhase2::PlayCinematic(EPhase2CinematicType CinematicType)
     
     if (CurrentSequencePlayer)
     {
-        UE_LOG(LogTemp, Display, TEXT("Phase2: SequencePlayer created successfully"));
         CurrentSequencePlayer->OnFinished.AddDynamic(this, &ASLDeveloperBossPhase2::OnCinematicFinished);
         CurrentSequencePlayer->Play();
-        UE_LOG(LogTemp, Display, TEXT("Phase2: Cinematic play started"));
-        
-        // 강제 타임아웃 추가 (시네마틱이 멈췄을 경우 대비)
-        if (IsValid(GetWorld()))
-        {
-            GetWorld()->GetTimerManager().SetTimer(
-                CinematicTimeoutTimer,
-                [this]()
-                {
-                    if (bWaitingForCinematic)
-                    {
-                        UE_LOG(LogTemp, Error, TEXT("Phase2: Cinematic timeout! Force finishing..."));
-                        OnCinematicFinished();
-                    }
-                },
-                10.0f, // 10초 타임아웃
-                false
-            );
-        }
+       
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("Phase2: Failed to create SequencePlayer"));
         OnCinematicFinished();
     }
 }
 
 void ASLDeveloperBossPhase2::OnCinematicFinished()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Phase2: OnCinematicFinished called for type: %d"), 
+    UE_LOG(LogTemp, Error, TEXT("Phase2: OnCinematicFinished - CurrentCinematicType=%d"), 
            static_cast<int32>(CurrentCinematicType));
-    
     bWaitingForCinematic = false;
-    
-    // 타임아웃 타이머 클리어
-    if (IsValid(GetWorld()) && CinematicTimeoutTimer.IsValid())
-    {
-        GetWorld()->GetTimerManager().ClearTimer(CinematicTimeoutTimer);
-    }
     
     if (CurrentSequencePlayer)
     {
@@ -259,15 +221,14 @@ void ASLDeveloperBossPhase2::OnCinematicFinished()
         
     case EPhase2CinematicType::Escape:
         // 탈출 시네마틱 완료 후 Phase2 완료
-        bIsCompleted = true;
-        CheckPhaseCompletion();
+        //bIsCompleted = true;
+        //CheckPhaseCompletion();
         break;
     }
 }
 
 void ASLDeveloperBossPhase2::StartPhaseAfterCinematic()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Phase2: Starting gameplay after start cinematic"));
     
     // 마우스 액터 비활성화
     if (IsValid(MouseActor))

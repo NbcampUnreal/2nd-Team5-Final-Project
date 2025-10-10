@@ -19,6 +19,9 @@ class STILLLOADING_API ASLInGameHUD : public ASLBaseHUD
 	
 public:
 	UFUNCTION(BlueprintCallable)
+	void ShowInGameWidget(bool bIsShowed);
+
+	UFUNCTION(BlueprintCallable)
 	void ApplyObjective();
 
 	UFUNCTION(BlueprintCallable)
@@ -80,6 +83,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetHitEffectValue(float MaxHp, float CurrentHp);
+
+	void ApplyCurrentDemoInfo(int32 CoinCount, int32 TimeSec);
 
 protected:
 	virtual void OnStartedHUD() override;

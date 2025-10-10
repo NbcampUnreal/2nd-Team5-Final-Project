@@ -5,9 +5,11 @@
 #include "SLPlayerCharacterBase.h"
 #include "DataAsset/TagQueryDataAsset.h"
 #include "Item/SLItem.h"
+#include "MovementHandlerComponent/SLMovementHandlerComponent.h"
 #include "SLPlayerCharacter.generated.h"
 
 
+class UInputBufferComponent;
 class ASLBattlePlayerState;
 class UAnimationMontageComponent;
 enum class EItemType : uint8;
@@ -106,6 +108,8 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UAnimationMontageComponent> CachedMontageComponent;
+	UPROPERTY()
+	TObjectPtr<UInputBufferComponent> CachedInputBufferComponent;
 	UPROPERTY(BlueprintReadOnly, Category = "Character|Movement")
 	float LastLandTime = 0.0f;
 

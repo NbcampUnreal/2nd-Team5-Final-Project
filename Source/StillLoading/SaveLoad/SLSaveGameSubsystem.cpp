@@ -19,12 +19,12 @@ void USLSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     Collection.InitializeDependency<USLObjectiveSubsystem>();
     Super::Initialize(Collection);
 
-    CheckSaveData();
+    // CheckSaveData();
     LoadSettingData();
     
-    CurrentGameSlotName = "";
-    CurrentGameSaveData = NewObject<USLSaveGame>();
-    LoadObjectiveDefaultData();
+    // CurrentGameSlotName = "";
+    // CurrentGameSaveData = NewObject<USLSaveGame>();
+    // LoadObjectiveDefaultData();
 }
 
 void USLSaveGameSubsystem::Deinitialize()

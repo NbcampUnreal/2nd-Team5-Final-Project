@@ -25,7 +25,7 @@ public:
 	UBattleComponent();
 
 	UFUNCTION(BlueprintCallable, Category = "Battle")
-	void SendHitResult(AActor* HitTarget, const FHitResult& HitResult, EAttackAnimType AnimType);
+	void SendHitResult(AActor* HitTarget, const FHitResult& HitResult, EAttackAnimType AnimType, float Damage = 0);
 
 	UFUNCTION(BlueprintCallable, Category = "Battle")
 	void ReceiveHitResult(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult, EAttackAnimType AnimType);
@@ -39,6 +39,9 @@ public:
 	UFUNCTION()
 	void ClearHitTargets();
 
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	float GetDamageByType(EAttackAnimType InType) const;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TObjectPtr<UHitEffectDataAsset> HitEffectData;
 
@@ -61,6 +64,5 @@ protected:
 	TSet<TWeakObjectPtr<AActor>> AlreadyHitActors;
 	
 private:
-	UFUNCTION(BlueprintCallable, Category = "Attack")
-	float GetDamageByType(EAttackAnimType InType) const;
+	
 };

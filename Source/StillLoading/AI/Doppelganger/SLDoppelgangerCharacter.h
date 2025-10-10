@@ -127,8 +127,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Combat|Jump")
     bool IsPlayerJumping() const;
 
+    // 챕터별 데미지 스케일링 적용을 위해 오버라이드
+    virtual void OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 
-    
 protected:
     virtual void BeginPlay() override;
     virtual void CharacterHit(AActor* DamageCauser, float DamageAmount, const FHitResult& HitResult, EHitAnimType AnimType) override;

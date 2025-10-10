@@ -12,6 +12,7 @@
 #include "UI/Struct/SLWidgetActivateBuffer.h"
 #include "SubSystem/SLTextPoolSubsystem.h"
 #include "SubSystem/Struct/SLTextPoolDataRows.h"
+#include "SubSystem/SLDemoSubsystem.h"
 
 void USLInGameWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -20,6 +21,12 @@ void USLInGameWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 
 	Super::InitWidget(NewUISubsystem);
 
+	USLDemoSubsystem* DemoSub = GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+	checkf(IsValid(DemoSub), TEXT("Demo Sub is invalid"));
+
+	DemoSub->ResetDele.AddDynamic(this, &ThisClass::ResetDemoInfo);
+	DemoSub->CoinDele.AddDynamic(this, &ThisClass::IncreaseCoin);
+	DemoSub->TimeDele.AddDynamic(this, &ThisClass::IncreasePlayTime);
 }
 
 void USLInGameWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer)
@@ -94,6 +101,37 @@ void USLInGameWidget::SetInvisibleObjective()
 void USLInGameWidget::SetIsBossStateActivate(bool bIsActived)
 {
 	SetIsSubWidgetActivate(bIsActived, ActiveBossStateAnim, DeactiveBossStateAnim);
+}
+
+void USLInGameWidget::SetDemoInfoVisibility(bool bIsVisible)
+{
+	if (bIsVisible)
+	{
+		DemoInfoPanel->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		DemoInfoPanel->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void USLInGameWidget::IncreaseCoin(int32 CoinCount)
+{
+	CoinText->SetText(FText::FromString(FString::FromInt(CoinCount)));
+}
+
+void USLInGameWidget::IncreasePlayTime(int32 TimeSec)
+{
+	int32 MinTime = TimeSec / 60;
+	int32 SecTime = TimeSec % 60;
+
+	PlayTimeText->SetText(FText::FromString(FString::Printf(TEXT("%02d:%02d"), MinTime, SecTime)));
+}
+
+void USLInGameWidget::ResetDemoInfo()
+{
+	CoinText->SetText(FText::FromString(FString::FromInt(0)));
+	PlayTimeText->SetText(FText::FromString(FString::Printf(TEXT("00:00"))));
 }
 
 void USLInGameWidget::SetIsHitEffectActivate(bool bIsActived)
@@ -199,6 +237,16 @@ void USLInGameWidget::SetObjectiveByCounter(const FName& ObjectiveName, int32 Ma
 const TMap<ESLInGameActivateType, bool>& USLInGameWidget::GetActivateUIMap()
 {
 	return ActivateUIMap;
+}
+
+void USLInGameWidget::UpdateCurrentCoin(int32 Count)
+{
+	IncreaseCoin(Count);
+}
+
+void USLInGameWidget::UpdateCurrentPlayTime(int32 TimeSec)
+{
+	IncreasePlayTime(TimeSec);
 }
 
 void USLInGameWidget::FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer)

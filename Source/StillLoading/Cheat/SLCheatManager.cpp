@@ -11,7 +11,9 @@
 #include "Objective/SLObjectiveBase.h"
 #include "Render/SLGridVolume.h"
 #include "SaveLoad/SLSaveGameSubsystem.h"
+#include "SubSystem/SLDemoSubsystem.h"
 #include "SubSystem/SLLevelTransferSubsystem.h"
+#include "UI/SLUISubsystem.h"
 #include "UI/HUD/SLTitleHUD.h"
 
 void USLCheatManager::ShowGridVolumeDebugLine(const bool bFlag)
@@ -73,8 +75,8 @@ void USLCheatManager::SetCurrentChapter(const int32 InChapter)
 			GetWorld()->GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>()->SetCurrentChapter(ESLChapterType::EC_Chapter4);
 			break;
 	}
-	GetWorld()->GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>()->SaveGameData();
-	GetWorld()->GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>()->LoadGameData();
+	// GetWorld()->GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>()->SaveGameData();
+	// GetWorld()->GetGameInstance()->GetSubsystem<USLSaveGameSubsystem>()->LoadGameData();
 }
 
 void USLCheatManager::ShowTitleHUD(bool bFlag)
@@ -97,5 +99,39 @@ void USLCheatManager::ShowLevelWidget(bool bFlag)
 	if (IsValid(HUD))
 	{
 		HUD->HideLevelWidget(!bFlag);
+	}
+}
+
+void USLCheatManager::SkipChapter()
+{
+	USLLevelTransferSubsystem* LevelTransferSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	check(LevelTransferSubsystem);
+
+	switch (ESLChapterType CurrentChapter = LevelTransferSubsystem->GetCurrentChapter())
+	{
+	default:
+		break;
+	case ESLChapterType::EC_Chapter0:
+		LevelTransferSubsystem->SetCurrentChapter(ESLChapterType::EC_Chapter1);
+		LevelTransferSubsystem->OpenLevelByNameType(ESLLevelNameType::ELN_DebugRoom);
+		break;
+	case ESLChapterType::EC_Chapter1:
+		LevelTransferSubsystem->SetCurrentChapter(ESLChapterType::EC_Chapter2);
+		LevelTransferSubsystem->OpenLevelByNameType(ESLLevelNameType::ELN_Mini6);
+		break;
+	case ESLChapterType::EC_Chapter2:
+		LevelTransferSubsystem->SetCurrentChapter(ESLChapterType::EC_Chapter3);
+		LevelTransferSubsystem->OpenLevelByNameType(ESLLevelNameType::ELN_Mini1);
+		break;
+	case ESLChapterType::EC_Chapter3:
+		LevelTransferSubsystem->SetCurrentChapter(ESLChapterType::EC_Chapter4);
+		LevelTransferSubsystem->OpenLevelByNameType(ESLLevelNameType::ELN_BossStage);
+		break;
+	case ESLChapterType::EC_Chapter4:
+		USLDemoSubsystem* DemoSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+		USLUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<USLUISubsystem>();
+		DemoSubsystem->EndCurrentGame();
+		UISubsystem->AddAdditiveWidget(ESLAdditiveWidgetType::EAW_CreditWidget);
+		break;
 	}
 }

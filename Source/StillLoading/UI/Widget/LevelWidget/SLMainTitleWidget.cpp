@@ -10,7 +10,7 @@
 #include "UI/Widget/SLWidgetPrivateDataAsset.h"
 #include "SaveLoad/SLSaveGameSubsystem.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "SubSystem/SLDemoSubsystem.h"
 
 const FName USLMainTitleWidget::StartButtonIndex = "StartButton";
 const FName USLMainTitleWidget::LoadButtonIndex = "ContinueButton";
@@ -112,6 +112,11 @@ void USLMainTitleWidget::OnClickedStartButton()
 	checkf(IsValid(SaveGameSubsystem), TEXT("Save Game Subsystem is invalid"));
 
 	SaveGameSubsystem->ResetGameData();
+
+	USLDemoSubsystem* DemoSub = GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+	checkf(IsValid(DemoSub), TEXT("Demo Sub is invalid"));
+	DemoSub->StartNewGame();
+
 	MoveToLevelByType(ESLLevelNameType::ELN_Title);
 }
 
@@ -131,6 +136,10 @@ void USLMainTitleWidget::OnClickedOptionButton()
 
 void USLMainTitleWidget::OnClickedQuitButton()
 {
+	USLDemoSubsystem* DemoSub = GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+	checkf(IsValid(DemoSub), TEXT("Demo Sub is invalid"));
+	DemoSub->EndCurrentGame();
+
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
 	PlayUISound(ESLUISoundType::EUS_Click);
 }

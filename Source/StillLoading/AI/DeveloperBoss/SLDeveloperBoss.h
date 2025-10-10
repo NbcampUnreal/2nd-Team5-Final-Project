@@ -175,7 +175,7 @@ public:
     int32 GetPhase1BossesRemaining() const;
 
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase1")
-    void SpawnNextPhase1Boss();
+    ASLAIBaseCharacter* SpawnNextPhase1Boss();
 
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase3")
     void StartPhase3AutoWallAttack();
@@ -185,15 +185,6 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase3")
     bool IsPhase3AutoWallAttackActive() const;
-
-    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase4")
-    void StartPhase4FloorCollapse();
-
-    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase4")
-    void ResetPhase4Floor();
-
-    UFUNCTION(BlueprintCallable, Category = "Developer Boss|Phase4")
-    void TriggerPhase4FloorCollapse();
 
     // Delegates
     UPROPERTY(BlueprintAssignable, Category = "Developer Boss")
@@ -322,9 +313,6 @@ protected:
     // 레벨 액터 참조 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Actors|Phase2")
     TObjectPtr<ASLDeveloperRoomSpace> Phase2RoomSpace;
-    
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Actors|Phase4")
-    TObjectPtr<ASLPhase4FallingFloor> Phase4FallingFloor;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Actors|Phase5")
     TArray<TObjectPtr<ASLLaunchableWall>> Phase5AvailableWalls;

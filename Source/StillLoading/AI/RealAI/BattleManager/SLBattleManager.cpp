@@ -725,7 +725,7 @@ void ASLBattleManager::StartNextGlobalWave()
 {
 	if (ManagedSpawners.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: 관리할 웨이브 스포너 컴포넌트가 없습니다. 다음 웨이브를 시작할 수 없습니다."));
+		//UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: 관리할 웨이브 스포너 컴포넌트가 없습니다. 다음 웨이브를 시작할 수 없습니다."));
 		return;
 	}
 
@@ -741,14 +741,14 @@ void ASLBattleManager::StartNextGlobalWave()
 
 	if (!bAllCurrentWavesCompleted)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: 모든 스포너 컴포넌트가 현재 웨이브를 완료하지 않아 다음 전역 웨이브를 시작할 수 없습니다."));
+		//UE_LOG(LogTemp, Warning, TEXT("ASLBattleManager: 모든 스포너 컴포넌트가 현재 웨이브를 완료하지 않아 다음 전역 웨이브를 시작할 수 없습니다."));
 		return;
 	}
 
 	CurrentGlobalWaveNumber++;
 	SpawnerWaveCompletionStatus.Empty();
 
-	UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 다음 전역 웨이브 (%d) 시작을 지시합니다."), CurrentGlobalWaveNumber);
+	//UE_LOG(LogTemp, Log, TEXT("ASLBattleManager: 다음 전역 웨이브 (%d) 시작을 지시합니다."), CurrentGlobalWaveNumber);
 
 	bool bAnySpawnerHasNextWave = false;
 
@@ -811,8 +811,7 @@ bool ASLBattleManager::RequestEngagementPermission(AActor* RequestingUnit, AActo
 				       *RequestingUnit->GetName(), *TargetActor->GetName());
 				return true;
 			}
-			UE_LOG(LogTemp, Log, TEXT("RequestEngagementPermission: %s가 기존 타겟과의 교전을 해제하고 새 타겟으로 전환합니다."),
-			       *RequestingUnit->GetName());
+			//UE_LOG(LogTemp, Log, TEXT("RequestEngagementPermission: %s가 기존 타겟과의 교전을 해제하고 새 타겟으로 전환합니다."), *RequestingUnit->GetName());
 			ReleaseEngagementPermission(RequestingUnit, EngagementPair.Key);
 			break;
 		}
@@ -876,8 +875,7 @@ void ASLBattleManager::ReleaseEngagementPermission(AActor* ReleasingUnit, AActor
 		UnitEngagedTargetIndices[*UnitIndexPtr] = INDEX_NONE;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("교전 권한 해제: %s -> %s"),
-	       *ReleasingUnit->GetName(), *TargetActor->GetName());
+	//UE_LOG(LogTemp, Log, TEXT("교전 권한 해제: %s -> %s"), *ReleasingUnit->GetName(), *TargetActor->GetName());
 }
 
 // Rebuild AI
@@ -923,7 +921,7 @@ TArray<int32> ASLBattleManager::FindSupportingAIs()
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("지원 가능한 AI %d개 발견"), SupportingAIIndices.Num());
+	//UE_LOG(LogTemp, Log, TEXT("지원 가능한 AI %d개 발견"), SupportingAIIndices.Num());
 	return SupportingAIIndices;
 }
 
@@ -942,7 +940,7 @@ TArray<AActor*> ASLBattleManager::FindTargetsWithOpenSlots()
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("여분이 있는 타겟 %d개 발견"), AvailableTargets.Num());
+	//UE_LOG(LogTemp, Log, TEXT("여분이 있는 타겟 %d개 발견"), AvailableTargets.Num());
 	return AvailableTargets;
 }
 
@@ -954,7 +952,7 @@ void ASLBattleManager::AssignSupportingAIToTarget(int32 SupportingAIIndex, AActo
 	if (USLAIStateComponent* StateComp = SupportingActor->FindComponentByClass<USLAIStateComponent>())
 	{
 		StateComp->StartSupportMovement(Target);
-		UE_LOG(LogTemp, Log, TEXT("지원 AI %s를 타겟 %s로 이동 지시"), *SupportingActor->GetName(), *Target->GetName());
+		//UE_LOG(LogTemp, Log, TEXT("지원 AI %s를 타겟 %s로 이동 지시"), *SupportingActor->GetName(), *Target->GetName());
 	}
 }
 

@@ -7,6 +7,7 @@
 #include "UI/Struct/SLInGameDelegateBuffers.h"
 #include "GameMode/SLGameModeBase.h"
 #include "Objective/SLObjectiveBase.h"
+#include "SubSystem/SLDemoSubsystem.h"
 
 void ASLInGameHUD::OnStartedHUD()
 {
@@ -25,6 +26,10 @@ void ASLInGameHUD::OnStartedHUD()
 		GM->OnPrimaryInProgressObjectiveChanged.AddDynamic(this, &ThisClass::OnAddObjective);
 		GM->OnInProgressObjectiveRemoved.AddDynamic(this, &ThisClass::OnRemoveObjective);
 	}
+
+	USLDemoSubsystem* DemoSub = GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+	checkf(IsValid(DemoSub), TEXT("Demo sub is invalid"));
+	ApplyCurrentDemoInfo(DemoSub->GetCurrentCoin(), DemoSub->GetCurrentTime());
 }
 
 void ASLInGameHUD::OnAddObjective(USLObjectiveBase* TargetObjective)
@@ -60,6 +65,22 @@ void ASLInGameHUD::OnRemoveObjective(USLObjectiveBase* TargetObjective)
 void ASLInGameHUD::OnObjectiveCountChanged(int32 Count)
 {
 	SetObjectiveCounter(CurrentObjectiveName, ObjectiveMaxCount, Count);
+}
+
+void ASLInGameHUD::ShowInGameWidget(bool bIsShowed)
+{
+	if (bIsShowed)
+	{
+		ApplyObjective();
+		SetVisibilityPlayerState(true);
+		InGameWidget->SetDemoInfoVisibility(true);
+	}
+	else
+	{
+		SetInvisibleObjectivve();
+		SetVisibilityPlayerState(false);
+		InGameWidget->SetDemoInfoVisibility(false);
+	}
 }
 
 void ASLInGameHUD::ApplyObjective()
@@ -202,4 +223,10 @@ void ASLInGameHUD::SetHitEffectValue(float MaxHp, float CurrentHp)
 {
 	InGameWidget->SetEffectValue(MaxHp, CurrentHp);
 	InGameWidget->SetIsHitEffectActivate(true);
+}
+
+void ASLInGameHUD::ApplyCurrentDemoInfo(int32 CoinCount, int32 TimeSec)
+{
+	InGameWidget->UpdateCurrentCoin(CoinCount);
+	InGameWidget->UpdateCurrentPlayTime(TimeSec);
 }

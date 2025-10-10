@@ -7,11 +7,9 @@
 #include "AI/SLAIFunctionLibrary.h"
 #include "AI/SLCompanionPatternData.h"
 #include "AI/Components/SLCompanionFlyingComponent.h"
-#include "AI/GamePlayTag/AIGamePlayTag.h"
 #include "AI/Projectile/SLAIProjectile.h"
-#include "AI/Projectile/SLHomingProjectile.h"
-#include "AI/SLMonster/SLMonster.h"
 #include "Character/BattleComponent/BattleComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Controller/SLBaseAIController.h"
 #include "Controller/SLCompanionNormalAIController.h"
@@ -94,6 +92,7 @@ void ASLCompanionCharacter::BeginPlay()
         FlyingComponent->OnFlyingStateChanged.AddDynamic(this, &ASLCompanionCharacter::OnFlyingStateChanged);
     }
     CurrentHealth = MaxHealth;
+    bIsEnemyAI = USLAIFunctionLibrary::IsEnemy(AIController);
 }
 
 void ASLCompanionCharacter::Tick(float DeltaTime)
@@ -544,8 +543,16 @@ void ASLCompanionCharacter::ApplyExplosionDamage(FVector ExplosionLocation, floa
             FHitResult HitResult;
             HitResult.Location = HitActor->GetActorLocation();
             HitResult.ImpactPoint = HitResult.Location;
+
             
-            BattleComponent->SendHitResult(HitActor, HitResult, AttackAnimType);
+            float ChapterMultiplier = 1.0f;
+            if (bIsEnemyAI)
+            {
+                ChapterMultiplier = GetChapterDamageMultiplier();
+            }
+            
+            const float AttackDamage = BattleComponent->GetDamageByType(AttackAnimType);
+            BattleComponent->SendHitResult(HitActor, HitResult, AttackAnimType, AttackDamage * ChapterMultiplier);
         }
     }
     
@@ -668,6 +675,74 @@ void ASLCompanionCharacter::ProcessMultiHit(const FMultiHitData& MultiHitData)
     );
 }
 
+void ASLCompanionCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	// 자기 자신과 충돌 무시
+	if (!OtherActor || OtherActor == this)
+	{
+		return;
+	}
+
+	UBattleComponent* TargetBattleComp = OtherActor->FindComponentByClass<UBattleComponent>();
+	if (!TargetBattleComp)
+	{
+		return;
+	}
+
+	if (!BattleComponent)
+	{
+		return;
+	}
+
+	if (bIsDebugMode)
+	{
+		// 오버랩된 컴포넌트의 크기에 맞는 디버그 박스 그리기
+		if (UBoxComponent* BoxComp = Cast<UBoxComponent>(OverlappedComponent))
+		{
+			FVector BoxExtent = BoxComp->GetScaledBoxExtent();
+			FVector BoxCenter = BoxComp->GetComponentLocation();
+			FRotator BoxRotation = BoxComp->GetComponentRotation();
+
+			DrawDebugBox(
+				GetWorld(),
+				BoxCenter,
+				BoxExtent,
+				BoxRotation.Quaternion(),
+				bIsEnemyAI ? FColor::Red : FColor::Green,
+				false,
+				5.0f,
+				0,
+				2.0f
+			);
+		}
+	}
+
+	FVector HitLocation;
+	if (bFromSweep)
+	{
+		HitLocation = SweepResult.ImpactPoint;
+	}
+	else
+	{
+		HitLocation = (OverlappedComponent->GetComponentLocation() + OtherComp->GetComponentLocation()) * 0.5f;
+	}
+	FHitResult HitResult;
+	HitResult.Location = HitLocation;
+	HitResult.ImpactPoint = HitLocation;
+
+	// 동료 AI가 적 캐릭터일 때만 챕터별 데미지 배율 적용
+	float ChapterMultiplier = 1.0f;
+	if (bIsEnemyAI)
+	{
+		ChapterMultiplier = GetChapterDamageMultiplier();
+	}
+
+	const float AttackDamage = BattleComponent->GetDamageByType(CurrentAttackType);
+
+	// BattleComponent를 통해 데미지 전달 (적 동료 AI일 때만 챕터 배율 적용)
+	BattleComponent->SendHitResult(OtherActor, HitResult, CurrentAttackType, AttackDamage * ChapterMultiplier);
+}
+
 void ASLCompanionCharacter::BeginDestroy()
 {
     Super::BeginDestroy();
@@ -692,3 +767,4 @@ void ASLCompanionCharacter::ProcessDeath()
     }
     ActiveMultiHits.Empty();
 }
+

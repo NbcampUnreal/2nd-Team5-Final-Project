@@ -28,6 +28,7 @@ public:
 	void SetInvisibleObjective();
 	void SetIsHitEffectActivate(bool bIsActived);
 	void SetIsBossStateActivate(bool bIsActived);
+	void SetDemoInfoVisibility(bool bIsVisible);
 
 	UFUNCTION()
 	void SetTimerText(int32 TimeSeconds);
@@ -39,6 +40,9 @@ public:
 	void SetObjectiveByCounter(const FName& ObjectiveName, int32 MaxCount, int32 CurrentCount);
 
 	const TMap<ESLInGameActivateType, bool>& GetActivateUIMap();
+
+	void UpdateCurrentCoin(int32 Count);
+	void UpdateCurrentPlayTime(int32 TimeSec);
 
 protected:
 	virtual void FindWidgetData(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
@@ -53,6 +57,15 @@ protected:
 private:
 	void ApplyTimerImage();
 	void ApplyProgressBarImage();
+
+	UFUNCTION()
+	void IncreaseCoin(int32 CoinCount);
+
+	UFUNCTION()
+	void IncreasePlayTime(int32 TimeSec);
+
+	UFUNCTION()
+	void ResetDemoInfo();
 
 protected:
 	UPROPERTY(Meta = (BindWidget))
@@ -120,6 +133,15 @@ protected:
 
 	UPROPERTY(Meta = (BindWidgetAnim), Transient)
 	TObjectPtr<UWidgetAnimation> ActiveHitEffectAnim = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> CoinText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> PlayTimeText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UCanvasPanel> DemoInfoPanel = nullptr;
 
 	UPROPERTY()
 	TMap<ESLInGamePrivateImageType, TObjectPtr<UObject>> PrivateImageMap;

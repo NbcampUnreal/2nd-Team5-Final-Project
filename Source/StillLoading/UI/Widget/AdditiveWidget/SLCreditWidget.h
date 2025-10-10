@@ -49,4 +49,23 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UImage> BackgroundImg = nullptr;
+
+	//Demo
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> CoinTag = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> TimeTag = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> CodeTag = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> CoinText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> TimeText = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> CodeText = nullptr;
 };

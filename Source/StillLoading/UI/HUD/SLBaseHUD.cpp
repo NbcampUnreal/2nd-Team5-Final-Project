@@ -10,7 +10,11 @@ void ASLBaseHUD::OnPause()
 {
 	GetOwningPlayerController()->SetPause(true);
 	CheckValidOfUISubsystem();
-	UISubsystem->ActivateOption();
+	UISubsystem->AddAdditiveWidget(ESLAdditiveWidgetType::EAW_PauseWidget);
+
+	/*USLLevelTransferSubsystem* LevelTransferSubsystem = GetGameInstance()->GetSubsystem<USLLevelTransferSubsystem>();
+	checkf(IsValid(LevelTransferSubsystem), TEXT("Level Transfer Subsystem is invalid"));
+	LevelTransferSubsystem->MoveToMainTitle();*/
 }
 
 void ASLBaseHUD::OnUnpause()

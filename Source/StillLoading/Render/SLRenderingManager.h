@@ -128,6 +128,9 @@ class STILLLOADING_API ASLRenderingManager : public AActor
 public:
 	ASLRenderingManager();
 
+	UFUNCTION(BlueprintCallable)
+	void EnablePixelArtShader(bool bFlag);
+	
 protected:
 	virtual void BeginPlay() override;
 	

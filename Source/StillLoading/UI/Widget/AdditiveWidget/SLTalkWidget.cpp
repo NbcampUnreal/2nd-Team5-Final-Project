@@ -11,6 +11,7 @@
 #include "Components/CanvasPanel.h"
 #include "Components/Image.h"
 #include "Components/WidgetSwitcher.h"
+#include "SubSystem/SLDemoSubsystem.h"
 
 void USLTalkWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -33,7 +34,12 @@ void USLTalkWidget::ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivate
 	ChangeTalkLayer(WidgetActivateBuffer.CurrentChapter);
 	UpdateTalkState(WidgetActivateBuffer.TargetTalk, WidgetActivateBuffer.TargetName, WidgetActivateBuffer.TalkName);
 
-	Super::ActivateWidget(WidgetActivateBuffer);	
+	Super::ActivateWidget(WidgetActivateBuffer);
+
+	USLDemoSubsystem* DemoSub = GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+	checkf(IsValid(DemoSub), TEXT("Demo Sub is invalid"));
+
+	DemoSub->PauseTimer();
 }
 
 void USLTalkWidget::DeactivateWidget()
@@ -43,6 +49,14 @@ void USLTalkWidget::DeactivateWidget()
 	TalkArray.Empty();
 	NameArray.Empty();
 	OnEndedCloseAnim();
+
+	USLDemoSubsystem* DemoSub = GetGameInstance()->GetSubsystem<USLDemoSubsystem>();
+	checkf(IsValid(DemoSub), TEXT("Demo Sub is invalid"));
+
+	if (!DemoSub->GetIsCinePause())
+	{
+		DemoSub->ContinueTimer();
+	}
 }
 
 void USLTalkWidget::UpdateTalkState(ESLTalkTargetType TalkTargetType, const FName& TargetName, const FName& TalkName)
@@ -72,7 +86,8 @@ void USLTalkWidget::UpdateTalkState(ESLTalkTargetType TalkTargetType, const FNam
 
 void USLTalkWidget::ChangeTalkLayer(ESLChapterType ChapterType)
 {
-	if (ChapterType == ESLChapterType::EC_Chapter3)
+	if (ChapterType == ESLChapterType::EC_Chapter3 ||
+		ChapterType == ESLChapterType::EC_Chapter4)
 	{
 		ParentNamePanel = MidNamePanel;
 		ParentNameText = MidNameText;
