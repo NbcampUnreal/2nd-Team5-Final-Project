@@ -76,9 +76,6 @@ struct STILLLOADING_API FSLPhase4Config
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
-    float FloorCollapseDelay;
-
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wall Attack Settings")
     float AutoWallAttackInterval;
 

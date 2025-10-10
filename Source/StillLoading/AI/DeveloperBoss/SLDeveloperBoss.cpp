@@ -76,7 +76,6 @@ ASLDeveloperBoss::ASLDeveloperBoss()
 
     // Level Actor References
     Phase2RoomSpace = nullptr;
-    Phase4FallingFloor = nullptr;
 
     // Pending Line Activation
     PendingLineActivation.PhaseIndex = -1;
@@ -142,21 +141,6 @@ void ASLDeveloperBoss::InitializeBossFight()
 
 void ASLDeveloperBoss::StartPhase(EDeveloperBossPhase PhaseType)
 {
-    // 현재 페이즈 검증
-    if (CurrentPhaseActor && CurrentPhaseActor->IsPhaseActive())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot start phase %d - Current phase %d is still active"), 
-               static_cast<int32>(PhaseType), static_cast<int32>(CurrentPhase));
-        return;
-    }
-    
-    // 유효한 페이즈 타입 검증
-    if (!IsValidPhaseType(PhaseType))
-    {
-        UE_LOG(LogTemp, Error, TEXT("Invalid phase type: %d"), static_cast<int32>(PhaseType));
-        return;
-    }
-    
     // 이전 페이즈 정리
     if (CurrentPhaseActor && CurrentPhaseActor->IsPhaseActive())
     {
@@ -784,12 +768,13 @@ int32 ASLDeveloperBoss::GetPhase1BossesRemaining() const
     return 0;
 }
 
-void ASLDeveloperBoss::SpawnNextPhase1Boss()
+ASLAIBaseCharacter* ASLDeveloperBoss::SpawnNextPhase1Boss()
 {
     if (IsValid(Phase1Actor))
     {
-        Phase1Actor->SpawnNextBoss();
+        return Phase1Actor->SpawnNextBoss();
     }
+    return nullptr;
 }
 
 void ASLDeveloperBoss::StartPhase3AutoWallAttack()
@@ -817,38 +802,20 @@ bool ASLDeveloperBoss::IsPhase3AutoWallAttackActive() const
     return false;
 }
 
-void ASLDeveloperBoss::StartPhase4FloorCollapse()
-{
-    if (IsValid(Phase4Actor))
-    {
-        Phase4Actor->StartFloorCollapse();
-    }
-}
-
-void ASLDeveloperBoss::ResetPhase4Floor()
-{
-    if (IsValid(Phase4Actor))
-    {
-        Phase4Actor->ResetFloor();
-    }
-}
-
-void ASLDeveloperBoss::TriggerPhase4FloorCollapse()
-{
-    if (IsValid(Phase4Actor))
-    {
-        Phase4Actor->TriggerFloorCollapse();
-    }
-}
-
 void ASLDeveloperBoss::HandlePhaseCompleted()
 {
+    UE_LOG(LogTemp, Error, TEXT("Boss: HandlePhaseCompleted called"));
+    
     if (!IsValid(CurrentPhaseActor))
     {
+        UE_LOG(LogTemp, Error, TEXT("Boss: No valid current phase actor"));
         return;
     }
     
     int32 CompletedPhaseIndex = CurrentPhaseActor->GetPhaseIndex();
+    UE_LOG(LogTemp, Error, TEXT("Boss: Phase %d completed, starting Phase %d"), 
+           CompletedPhaseIndex, CompletedPhaseIndex + 1);
+    
     OnPhaseCompleted.Broadcast(CompletedPhaseIndex);
     
     // 다음 페이즈로 진행
@@ -1122,16 +1089,6 @@ void ASLDeveloperBoss::SetupPhase4Actor(ASLDeveloperBossPhase4* PhaseActor, cons
     PhaseActor->OnPhaseCompleted.AddDynamic(this, &ASLDeveloperBoss::HandlePhaseCompleted);
     
     PhaseActor->SetConfig(Config);
-    
-    if (IsValid(Phase4FallingFloor))
-    {
-        PhaseActor->SetFallingFloor(Phase4FallingFloor);
-        UE_LOG(LogTemp, Display, TEXT("Phase4: Falling Floor assigned - %s"), *Phase4FallingFloor->GetName());
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Phase4: No Falling Floor assigned"));
-    }
     
     SetupPhase4Walls(PhaseActor);
     

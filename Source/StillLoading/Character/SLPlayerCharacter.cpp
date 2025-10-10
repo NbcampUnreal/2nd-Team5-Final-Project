@@ -117,10 +117,10 @@ void ASLPlayerCharacter::EnterCinematic(const float Yaw)
 
 	if (USLMovementComponentBase* CombatHandler = FindComponentByClass<USLMovementComponentBase>())
 	{
-		if (CombatHandler->CachedSkeletalMesh)
+		/*if (CombatHandler->CachedSkeletalMesh)
 		{
 			CombatHandler->CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, Yaw, 0.0f));
-		}
+		}*/
 		CombatHandler->SetComponentTickEnabled(false);
 	}
 	

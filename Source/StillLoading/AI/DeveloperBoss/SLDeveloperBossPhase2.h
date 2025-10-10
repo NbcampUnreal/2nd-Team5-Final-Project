@@ -42,7 +42,8 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnPhaseStarted() override;
 	virtual void OnPhaseEnded() override;
-
+	virtual void HandleLineDestroyed(int32 LineIndex) override;
+	
 	UFUNCTION()
 	void HandleRoomEscape(ASLDeveloperRoomSpace* Room);
 
