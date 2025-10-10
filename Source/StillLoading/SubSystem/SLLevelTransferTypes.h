@@ -27,13 +27,13 @@ enum class ESLLevelNameType : uint8
 UENUM(BlueprintType)
 enum class ESLChapterType : uint8
 {
-	EC_None = 0,
-	EC_Chapter0,
-	EC_Chapter1,
-	EC_Chapter2,
-	EC_Chapter3,
-	EC_Chapter4,
-	EC_Main
+	EC_None = 0 UMETA(DisplayName = "---"),
+	EC_Chapter0 UMETA(DisplayName = "Intro"),
+	EC_Chapter1 UMETA(DisplayName = "Chapter 1"),
+	EC_Chapter2 UMETA(DisplayName = "Chapter 2"),
+	EC_Chapter3 UMETA(DisplayName = "Chapter 3"),
+	EC_Chapter4 UMETA(DisplayName = "Chapter 4"),
+	EC_Main UMETA(DisplayName = "Main Title")
 };
 
 UCLASS()

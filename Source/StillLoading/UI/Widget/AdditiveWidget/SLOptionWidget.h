@@ -10,10 +10,12 @@ class UTextBlock;
 class UImage;
 class UWidgetSwitcher;
 class USLButtonWidget;
-class USLLanguageSettingWidget;
-class USLGraphicSettingWidget;
-class USLSoundSettingWidget;
-class USLKeySettingWidget;
+//class USLLanguageSettingWidget;
+//class USLGraphicSettingWidget;
+//class USLSoundSettingWidget;
+//class USLKeySettingWidget;
+//class USLSaveLoadWidget;
+class USLOptionSubBase;
 class USLLevelTransferSubsystem;
 
 UCLASS()
@@ -25,6 +27,8 @@ public:
 	virtual void InitWidget(USLUISubsystem* NewUISubsystem) override;
 	virtual void ActivateWidget(const FSLWidgetActivateBuffer& WidgetActivateBuffer) override;
 	virtual void DeactivateWidget() override;
+
+	void ShowSaveLoadUI();
 
 protected:
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
@@ -47,13 +51,16 @@ private:
 
 	UFUNCTION()
 	void OnClickedKeySetting();
+
+	UFUNCTION()
+	void OnClickedSaveLoad();
 	//
 
 	UFUNCTION()
 	void OnClickedMoveToTitle();
 
-	UFUNCTION()
-	void OnClickedRestart();
+	/*UFUNCTION()
+	void OnClickedRestart();*/
 
 	UFUNCTION()
 	void OnClickedSettingReset();
@@ -85,10 +92,13 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLButtonWidget> KeySettingButton = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLButtonWidget> SaveLoadButton = nullptr;
 	//
 
 	// Layer Widget
-	UPROPERTY(Meta = (BindWidget))
+	/*UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLLanguageSettingWidget> LanguageSettingWidget = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
@@ -99,11 +109,29 @@ private:
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLKeySettingWidget> KeySettingWidget = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLSaveLoadWidget> SaveLoadWidget = nullptr;*/
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLOptionSubBase> LanguageSettingWidget = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLOptionSubBase> GraphicSettingWidget = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLOptionSubBase> SoundSettingWidget = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLOptionSubBase> KeySettingWidget = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<USLOptionSubBase> SaveLoadWidget = nullptr;
 	//
 
 	// Widget Handle
-	UPROPERTY(Meta = (BindWidget))
-	TObjectPtr<USLButtonWidget> RestartButton = nullptr;
+	//UPROPERTY(Meta = (BindWidget))
+	//TObjectPtr<USLButtonWidget> RestartButton = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<USLButtonWidget> MoveToTitleButton = nullptr;
@@ -130,4 +158,5 @@ private:
 	static const FName LanguageSettingIndex;
 	static const FName GraphicSettingIndex;
 	static const FName SoundSettingIndex;
+	static const FName SaveLoadButtonIndex;
 };

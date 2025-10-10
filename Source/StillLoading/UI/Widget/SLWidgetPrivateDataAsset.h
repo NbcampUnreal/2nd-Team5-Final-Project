@@ -9,6 +9,15 @@
 #include "UI/Struct/SLLevelWidgetDataRow.h"
 #include "SLWidgetPrivateDataAsset.generated.h"
 
+USTRUCT(BlueprintType)
+struct STILLLOADING_API FSLMapImageStruct
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	TMap<ESLLevelNameType, TSoftObjectPtr<UObject>> LevelImgMap;
+};
 
 UCLASS()
 class STILLLOADING_API USLMapListPrivateDataAsset : public UDataAsset
@@ -72,4 +81,17 @@ public:
 private:
 	UPROPERTY(EditAnywhere)
 	TMap<ESLOptionPrivateImageType, TObjectPtr<UObject>> OptionImageMap;
+};
+
+UCLASS()
+class STILLLOADING_API USLSaveSlotPrivateDataAsset : public UDataAsset
+{
+	GENERATED_BODY()
+
+public:
+	const TSoftObjectPtr<UObject> GetLevelImg(ESLChapterType ChapterType, ESLLevelNameType LevelType) const;
+
+private:
+	UPROPERTY(EditAnywhere)
+	TMap<ESLChapterType, FSLMapImageStruct> ChapterLevelImgMap;
 };

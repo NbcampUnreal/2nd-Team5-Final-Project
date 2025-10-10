@@ -36,6 +36,8 @@ void USLLevelTransferSubsystem::OpenLevelByNameType(ESLLevelNameType LevelNameTy
 
 void USLLevelTransferSubsystem::MoveToMainTitle(bool bIsFadeOut)
 {
+	CheckValidOfSoundSubsystem();
+	SoundSubsystem->StopBgmSound();
 	SetCurrentChapter(ESLChapterType::EC_Main);
 	OpenLevelByNameType(ESLLevelNameType::ELN_MainTitle, bIsFadeOut);
 }

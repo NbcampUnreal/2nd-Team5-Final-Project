@@ -127,7 +127,9 @@ enum class ESLOptionPrivateImageType : uint8
 	EOPI_ListBack,
 	EOPI_LeftArrow,
 	EOPI_RightArrow,
-	EOPI_Background
+	EOPI_Background,
+	EOPI_Slot,
+	EOPI_SavePop
 };
 
 UCLASS()

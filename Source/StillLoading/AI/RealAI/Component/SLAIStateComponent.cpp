@@ -200,6 +200,16 @@ void USLAIStateComponent::DeactivateAndReset()
 
 void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, bool bFixeRange, float AvailRange)
 {
+	const AActor* OwnerActor = GetOwner();
+	// Owner가 유효한지 먼저 확인합니다.
+	if (!IsValid(OwnerActor))
+	{
+		UE_LOG(LogTemp, Error, TEXT("SetMovementTarget: Owner is not valid!"));
+		return;
+	}
+
+	const FVector CurrentLocation = OwnerActor->GetActorLocation();
+
 	if (NewTargetLocation.IsNearlyZero(KINDA_SMALL_NUMBER))
 	{
 		LogStateModeStatus(TEXT("유효하지 않은 이동 목표"));
@@ -216,10 +226,12 @@ void USLAIStateComponent::SetMovementTarget(FVector NewTargetLocation, bool bFix
 	if (IsValid(CachedAIController))
 	{
 		FAIRequestID RequestID = CachedAIController->MoveToLocation(MovementTargetLocation, AvailRange);
+		/*
 		if (CurrentState != EAIBattleState::Attacking)
 		{
-			SetState(EAIBattleState::Moving);
+		   SetState(EAIBattleState::Moving);
 		}
+		*/
 
 		if (RequestID == FAIRequestID::InvalidRequest)
 		{
@@ -289,31 +301,33 @@ void USLAIStateComponent::StartSupportMovement(AActor* TargetToSupport)
 
 void USLAIStateComponent::UpdateBerserkMode(const float DeltaTime)
 {
+	if (!CachedMyCharacter || !CachedMyCharacter->BattleManager || !CombatComponent || !CachedMyCharacter->AIAttributeComp)
+	{
+		return;
+	}
+
 	if (APawn* PlayerPawn = CachedMyCharacter->BattleManager->GetPrimaryTarget())
 	{
-		if (IsValid(PlayerPawn) && IsValid(CombatComponent))
+		if (!IsValid(PlayerPawn))
 		{
-			CombatComponent->SafeLookAtTarget(PlayerPawn, DeltaTime);
-			CombatComponent->HandleEnemyDetection(PlayerPawn);
+			return;
+		}
 
-			const float DistSq = FVector::DistSquared(GetOwner()->GetActorLocation(), PlayerPawn->GetActorLocation());
-			float AttackRange = 150.f;
-			if (IsValid(CachedMyCharacter) && IsValid(CachedMyCharacter->AIAttributeComp))
-			{
-				AttackRange = CachedMyCharacter->AIAttributeComp->GetAttackRange();
-			}
-			const float AttackRangeSq = FMath::Square(AttackRange);
+		CombatComponent->SafeLookAtTarget(PlayerPawn, DeltaTime);
+		CombatComponent->HandleEnemyDetection(PlayerPawn);
 
-			if (DistSq > AttackRangeSq)
+		const float Distance = CombatComponent->GetDistanceFromTarget(PlayerPawn->GetActorLocation());
+		const float AttackRange = CachedMyCharacter->AIAttributeComp->GetAttackRange();
+
+		if (Distance > AttackRange)
+		{
+			SetMovementTarget(PlayerPawn->GetActorLocation(), true, 50.f);
+		}
+		else
+		{
+			if (CurrentState != EAIBattleState::Attacking)
 			{
-				SetMovementTarget(PlayerPawn->GetActorLocation(), true, 100.f);
-			}
-			else
-			{
-				if (CurrentState != EAIBattleState::Attacking)
-				{
-					SetState(EAIBattleState::Attacking);
-				}
+				SetState(EAIBattleState::Attacking);
 			}
 		}
 	}

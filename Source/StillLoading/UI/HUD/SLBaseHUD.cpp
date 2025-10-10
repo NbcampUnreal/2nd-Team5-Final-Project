@@ -73,6 +73,23 @@ void ASLBaseHUD::OnStartedHUD()
 	ApplyLevelWidgetInputMode();
 }
 
+void ASLBaseHUD::HideLevelWidget(bool bIsHide)
+{
+	if (!IsValid(LevelWidgetObj))
+	{
+		return;
+	}
+
+	if (bIsHide)
+	{
+		LevelWidgetObj->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	else
+	{
+		LevelWidgetObj->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
 void ASLBaseHUD::ApplyLevelWidgetInputMode()
 {
 	APlayerController* OwningPC = GetOwningPlayerController();

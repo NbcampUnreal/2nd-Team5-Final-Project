@@ -36,8 +36,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SpawnArrow();
 	UFUNCTION()
-	void BeginSpawning(const FVector& FinalLocation, float RiseHeight = 300.f);
-	UFUNCTION()
 	void HandleAnimNotify(EAttackAnimType MonsterMontageStage);
 	UFUNCTION()
 	void HandleHitNotify();
@@ -106,10 +104,6 @@ protected:
 	
 	UFUNCTION()
 	void ResetPushFlag();
-	UFUNCTION()
-	void UpdateSpawnMovement(float Alpha);
-	UFUNCTION()
-	void OnSpawnMovementFinished() const;
 
 	UPROPERTY()
 	TObjectPtr<UTimelineComponent> SpawnTimeline;
