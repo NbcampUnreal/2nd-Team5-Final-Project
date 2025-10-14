@@ -507,6 +507,14 @@ void ASLMonsterAICharacter::CorrectActorLocationPostAttack()
 
 void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+		GetCharacterMovement()->SetMovementMode(MOVE_None);
+		GetCharacterMovement()->Velocity = FVector::ZeroVector;
+		GetCharacterMovement()->Deactivate();
+	}
+	
 	OnDeath();
 	ToggleWeaponState(false);
 

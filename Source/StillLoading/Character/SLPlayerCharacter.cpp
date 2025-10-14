@@ -21,13 +21,13 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.f;
-	CameraBoom->bUsePawnControlRotation = true; // 자체 회전 제어
+	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->CameraLagSpeed = 3.f;
 
 	// Spring Arm Collision
