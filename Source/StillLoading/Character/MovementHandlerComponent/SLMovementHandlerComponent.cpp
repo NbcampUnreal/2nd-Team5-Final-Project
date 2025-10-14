@@ -694,6 +694,7 @@ void UMovementHandlerComponent::SetViewMode(bool bIsTPS)
 
     	OwnerCharacter->CameraBoom->SetRelativeLocation(FVector(85.f, 60.f, 60.f));
     	OwnerCharacter->CameraBoom->SetRelativeRotation(FRotator(0.f, -30.f, 0.f));
+    	
     	bActivateTPSView = true;
     }
     else
