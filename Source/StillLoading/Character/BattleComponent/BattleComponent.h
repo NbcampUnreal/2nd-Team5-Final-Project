@@ -25,7 +25,7 @@ public:
 	UBattleComponent();
 
 	UFUNCTION(BlueprintCallable, Category = "Battle")
-	void SendHitResult(AActor* HitTarget, const FHitResult& HitResult, EAttackAnimType AnimType);
+	void SendHitResult(AActor* HitTarget, const FHitResult& HitResult, EAttackAnimType AnimType, float Damage = 0);
 
 	UFUNCTION(BlueprintCallable, Category = "Battle")
 	void ReceiveHitResult(float DamageAmount, AActor* DamageCauser, const FHitResult& HitResult, EAttackAnimType AnimType);

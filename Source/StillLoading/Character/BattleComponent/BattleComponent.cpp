@@ -24,7 +24,7 @@ void UBattleComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitResult, const EAttackAnimType AnimType)
+void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitResult, const EAttackAnimType AnimType, float Damage)
 {
 	if (AActor* OwnerActor = GetOwner())
 	{
@@ -65,7 +65,7 @@ void UBattleComponent::SendHitResult(AActor* HitTarget, const FHitResult& HitRes
 				       GetDamageByType(AnimType),
 				       *UEnum::GetValueAsString(AnimType));
 
-				TargetBattleComp->ReceiveHitResult(GetDamageByType(AnimType), OwnerActor, HitResult, AnimType);
+				TargetBattleComp->ReceiveHitResult(GetDamageByType(AnimType) + Damage, OwnerActor, HitResult, AnimType);
 			}
 		}
 	}
