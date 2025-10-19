@@ -111,6 +111,10 @@ public:
 	UFUNCTION()
 	virtual void OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	// 챕터별 데미지 배율 계산 헬퍼 함수
+	UFUNCTION(BlueprintCallable, Category = "Combat|Damage")
+	float GetChapterDamageMultiplier() const;
+
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 

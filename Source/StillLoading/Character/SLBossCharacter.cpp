@@ -4,6 +4,7 @@
 #include "AIController.h"
 #include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "AnimInstances/SLBossAnimInstance.h"
+#include "BattleComponent/BattleComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/BoxComponent.h"
 #include "Controller/SLBaseAIController.h"
@@ -231,13 +232,70 @@ void ASLBossCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Overl
 	{
 		if (GetBossAttackPattern() != EBossAttackPattern::EBAP_DashAttack)
 		{
-			return; 
+			return;
 		}
 		else
 		{
 			CurrentAttackType = EAttackAnimType::AAT_DashAttack;
 		}
 	}
-    
-	Super::OnBodyCollisionBoxBeginOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+
+	// 자기 자신과 충돌 무시
+	if (!OtherActor || OtherActor == this)
+	{
+		return;
+	}
+
+	UBattleComponent* TargetBattleComp = OtherActor->FindComponentByClass<UBattleComponent>();
+	if (!TargetBattleComp)
+	{
+		return;
+	}
+
+	if (!BattleComponent)
+	{
+		return;
+	}
+
+	if (bIsDebugMode)
+	{
+		// 오버랩된 컴포넌트의 크기에 맞는 디버그 박스 그리기
+		if (UBoxComponent* BoxComp = Cast<UBoxComponent>(OverlappedComponent))
+		{
+			FVector BoxExtent = BoxComp->GetScaledBoxExtent();
+			FVector BoxCenter = BoxComp->GetComponentLocation();
+			FRotator BoxRotation = BoxComp->GetComponentRotation();
+
+			DrawDebugBox(
+				GetWorld(),
+				BoxCenter,
+				BoxExtent,
+				BoxRotation.Quaternion(),
+				FColor::Red,
+				false,
+				5.0f,
+				0,
+				2.0f
+			);
+		}
+	}
+
+	FVector HitLocation;
+	if (bFromSweep)
+	{
+		HitLocation = SweepResult.ImpactPoint;
+	}
+	else
+	{
+		HitLocation = (OverlappedComponent->GetComponentLocation() + OtherComp->GetComponentLocation()) * 0.5f;
+	}
+	FHitResult HitResult;
+	HitResult.Location = HitLocation;
+	HitResult.ImpactPoint = HitLocation;
+	
+	const float ChapterMultiplier = GetChapterDamageMultiplier();
+	const float AttackDamage = BattleComponent->GetDamageByType(CurrentAttackType);
+	
+	// BattleComponent를 통해 데미지 전달 (챕터 배율 적용된 데미지)
+	BattleComponent->SendHitResult(OtherActor, HitResult, CurrentAttackType, AttackDamage * ChapterMultiplier);
 }

@@ -239,6 +239,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	FORCEINLINE ASLBaseAIController* GetAIController() const { return AIController; }
 	
+	virtual void OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -295,6 +297,9 @@ protected:
 	TObjectPtr<USLCompanionFlyingComponent> FlyingComponent;
 
 private:
+	UPROPERTY()
+	bool bIsEnemyAI;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	bool bIsInCombat;
 
