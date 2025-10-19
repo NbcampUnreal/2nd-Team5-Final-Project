@@ -39,6 +39,9 @@ public:
 	UFUNCTION()
 	void ClearHitTargets();
 
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	float GetDamageByType(EAttackAnimType InType) const;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TObjectPtr<UHitEffectDataAsset> HitEffectData;
 
@@ -61,6 +64,5 @@ protected:
 	TSet<TWeakObjectPtr<AActor>> AlreadyHitActors;
 	
 private:
-	UFUNCTION(BlueprintCallable, Category = "Attack")
-	float GetDamageByType(EAttackAnimType InType) const;
+	
 };
