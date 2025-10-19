@@ -7,6 +7,8 @@
 #include "Character/SLPlayerCharacter.h"
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/Item/SLItem.h"
+#include "Character/BattleComponent/BattleComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Controller/SLBaseAIController.h"
 #include "Engine/Engine.h"
@@ -740,7 +742,70 @@ void ASLDoppelgangerCharacter::SetHitState(bool bNewIsHit, float AutoResetTime)
 void ASLDoppelgangerCharacter::Landed(const FHitResult& Hit)
 {
     Super::Landed(Hit);
-    
+
     // 착지 시 AirHit 상태 해제
     //SetIsAirHit(false);
+}
+
+void ASLDoppelgangerCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	// 자기 자신과 충돌 무시
+	if (!OtherActor || OtherActor == this)
+	{
+		return;
+	}
+
+	UBattleComponent* TargetBattleComp = OtherActor->FindComponentByClass<UBattleComponent>();
+	if (!TargetBattleComp)
+	{
+		return;
+	}
+
+	if (!BattleComponent)
+	{
+		return;
+	}
+
+	if (bIsDebugMode)
+	{
+		// 오버랩된 컴포넌트의 크기에 맞는 디버그 박스 그리기
+		if (UBoxComponent* BoxComp = Cast<UBoxComponent>(OverlappedComponent))
+		{
+			FVector BoxExtent = BoxComp->GetScaledBoxExtent();
+			FVector BoxCenter = BoxComp->GetComponentLocation();
+			FRotator BoxRotation = BoxComp->GetComponentRotation();
+
+			DrawDebugBox(
+				GetWorld(),
+				BoxCenter,
+				BoxExtent,
+				BoxRotation.Quaternion(),
+				FColor::Red,
+				false,
+				5.0f,
+				0,
+				2.0f
+			);
+		}
+	}
+
+	FVector HitLocation;
+	if (bFromSweep)
+	{
+		HitLocation = SweepResult.ImpactPoint;
+	}
+	else
+	{
+		HitLocation = (OverlappedComponent->GetComponentLocation() + OtherComp->GetComponentLocation()) * 0.5f;
+	}
+	FHitResult HitResult;
+	HitResult.Location = HitLocation;
+	HitResult.ImpactPoint = HitLocation;
+
+	// 챕터별 데미지 배율 적용 (도플갱어 AI)
+	const float ChapterMultiplier = GetChapterDamageMultiplier();
+	const float AttackDamage = BattleComponent->GetDamageByType(CurrentAttackType);
+
+	// BattleComponent를 통해 데미지 전달 (챕터 배율 적용된 데미지)
+	BattleComponent->SendHitResult(OtherActor, HitResult, CurrentAttackType, AttackDamage * ChapterMultiplier);
 }
