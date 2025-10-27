@@ -19,6 +19,7 @@ void ASLRollingFist::BeginPlay()
 	TargetPosition = GetActorLocation() + TargetPosition;
 	ReturnPosition = GetActorLocation() + ReturnPosition;
 
+	Activate();
 }
 
 
@@ -26,7 +27,7 @@ void ASLRollingFist::Tick(float DeltaTime)
 {
 	if (bIsTrigger)
 	{
-		FVector CurrentLocation = GetActorLocation();
+		const FVector CurrentLocation = GetActorLocation();
 		FVector Target;
 
 		if (bArrivalTargetPoint)
@@ -37,7 +38,8 @@ void ASLRollingFist::Tick(float DeltaTime)
 		{
 			Target = TargetPosition;
 		}
-		FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, Target, DeltaTime, Speed);
+
+		const FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, Target, DeltaTime, Speed);
 		SetActorLocation(NewLocation);
 
 		AddActorLocalRotation(FRotator(-RotationSpeed * DeltaTime, 0.0f, 0.0f));
@@ -45,22 +47,8 @@ void ASLRollingFist::Tick(float DeltaTime)
 
 		if (FVector::Dist(NewLocation, Target) < 1.0f)
 		{
-			if (bArrivalTargetPoint)
-			{
-				DeActivate();
-			}
-			else
-			{
-				bArrivalTargetPoint = true;
-			}
-
+			bArrivalTargetPoint = !bArrivalTargetPoint;
 		}
-
-
-
-
-
-
 	}
 }
 
