@@ -327,6 +327,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 		bIsDead = true;
 		SetPrimaryState(TAG_AI_Dead);
 		AnimationComponent->PlayAIHitMontage("Dead");
+		AICombatComp->ClearTarget();
 		Dead(Causer, true);
 		return;
 	}
