@@ -37,7 +37,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	BoxCollisionComponent->SetupAttachment(RootComponent);
 	BoxCollisionComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	BoxCollisionComponent->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-	BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 	
     LeftHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftHandCollisionBox");
     LeftHandCollisionBox->SetupAttachment(GetMesh());
@@ -382,6 +382,9 @@ void ASLAIBaseCharacter::ToggleCollision(EToggleDamageType DamageType, bool bEna
 	case EToggleDamageType::ETDT_RightFoot:
 		ToggleRightFootCollision(bEnableCollision);
 		break;
+	case EToggleDamageType::ETDT_Body:
+		ToggleBodyCollision(bEnableCollision);
+		break;
 	case EToggleDamageType::ETDT_CurrentEquippedWeapon:
 		if (CurrentWeaponCollision)
 		{
@@ -422,6 +425,14 @@ void ASLAIBaseCharacter::ToggleRightFootCollision(bool bEnableCollision)
 	if (RightFootCollisionBox)
 	{
 		RightFootCollisionBox->SetCollisionEnabled(bEnableCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+	}
+}
+
+void ASLAIBaseCharacter::ToggleBodyCollision(bool bEnableCollision)
+{
+	if (BoxCollisionComponent)
+	{
+		BoxCollisionComponent->SetCollisionEnabled(bEnableCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
 	}
 }
 
@@ -1231,12 +1242,13 @@ void ASLAIBaseCharacter::SetupBoxCollision()
 	if (BoxCollisionComponent)
 	{
 		BoxCollisionComponent->SetBoxExtent(FVector(42.0f, 42.0f, 88.0f));
-		
+
 		// 콜리전 설정
 		BoxCollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		BoxCollisionComponent->SetCollisionObjectType(ECC_Pawn);
-        
+
 		// 콜리전 응답 설정
+		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
