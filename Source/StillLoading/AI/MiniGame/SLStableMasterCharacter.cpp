@@ -16,7 +16,7 @@ ASLStableMasterCharacter::ASLStableMasterCharacter()
 	bIsInvincibility = true;
 	SetHitReactionMode(EHitReactionMode::EHRM_Disabled);
 	AIChapter = EChapter::EC_Chapter3;
-
+	BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	// 감지 범위 설정
 	NormalDetectionRange = 100.0f;      // 일반 상태 감지 범위
 	HidingDetectionRange = 300.0f;      // 숨어있는 상태 감지 범위 (더 넓게)
