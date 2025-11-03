@@ -310,6 +310,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
                                           EHitAnimType AnimType)
 {
 	if (IsInPrimaryState(TAG_AI_Dead) || bIsDead) return;
+	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
 	LastAnimType = AnimType;
 	
 	AnimationComponent->StopAllMontages(0.2f);
@@ -508,6 +509,7 @@ void ASLMonsterAICharacter::CorrectActorLocationPostAttack()
 
 void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
+	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterDie, GetActorLocation());
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->StopMovementImmediately();
