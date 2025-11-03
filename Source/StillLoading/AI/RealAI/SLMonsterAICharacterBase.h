@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "SLMonsterAICharacterBase.generated.h"
 
+class USLSoundSubsystem;
 class USLAILODComponent;
 class USLAICombatComponent;
 class USLAISupportModeComponent;
