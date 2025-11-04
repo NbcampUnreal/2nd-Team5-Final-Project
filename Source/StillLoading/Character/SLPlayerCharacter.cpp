@@ -66,6 +66,7 @@ void ASLPlayerCharacter::BeginPlay()
 	}
 
 	CachedMontageComponent = FindComponentByClass<UAnimationMontageComponent>();
+	CachedInputBufferComponent = FindComponentByClass<UInputBufferComponent>();
 
 	if (GetController())
 	{
@@ -113,6 +114,11 @@ void ASLPlayerCharacter::EnterCinematic(const float Yaw)
 	if (CachedMontageComponent)
 	{
 		CachedMontageComponent->StopAllMontages(0.2);
+	}
+	
+	if (CachedInputBufferComponent)
+	{
+		CachedInputBufferComponent->ClearBuffer();
 	}
 
 	if (USLMovementComponentBase* CombatHandler = FindComponentByClass<USLMovementComponentBase>())
