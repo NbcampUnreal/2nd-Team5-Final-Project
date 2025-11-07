@@ -104,9 +104,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Detour Crowd Avoidance Config", meta = (EditCondition = "bEnableDetourCrowdAvoidance"))
 	float CollisionQueryRange;
-	
-	UPROPERTY(BlueprintReadWrite, Category = "AI|Reference")
-	TObjectPtr<ASLPlayerCharacterBase> PosseedAIPawn;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "AI|Behavior")
 	bool bIsHostileToOtherAI;
@@ -121,11 +118,12 @@ protected:
 	float DamageThreatMultiplier;
 
 	UPROPERTY()
-	TObjectPtr<AActor> CurrentBestTarget;
+	TWeakObjectPtr<AActor> CurrentBestTarget;
 private:
 
 	UPROPERTY()
-	TMap<TObjectPtr<AActor>, FTargetInfo> PotentialTargets;
+	TMap<TWeakObjectPtr<AActor>, FTargetInfo> PotentialTargets;
+
 	UPROPERTY()
 	float LastTargetEvaluationTime;
 	
