@@ -231,7 +231,7 @@ bool UInputBufferComponent::TryConsumeComboInput()
 void UInputBufferComponent::ClearBuffer()
 {
 	InputBuffer.Empty();
-	SetComponentTickEnabled(false);
+	//SetComponentTickEnabled(false);
 	LastExecutedSkill = ESkillType::ST_None;
 }
 

@@ -288,6 +288,15 @@ void ASLMonsterAICharacter::Landed(const FHitResult& Hit)
 	{
 		MoveComp->GravityScale = 1.0f;
 	}
+
+	if (CurrentHealth <= 0.f)
+	{
+		bIsDead = true;
+		SetPrimaryState(TAG_AI_Dead);
+		AnimationComponent->PlayAIHitMontage("Dead");
+		AICombatComp->ClearTarget();
+		Dead(LastAttacker, true);
+	}
 }
 
 void ASLMonsterAICharacter::OnHoveredByCursor_Implementation(ASLBasePlayerController* InstigatingController)
@@ -310,6 +319,9 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
                                           EHitAnimType AnimType)
 {
 	if (IsInPrimaryState(TAG_AI_Dead) || bIsDead) return;
+	
+	const bool bIsFalling = GetCharacterMovement() && GetCharacterMovement()->IsFalling();
+	
 	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
 	LastAnimType = AnimType;
 	
@@ -323,7 +335,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 
 	UE_LOG(LogTemp, Warning, TEXT("Monster Current Health[%f]"), CurrentHealth);
 
-	if (CurrentHealth <= 0.f)
+	if (CurrentHealth <= 0.f && !bIsFalling)
 	{
 		bIsDead = true;
 		SetPrimaryState(TAG_AI_Dead);
@@ -353,6 +365,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 	//RotateToHitCauser(Causer);
 	//ChangeMeshTemporarily();
 	StartFlyingState();
+	
 	if (AICombatComp)
 	{
 		AICombatComp->SetTarget(Causer);
@@ -513,7 +526,7 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->StopMovementImmediately();
-		GetCharacterMovement()->SetMovementMode(MOVE_None);
+		GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 		GetCharacterMovement()->Velocity = FVector::ZeroVector;
 		GetCharacterMovement()->Deactivate();
 	}
@@ -521,7 +534,7 @@ void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMat
 	OnDeath();
 	ToggleWeaponState(false);
 
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	//GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
 	if (DeathMaterial && bIsChangeMaterial)
 	{
