@@ -998,6 +998,8 @@ void UMovementHandlerComponent::DodgeLoco()
 		return;
 	}
 
+	if (OwnerCharacter->GetCharacterMovement()->IsFalling()) return;
+
 	CachedMontageComponent->StopAllMontages(0.2f);
 	ToggleCameraZoom(false);
 
