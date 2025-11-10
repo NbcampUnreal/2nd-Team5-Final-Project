@@ -130,19 +130,19 @@ void ASLPlayerCharacter::EnterCinematic(const float Yaw)
 		CombatHandler->SetComponentTickEnabled(false);
 	}
 	
-	ToggleBlock(true);
 	ClearAllStateTags();
 	SetPrimaryState(TAG_Character_EnterCinematic);
+	ToggleBlock(false);
 }
 
 void ASLPlayerCharacter::EndCinematic()
 {
+	ToggleBlock(true);
 	if (USLMovementComponentBase* CombatHandler = FindComponentByClass<USLMovementComponentBase>())
 	{
 		CombatHandler->SetComponentTickEnabled(true);
 	}
 	
-	ToggleBlock(false);
 	ClearAllStateTags();
 	SetPrimaryState(TAG_Character_Movement_Idle);
 }
