@@ -43,16 +43,22 @@ void UAIAttackSweepNotifyState::DoAttackSweep(AActor* OwnerActor)
 	{
 		return;
 	}
-	
+
+	UWorld* World = OwnerActor->GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
 	FVector Start = OwnerActor->GetActorLocation() + FVector(0, 0, 25);
 	FVector End = Start + OwnerActor->GetActorForwardVector() * 100;
 	FCollisionShape SweepShape = FCollisionShape::MakeCapsule(45.f, 60.f);
-	
+
 	TArray<FHitResult> HitResults;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(OwnerActor);
 
-	GetWorld()->SweepMultiByChannel(
+	World->SweepMultiByChannel(
 		HitResults,
 		Start,
 		End,
@@ -61,6 +67,7 @@ void UAIAttackSweepNotifyState::DoAttackSweep(AActor* OwnerActor)
 		SweepShape,
 		Params
 	);
+
 
 	for (const FHitResult& Hit : HitResults)
 	{
