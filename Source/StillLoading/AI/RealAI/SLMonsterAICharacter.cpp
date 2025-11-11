@@ -387,7 +387,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 			KnockbackDir.Z = 0;
 			KnockbackDir.Normalize();
 
-			constexpr float KnockbackPower = 1800.f;
+			constexpr float KnockbackPower = 800.f;
 			if (!GetCharacterMovement()->IsFalling())
 			{
 				LaunchCharacter(KnockbackDir * KnockbackPower, true, true);
