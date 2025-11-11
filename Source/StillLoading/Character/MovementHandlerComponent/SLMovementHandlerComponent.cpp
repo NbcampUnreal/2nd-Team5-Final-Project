@@ -301,8 +301,6 @@ void UMovementHandlerComponent::RemoveInvulnerability() const
 void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult,
                                                              EHitAnimType AnimType)
 {
-	Super::OnHitReceived_Implementation(Causer, Damage, HitResult, AnimType);
-
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_HitBlock))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("USLMovementComponentBase: Hit Blocked"));
@@ -373,6 +371,8 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 		}
 		return;
 	}
+
+	Super::OnHitReceived_Implementation(Causer, Damage, HitResult, AnimType);
 
 	// 피격무적 분기
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Invulnerable) && InvulnerableDuration > 0) return;

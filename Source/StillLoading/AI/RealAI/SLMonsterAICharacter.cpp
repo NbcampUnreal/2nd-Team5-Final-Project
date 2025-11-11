@@ -101,6 +101,7 @@ void ASLMonsterAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void ASLMonsterAICharacter::PlayAttackAnim()
 {
+	SetPrimaryState(TAG_AI_IsPlayingMontage);
 	TArray<FString> AttackMontageNames = {"Attack1", "Attack2", "Attack3"};
 	const int32 RandIndex = FMath::RandRange(0, AttackMontageNames.Num() - 1);
 	AnimationComponent->PlayAIAttackMontage(*AttackMontageNames[RandIndex]);
@@ -108,6 +109,7 @@ void ASLMonsterAICharacter::PlayAttackAnim()
 
 void ASLMonsterAICharacter::PlayETCAnim()
 {
+	SetPrimaryState(TAG_AI_IsPlayingMontage);
 	TArray<FString> AttackMontageNames = {"WonderA", "WonderB", "WonderC", "WonderD", "WonderE"};
 	const int32 RandIndex = FMath::RandRange(0, AttackMontageNames.Num() - 1);
 	AnimationComponent->PlayAIETCMontage(*AttackMontageNames[RandIndex]);
@@ -115,6 +117,7 @@ void ASLMonsterAICharacter::PlayETCAnim()
 
 void ASLMonsterAICharacter::PlayETCWaitAnim()
 {
+	SetPrimaryState(TAG_AI_IsPlayingMontage);
 	TArray<FString> AttackMontageNames = {"WaitA", "WaitB", "WaitC", "WaitD"};
 	const int32 RandIndex = FMath::RandRange(0, AttackMontageNames.Num() - 1);
 	AnimationComponent->PlayAIETCMontage(*AttackMontageNames[RandIndex]);
@@ -464,6 +467,7 @@ void ASLMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage
 	{
 	case EAttackAnimType::AAT_AINormal:
 	case EAttackAnimType::AAT_AISpecial:
+		SetPrimaryState(TAG_AI_Idle);
 		break;
 	case EAttackAnimType::AAT_FinalAttackA:
 	case EAttackAnimType::AAT_FinalAttackB:
