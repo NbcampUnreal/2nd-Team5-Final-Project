@@ -380,20 +380,21 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 	case EHitAnimType::HAT_HardHit:
 		{
 			GetHitDirection(Causer);
+			RotateToHitCauser(Causer);
 			PlayHitMontageAndSetupRecovery(0.8);
 
 			FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
 			KnockbackDir.Z = 0;
 			KnockbackDir.Normalize();
 
-			constexpr float KnockbackPower = 500.f;
-			
+			constexpr float KnockbackPower = 1800.f;
 			if (!GetCharacterMovement()->IsFalling())
 			{
 				LaunchCharacter(KnockbackDir * KnockbackPower, true, true);
 			}
 
 			SetPrimaryState(TAG_AI_Idle);
+			
 			break;
 		}
 	case EHitAnimType::HAT_AirBorne:
