@@ -65,8 +65,14 @@ private:
 	TObjectPtr<UTextBlock> NotiText = nullptr;
 
 	UPROPERTY(Meta = (BindWidget))
+	TObjectPtr<UTextBlock> NotiText2 = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
 	TObjectPtr<UCanvasPanel> NotiBox = nullptr;
 
 	int32 SelectedSlot = 0;
 	bool bIsMainTitle = true;
+
+	static const FName SaveTextIndex;
+	static const FName SaveTextIndex2;
 };

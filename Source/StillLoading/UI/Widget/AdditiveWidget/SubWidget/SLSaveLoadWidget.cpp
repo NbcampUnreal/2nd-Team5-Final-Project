@@ -9,8 +9,14 @@
 #include "UI/SLUISubsystem.h"
 #include "Components/CanvasPanel.h"
 #include "Components/Image.h"
+#include "Components/TextBlock.h"
 #include "UI/Widget/SLButtonWidget.h"
 #include "UI/Widget/SLWidgetPrivateDataAsset.h"
+#include "SubSystem/SLTextPoolSubsystem.h"
+#include "SubSystem/Struct/SLTextPoolDataRows.h"
+
+const FName USLSaveLoadWidget::SaveTextIndex = "SaveText";
+const FName USLSaveLoadWidget::SaveTextIndex2 = "SaveText2";
 
 void USLSaveLoadWidget::InitWidget(USLUISubsystem* NewUISubsystem)
 {
@@ -85,6 +91,26 @@ void USLSaveLoadWidget::ApplyFontData()
 void USLSaveLoadWidget::ApplyTextData()
 {
 	Super::ApplyTextData();
+
+	CheckValidOfTextPoolSubsystem();
+	const UDataTable* TextPool = TextPoolSubsystem->GetUITextPool();
+
+	TArray<FSLUITextPoolDataRow*> TempArray;
+	TextPool->GetAllRows(TEXT("UI Textpool Data ConText"), TempArray);
+
+	TMap<FName, FText> OptionTextMap;
+
+	for (const FSLUITextPoolDataRow* UITextPool : TempArray)
+	{
+		if (UITextPool->TargetWidget == ESLTargetWidgetType::ETW_Option)
+		{
+			OptionTextMap = UITextPool->TextMap;
+			break;
+		}
+	}
+
+	NotiText->SetText(OptionTextMap[SaveTextIndex]);
+	NotiText2->SetText(OptionTextMap[SaveTextIndex2]);
 }
 
 bool USLSaveLoadWidget::ApplySlotImage(FSlateBrush& SlateBrush)
