@@ -116,28 +116,10 @@ void ASLDeveloperBossPhase5::SetConfig(const FSLPhase5Config& InConfig)
 {
     Config = InConfig;
     
-    UE_LOG(LogTemp, Warning, TEXT(" Phase5 Config Set:"));
-    UE_LOG(LogTemp, Warning, TEXT("  - MaxSimultaneousWalls: %d"), Config.MaxSimultaneousWalls);
-    UE_LOG(LogTemp, Warning, TEXT("  - bEnableMultiWallAttack: %s"), Config.bEnableMultiWallAttack ? TEXT("true") : TEXT("false"));
-    UE_LOG(LogTemp, Warning, TEXT("  - WallAttackInterval: %f"), Config.WallAttackInterval);
-    UE_LOG(LogTemp, Warning, TEXT("  - Cinematics: %d"), Config.Cinematics.Num());
-    
-    for (int32 i = 0; i < Config.Cinematics.Num(); i++)
-    {
-        if (IsValid(Config.Cinematics[i]))
-        {
-            UE_LOG(LogTemp, Warning, TEXT("  - Cinematic[%d]: %s"), i, *Config.Cinematics[i]->GetName());
-        }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("  - Cinematic[%d]: NULL"), i);
-        }
-    }
 }
 
 void ASLDeveloperBossPhase5::PlayStartCinematic()
 {
-    UE_LOG(LogTemp, Warning, TEXT(" Phase5: Playing start cinematic"));
     
     int32 CinematicIndex = 0; // 시작 시네마틱
     
@@ -155,11 +137,15 @@ void ASLDeveloperBossPhase5::PlayStartCinematic()
         return;
     }
     
-    UE_LOG(LogTemp, Display, TEXT(" Phase5: Starting cinematic: %s"), *Config.Cinematics[CinematicIndex]->GetName());
     
     bWaitingForCinematic = true;
     
     FMovieSceneSequencePlaybackSettings PlaybackSettings;
+    PlaybackSettings.bHideHud = false;
+    PlaybackSettings.FinishCompletionStateOverride = EMovieSceneCompletionModeOverride::ForceKeepState;
+    PlaybackSettings.bDisableLookAtInput = true;
+    PlaybackSettings.bDisableMovementInput = true;
+    
     ALevelSequenceActor* SequenceActor = nullptr;
     CurrentSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
         GetWorld(),

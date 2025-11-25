@@ -15,9 +15,7 @@
 #include "Character/GamePlayTag/GamePlayTag.h"
 #include "Character/MontageComponent/AnimationMontageComponent.h"
 #include "Character/RadarComponent/CollisionRadarComponent.h"
-#include "Character/Skill/SLSkillComponent.h"
 #include "Character/SlowMotionHelper/SlowMotionHelper.h"
-#include "Controller/SLBasePlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -303,8 +301,6 @@ void UMovementHandlerComponent::RemoveInvulnerability() const
 void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, float Damage, const FHitResult& HitResult,
                                                              EHitAnimType AnimType)
 {
-	Super::OnHitReceived_Implementation(Causer, Damage, HitResult, AnimType);
-
 	if (OwnerCharacter->IsConditionBlocked(EQueryType::EQT_HitBlock))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("USLMovementComponentBase: Hit Blocked"));
@@ -375,6 +371,8 @@ void UMovementHandlerComponent::OnHitReceived_Implementation(AActor* Causer, flo
 		}
 		return;
 	}
+
+	Super::OnHitReceived_Implementation(Causer, Damage, HitResult, AnimType);
 
 	// 피격무적 분기
 	if (OwnerCharacter->HasSecondaryState(TAG_Character_Invulnerable) && InvulnerableDuration > 0) return;
@@ -694,6 +692,7 @@ void UMovementHandlerComponent::SetViewMode(bool bIsTPS)
 
     	OwnerCharacter->CameraBoom->SetRelativeLocation(FVector(85.f, 60.f, 60.f));
     	OwnerCharacter->CameraBoom->SetRelativeRotation(FRotator(0.f, -30.f, 0.f));
+    	
     	bActivateTPSView = true;
     }
     else
@@ -998,6 +997,8 @@ void UMovementHandlerComponent::DodgeLoco()
 		//UE_LOG(LogTemp, Warning, TEXT("UMovementHandlerComponent: Dodge Blocked"));
 		return;
 	}
+
+	if (OwnerCharacter->GetCharacterMovement()->IsFalling()) return;
 
 	CachedMontageComponent->StopAllMontages(0.2f);
 	ToggleCameraZoom(false);

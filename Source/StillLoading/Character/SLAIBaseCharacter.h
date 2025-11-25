@@ -63,7 +63,8 @@ enum class EToggleDamageType : uint8
 	ETDT_LeftHand,
 	ETDT_RightHand,
 	ETDT_LeftFoot,
-	ETDT_RightFoot
+	ETDT_RightFoot,
+	ETDT_Body
 };
 
 UENUM(BlueprintType)
@@ -109,6 +110,10 @@ public:
 
 	UFUNCTION()
 	virtual void OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	// 챕터별 데미지 배율 계산 헬퍼 함수
+	UFUNCTION(BlueprintCallable, Category = "Combat|Damage")
+	float GetChapterDamageMultiplier() const;
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
@@ -194,6 +199,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void ToggleRightFootCollision(bool bEnableCollision);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ToggleBodyCollision(bool bEnableCollision);
 	
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void EquipWeapon(AActor* WeaponActor);
@@ -387,13 +395,13 @@ protected:
 	// --- Chapter Info ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Chapter", meta = (AllowPrivateAccess = "true"))
 	EChapter AIChapter;
-
+	
 	// --- Animation Assets ---
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Montages")
 	TArray<TObjectPtr<UAnimMontage>> DeathMontages;
 	
 	// --- Collision Components ---
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> BoxCollisionComponent;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Collision", meta = (AllowPrivateAccess = "true"))

@@ -311,6 +311,10 @@ void USLAICombatComponent::PerformAttack(float DeltaTime)
 {
 	LastAttackTime = GetWorld()->GetTimeSeconds();
 	//LogCombatModeStatus(FString::Printf(TEXT("%s 공격!"), *CurrentTarget.TargetActor->GetName()));
+	if (StateComponent)
+	{
+		StateComponent->CachedAIController->StopMovement();
+	}
 
 	if (IsValid(CachedMyCharacter))
 	{

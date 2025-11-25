@@ -5,17 +5,16 @@
 #include "NiagaraComponent.h"
 #include "SLBossCharacter.h"
 #include "AI/Projectile/SLAIProjectile.h"
-#include "AnimInstances/SLAICharacterAnimInstance.h"
 #include "BattleComponent/BattleComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/WidgetComponent.h"
 #include "Controller/SLBaseAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Perception/AISense_Damage.h"
+#include "SubSystem/SLLevelTransferSubsystem.h"
 
 
 ASLAIBaseCharacter::ASLAIBaseCharacter()
@@ -37,7 +36,7 @@ ASLAIBaseCharacter::ASLAIBaseCharacter()
 	BoxCollisionComponent->SetupAttachment(RootComponent);
 	BoxCollisionComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	BoxCollisionComponent->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnBodyCollisionBoxBeginOverlap);
-	BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 	
     LeftHandCollisionBox = CreateDefaultSubobject<UBoxComponent>("LeftHandCollisionBox");
     LeftHandCollisionBox->SetupAttachment(GetMesh());
@@ -209,27 +208,14 @@ void ASLAIBaseCharacter::OnBodyCollisionBoxBeginOverlap(UPrimitiveComponent* Ove
 	{
 		return;
 	}
-    
-	// 캐릭터인지 확인
-	ACharacter* HitCharacter = Cast<ACharacter>(OtherActor);
-	if (!HitCharacter)
+	if (!BattleComponent)
 	{
 		return;
 	}
-     
-	// 타겟 액터에 BattleComponent가 있는지 확인
+	
 	UBattleComponent* TargetBattleComp = OtherActor->FindComponentByClass<UBattleComponent>();
 	if (!TargetBattleComp)
 	{
-		// BattleComponent가 없는 액터는 데미지를 받을 수 없음
-		UE_LOG(LogTemp, Warning, TEXT("%s에 BattleComponent가 없어 데미지를 처리할 수 없습니다"), *OtherActor->GetName());
-		return;
-	}
-    
-	// 자신의 BattleComponent 확인
-	if (!BattleComponent)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("공격자(%s)에 BattleComponent가 없습니다"), *GetName());
 		return;
 	}
 	
@@ -382,6 +368,9 @@ void ASLAIBaseCharacter::ToggleCollision(EToggleDamageType DamageType, bool bEna
 	case EToggleDamageType::ETDT_RightFoot:
 		ToggleRightFootCollision(bEnableCollision);
 		break;
+	case EToggleDamageType::ETDT_Body:
+		ToggleBodyCollision(bEnableCollision);
+		break;
 	case EToggleDamageType::ETDT_CurrentEquippedWeapon:
 		if (CurrentWeaponCollision)
 		{
@@ -422,6 +411,14 @@ void ASLAIBaseCharacter::ToggleRightFootCollision(bool bEnableCollision)
 	if (RightFootCollisionBox)
 	{
 		RightFootCollisionBox->SetCollisionEnabled(bEnableCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+	}
+}
+
+void ASLAIBaseCharacter::ToggleBodyCollision(bool bEnableCollision)
+{
+	if (BoxCollisionComponent)
+	{
+		BoxCollisionComponent->SetCollisionEnabled(bEnableCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
 	}
 }
 
@@ -1231,14 +1228,45 @@ void ASLAIBaseCharacter::SetupBoxCollision()
 	if (BoxCollisionComponent)
 	{
 		BoxCollisionComponent->SetBoxExtent(FVector(42.0f, 42.0f, 88.0f));
-		
+
 		// 콜리전 설정
 		BoxCollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		BoxCollisionComponent->SetCollisionObjectType(ECC_Pawn);
-        
+
 		// 콜리전 응답 설정
+		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 		BoxCollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
 	}
+}
+
+float ASLAIBaseCharacter::GetChapterDamageMultiplier() const
+{
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GameInstance = World->GetGameInstance())
+		{
+			if (const USLLevelTransferSubsystem* LevelSubsystem = GameInstance->GetSubsystem<USLLevelTransferSubsystem>())
+			{
+				const ESLChapterType CurrentChapter = LevelSubsystem->GetCurrentChapter();
+				
+				switch (CurrentChapter)
+				{
+				case ESLChapterType::EC_Chapter1:
+					return 1.0f;
+				case ESLChapterType::EC_Chapter2:
+					return 1.2f;
+				case ESLChapterType::EC_Chapter3:
+					return 1.5f;
+				case ESLChapterType::EC_Chapter4:
+					return 1.7f;
+				default:
+					return 1.0f;
+				}
+			}
+		}
+	}
+
+	return 1.0f;
 }

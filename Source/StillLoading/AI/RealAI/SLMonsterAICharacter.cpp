@@ -101,6 +101,7 @@ void ASLMonsterAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void ASLMonsterAICharacter::PlayAttackAnim()
 {
+	SetPrimaryState(TAG_AI_IsPlayingMontage);
 	TArray<FString> AttackMontageNames = {"Attack1", "Attack2", "Attack3"};
 	const int32 RandIndex = FMath::RandRange(0, AttackMontageNames.Num() - 1);
 	AnimationComponent->PlayAIAttackMontage(*AttackMontageNames[RandIndex]);
@@ -108,6 +109,7 @@ void ASLMonsterAICharacter::PlayAttackAnim()
 
 void ASLMonsterAICharacter::PlayETCAnim()
 {
+	SetPrimaryState(TAG_AI_IsPlayingMontage);
 	TArray<FString> AttackMontageNames = {"WonderA", "WonderB", "WonderC", "WonderD", "WonderE"};
 	const int32 RandIndex = FMath::RandRange(0, AttackMontageNames.Num() - 1);
 	AnimationComponent->PlayAIETCMontage(*AttackMontageNames[RandIndex]);
@@ -115,6 +117,7 @@ void ASLMonsterAICharacter::PlayETCAnim()
 
 void ASLMonsterAICharacter::PlayETCWaitAnim()
 {
+	SetPrimaryState(TAG_AI_IsPlayingMontage);
 	TArray<FString> AttackMontageNames = {"WaitA", "WaitB", "WaitC", "WaitD"};
 	const int32 RandIndex = FMath::RandRange(0, AttackMontageNames.Num() - 1);
 	AnimationComponent->PlayAIETCMontage(*AttackMontageNames[RandIndex]);
@@ -288,6 +291,15 @@ void ASLMonsterAICharacter::Landed(const FHitResult& Hit)
 	{
 		MoveComp->GravityScale = 1.0f;
 	}
+
+	if (CurrentHealth <= 0.f)
+	{
+		bIsDead = true;
+		SetPrimaryState(TAG_AI_Dead);
+		AnimationComponent->PlayAIHitMontage("Dead");
+		AICombatComp->ClearTarget();
+		Dead(LastAttacker, true);
+	}
 }
 
 void ASLMonsterAICharacter::OnHoveredByCursor_Implementation(ASLBasePlayerController* InstigatingController)
@@ -310,6 +322,10 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
                                           EHitAnimType AnimType)
 {
 	if (IsInPrimaryState(TAG_AI_Dead) || bIsDead) return;
+	
+	const bool bIsFalling = GetCharacterMovement() && GetCharacterMovement()->IsFalling();
+	
+	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterHit, GetActorLocation());
 	LastAnimType = AnimType;
 	
 	AnimationComponent->StopAllMontages(0.2f);
@@ -322,11 +338,12 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 
 	UE_LOG(LogTemp, Warning, TEXT("Monster Current Health[%f]"), CurrentHealth);
 
-	if (CurrentHealth <= 0.f)
+	if (CurrentHealth <= 0.f && !bIsFalling)
 	{
 		bIsDead = true;
 		SetPrimaryState(TAG_AI_Dead);
 		AnimationComponent->PlayAIHitMontage("Dead");
+		AICombatComp->ClearTarget();
 		Dead(Causer, true);
 		return;
 	}
@@ -351,6 +368,7 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 	//RotateToHitCauser(Causer);
 	//ChangeMeshTemporarily();
 	StartFlyingState();
+	
 	if (AICombatComp)
 	{
 		AICombatComp->SetTarget(Causer);
@@ -362,20 +380,21 @@ void ASLMonsterAICharacter::OnHitReceived(AActor* Causer, float Damage, const FH
 	case EHitAnimType::HAT_HardHit:
 		{
 			GetHitDirection(Causer);
+			RotateToHitCauser(Causer);
 			PlayHitMontageAndSetupRecovery(0.8);
 
 			FVector KnockbackDir = GetActorLocation() - Causer->GetActorLocation();
 			KnockbackDir.Z = 0;
 			KnockbackDir.Normalize();
 
-			constexpr float KnockbackPower = 500.f;
-			
+			constexpr float KnockbackPower = 800.f;
 			if (!GetCharacterMovement()->IsFalling())
 			{
 				LaunchCharacter(KnockbackDir * KnockbackPower, true, true);
 			}
 
 			SetPrimaryState(TAG_AI_Idle);
+			
 			break;
 		}
 	case EHitAnimType::HAT_AirBorne:
@@ -449,6 +468,7 @@ void ASLMonsterAICharacter::HandleAnimNotify(EAttackAnimType MonsterMontageStage
 	{
 	case EAttackAnimType::AAT_AINormal:
 	case EAttackAnimType::AAT_AISpecial:
+		SetPrimaryState(TAG_AI_Idle);
 		break;
 	case EAttackAnimType::AAT_FinalAttackA:
 	case EAttackAnimType::AAT_FinalAttackB:
@@ -507,10 +527,19 @@ void ASLMonsterAICharacter::CorrectActorLocationPostAttack()
 
 void ASLMonsterAICharacter::Dead(const AActor* Attacker, const bool bIsChangeMaterial)
 {
+	GetBattleSoundSubSystem()->PlayBattleSound(EBattleSoundType::BST_MonsterDie, GetActorLocation());
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+		GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+		GetCharacterMovement()->Velocity = FVector::ZeroVector;
+		GetCharacterMovement()->Deactivate();
+	}
+	
 	OnDeath();
 	ToggleWeaponState(false);
 
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	//GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
 	if (DeathMaterial && bIsChangeMaterial)
 	{

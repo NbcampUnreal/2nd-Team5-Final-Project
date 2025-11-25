@@ -130,8 +130,6 @@ void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 			{
 				float OldThreatLevel = TargetInfo->ThreatLevel;
 				TargetInfo->ThreatLevel *= DamageThreatMultiplier;
-				/*UE_LOG(LogAITargeting, Log, TEXT("[%s] Damage from %s - Threat Level: %.2f -> %.2f"), 
-					*GetName(), *Actor->GetName(), OldThreatLevel, TargetInfo->ThreatLevel);*/
 			}
 		}
 		
@@ -140,8 +138,6 @@ void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 	}
 	else if (!Stimulus.WasSuccessfullySensed() && Attitude == ETeamAttitude::Hostile)
 	{
-		//UE_LOG(LogAITargeting, Log, TEXT("[%s] Target Lost: %s"), *GetName(), *Actor->GetName());
-		
 		// 시야에서 사라진 적 처리
 		if (FTargetInfo* TargetInfo = PotentialTargets.Find(Actor))
 		{
@@ -152,8 +148,6 @@ void ASLBaseAIController::OnAIPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 
 void ASLBaseAIController::OnTargetPerceptionForgotten(AActor* Actor)
 {
-	//UE_LOG(LogAITargeting, Log, TEXT("[%s] Target Forgotten: %s"), *GetName(), *Actor->GetName());
-	
 	RemoveTarget(Actor);
 	
 	// 현재 타겟이 잊혀진 경우 재평가
@@ -181,16 +175,16 @@ void ASLBaseAIController::UpdateTargetEvaluation()
 	for (auto& TargetPair : PotentialTargets)
 	{
 		// 죽었거나 유효하지 않은 타겟 제거
-		if (!IsValid(TargetPair.Key) || !IsActorAlive(TargetPair.Key))
+		if (!TargetPair.Key.IsValid() || !IsActorAlive(TargetPair.Key.Get()))
 		{
-			TargetsToRemove.Add(TargetPair.Key);
+			TargetsToRemove.Add(TargetPair.Key.Get());
 			continue;
 		}
 		
 		// 5초 이상 보이지 않은 타겟 제거
 		if (CurrentTime - TargetPair.Value.LastSeenTime > 5.0f && TargetPair.Value.LastSeenTime > 0)
 		{
-			TargetsToRemove.Add(TargetPair.Key);
+			TargetsToRemove.Add(TargetPair.Key.Get());
 			continue;
 		}
 		
@@ -207,31 +201,20 @@ void ASLBaseAIController::UpdateTargetEvaluation()
 		if (Score > BestScore)
 		{
 			BestScore = Score;
-			BestTarget = TargetPair.Key;
+			BestTarget = TargetPair.Key.Get();
 		}
 	}
 	
 	// 오래된 타겟 제거
 	for (AActor* Target : TargetsToRemove)
 	{
-		//UE_LOG(LogAITargeting, Log, TEXT("[%s] Removing Old Target: %s"), *GetName(), *Target->GetName());
 		PotentialTargets.Remove(Target);
 	}
 	
 	// 새로운 최적 타겟 설정
-	if (BestTarget != CurrentBestTarget || !IsActorAlive(CurrentBestTarget))
+	if (BestTarget != CurrentBestTarget || !IsActorAlive(CurrentBestTarget.Get()))
 	{
-		AActor* PreviousTarget = CurrentBestTarget;
 		CurrentBestTarget = BestTarget;
-		
-		if (BestTarget)
-		{
-			UE_LOG(LogAITargeting, Warning, TEXT("[%s] Best Target Changed: %s -> %s (Score: %.2f)"), 
-				*GetName(), 
-				PreviousTarget ? *PreviousTarget->GetName() : TEXT("None"), 
-				*BestTarget->GetName(), 
-				BestScore);
-		}
 		
 		if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())
 		{
@@ -300,7 +283,7 @@ float ASLBaseAIController::CalculateThreatLevel(AActor* Actor) const
 
 AActor* ASLBaseAIController::GetBestTarget() const
 {
-	return CurrentBestTarget;
+	return CurrentBestTarget.Get();
 }
 
 bool ASLBaseAIController::IsActorAlive(AActor* Actor) const
@@ -321,6 +304,11 @@ bool ASLBaseAIController::IsActorAlive(AActor* Actor) const
 	{
 		return !PlayerCharacter->PrimaryStateTags.HasTag(TAG_Character_Dead);
 	}
+
+	if (ASLMonsterAICharacterBase* MonsterAICharacter = Cast<ASLMonsterAICharacterBase>(Actor))
+	{
+		return !MonsterAICharacter->bIsDead;
+	}
 	
 	return true;
 }
@@ -332,9 +320,9 @@ void ASLBaseAIController::CleanupDeadTargets()
 	// 죽은 타겟 찾기
 	for (auto& TargetPair : PotentialTargets)
 	{
-		if (!IsActorAlive(TargetPair.Key))
+		if (!IsActorAlive(TargetPair.Key.Get()))
 		{
-			DeadTargets.Add(TargetPair.Key);
+			DeadTargets.Add(TargetPair.Key.Get());
 		}
 	}
 	
@@ -352,16 +340,12 @@ void ASLBaseAIController::OnTargetDeath(AActor* DeadActor)
 		return;
 	}
 	
-	UE_LOG(LogAITargeting, Warning, TEXT("[%s] Target Died: %s"), *GetName(), *DeadActor->GetName());
-	
 	// 타겟 리스트에서 제거
 	PotentialTargets.Remove(DeadActor);
 	
 	// 현재 타겟이 죽었다면
 	if (CurrentBestTarget == DeadActor)
 	{
-		UE_LOG(LogAITargeting, Warning, TEXT("[%s] Current Best Target Died, Finding New Target"), *GetName());
-		
 		CurrentBestTarget = nullptr;
 		
 		if (UBlackboardComponent* BlackboardComponent = GetBlackboardComponent())

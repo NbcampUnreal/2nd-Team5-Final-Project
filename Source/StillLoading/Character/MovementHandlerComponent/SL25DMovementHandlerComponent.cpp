@@ -418,6 +418,8 @@ void USL25DMovementHandlerComponent::DodgeLoco()
 		return;
 	}
 
+	if (OwnerCharacter->GetCharacterMovement()->IsFalling()) return;
+
 	FaceMouseCursorInstantly();
 	CachedMontageComponent->PlayDodgeMontage("Forward");
 	OwnerCharacter->SetPrimaryState(TAG_Character_Movement_Dodge);

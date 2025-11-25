@@ -2,7 +2,7 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
-
+#include "AIController.h"
 
 FVector USLAIFunctionLibrary::FindGroundLocation(const UObject* WorldContextObject, FVector StartLocation, float MaxTraceDistance, bool bDrawDebug)
 {
@@ -39,4 +39,14 @@ FVector USLAIFunctionLibrary::FindGroundLocation(const UObject* WorldContextObje
 	{
 		return TraceEnd; 
 	}
+}
+
+bool USLAIFunctionLibrary::IsEnemy(AAIController* AIController)
+{
+	if (const IGenericTeamAgentInterface* MyTeamAgent = Cast<IGenericTeamAgentInterface>(AIController))
+	{
+		FGenericTeamId MyTeamId = MyTeamAgent->GetGenericTeamId();
+		return MyTeamId == FGenericTeamId(1);
+	}
+	return false;
 }

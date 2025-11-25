@@ -184,7 +184,19 @@ void ASLAIProjectile::ProcessDamage(AActor* HitActor, const FHitResult& Hit)
 {
 	if (ASLAIBaseCharacter* OwnerCharacter = Cast<ASLAIBaseCharacter>(GetInstigator()))
 	{
-		OwnerCharacter->GetBattleComponent()->SendHitResult(HitActor, Hit, AttackAnimType);
+		UBattleComponent* HitActorBM =  HitActor->FindComponentByClass<UBattleComponent>();
+
+		if (!HitActorBM)
+		{
+			return;
+		}
+
+		UBattleComponent* OwnerBattleComp = OwnerCharacter->GetBattleComponent();
+		if (!OwnerBattleComp) return;
+
+		const float AttackDamage = OwnerBattleComp->GetDamageByType(AttackAnimType);  
+		const float ChapterMultiplier = OwnerCharacter->GetChapterDamageMultiplier();
+		OwnerBattleComp->SendHitResult(HitActor, Hit, AttackAnimType, AttackDamage * ChapterMultiplier);
 	}
 }
 

@@ -21,13 +21,13 @@ ASLPlayerCharacter::ASLPlayerCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Zelda-like
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.f;
-	CameraBoom->bUsePawnControlRotation = true; // 자체 회전 제어
+	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->CameraLagSpeed = 3.f;
 
 	// Spring Arm Collision
@@ -66,6 +66,7 @@ void ASLPlayerCharacter::BeginPlay()
 	}
 
 	CachedMontageComponent = FindComponentByClass<UAnimationMontageComponent>();
+	CachedInputBufferComponent = FindComponentByClass<UInputBufferComponent>();
 
 	if (GetController())
 	{
@@ -114,26 +115,35 @@ void ASLPlayerCharacter::EnterCinematic(const float Yaw)
 	{
 		CachedMontageComponent->StopAllMontages(0.2);
 	}
+	
+	if (CachedInputBufferComponent)
+	{
+		CachedInputBufferComponent->ClearBuffer();
+	}
 
 	if (USLMovementComponentBase* CombatHandler = FindComponentByClass<USLMovementComponentBase>())
 	{
-		if (CombatHandler->CachedSkeletalMesh)
+		/*if (CombatHandler->CachedSkeletalMesh)
 		{
 			CombatHandler->CachedSkeletalMesh->SetRelativeRotation(FRotator(0.0f, Yaw, 0.0f));
-		}
+		}*/
 		CombatHandler->SetComponentTickEnabled(false);
 	}
 	
+	ClearAllStateTags();
 	SetPrimaryState(TAG_Character_EnterCinematic);
+	ToggleBlock(false);
 }
 
 void ASLPlayerCharacter::EndCinematic()
 {
+	ToggleBlock(true);
 	if (USLMovementComponentBase* CombatHandler = FindComponentByClass<USLMovementComponentBase>())
 	{
 		CombatHandler->SetComponentTickEnabled(true);
 	}
-
+	
+	ClearAllStateTags();
 	SetPrimaryState(TAG_Character_Movement_Idle);
 }
 
