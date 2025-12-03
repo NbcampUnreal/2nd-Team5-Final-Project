@@ -166,8 +166,19 @@ void UDynamicIMCComponent::BindInputForAction(const UInputAction* Action, const 
 	}
 }
 
+void UDynamicIMCComponent::ReBindDefaultSetting()
+{
+	CurrentIMC = nullptr;
+	BindDefaultSetting();
+}
+
 void UDynamicIMCComponent::HandleActionTriggered(const FInputActionInstance& Instance)
 {
+	const ACharacter* OwnerChar = Cast<ACharacter>(GetOwner());
+	const APlayerController* PC = OwnerChar ? Cast<APlayerController>(OwnerChar->GetController()) : nullptr;
+
+	if (!IsValid(PC)) return;
+
 	if (const UInputAction* TriggeredAction = Instance.GetSourceAction())
 	{
 		for (const auto& Pair : ActionMap)
@@ -183,6 +194,11 @@ void UDynamicIMCComponent::HandleActionTriggered(const FInputActionInstance& Ins
 
 void UDynamicIMCComponent::HandleActionStarted(const FInputActionInstance& Instance)
 {
+	const ACharacter* OwnerChar = Cast<ACharacter>(GetOwner());
+	const APlayerController* PC = OwnerChar ? Cast<APlayerController>(OwnerChar->GetController()) : nullptr;
+
+	if (!IsValid(PC)) return;
+
 	if (const UInputAction* StartedAction = Instance.GetSourceAction())
 	{
 		for (const auto& Pair : ActionMap)
@@ -198,6 +214,11 @@ void UDynamicIMCComponent::HandleActionStarted(const FInputActionInstance& Insta
 
 void UDynamicIMCComponent::HandleActionCompleted(const FInputActionInstance& Instance)
 {
+	const ACharacter* OwnerChar = Cast<ACharacter>(GetOwner());
+	const APlayerController* PC = OwnerChar ? Cast<APlayerController>(OwnerChar->GetController()) : nullptr;
+
+	if (!IsValid(PC)) return;
+
 	if (const UInputAction* CompletedAction = Instance.GetSourceAction())
 	{
 		for (const auto& Pair : ActionMap)

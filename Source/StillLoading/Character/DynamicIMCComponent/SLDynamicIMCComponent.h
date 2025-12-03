@@ -65,6 +65,9 @@ public:
 	UFUNCTION()
 	void BindInputForAction(const UInputAction* Action, EInputActionType ActionType, UEnhancedInputComponent* InputComp);
 
+	UFUNCTION(BlueprintCallable)
+	void ReBindDefaultSetting();
+
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UInputMappingContext> DefaultIMC;
 
