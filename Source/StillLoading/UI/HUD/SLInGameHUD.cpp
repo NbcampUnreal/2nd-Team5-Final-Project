@@ -75,8 +75,6 @@ void ASLInGameHUD::ApplyTimer(int32 SecondsValue)
 
 void ASLInGameHUD::ApplyPlayerHp(FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 {
-	bIsFirstApplyHp = true;
-
 	if (!PlayerHpDelegate.OnPlayerHpChanged.IsAlreadyBound(this, &ThisClass::SetPlayerHpValue))
 	{
 		PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
@@ -106,9 +104,9 @@ void ASLInGameHUD::ApplyHitEffect(FSLPlayerHpDelegateBuffer& PlayerHpDelegate)
 {
 	bIsFirstApplyHp = true;
 
-	if (!PlayerHpDelegate.OnPlayerHpChanged.IsAlreadyBound(this, &ThisClass::SetPlayerHpValue))
+	if (!PlayerHpDelegate.OnPlayerHpChanged.IsAlreadyBound(this, &ThisClass::SetHitEffectValue))
 	{
-		PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetPlayerHpValue);
+		PlayerHpDelegate.OnPlayerHpChanged.AddDynamic(this, &ThisClass::SetHitEffectValue);
 	}
 
 	SetHitEffectValue(100, 100);
@@ -138,6 +136,11 @@ void ASLInGameHUD::SetPlayerStateVisibility(bool bIsVisible, bool bIsSpecial)
 
 void ASLInGameHUD::SetVisibilityPlayerState(bool bIsVisible)
 {
+	if (!GetIsActivated(ESLInGameActivateType::EIGA_PlayerHpBar))
+	{
+		return;
+	}
+
 	InGameWidget->SetVisibilityPlayerStatePanel(bIsVisible);
 	SetPlayerStateVisibility(GetIsActivated(ESLInGameActivateType::EIGA_PlayerHpBar), GetIsActivated(ESLInGameActivateType::EIGA_PlayerSpecialBar));
 	SetPlayerHpValue(100, 100);
@@ -166,14 +169,14 @@ void ASLInGameHUD::SetTimerValue(int32 SecondsValue)
 
 void ASLInGameHUD::SetPlayerHpValue(float MaxHp, float CurrentHp)
 {
-	if (!bIsFirstApplyHp)
-	{
-		SetHitEffectValue(MaxHp, CurrentHp);
-	}
-	else
-	{
-		bIsFirstApplyHp = false;
-	}
+	//if (!bIsFirstApplyHp)
+	//{
+	//	SetHitEffectValue(MaxHp, CurrentHp);
+	//}
+	//else
+	//{
+	//	bIsFirstApplyHp = false;
+	//}
 	
 	InGameWidget->SetHpValue(MaxHp, CurrentHp);
 }
@@ -201,5 +204,12 @@ void ASLInGameHUD::SetBossHpValue(float MaxHp, float CurrentHp)
 void ASLInGameHUD::SetHitEffectValue(float MaxHp, float CurrentHp)
 {
 	InGameWidget->SetEffectValue(MaxHp, CurrentHp);
+
+	if (bIsFirstApplyHp)
+	{
+		bIsFirstApplyHp = false;
+		return;
+	}
+
 	InGameWidget->SetIsHitEffectActivate(true);
 }

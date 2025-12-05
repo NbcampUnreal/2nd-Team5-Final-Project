@@ -17,7 +17,8 @@ void ASLBattleObjectiveManager::ActivateBattleUI(USLObjectiveHandlerBase* Compon
 		{
 			ActivatePlayerHpUI();
 		}
-		else if (HUD->GetIsActivated(ESLInGameActivateType::EIGA_PlayerHitEffect))
+		
+		if (HUD->GetIsActivated(ESLInGameActivateType::EIGA_PlayerHitEffect))
 		{
 			ActivateHitEffectUI();
 		}

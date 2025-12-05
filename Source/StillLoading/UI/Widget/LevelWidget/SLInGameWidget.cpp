@@ -59,12 +59,18 @@ void USLInGameWidget::SetIsPlayerStateActivate(bool bIsActived, bool bIsVisibleS
 
 	if (!PlayerStatePanel->IsVisible())
 	{
+		if (!bIsActived) return;
 		SetIsSubWidgetActivate(bIsActived, ActivePlayerStateAnim, DeactivePlayerStateAnim);
 	}
 }
 
 void USLInGameWidget::SetVisibilityPlayerStatePanel(bool bIsVisible)
 {
+	if (!bIsVisible && !PlayerStatePanel->IsVisible())
+	{
+		return;
+	}
+
 	SetIsSubWidgetActivate(bIsVisible, ActivePlayerStateAnim, DeactivePlayerStateAnim);
 }
 
