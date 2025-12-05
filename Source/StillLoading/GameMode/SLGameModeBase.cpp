@@ -10,6 +10,12 @@ ASLGameModeBase::ASLGameModeBase()
 
 void ASLGameModeBase::OnUpdatedObjectiveState(USLObjectiveBase* Objective, const ESLObjectiveState InState)
 {
+	if (!IsValid(SLGameState))
+	{
+		SLGameState = Cast<ASLGameStateBase>(GameState);
+		checkf(SLGameState, TEXT("GameState is not ASLGameStateBase"));
+	}
+
 	TArray<TObjectPtr<USLObjectiveBase>>& ModifiedObjectives = SLGameState->GetModifedObjectives();
 	ModifiedObjectives.AddUnique(Objective);
 
@@ -29,12 +35,14 @@ void ASLGameModeBase::OnUpdatedObjectiveState(USLObjectiveBase* Objective, const
 
 void ASLGameModeBase::AddInProgressObjective(USLObjectiveBase* Objective)
 {
+	if (!IsValid(SLGameState))
+	{
+		SLGameState = Cast<ASLGameStateBase>(GameState);
+		checkf(SLGameState, TEXT("GameState is not ASLGameStateBase"));
+	}
+
 	TArray<TObjectPtr<USLObjectiveBase>>& InProgressedObjectives = SLGameState->GetInProgressedObjectives();
 	
-	if (!SLGameState)
-	{
-		return;
-	}
 	if (InProgressedObjectives.Contains(Objective))
 	{
 		return;
@@ -48,11 +56,14 @@ void ASLGameModeBase::AddInProgressObjective(USLObjectiveBase* Objective)
 
 void ASLGameModeBase::RemoveInProgressObjective(USLObjectiveBase* Objective)
 {
-	TArray<TObjectPtr<USLObjectiveBase>>& InProgressedObjectives = SLGameState->GetInProgressedObjectives();
-	if (!SLGameState)
+	if (!IsValid(SLGameState))
 	{
-		return;
+		SLGameState = Cast<ASLGameStateBase>(GameState);
+		checkf(SLGameState, TEXT("GameState is not ASLGameStateBase"));
 	}
+
+	TArray<TObjectPtr<USLObjectiveBase>>& InProgressedObjectives = SLGameState->GetInProgressedObjectives();
+
 	if (!InProgressedObjectives.Contains(Objective))
 	{
 		return;
@@ -69,11 +80,23 @@ void ASLGameModeBase::RemoveInProgressObjective(USLObjectiveBase* Objective)
 
 USLObjectiveBase* ASLGameModeBase::GetPrimaryInProgressObjective()
 {
+	if (!IsValid(SLGameState))
+	{
+		SLGameState = Cast<ASLGameStateBase>(GameState);
+		checkf(SLGameState, TEXT("GameState is not ASLGameStateBase"));
+	}
+
 	return SLGameState->GetInProgressedObjectives().Top();
 }
 
 void ASLGameModeBase::ResetModifiedObjectives()
 {
+	if (!IsValid(SLGameState))
+	{
+		SLGameState = Cast<ASLGameStateBase>(GameState);
+		checkf(SLGameState, TEXT("GameState is not ASLGameStateBase"));
+	}
+
 	for (USLObjectiveBase* ModifiedObjective : SLGameState->GetInProgressedObjectives())
 	{
 		if (IsValid(ModifiedObjective))
@@ -99,6 +122,12 @@ void ASLGameModeBase::LoadGame()
 
 void ASLGameModeBase::LoadInProgressObjectives()
 {
+	if (!IsValid(SLGameState))
+	{
+		SLGameState = Cast<ASLGameStateBase>(GameState);
+		checkf(SLGameState, TEXT("GameState is not ASLGameStateBase"));
+	}
+
 	for (USLObjectiveBase* InProgressObjective : SLGameState->GetInProgressedObjectives())
 	{
 		if (InProgressObjective)
