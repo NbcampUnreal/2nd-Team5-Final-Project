@@ -69,6 +69,12 @@ public:
 	float InterpSpeed = 5.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Movement")
+	float DecreasePerSecond = 200.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float DeInterpSpeed = 10.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
 	float CurrentSpeed;
 
 	UPROPERTY(EditAnywhere, Category = "Movement")
@@ -88,5 +94,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "AI")
 	int32 OverlapEnemyCount = 0;
+
+	bool bIsPlayerOn = false;
+	bool bIsEnemyOn = false;
 
 };

@@ -9,7 +9,7 @@ ASLHorse::ASLHorse()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	PrimaryActorTick.bStartWithTickEnabled = false;
 }
 
 // Called when the game starts or when spawned
@@ -36,12 +36,6 @@ void ASLHorse::Tick(float DeltaTime)
 
 void ASLHorse::Move(float DeltaTime)
 {
-
-	if (!bShouldMove)
-	{
-		return;
-	}
-
 	if (TargetSplineActor)
 	{
 		FVector ActorLocation = GetActorLocation();
@@ -52,11 +46,10 @@ void ASLHorse::Move(float DeltaTime)
 		FVector SplineDir = TargetSpline->GetDirectionAtDistanceAlongSpline(CurrentDistance, ESplineCoordinateSpace::World);
 		FRotator Rotation = TargetSpline->GetRotationAtDistanceAlongSpline(CurrentDistance, ESplineCoordinateSpace::World);
 
-		if (!bDeceleration)
+		if (bIsPlayerOn && !bIsEnemyOn)
 		{
 			Accelerate(DeltaTime);
 		}
-
 		else
 		{
 			Deceleration(DeltaTime);
@@ -68,37 +61,42 @@ void ASLHorse::Move(float DeltaTime)
 
 }
 
-
 void ASLHorse::OnEnemyDetected()
 {
 	OverlapEnemyCount++;
-	bDeceleration = true;
+	bIsEnemyOn = true;
+	//SetActorTickEnabled(false);
 }
 
 void ASLHorse::OnEnemyCleared()
 {
 	OverlapEnemyCount = FMath::Max(OverlapEnemyCount - 1, 0);
+
 	if (OverlapEnemyCount == 0)
 	{
-		bShouldMove = true;
-		bDeceleration = false;
+		bIsEnemyOn = false;
+
+		if (bIsPlayerOn)
+		{
+			SetActorTickEnabled(true);
+		}
 	}
 }
 
 void ASLHorse::BeginOverlapPlayer()
 {
-	if (OverlapEnemyCount > 0)
+	if (!bIsEnemyOn)
 	{
-		return;
+		SetActorTickEnabled(true);
 	}
 
-	bShouldMove = true;
-	bDeceleration = false;
+	bIsPlayerOn = true;
 }
 
 void ASLHorse::EndOverlapPlayer()
 {
-	bDeceleration = true;
+	bIsPlayerOn = false;
+	//SetActorTickEnabled(false);
 }
 
 void ASLHorse::Accelerate(float DeltaTime)
@@ -108,19 +106,14 @@ void ASLHorse::Accelerate(float DeltaTime)
 	GetCharacterMovement()->MaxWalkSpeed = CurrentSpeed;
 }
 
-
 void ASLHorse::Deceleration(float DeltaTime)
 {
-	TargetSpeed = FMath::Clamp(TargetSpeed - IncreasePerSecond * 4.0f * DeltaTime, DefaultSpeed, MaxSpeed);
-	CurrentSpeed = FMath::FInterpTo(CurrentSpeed, TargetSpeed, DeltaTime, InterpSpeed);
+	TargetSpeed = FMath::Clamp(TargetSpeed - DecreasePerSecond * DeltaTime, DefaultSpeed, MaxSpeed);
+	CurrentSpeed = FMath::FInterpTo(CurrentSpeed, TargetSpeed, DeltaTime, DeInterpSpeed);
 	GetCharacterMovement()->MaxWalkSpeed = CurrentSpeed;
-
+	
 	if (CurrentSpeed <= DefaultSpeed)
 	{
-		bShouldMove = false;
+		SetActorTickEnabled(false);
 	}
 }
-
-
-
-
