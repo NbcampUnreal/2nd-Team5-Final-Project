@@ -7,6 +7,7 @@
 
 #include "SLInteractableObjectBase.generated.h"
 
+class USLInteractableHighlight;
 class USphereComponent;
 class ASLPlayerCharacterBase;
 
@@ -58,4 +59,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableObject")
 	TObjectPtr<USoundBase> InteractionSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "InteractableObject")
+	TObjectPtr<USLInteractableHighlight> InteractableHighlight;
 };

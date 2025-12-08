@@ -3,6 +3,9 @@
 
 #include "SLInteractableObjectBase.h"
 
+#include "NiagaraDataInterfaceSkeletalMesh.h"
+#include "SLInteractableHighlight.h"
+#include "Components/PointLightComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "StillLoading\Character\SLPlayerCharacterBase.h"
 
@@ -11,6 +14,10 @@ ASLInteractableObjectBase::ASLInteractableObjectBase()
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMeshComp->SetCollisionProfileName("Interactable");
 	SetRootComponent(StaticMeshComp);
+	
+	InteractableHighlight = CreateDefaultSubobject<USLInteractableHighlight>(TEXT("InteractableHighlight"));
+	InteractableHighlight->SetupAttachment(StaticMeshComp);
+	InteractableHighlight->PointLight->SetupAttachment(InteractableHighlight);
 }
 
 void ASLInteractableObjectBase::TriggerReact(ASLPlayerCharacterBase* InCharacter, const ESLReactiveTriggerType InComingType)
@@ -33,12 +40,14 @@ void ASLInteractableObjectBase::TriggerReact(ASLPlayerCharacterBase* InCharacter
 
 void ASLInteractableObjectBase::OnDetected_Implementation()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("OnDetected"));
+	UE_LOG(LogTemp, Warning, TEXT("OnDetected"));
+	InteractableHighlight->HighlightActivate();
 }
 
 void ASLInteractableObjectBase::OnUndetected_Implementation()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("OnUndetected"));
+	UE_LOG(LogTemp, Warning, TEXT("OnUndetected"));
+	InteractableHighlight->HighlightDeactivate();
 }
 
 void ASLInteractableObjectBase::BeginPlay()
@@ -52,6 +61,7 @@ void ASLInteractableObjectBase::OnInteracted(const ASLPlayerCharacterBase* InCha
 	
 	if (InteractionSound)
 	{
+		InteractableHighlight->SetInteracted(true);
 		UGameplayStatics::PlaySoundAtLocation(this, InteractionSound, GetActorLocation());
 	}
 }
